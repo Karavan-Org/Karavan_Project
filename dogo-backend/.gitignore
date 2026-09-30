@@ -1,0 +1,16 @@
+target/
+.vscode/
+.idea/
+*.iml
+*.log
+# documents KYC déposés en local par l'application
+donnees/
+
+.env
+.env.*
+*.key
+*.pem
+*.jks
+*.keystore
+Thumbs.db
+.DS_Store

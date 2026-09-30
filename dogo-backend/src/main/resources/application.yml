@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: dogo-backend
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/dogo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:1234}
+    hikari:
+      # Chaque lecture voit toujours les données validées les plus récentes, même après une attente de verrou :
+      # les décisions reposent sur des verrous et des mises à jour atomiques, pas sur un instantané de la transaction.
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none        # le schéma est géré uniquement par Flyway
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 15MB
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Paramètres métier (voir « Règles de gestion »). Les valeurs marquées [à confirmer] sont des propositions.
+dogo:
+  jwt:
+    secret: ${DOGO_JWT_SECRET:changez-moi-changez-moi-changez-moi-32-octets-minimum}
+  otp:
+    validite: PT5M                 # RG-02
+    max-tentatives: 3              # RG-02
+    afficher-dans-reponse: false   # démo uniquement : renvoie le code dans la réponse d'inscription
+  pin:
+    max-echecs: 5                  # RG-07
+    verrouillage: PT15M            # RG-07
+  session:
+    inactivite: P30D               # RG-08
+  reservation:
+    duree: PT15M                   # RG-28
+  commission:
+    taux: "0.05"                   # RG-37 [à confirmer]
+  retrait:
+    validite: P7D                  # RG-54 [à confirmer]
+    max-tentatives: 3              # RG-54
+  mobile-money:
+    secret-callback: ${DOGO_MM_SECRET:secret-de-demo-a-remplacer}   # signature HMAC des callbacks (RG-35)
+  stockage:
+    dossier: ${DOGO_STOCKAGE:./donnees/fichiers}

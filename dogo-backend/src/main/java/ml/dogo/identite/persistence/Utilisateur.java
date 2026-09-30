@@ -1,0 +1,120 @@
+package ml.dogo.identite.persistence;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.Instant;
+import ml.dogo.identite.domain.RegleAcces;
+import ml.dogo.identite.domain.StatutCompte;
+import ml.dogo.identite.domain.TypeActeur;
+
+/** Compte utilisateur. Les quatre acteurs héritent de cette classe (généralisation du diagramme de classes). */
+@Entity
+@Table(name = "utilisateur")
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "type_acteur", discriminatorType = DiscriminatorType.STRING)
+public abstract class Utilisateur {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String telephone;
+
+    @Column(nullable = false)
+    private String nom;
+
+    @Column(name = "pin_hash", nullable = false)
+    private String pinHash;
+
+    @Column(nullable = false)
+    private String langue = "fr";
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_compte", nullable = false)
+    private StatutCompte statutCompte = StatutCompte.EN_ATTENTE;
+
+    @Column(name = "telephone_verifie", nullable = false)
+    private boolean telephoneVerifie;
+
+    @Column(name = "tentatives_pin", nullable = false)
+    private int tentativesPin;
+
+    @Column(name = "verrouille_jusqua")
+    private Instant verrouilleJusqua;
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
+
+    @Column(name = "date_creation", nullable = false)
+    private Instant dateCreation;
+
+    protected Utilisateur() {
+    }
+
+    protected Utilisateur(String telephone, String nom, String pinHash, Role role, Instant dateCreation) {
+        this.telephone = telephone;
+        this.nom = nom;
+        this.pinHash = pinHash;
+        this.role = role;
+        this.dateCreation = dateCreation;
+    }
+
+    public abstract TypeActeur typeActeur();
+
+    // ---- comportements (RG-01, RG-03, RG-07, RG-09)
+
+    public void reinitialiserEchecsPin() {
+        this.tentativesPin = 0;
+        this.verrouilleJusqua = null;
+    }
+
+    public void verifierNonVerrouille(Instant maintenant) {
+        RegleAcces.verifierNonVerrouille(verrouilleJusqua, maintenant);
+    }
+
+    public void modifierIdentite(String nom, String langue) {
+        if (nom != null && !nom.isBlank()) {
+            this.nom = nom.strip();
+        }
+        if (langue != null && !langue.isBlank()) {
+            this.langue = langue;
+        }
+    }
+
+    public void marquerTelephoneVerifie() {
+        this.telephoneVerifie = true;
+    }
+
+    public void changerStatut(StatutCompte cible) {
+        this.statutCompte = statutCompte.verifierTransition(cible, "RG-09");
+    }
+
+    public boolean estActif() {
+        return statutCompte == StatutCompte.ACTIF;
+    }
+
+    public Long getId() { return id; }
+    public String getTelephone() { return telephone; }
+    public String getNom() { return nom; }
+    public String getPinHash() { return pinHash; }
+    public String getLangue() { return langue; }
+    public StatutCompte getStatutCompte() { return statutCompte; }
+    public boolean isTelephoneVerifie() { return telephoneVerifie; }
+    public Role getRole() { return role; }
+    public Instant getDateCreation() { return dateCreation; }
+}

@@ -1,0 +1,44 @@
+package ml.dogo.identite.persistence;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
+import java.time.Instant;
+import ml.dogo.identite.domain.RoleAdministratif;
+import ml.dogo.identite.domain.TypeActeur;
+
+@Entity
+@Table(name = "administrateur")
+@DiscriminatorValue("ADMINISTRATEUR")
+@PrimaryKeyJoinColumn(name = "utilisateur_id")
+public class Administrateur extends Utilisateur {
+
+    @Column(name = "matricule_agent", nullable = false, unique = true)
+    private String matriculeAgent;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role_administratif", nullable = false)
+    private RoleAdministratif roleAdministratif;
+
+    protected Administrateur() {
+    }
+
+    public Administrateur(String telephone, String nom, String pinHash, Role role, Instant date,
+                          String matriculeAgent, RoleAdministratif roleAdministratif) {
+        super(telephone, nom, pinHash, role, date);
+        this.matriculeAgent = matriculeAgent;
+        this.roleAdministratif = roleAdministratif;
+    }
+
+    @Override
+    public TypeActeur typeActeur() {
+        return TypeActeur.ADMINISTRATEUR;
+    }
+
+    public String getMatriculeAgent() { return matriculeAgent; }
+    public RoleAdministratif getRoleAdministratif() { return roleAdministratif; }
+}

@@ -1,0 +1,61 @@
+# ==========================================
+# Fichiers compilés & Artefacts de Build
+# ==========================================
+target/
+build/
+bin/
+out/
+*.class
+*.jar
+*.war
+*.ear
+
+# ==========================================
+# Données locales & Fichiers générés
+# ==========================================
+donnees/
+uploads/
+*.log
+*.sqlite
+*.db
+
+# ==========================================
+# Environnement & Secrets
+# ==========================================
+.env
+.env.*
+*.key
+*.pem
+*.jks
+*.keystore
+
+# ==========================================
+# IDEs & Éditeurs de code
+# ==========================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+
+# ==========================================
+# Système d'exploitation (Windows, macOS)
+# ==========================================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ==========================================
+# Flutter / Dart (si projet mobile présent)
+# ==========================================
+.dart_tool/
+.packages
+.pub-cache/
+.pub/

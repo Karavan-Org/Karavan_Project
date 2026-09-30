@@ -1,0 +1,94 @@
+package ml.dogo.identite.web;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import ml.dogo.identite.application.KycService;
+import ml.dogo.identite.domain.StatutValidation;
+import ml.dogo.identite.domain.TypeDocument;
+import ml.dogo.shared.errors.CodeErreur;
+import ml.dogo.shared.errors.ErreurMetier;
+import ml.dogo.shared.security.UtilisateurCourant;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping("/api")
+public class KycController {
+
+    public record DecisionRequete(@NotNull StatutValidation decision, String commentaire) {
+    }
+
+    private final KycService kyc;
+
+    public KycController(KycService kyc) {
+        this.kyc = kyc;
+    }
+
+    /** Dépôt du dossier : {@code types[i]} décrit {@code fichiers[i]}. */
+    @PostMapping(value = "/kyc", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('KYC_SOUMETTRE')")
+    public KycService.DossierVue soumettre(@AuthenticationPrincipal UtilisateurCourant moi,
+                                           @RequestParam("types") List<TypeDocument> types,
+                                           @RequestParam("fichiers") List<MultipartFile> fichiers) throws IOException {
+        if (types.size() != fichiers.size()) {
+            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-04", "Un type de document par fichier");
+        }
+        List<KycService.PieceJointe> pieces = new ArrayList<>();
+        for (int i = 0; i < fichiers.size(); i++) {
+            pieces.add(new KycService.PieceJointe(types.get(i), fichiers.get(i).getOriginalFilename(),
+                    fichiers.get(i).getBytes()));
+        }
+        return kyc.soumettre(moi.id(), pieces);
+    }
+
+    @GetMapping("/kyc/moi")
+    @PreAuthorize("hasAuthority('KYC_SOUMETTRE')")
+    public KycService.DossierVue monDossier(@AuthenticationPrincipal UtilisateurCourant moi) {
+        return kyc.monDossier(moi.id());
+    }
+
+    @GetMapping("/admin/kyc")
+    @PreAuthorize("hasAuthority('KYC_VALIDER')")
+    public List<KycService.DossierVue> enAttente() {
+        return kyc.enAttente();
+    }
+
+    @PostMapping("/admin/kyc/{dossierId}/decision")
+    @PreAuthorize("hasAuthority('KYC_VALIDER')")
+    public KycService.DossierVue decider(@AuthenticationPrincipal UtilisateurCourant moi,
+                                         @PathVariable long dossierId, @Valid @RequestBody DecisionRequete r) {
+        return kyc.decider(moi.id(), dossierId, r.decision(), r.commentaire());
+    }
+
+    @GetMapping("/admin/kyc/{dossierId}/documents/{documentId}")
+    @PreAuthorize("hasAuthority('KYC_VALIDER')")
+    public ResponseEntity<byte[]> document(@AuthenticationPrincipal UtilisateurCourant moi,
+                                           @PathVariable long dossierId, @PathVariable long documentId) {
+        KycService.FichierVue f = kyc.lireDocument(moi.id(), dossierId, documentId);
+        String nom = f.nom().toLowerCase(java.util.Locale.ROOT);
+        MediaType type = nom.endsWith(".pdf") ? MediaType.APPLICATION_PDF
+                : nom.endsWith(".png") ? MediaType.IMAGE_PNG
+                : nom.endsWith(".jpg") || nom.endsWith(".jpeg") ? MediaType.IMAGE_JPEG
+                : MediaType.APPLICATION_OCTET_STREAM;
+        return ResponseEntity.ok().contentType(type)
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Content-Disposition", "inline; filename=\"" + f.nom() + "\"")
+                .body(f.contenu());
+    }
+}

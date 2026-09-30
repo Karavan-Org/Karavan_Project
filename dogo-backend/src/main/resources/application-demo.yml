@@ -1,0 +1,5 @@
+# Profil « demo » : SMS et Mobile Money simulés, données d'exemple, code OTP visible dans la réponse d'inscription
+# et simulateur d'opérateur (/api/dev/mobile-money/...). À ne jamais activer en production.
+dogo:
+  otp:
+    afficher-dans-reponse: true
