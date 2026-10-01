@@ -7,6 +7,7 @@ import java.util.List;
 import ml.dogo.identite.domain.Telephone;
 import ml.dogo.identite.persistence.SessionUtilisateur;
 import ml.dogo.identite.persistence.SessionUtilisateurRepository;
+import ml.dogo.identite.persistence.Administrateur;
 import ml.dogo.identite.persistence.Utilisateur;
 import ml.dogo.identite.persistence.UtilisateurRepository;
 import ml.dogo.shared.config.DogoProperties;
@@ -60,7 +61,7 @@ public class AuthService {
     public Connexion connecter(String telephoneBrut, String pin, String deviceId, String ip) {
         Instant maintenant = horloge.instant();
         String telephone = Telephone.normaliser(telephoneBrut);
-        Utilisateur u = utilisateurs.findByTelephone(telephone).orElse(null);
+        Utilisateur u = utilisateurs.findByTelephoneForUpdate(telephone).orElse(null);
         if (u == null) {
             encodeur.matches(pin == null ? "" : pin, hacheFactice);
             throw identifiantsInvalides();
@@ -93,6 +94,16 @@ public class AuthService {
     }
 
     private static List<String> codesPermissions(Utilisateur u) {
+        if (u instanceof Administrateur admin && admin.getRoleAdministratif() != null) {
+            return switch (admin.getRoleAdministratif()) {
+                case TECHNIQUE -> List.of("ADMIN_CREER", "AUDIT_LIRE", "CAMPAGNE_EXPLORER", "COMMANDE_LIRE", "COMPTE_SUSPENDRE",
+                        "GROUPE_ANNULER", "GROUPE_PUBLICATION_VALIDER", "GROUPE_SUIVRE", "KYC_VALIDER", "NOTIFICATION_LIRE",
+                        "POINT_RETRAIT_GERER", "PORTEFEUILLE_RETIRER", "PROFIL_GERER", "RECEPTION_VALIDER", "REMBOURSEMENT_APPROUVER", "RETRAIT_VALIDER");
+                case VALIDATION -> List.of("CAMPAGNE_EXPLORER", "GROUPE_ANNULER", "GROUPE_PUBLICATION_VALIDER", "GROUPE_SUIVRE", "KYC_VALIDER", "NOTIFICATION_LIRE", "PROFIL_GERER");
+                case FINANCE -> List.of("CAMPAGNE_EXPLORER", "GROUPE_SUIVRE", "NOTIFICATION_LIRE", "PORTEFEUILLE_RETIRER", "PROFIL_GERER", "REMBOURSEMENT_APPROUVER");
+                case SUPPORT -> List.of("CAMPAGNE_EXPLORER", "COMMANDE_LIRE", "GROUPE_SUIVRE", "NOTIFICATION_LIRE", "PROFIL_GERER", "RECEPTION_VALIDER");
+            };
+        }
         return u.getRole().getPermissions().stream().map(p -> p.getCode()).sorted().toList();
     }
 

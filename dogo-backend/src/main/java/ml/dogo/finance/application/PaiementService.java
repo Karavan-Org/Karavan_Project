@@ -78,7 +78,7 @@ public class PaiementService {
                 ? identite.moyenPaiementDe(commercantId, moyenId)
                 : identite.moyenParDefaut(commercantId).orElseThrow(() -> new ErreurMetier(CodeErreur.DONNEES_INVALIDES,
                         "RG-10", "Aucun moyen de paiement : ajoutez un numéro Mobile Money"));
-        Paiement p = paiements.save(new Paiement(participationId, moyen.id(), part.montant(), cleIdempotence, maintenant));
+        Paiement p = paiements.saveAndFlush(new Paiement(participationId, moyen.id(), part.montant(), cleIdempotence, maintenant));
         passerelle.demanderDebit("DOGO-" + p.getId(), moyen.numero(), moyen.operateur(), p.getMontant());
         p.changerStatut(StatutPaiement.EN_ATTENTE, maintenant);
         return vue(p);

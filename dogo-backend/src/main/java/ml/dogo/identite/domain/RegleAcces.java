@@ -19,9 +19,18 @@ public final class RegleAcces {
         }
     }
 
-    /** RG-07 : verrouillage après {@code max} échecs consécutifs. */
-    public static Instant verrouillageApres(int echecs, int max, Duration duree, Instant maintenant) {
-        return echecs >= max ? maintenant.plus(duree) : null;
+    /** RG-07 : verrouillage progressif après {@code max} échecs consécutifs. */
+    public static Instant verrouillageApres(int echecs, int max, Duration dureeBase, Instant maintenant) {
+        if (echecs < max) {
+            return null;
+        }
+        long multiplicateur = switch (echecs - max) {
+            case 0 -> 1;
+            case 1 -> 4;
+            case 2 -> 16;
+            default -> 96;
+        };
+        return maintenant.plus(dureeBase.multipliedBy(multiplicateur));
     }
 
     public static void verifierNonVerrouille(Instant verrouilleJusqua, Instant maintenant) {

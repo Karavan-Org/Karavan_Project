@@ -24,7 +24,7 @@ public class AmorcageAdministrateur {
     private final String pin;
 
     public AmorcageAdministrateur(AdministrateurService administrateurs, UtilisateurRepository utilisateurs,
-                                  @Value("${dogo.admin.telephone:}") String telephone,
+                                  @Value("${dogo.admin.telephone:${dogo.admin.tel:}}") String telephone,
                                   @Value("${dogo.admin.pin:}") String pin) {
         this.administrateurs = administrateurs;
         this.utilisateurs = utilisateurs;
@@ -35,6 +35,7 @@ public class AmorcageAdministrateur {
     @EventListener(ApplicationReadyEvent.class)
     public void amorcer() {
         if (telephone.isBlank() || pin.isBlank()) {
+            LOG.info("Amorçage administrateur : aucune variable (DOGO_ADMIN_TELEPHONE / DOGO_ADMIN_TEL) renseignée.");
             return;
         }
         if (utilisateurs.nombreAdministrateurs() > 0) {

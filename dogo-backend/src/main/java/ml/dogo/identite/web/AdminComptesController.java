@@ -3,6 +3,7 @@ package ml.dogo.identite.web;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Map;
 import ml.dogo.identite.application.AdministrateurService;
 import ml.dogo.identite.application.CompteService;
@@ -11,6 +12,7 @@ import ml.dogo.shared.security.UtilisateurCourant;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,5 +62,29 @@ public class AdminComptesController {
         long id = administrateurs.creerParAdministrateur(moi.id(), r.telephone(), r.nom(), r.pin(), r.matricule(),
                 r.role());
         return Map.of("id", id);
+    }
+
+    @GetMapping("/commercants")
+    @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'KYC_VALIDER', 'AUDIT_LIRE')")
+    public List<CompteService.CommercantVue> listerCommercants() {
+        return comptes.listerCommercants();
+    }
+
+    @GetMapping("/grossistes")
+    @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'KYC_VALIDER', 'AUDIT_LIRE')")
+    public List<CompteService.GrossisteVue> listerGrossistes() {
+        return comptes.listerGrossistes();
+    }
+
+    @GetMapping("/courtiers")
+    @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'KYC_VALIDER', 'AUDIT_LIRE')")
+    public List<CompteService.CourtierVue> listerCourtiers() {
+        return comptes.listerCourtiers();
+    }
+
+    @GetMapping("/supervision/stats")
+    @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'AUDIT_LIRE', 'GROUPE_SUIVRE')")
+    public CompteService.SupervisionStatsVue stats() {
+        return comptes.statistiques();
     }
 }

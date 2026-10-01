@@ -29,6 +29,13 @@ uploads/
 *.jks
 *.keystore
 
+# Configurations locales et de production avec secrets réels
+application-local.yml
+application-local.properties
+application-prod.yml
+application-prod.properties
+application-*.local.yml
+
 # ==========================================
 # IDEs & Éditeurs de code
 # ==========================================

@@ -12,5 +12,12 @@ donnees/
 *.pem
 *.jks
 *.keystore
+
+# Configurations locales et de production avec secrets réels
+application-local.yml
+application-local.properties
+application-prod.yml
+application-prod.properties
+application-*.local.yml
 Thumbs.db
 .DS_Store

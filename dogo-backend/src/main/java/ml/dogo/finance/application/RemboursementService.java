@@ -171,9 +171,9 @@ public class RemboursementService {
         }
         // 3) effets externes et trace
         String reference = "REMB-" + remboursementId;
-        passerelle.rembourser(reference, moyen.numero(), moyen.operateur(), montant);
         mouvements.enregistrer(paiementId, portefeuilleId, TypeMouvement.REMBOURSEMENT, montant, reference);
         audit.tracer(null, "REMBOURSEMENT_EXECUTE", "paiement=" + paiementId, "montant=" + montant);
+        passerelle.rembourser(reference, moyen.numero(), moyen.operateur(), montant);
         notifications.notifier(part.commercantId(),
                 "Vous avez été remboursé de " + montant.toBigInteger() + " XOF sur votre compte Mobile Money.");
     }

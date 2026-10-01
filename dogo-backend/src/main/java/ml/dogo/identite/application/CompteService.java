@@ -1,5 +1,6 @@
 package ml.dogo.identite.application;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,22 @@ public class CompteService {
     }
 
     public record MoyenVue(long id, String numero, String operateur, boolean parDefaut) {
+    }
+
+    public record CommercantVue(long id, String telephone, String nom, String statut, String nomBoutique,
+                                String adresseLivraison, String quartierBamako, String canalVente) {
+    }
+
+    public record GrossisteVue(long id, String telephone, String nom, String statut, String nomBoutiqueMarche,
+                               String numeroNif, String registreCommerce, BigDecimal noteFiabilite) {
+    }
+
+    public record CourtierVue(long id, String telephone, String nom, String statut, String nomSocieteImport,
+                              String licenceTransit, String adresseDepot, BigDecimal noteFiabilite) {
+    }
+
+    public record SupervisionStatsVue(long totalCommercants, long totalGrossistes, long totalCourtiers,
+                                      long totalAdministrateurs) {
     }
 
     private final UtilisateurRepository utilisateurs;
@@ -158,6 +175,40 @@ public class CompteService {
 
     private static MoyenVue vue(MoyenPaiementUtilisateur m) {
         return new MoyenVue(m.getId(), m.getNumeroMobileMoney(), m.getOperateur().name(), m.isParDefaut());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommercantVue> listerCommercants() {
+        return utilisateurs.tousLesCommercants().stream()
+                .map(c -> new CommercantVue(c.getId(), c.getTelephone(), c.getNom(), c.getStatutCompte().name(),
+                        c.getNomBoutique(), c.getAdresseLivraison(), c.getQuartierBamako(), c.getCanalVente()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GrossisteVue> listerGrossistes() {
+        return utilisateurs.tousLesGrossistes().stream()
+                .map(g -> new GrossisteVue(g.getId(), g.getTelephone(), g.getNom(), g.getStatutCompte().name(),
+                        g.getNomBoutiqueMarche(), g.getNumeroNif(), g.getRegistreCommerce(), g.getNoteFiabilite()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourtierVue> listerCourtiers() {
+        return utilisateurs.tousLesCourtiers().stream()
+                .map(c -> new CourtierVue(c.getId(), c.getTelephone(), c.getNom(), c.getStatutCompte().name(),
+                        c.getNomSocieteImport(), c.getLicenceTransit(), c.getAdresseDepot(), c.getNoteFiabilite()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public SupervisionStatsVue statistiques() {
+        return new SupervisionStatsVue(
+                utilisateurs.nombreCommercants(),
+                utilisateurs.nombreGrossistes(),
+                utilisateurs.nombreCourtiers(),
+                utilisateurs.nombreAdministrateurs()
+        );
     }
 
     private static ProfilComplet versProfil(Utilisateur u) {

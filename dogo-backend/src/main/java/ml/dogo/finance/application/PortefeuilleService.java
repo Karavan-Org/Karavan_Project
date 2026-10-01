@@ -85,9 +85,9 @@ public class PortefeuilleService {
         if (portefeuilles.retirer(portefeuilleId, montant) != 1) {
             throw new ErreurMetier(CodeErreur.CONFLIT, "RG-41", "Solde disponible insuffisant");
         }
-        passerelle.verser(reference, moyen.numero(), moyen.operateur(), montant);
         mouvements.enregistrer(null, portefeuilleId, TypeMouvement.RETRAIT_COURTIER, montant, reference);
         audit.tracer(courtierId, "RETRAIT_COURTIER", "portefeuille=" + portefeuilleId, "montant=" + montant);
+        passerelle.verser(reference, moyen.numero(), moyen.operateur(), montant);
         PorteFeuilleCourtier apres = mouvements.portefeuilleDe(courtierId);
         return new PortefeuilleVue(apres.getSoldeBloque(), apres.getSoldeDisponible(), apres.getDevise());
     }
