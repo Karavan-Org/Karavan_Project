@@ -49,10 +49,18 @@ public class CallbackService {
 
     /** Signature que l'opérateur (ou le simulateur de démonstration) joint au callback. */
     public String signer(String corps) {
+        if (corps == null) {
+            throw new IllegalArgumentException("Le corps du callback ne peut pas être null");
+        }
+
+        String secret = proprietes.mobileMoney().secretCallback();
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("Le secret du callback est absent ou vide");
+        }
+
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(proprietes.mobileMoney().secretCallback().getBytes(StandardCharsets.UTF_8),
-                    "HmacSHA256"));
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             return HexFormat.of().formatHex(mac.doFinal(corps.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new IllegalStateException(e);
@@ -60,9 +68,19 @@ public class CallbackService {
     }
 
     boolean signatureValide(String corps, String signature) {
-        byte[] attendue = signer(corps).getBytes(StandardCharsets.UTF_8);
-        byte[] recue = signature.strip().toLowerCase(java.util.Locale.ROOT).getBytes(StandardCharsets.UTF_8);
-        return MessageDigest.isEqual(attendue, recue);
+        if (corps == null || signature == null) {
+            return false;
+        }
+
+        String attendue = signer(corps);
+        String recue = signature.strip();
+        if (recue.isEmpty() || recue.length() != attendue.length()) {
+            return false;
+        }
+
+        byte[] attenduBytes = attendue.getBytes(StandardCharsets.UTF_8);
+        byte[] recuBytes = recue.toLowerCase(java.util.Locale.ROOT).getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(attenduBytes, recuBytes);
     }
 
     private TraitementPaiement.Callback lire(String corps) {

@@ -7,7 +7,12 @@ import 'scanner_retrait_screen.dart';
 
 /// Tableau de bord d'accueil du Courtier (Frame 7 - accueil 1 de la planche)
 class CourtierDashboardScreen extends StatefulWidget {
-  const CourtierDashboardScreen({super.key});
+  final bool showBottomNav;
+
+  const CourtierDashboardScreen({
+    super.key,
+    this.showBottomNav = true,
+  });
 
   @override
   State<CourtierDashboardScreen> createState() => _CourtierDashboardScreenState();
@@ -24,15 +29,15 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
         backgroundColor: AppTheme.surface,
         elevation: 0,
         centerTitle: false,
-        title: Row(
+        title: const Row(
           children: [
             CircleAvatar(
               radius: 17,
               backgroundColor: AppTheme.primary,
-              child: const Icon(Icons.person, color: Colors.white, size: 20),
+              child: Icon(Icons.person, color: Colors.white, size: 20),
             ),
-            const SizedBox(width: 10),
-            const Column(
+            SizedBox(width: 10),
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -41,7 +46,7 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                 ),
                 Text(
                   "Touré Transit & Logistique SARL • Certifié",
-                  style: TextStyle(fontSize: 10.5, color: AppTheme.success, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 11.5, color: AppTheme.success, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -53,45 +58,54 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
               label: Text("3"),
               child: Icon(Icons.notifications_none_rounded, color: AppTheme.textDark),
             ),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Notifications : 3 nouvelles commandes de groupage en attente de validation."),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            },
           ),
           const SizedBox(width: 8),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _bottomIndex,
-        onTap: (index) {
-          setState(() => _bottomIndex = index);
-          if (index == 1) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const GestionConvoiScreen()));
-          } else if (index == 2) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const LancerConvoiScreen()));
-          } else if (index == 3) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ScannerRetraitScreen()));
-          } else if (index == 4) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const PortefeuilleCourtierScreen()));
-          }
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppTheme.primary,
-        unselectedItemColor: AppTheme.textMuted,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Accueil"),
-          BottomNavigationBarItem(icon: Icon(Icons.local_shipping_outlined), label: "Convois"),
-          BottomNavigationBarItem(
-            icon: CircleAvatar(
-              radius: 18,
-              backgroundColor: AppTheme.primary,
-              child: Icon(Icons.add, color: Colors.white, size: 20),
-            ),
-            label: "",
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_rounded), label: "Retraits"),
-          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_outlined), label: "Portefeuille"),
-        ],
-      ),
+      bottomNavigationBar: widget.showBottomNav
+          ? BottomNavigationBar(
+              currentIndex: _bottomIndex,
+              onTap: (index) {
+                setState(() => _bottomIndex = index);
+                if (index == 1) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const GestionConvoiScreen()));
+                } else if (index == 2) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const LancerConvoiScreen()));
+                } else if (index == 3) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ScannerRetraitScreen()));
+                } else if (index == 4) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PortefeuilleCourtierScreen()));
+                }
+              },
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: AppTheme.primary,
+              unselectedItemColor: AppTheme.textMuted,
+              selectedFontSize: 11,
+              unselectedFontSize: 11,
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Accueil"),
+                BottomNavigationBarItem(icon: Icon(Icons.local_shipping_outlined), label: "Convois"),
+                BottomNavigationBarItem(
+                  icon: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: AppTheme.primary,
+                    child: Icon(Icons.add, color: Colors.white, size: 20),
+                  ),
+                  label: "",
+                ),
+                BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_rounded), label: "Retraits"),
+                BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_outlined), label: "Portefeuille"),
+              ],
+            )
+          : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -133,7 +147,7 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                         ),
                         child: const Text(
                           "Garantie Séquestre",
-                          style: TextStyle(color: AppTheme.secondary, fontSize: 10, fontWeight: FontWeight.w700),
+                          style: TextStyle(color: AppTheme.secondary, fontSize: 11.5, fontWeight: FontWeight.w700),
                         ),
                       ),
                     ],
@@ -149,7 +163,7 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                     children: [
                       const Text(
                         "Versements directs : Orange Money • Moov",
-                        style: TextStyle(color: Color(0xFFA8988B), fontSize: 11),
+                        style: TextStyle(color: Color(0xFFA8988B), fontSize: 11.5),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -217,7 +231,7 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                           SizedBox(height: 2),
                           Text(
                             "Fédéralisez vos commerçants locaux sans avance de trésorerie.",
-                            style: TextStyle(color: Color(0xFFF3EAE2), fontSize: 11),
+                            style: TextStyle(color: Color(0xFFF3EAE2), fontSize: 11.5),
                           ),
                         ],
                       ),
@@ -272,7 +286,7 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                         ),
                         child: const Text(
                           "En transit",
-                          style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w700, fontSize: 10.5),
+                          style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w700, fontSize: 11.5),
                         ),
                       ),
                     ],
@@ -289,13 +303,13 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Colis déclarés : 19 / 40", style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                      Text("Colis déclarés : 19 / 40", style: TextStyle(fontSize: 11.5, color: AppTheme.textMuted)),
                       Text(
                         "Commissions : 85 000 FCFA",
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
                       ),
                     ],
                   ),

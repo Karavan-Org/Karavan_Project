@@ -36,6 +36,9 @@ public class Produit {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "photo_url")
+    private String photoUrl;
+
     @Column(name = "pays_origine")
     private String paysOrigine;
 
@@ -47,7 +50,7 @@ public class Produit {
     protected Produit() {
     }
 
-    public Produit(Long grossisteId, Long categorieId, String nom, String description, String paysOrigine,
+    public Produit(Long grossisteId, Long categorieId, String nom, String description, String photoUrl, String paysOrigine,
                    List<VarianteProduit> variantes) {
         if (variantes == null || variantes.isEmpty()) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-12", "Un produit a au moins une variante");
@@ -56,8 +59,18 @@ public class Produit {
         this.categorieId = categorieId;
         this.nom = nom;
         this.description = description;
+        this.photoUrl = photoUrl;
         this.paysOrigine = paysOrigine;
         this.variantes.addAll(variantes);
+    }
+
+    public Produit(Long grossisteId, Long categorieId, String nom, String description, String paysOrigine,
+                   List<VarianteProduit> variantes) {
+        this(grossisteId, categorieId, nom, description, null, paysOrigine, variantes);
+    }
+
+    public void uploaderPhoto(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 
     public void modifier(String nom, String description, String paysOrigine) {
@@ -81,6 +94,7 @@ public class Produit {
     public Long getCategorieId() { return categorieId; }
     public String getNom() { return nom; }
     public String getDescription() { return description; }
+    public String getPhotoUrl() { return photoUrl; }
     public String getPaysOrigine() { return paysOrigine; }
     public List<VarianteProduit> getVariantes() { return variantes; }
 }

@@ -75,7 +75,17 @@ class PortefeuilleCourtierScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text("Historique des Mouvements", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                TextButton(onPressed: () {}, child: const Text("Filtrer", style: TextStyle(color: AppTheme.primary))),
+                TextButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Filtres : Toutes vos commissions et retraits sont affichés."),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: const Text("Filtrer", style: TextStyle(color: AppTheme.primary)),
+                ),
               ],
             ),
 
@@ -122,7 +132,7 @@ class PortefeuilleCourtierScreen extends StatelessWidget {
                 color: AppTheme.success.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text("Par défaut", style: TextStyle(color: AppTheme.success, fontSize: 10.5, fontWeight: FontWeight.bold)),
+              child: const Text("Par défaut", style: TextStyle(color: AppTheme.success, fontSize: 11.5, fontWeight: FontWeight.bold)),
             ),
         ],
       ),
@@ -157,7 +167,7 @@ class PortefeuilleCourtierScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(titre, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                Text(sousTitre, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                Text(sousTitre, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11.5)),
               ],
             ),
           ),

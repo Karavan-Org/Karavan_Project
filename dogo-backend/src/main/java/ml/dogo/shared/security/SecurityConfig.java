@@ -1,5 +1,6 @@
 package ml.dogo.shared.security;
 
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -8,6 +9,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * API sans état : chaque requête porte un jeton JWT. Les droits fins sont posés sur les méthodes
@@ -21,9 +25,11 @@ public class SecurityConfig {
     public SecurityFilterChain chaineDeSecurite(HttpSecurity http, JwtService jwt, VerificateurSession sessions)
             throws Exception {
         JwtFiltre filtre = new JwtFiltre(jwt, sessions);
-        http.csrf(c -> c.disable())
+        http.cors(c -> c.configurationSource(corsConfigurationSource()))
+                .csrf(c -> c.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/paiements/callback").permitAll()
                         .requestMatchers("/api/dev/**").permitAll()
@@ -35,6 +41,33 @@ public class SecurityConfig {
                         .accessDeniedHandler((req, res, ex) -> ecrire(res, 403, "Accès refusé")))
                 .addFilterBefore(filtre, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:[*]",
+                "http://127.0.0.1:[*]",
+                "http://10.0.2.2:[*]"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Idempotency-Key",
+                "X-Signature",
+                "Accept",
+                "Origin",
+                "X-Requested-With"
+        ));
+        config.setExposedHeaders(List.of("Idempotency-Key", "Authorization"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     private static void ecrire(jakarta.servlet.http.HttpServletResponse res, int statut, String detail)

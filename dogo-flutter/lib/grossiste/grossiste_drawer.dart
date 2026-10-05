@@ -94,7 +94,7 @@ class GrossisteDrawer extends StatelessWidget {
                                   Text(
                                     "KYC Validé",
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 11.5,
                                       fontWeight: FontWeight.w700,
                                       color: AppTheme.success,
                                     ),
@@ -106,7 +106,7 @@ class GrossisteDrawer extends StatelessWidget {
                             const Text(
                               "Chine",
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 11.5,
                                 color: AppTheme.textMuted,
                               ),
                             ),
@@ -283,7 +283,7 @@ class GrossisteDrawer extends StatelessWidget {
                 child: Text(
                   badge,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),

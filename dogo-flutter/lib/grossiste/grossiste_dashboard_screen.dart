@@ -5,7 +5,12 @@ import 'grossiste_drawer.dart';
 
 /// Tableau de bord d'accueil du Grossiste (Section 2 de la planche)
 class GrossisteDashboardScreen extends StatelessWidget {
-  const GrossisteDashboardScreen({super.key});
+  final bool showFab;
+
+  const GrossisteDashboardScreen({
+    super.key,
+    this.showFab = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -50,23 +55,32 @@ class GrossisteDashboardScreen extends StatelessWidget {
               label: Text("2"),
               child: Icon(Icons.notifications_none_rounded, color: AppTheme.textDark),
             ),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Notifications : 2 nouvelles demandes d'approvisionnement en attente."),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            },
           ),
           const SizedBox(width: 8),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AjouterProduitScreen()),
-          );
-        },
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text("Ajouter produit"),
-      ),
+      floatingActionButton: showFab
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AjouterProduitScreen()),
+                );
+              },
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text("Ajouter produit"),
+            )
+          : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -92,17 +106,16 @@ class GrossisteDashboardScreen extends StatelessWidget {
                     ),
                     child: const Icon(Icons.hourglass_top_rounded, color: AppTheme.secondary, size: 24),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           "Disponibilité à confirmer (RG-18)",
                           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF6D4C00)),
                         ),
-                        const SizedBox(height: 2),
-                        const Text(
+                        SizedBox(height: 2),
+                        Text(
                           "Un groupe d'achat (Sneakers Pro - 50 paires) attend votre validation de stock.",
                           style: TextStyle(fontSize: 11.5, color: Color(0xFF8A6516)),
                         ),
@@ -184,8 +197,8 @@ class GrossisteDashboardScreen extends StatelessWidget {
             // --- LISTE DES PRODUITS EN VENTE AVEC ASSETS DU PROJET ---
             _buildProductRow(
               context: context,
-              imagePath: "assets/images/008_nike-vomero-plus-2-1067x800-removebg-preview.png",
-              nom: "Nike Vomero Plus 2 - Edition Pro",
+              imagePath: "assets/images/Nike_Joyride-removebg-preview.png",
+              nom: "Nike Joyride - Edition Pro",
               categorie: "Chaussures Sport",
               prix: "18 750 FCFA",
               stock: "420 unités disponibles",
@@ -258,7 +271,7 @@ class GrossisteDashboardScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
           const SizedBox(height: 2),
-          Text(subtext, style: const TextStyle(fontSize: 10.5, color: AppTheme.success, fontWeight: FontWeight.w600)),
+          Text(subtext, style: const TextStyle(fontSize: 11.5, color: AppTheme.success, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -323,13 +336,13 @@ class GrossisteDashboardScreen extends StatelessWidget {
                       ),
                       child: Text(
                         statusBadge,
-                        style: TextStyle(color: badgeColor, fontSize: 9.5, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: badgeColor, fontSize: 11.5, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 3),
-                Text(categorie, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                Text(categorie, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11.5)),
                 const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -338,7 +351,7 @@ class GrossisteDashboardScreen extends StatelessWidget {
                       prix,
                       style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.primary, fontSize: 13.5),
                     ),
-                    Text(stock, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                    Text(stock, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11.5)),
                   ],
                 ),
               ],

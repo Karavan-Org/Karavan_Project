@@ -39,7 +39,7 @@
     /* Badge indicateur discret d'interaction */
     .interaction-hint {
       position: absolute;
-      bottom: 12px;
+      top: 12px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(172, 127, 94, 0.15);
@@ -84,13 +84,12 @@
     };
 
     const container = document.getElementById('canvas-container');
-    const width = container.clientWidth || window.innerWidth;
-    const height = container.clientHeight || window.innerHeight;
+    let width = container.clientWidth || window.innerWidth;
+    let height = container.clientHeight || window.innerHeight;
 
     // --- SCÈNE, CAMÉRA ET RENDU ---
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 7, 24);
+    const camera = new THREE.PerspectiveCamera(45, width / (height || 1), 0.1, 1000);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
@@ -99,11 +98,28 @@
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
+    // Fonction de cadrage parfait au plein centre
+    function updateCameraFraming() {
+      const curW = container.clientWidth || window.innerWidth;
+      const curH = container.clientHeight || window.innerHeight;
+      const aspect = curW / (curH || 1);
+      camera.aspect = aspect;
+
+      // Distance idéale pour que la Terre soit bien visible, imposante et parfaitement au centre
+      const baseDistance = aspect < 1 ? 16.0 / Math.max(aspect, 0.6) : 15.5;
+      camera.position.set(0, 0.6, baseDistance);
+      camera.lookAt(0, 0, 0);
+      camera.updateProjectionMatrix();
+      renderer.setSize(curW, curH);
+    }
+
+    updateCameraFraming();
+
     // --- ÉCLAIRAGE DE STYLE STUDIO ---
-    const ambientLight = new THREE.AmbientLight(0xfff6ea, 0.85);
+    const ambientLight = new THREE.AmbientLight(0xfff6ea, 0.9);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfff5dd, 1.4);
+    const sunLight = new THREE.DirectionalLight(0xfff5dd, 1.45);
     sunLight.position.set(18, 25, 18);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 1024;
@@ -123,6 +139,18 @@
     scene.add(globePivot);
 
     const PLANET_RADIUS = 5.2;
+
+    // Atmosphère lumineuse subtile
+    const atmoGeo = new THREE.SphereGeometry(PLANET_RADIUS * 1.12, 32, 32);
+    const atmoMat = new THREE.MeshBasicMaterial({
+      color: 0x48A6BE,
+      transparent: true,
+      opacity: 0.16,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending
+    });
+    const atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
+    scene.add(atmosphere);
 
     // 1. OCÉAN
     const oceanGeo = new THREE.SphereGeometry(PLANET_RADIUS, 48, 48);
@@ -636,13 +664,9 @@
 
     animate();
 
-    // --- REDIMENSIONNEMENT FLUIDE ---
+    // --- REDIMENSIONNEMENT FLUIDE ET RECENTRAGE ---
     window.addEventListener('resize', () => {
-      const newW = container.clientWidth || window.innerWidth;
-      const newH = container.clientHeight || window.innerHeight;
-      camera.aspect = newW / newH;
-      camera.updateProjectionMatrix();
-      renderer.setSize(newW, newH);
+      updateCameraFraming();
     });
   </script>
 </body>

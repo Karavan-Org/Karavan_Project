@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/role_acteur.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dogo_planet_3d_widget.dart';
-import '../grossiste/grossiste_dashboard_screen.dart';
-import '../courtier/courtier_dashboard_screen.dart';
+import '../commercant/commercant_connexion_screen.dart';
 
 /// Écran d'accueil Onboarding unifié avec animation 3D Three.js
 /// Adaptable dynamiquement pour les 3 acteurs : Commerçant, Grossiste, Courtier.
@@ -58,106 +57,69 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _naviguerVersEspace(BuildContext context) {
-    switch (_currentRole) {
-      case RoleActeur.grossiste:
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const GrossisteDashboardScreen()),
-        );
-        break;
-      case RoleActeur.courtier:
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const CourtierDashboardScreen()),
-        );
-        break;
-      case RoleActeur.commercant:
-        // Continuer vers le flux commerçant ou inscription
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Accès à l'espace Commerçant"),
-            backgroundColor: AppTheme.primary,
-          ),
-        );
-        break;
-    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CommercantConnexionScreen(role: _currentRole),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Column(
           children: [
-            // --- EN-TÊTE AVEC LOGO DOGO ET ACTION PASSER ---
+            // --- EN-TÊTE AVEC LOGO DOGO (SANS BOUTON PASSER) ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(
-                          'assets/images/logo_dogo.png',
-                          width: 38,
-                          height: 38,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                "D",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                ),
-                              ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      'assets/images/logo_dogo.png',
+                      width: 38,
+                      height: 38,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "D",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      RichText(
-                        text: const TextSpan(
-                          text: 'Do',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.primary,
-                            letterSpacing: -0.5,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: 'Go',
-                              style: TextStyle(
-                                color: AppTheme.secondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  TextButton(
-                    onPressed: () => _naviguerVersEspace(context),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.textMuted,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     ),
-                    child: const Text(
-                      'Passer',
+                  ),
+                  const SizedBox(width: 10),
+                  RichText(
+                    text: const TextSpan(
+                      text: 'Do',
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primary,
+                        letterSpacing: -0.5,
                       ),
+                      children: [
+                        TextSpan(
+                          text: 'Go',
+                          style: TextStyle(
+                            color: AppTheme.secondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -226,12 +188,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
 
             // --- ANIMATION 3D THREE.JS (PLANÈTE, CARGO SUR MER, AVION, CARTON) ---
-            Expanded(
-              child: Center(
-                child: DogoPlanet3DWidget(
-                  height: size.height * 0.42,
-                ),
-              ),
+            const Expanded(
+              child: DogoPlanet3DWidget(),
             ),
 
             // --- CARTE INFÉRIEURE AVEC TEXTE DYNAMIQUE DU RÔLE ---
@@ -332,21 +290,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                       minimumSize: const Size(double.infinity, 56),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          _currentRole == RoleActeur.courtier
-                              ? "Suivant"
-                              : "Commencer (${_currentRole.libelle})",
-                          style: const TextStyle(
+                          "Suivant",
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.2,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward_rounded, size: 20),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward_rounded, size: 20),
                       ],
                     ),
                   ),
@@ -389,7 +345,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 11.5,
               fontWeight: FontWeight.w600,
               color: AppTheme.primaryDark,
             ),

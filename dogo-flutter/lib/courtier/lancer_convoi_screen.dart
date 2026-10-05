@@ -57,7 +57,7 @@ class _LancerConvoiScreenState extends State<LancerConvoiScreen> {
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      "Les commerçants inscrivent leurs colis. Vous fixez la capacité et le tarif d'acheminement.",
+                      "Fixez la capacité et le tarif du convoi.",
                       style: TextStyle(fontSize: 12, color: AppTheme.primaryDark),
                     ),
                   ),
@@ -143,8 +143,8 @@ class _LancerConvoiScreenState extends State<LancerConvoiScreen> {
                         Text("Sécurisation automatique DoGo", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                         SizedBox(height: 2),
                         Text(
-                          "Dès qu'un commerçant paye son colis, vos commissions de transport sont bloquées en séquestre.",
-                          style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                          "Vos commissions sont sécurisées en séquestre.",
+                          style: TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
                         ),
                       ],
                     ),

@@ -106,7 +106,7 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
                         ),
                         child: const Text(
                           "Étape 3 / 5",
-                          style: TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.bold, fontSize: 11),
+                          style: TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.bold, fontSize: 11.5),
                         ),
                       ),
                     ],
@@ -165,7 +165,7 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text("Colis des Commerçants (${_colis.length})", style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                const Text("Séquestre DoGo Actif", style: TextStyle(fontSize: 11, color: AppTheme.success, fontWeight: FontWeight.w700)),
+                const Text("Séquestre DoGo Actif", style: TextStyle(fontSize: 11.5, color: AppTheme.success, fontWeight: FontWeight.w700)),
               ],
             ),
             const SizedBox(height: 10),
@@ -216,7 +216,7 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
                               color: AppTheme.success.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text("Séquestre", style: TextStyle(color: AppTheme.success, fontSize: 9.5, fontWeight: FontWeight.w700)),
+                            child: const Text("Séquestre", style: TextStyle(color: AppTheme.success, fontSize: 11.5, fontWeight: FontWeight.w700)),
                           ),
                         ],
                       ),
@@ -236,7 +236,7 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+        Text(label, style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted)),
         const SizedBox(height: 2),
         Text(
           value,
@@ -263,7 +263,7 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
                 : (isCurrent ? AppTheme.secondary : const Color(0xFFE2D8CF)),
             child: isDone
                 ? const Icon(Icons.check, size: 16, color: Colors.white)
-                : Text("$numero", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                : Text("$numero", style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -272,7 +272,7 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
               children: [
                 Text(titre, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: isCurrent ? AppTheme.primaryDark : AppTheme.textDark)),
                 const SizedBox(height: 2),
-                Text(detail, style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                Text(detail, style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted)),
               ],
             ),
           ),

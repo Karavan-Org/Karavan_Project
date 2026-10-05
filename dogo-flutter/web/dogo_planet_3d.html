@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DoGo 3D Planet - Animation Accueil</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+    /* Badge indicateur discret d'interaction */
+    .interaction-hint {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(172, 127, 94, 0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(172, 127, 94, 0.25);
+      color: #7D553A;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 5px 14px;
+      border-radius: 20px;
+      pointer-events: none;
+      letter-spacing: 0.3px;
+      opacity: 0.85;
+      transition: opacity 0.5s ease;
+    }
+  </style>
+  <script src="three.min.js"></script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div class="interaction-hint">Faites glisser pour explorer le globe 3D</div>
+
+  <script>
+    // --- PALETTE DE COULEURS DE LA CHARTE DOGO ---
+    const COLORS = {
+      primary: 0xAC7F5E,     // Marron Camel emblématique
+      primaryDark: 0x825A3B,
+      secondary: 0xE6A823,   // Jaune moutarde / doré
+      tertiary: 0xF5E8D3,    // Crème / beige clair
+      ocean: 0x2A7F96,       // Océan lagon profond
+      oceanShallow: 0x48A6BE,
+      continent: 0xD8C4A7,   // Terres chaudes
+      continentGreen: 0x4E9A66, // Végétation (vert #34C759 adouci)
+      clouds: 0xFFFFFF,
+      shipHull: 0x3D291D,
+      shipDeck: 0xF8F5EE,
+      shipRed: 0xBE4034,
+      planeWhite: 0xF8FAFC,
+      cardboard: 0xB5885C,   // Boîte kraft
+      cardboardTape: 0xE6A823
+    };
+
+    const container = document.getElementById('canvas-container');
+    let width = container.clientWidth || window.innerWidth;
+    let height = container.clientHeight || window.innerHeight;
+
+    // --- SCÈNE, CAMÉRA ET RENDU ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, width / (height || 1), 0.1, 1000);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    // Fonction de cadrage parfait au plein centre
+    function updateCameraFraming() {
+      const curW = container.clientWidth || window.innerWidth;
+      const curH = container.clientHeight || window.innerHeight;
+      const aspect = curW / (curH || 1);
+      camera.aspect = aspect;
+
+      // Distance idéale pour que la Terre soit bien visible, imposante et parfaitement au centre
+      const baseDistance = aspect < 1 ? 16.0 / Math.max(aspect, 0.6) : 15.5;
+      camera.position.set(0, 0.6, baseDistance);
+      camera.lookAt(0, 0, 0);
+      camera.updateProjectionMatrix();
+      renderer.setSize(curW, curH);
+    }
+
+    updateCameraFraming();
+
+    // --- ÉCLAIRAGE DE STYLE STUDIO ---
+    const ambientLight = new THREE.AmbientLight(0xfff6ea, 0.9);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff5dd, 1.45);
+    sunLight.position.set(18, 25, 18);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+    sunLight.shadow.camera.near = 10;
+    sunLight.shadow.camera.far = 60;
+    sunLight.shadow.bias = -0.001;
+    scene.add(sunLight);
+
+    // Lumière d'ambiance chaude depuis le bas (contre-jour camel)
+    const rimLight = new THREE.DirectionalLight(0xAC7F5E, 0.6);
+    rimLight.position.set(-15, -10, -10);
+    scene.add(rimLight);
+
+    // --- GROUPE PRINCIPAL DU GLOBE ---
+    const globePivot = new THREE.Group();
+    scene.add(globePivot);
+
+    const PLANET_RADIUS = 5.2;
+
+    // Atmosphère lumineuse subtile
+    const atmoGeo = new THREE.SphereGeometry(PLANET_RADIUS * 1.12, 32, 32);
+    const atmoMat = new THREE.MeshBasicMaterial({
+      color: 0x48A6BE,
+      transparent: true,
+      opacity: 0.16,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending
+    });
+    const atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
+    scene.add(atmosphere);
+
+    // 1. OCÉAN
+    const oceanGeo = new THREE.SphereGeometry(PLANET_RADIUS, 48, 48);
+    const oceanMat = new THREE.MeshStandardMaterial({
+      color: COLORS.ocean,
+      roughness: 0.35,
+      metalness: 0.15,
+      flatShading: false
+    });
+    const ocean = new THREE.Mesh(oceanGeo, oceanMat);
+    ocean.receiveShadow = true;
+    globePivot.add(ocean);
+
+    // 2. CONTINENTS STYLISÉS (Low-poly chic)
+    const continentMat = new THREE.MeshStandardMaterial({
+      color: COLORS.continent,
+      roughness: 0.7,
+      flatShading: true
+    });
+    const continentGreenMat = new THREE.MeshStandardMaterial({
+      color: COLORS.continentGreen,
+      roughness: 0.8,
+      flatShading: true
+    });
+
+    // Fonction pour générer un patch de continent sur la sphère
+    function createLandmass(lat, lon, size, heightScale, colorType = 'sand') {
+      const landGroup = new THREE.Group();
+      const phi = (90 - lat) * (Math.PI / 180);
+      const theta = (lon + 180) * (Math.PI / 180);
+      const centerPos = new THREE.Vector3(
+        -PLANET_RADIUS * Math.sin(phi) * Math.cos(theta),
+        PLANET_RADIUS * Math.cos(phi),
+        PLANET_RADIUS * Math.sin(phi) * Math.sin(theta)
+      );
+
+      const numHexes = Math.floor(size * 10);
+      const mat = colorType === 'green' ? continentGreenMat : continentMat;
+
+      for (let i = 0; i < numHexes; i++) {
+        const hexHeight = 0.2 + Math.random() * 0.25 * heightScale;
+        const hexRadius = 0.3 + Math.random() * 0.45;
+        const hexGeo = new THREE.CylinderGeometry(hexRadius * 0.8, hexRadius, hexHeight, 6);
+        const hexMesh = new THREE.Mesh(hexGeo, mat);
+
+        // Décalage aléatoire autour du centre
+        const offset = new THREE.Vector3(
+          (Math.random() - 0.5) * size * 1.5,
+          (Math.random() - 0.5) * size * 1.5,
+          (Math.random() - 0.5) * size * 1.5
+        );
+        const p = centerPos.clone().add(offset).normalize().multiplyScalar(PLANET_RADIUS + hexHeight / 2 - 0.05);
+        hexMesh.position.copy(p);
+        hexMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p.clone().normalize());
+        hexMesh.castShadow = true;
+        hexMesh.receiveShadow = true;
+        landGroup.add(hexMesh);
+
+        // Ajouter de temps en temps un arbre miniature mignon
+        if (Math.random() > 0.65) {
+          const trunkGeo = new THREE.CylinderGeometry(0.04, 0.05, 0.2, 4);
+          const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5C3A21 });
+          const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+          trunk.position.y = hexHeight / 2 + 0.1;
+
+          const foliageGeo = new THREE.ConeGeometry(0.18, 0.35, 5);
+          const foliageMat = new THREE.MeshLambertMaterial({ color: 0x2E7D32 });
+          const foliage = new THREE.Mesh(foliageGeo, foliageMat);
+          foliage.position.y = 0.22;
+          trunk.add(foliage);
+
+          hexMesh.add(trunk);
+        }
+      }
+      globePivot.add(landGroup);
+    }
+
+    // Création des continents majeurs (Afrique, Asie, Amériques, Europe, îles)
+    createLandmass(10, 15, 1.8, 1.2, 'sand');   // Afrique
+    createLandmass(-10, 20, 1.4, 1.0, 'green'); // Afrique centrale/sud
+    createLandmass(45, 15, 1.3, 0.9, 'green');  // Europe
+    createLandmass(30, 80, 2.2, 1.3, 'sand');   // Asie / Moyen-Orient
+    createLandmass(15, 105, 1.5, 1.1, 'green'); // Asie du Sud-Est
+    createLandmass(35, -95, 2.0, 1.1, 'green'); // Amérique du Nord
+    createLandmass(-15, -60, 1.7, 1.2, 'green');// Amérique du Sud
+    createLandmass(-25, 135, 1.3, 0.8, 'sand'); // Australie
+
+    // 3. NUAGES FLOTTANTS DUVETEUX
+    const cloudsGroup = new THREE.Group();
+    globePivot.add(cloudsGroup);
+
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: COLORS.clouds,
+      roughness: 0.9,
+      flatShading: true,
+      transparent: true,
+      opacity: 0.88
+    });
+
+    function createCloudCluster(lat, lon, scale = 1) {
+      const cluster = new THREE.Group();
+      const phi = (90 - lat) * (Math.PI / 180);
+      const theta = (lon + 180) * (Math.PI / 180);
+      const r = PLANET_RADIUS + 0.8;
+      const pos = new THREE.Vector3(
+        -r * Math.sin(phi) * Math.cos(theta),
+        r * Math.cos(phi),
+        r * Math.sin(phi) * Math.sin(theta)
+      );
+      cluster.position.copy(pos);
+      cluster.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), pos.clone().normalize());
+
+      const numPuffs = 4 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < numPuffs; i++) {
+        const puffSize = (0.28 + Math.random() * 0.22) * scale;
+        const puffGeo = new THREE.DodecahedronGeometry(puffSize, 1);
+        const puff = new THREE.Mesh(puffGeo, cloudMat);
+        puff.position.set(
+          (Math.random() - 0.5) * 0.8 * scale,
+          (Math.random() - 0.2) * 0.2 * scale,
+          (Math.random() - 0.5) * 0.5 * scale
+        );
+        puff.castShadow = true;
+        cluster.add(puff);
+      }
+      cloudsGroup.add(cluster);
+    }
+
+    createCloudCluster(20, -30, 1.2);
+    createCloudCluster(-15, -15, 1.0);
+    createCloudCluster(55, -45, 1.1);
+    createCloudCluster(0, 70, 1.3);
+    createCloudCluster(-40, 90, 0.9);
+    createCloudCluster(35, 150, 1.2);
+
+    // 4. LE BATEAU (CARGO MARITIME DOGO QUI VOGUE SUR LA MER)
+    const boatPivot = new THREE.Group();
+    globePivot.add(boatPivot);
+
+    function createCargoShip() {
+      const ship = new THREE.Group();
+
+      // Coque
+      const hullGeo = new THREE.BoxGeometry(0.45, 0.22, 1.1);
+      const hullMat = new THREE.MeshStandardMaterial({ color: COLORS.shipHull, roughness: 0.5 });
+      const hull = new THREE.Mesh(hullGeo, hullMat);
+      hull.position.y = 0.1;
+      hull.castShadow = true;
+      ship.add(hull);
+
+      // Étrave biseautée (avant pointu)
+      const bowGeo = new THREE.ConeGeometry(0.24, 0.45, 4);
+      const bow = new THREE.Mesh(bowGeo, hullMat);
+      bow.rotation.x = Math.PI / 2;
+      bow.rotation.y = Math.PI / 4;
+      bow.position.set(0, 0.1, 0.65);
+      bow.scale.set(1, 0.6, 1);
+      ship.add(bow);
+
+      // Cabine blanche
+      const cabinGeo = new THREE.BoxGeometry(0.35, 0.28, 0.32);
+      const cabinMat = new THREE.MeshStandardMaterial({ color: COLORS.shipDeck, roughness: 0.4 });
+      const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+      cabin.position.set(0, 0.3, -0.28);
+      cabin.castShadow = true;
+      ship.add(cabin);
+
+      // Cheminée rouge DoGo avec bande dorée
+      const funnelGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.22, 8);
+      const funnelMat = new THREE.MeshStandardMaterial({ color: COLORS.shipRed });
+      const funnel = new THREE.Mesh(funnelGeo, funnelMat);
+      funnel.position.set(0, 0.48, -0.28);
+      ship.add(funnel);
+
+      // Petits conteneurs de fret sur le pont (Camel, Or, Vert)
+      const containerColors = [COLORS.primary, COLORS.secondary, COLORS.continentGreen];
+      for (let c = 0; c < 3; c++) {
+        const cGeo = new THREE.BoxGeometry(0.32, 0.14, 0.22);
+        const cMat = new THREE.MeshStandardMaterial({ color: containerColors[c % 3], roughness: 0.6 });
+        const cMesh = new THREE.Mesh(cGeo, cMat);
+        cMesh.position.set(0, 0.25, 0.05 + c * 0.2);
+        cMesh.castShadow = true;
+        ship.add(cMesh);
+      }
+
+      ship.scale.set(0.65, 0.65, 0.65);
+      return ship;
+    }
+
+    const shipMesh = createCargoShip();
+    boatPivot.add(shipMesh);
+
+    // 5. L'AVION DE TRANSPORT EN ORBITE (FRET AÉRIEN DOGO)
+    const planeOrbit = new THREE.Group();
+    scene.add(planeOrbit);
+    planeOrbit.rotation.z = 0.35; // Inclinaison orbitale
+    planeOrbit.rotation.x = 0.25;
+
+    function createPlane() {
+      const plane = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: COLORS.planeWhite, roughness: 0.3 });
+      const accentMat = new THREE.MeshStandardMaterial({ color: COLORS.primary, roughness: 0.4 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: COLORS.secondary, roughness: 0.3, metalness: 0.5 });
+
+      // Fuselage profilé
+      const fuselageGeo = new THREE.CylinderGeometry(0.12, 0.15, 1.3, 12);
+      const fuselage = new THREE.Mesh(fuselageGeo, bodyMat);
+      fuselage.rotation.x = Math.PI / 2;
+      fuselage.castShadow = true;
+      plane.add(fuselage);
+
+      // Nez arrondi
+      const noseGeo = new THREE.SphereGeometry(0.12, 12, 12);
+      const nose = new THREE.Mesh(noseGeo, goldMat);
+      nose.position.z = 0.65;
+      nose.scale.set(1, 1, 1.4);
+      plane.add(nose);
+
+      // Grandes ailes élégantes
+      const wingGeo = new THREE.BoxGeometry(1.6, 0.03, 0.32);
+      const wings = new THREE.Mesh(wingGeo, bodyMat);
+      wings.position.set(0, 0, 0.1);
+      wings.castShadow = true;
+      plane.add(wings);
+
+      // Winglets dorés
+      const wlGeo = new THREE.BoxGeometry(0.03, 0.12, 0.15);
+      const wlLeft = new THREE.Mesh(wlGeo, goldMat);
+      wlLeft.position.set(0.8, 0.06, 0.1);
+      const wlRight = wlLeft.clone();
+      wlRight.position.x = -0.8;
+      plane.add(wlLeft);
+      plane.add(wlRight);
+
+      // Réacteurs sous les ailes
+      const engineGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.28, 8);
+      engineGeo.rotateX(Math.PI / 2);
+      const engMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+      const engLeft = new THREE.Mesh(engineGeo, engMat);
+      engLeft.position.set(0.4, -0.09, 0.08);
+      const engRight = engLeft.clone();
+      engRight.position.x = -0.4;
+      plane.add(engLeft);
+      plane.add(engRight);
+
+      // Empennage (Aileron de queue)
+      const tailFinGeo = new THREE.BoxGeometry(0.03, 0.35, 0.28);
+      const tailFin = new THREE.Mesh(tailFinGeo, accentMat);
+      tailFin.position.set(0, 0.2, -0.55);
+      tailFin.rotation.x = -0.3;
+      plane.add(tailFin);
+
+      // Stabilisateurs horizontaux
+      const stabGeo = new THREE.BoxGeometry(0.6, 0.02, 0.18);
+      const stab = new THREE.Mesh(stabGeo, bodyMat);
+      stab.position.set(0, 0.08, -0.58);
+      plane.add(stab);
+
+      plane.scale.set(0.8, 0.8, 0.8);
+      return plane;
+    }
+
+    const planeMesh = createPlane();
+    const PLANE_ALTITUDE = 8.2;
+    planeMesh.position.set(PLANE_ALTITUDE, 0, 0);
+    // Orientation aérodynamique tangente à la courbe d'orbite
+    planeMesh.rotation.y = Math.PI / 2;
+    planeMesh.rotation.z = -0.15; // Léger roulis dans le virage
+    planeOrbit.add(planeMesh);
+
+    // Traînée de condensation lumineuse derrière l'avion
+    const trailPoints = [];
+    const TRAIL_LENGTH = 30;
+    for (let i = 0; i < TRAIL_LENGTH; i++) {
+      trailPoints.push(new THREE.Vector3(PLANE_ALTITUDE, 0, 0));
+    }
+    const trailGeo = new THREE.BufferGeometry().setFromPoints(trailPoints);
+    const trailMat = new THREE.LineBasicMaterial({
+      color: COLORS.secondary,
+      transparent: true,
+      opacity: 0.45,
+      linewidth: 2
+    });
+    const trailLine = new THREE.Line(trailGeo, trailMat);
+    planeOrbit.add(trailLine);
+
+    // 6. COLIS EN CARTON (CARTON DOGO) GRAVITANT EN ORBITE
+    const boxOrbit = new THREE.Group();
+    scene.add(boxOrbit);
+    boxOrbit.rotation.z = -0.5;
+    boxOrbit.rotation.y = 0.8;
+
+    function createDeliveryBox() {
+      const boxGroup = new THREE.Group();
+      const boxGeo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+      const boxMat = new THREE.MeshStandardMaterial({
+        color: COLORS.cardboard,
+        roughness: 0.85
+      });
+      const box = new THREE.Mesh(boxGeo, boxMat);
+      box.castShadow = true;
+      boxGroup.add(box);
+
+      // Ruban adhésif doré DoGo
+      const tapeMat = new THREE.MeshStandardMaterial({
+        color: COLORS.cardboardTape,
+        roughness: 0.4,
+        metalness: 0.2
+      });
+      const tapeH = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.16, 0.92), tapeMat);
+      const tapeV = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.92, 0.92), tapeMat);
+      boxGroup.add(tapeH);
+      boxGroup.add(tapeV);
+
+      // Étiquette d'expédition blanche
+      const labelGeo = new THREE.PlaneGeometry(0.35, 0.25);
+      const labelMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+      const label = new THREE.Mesh(labelGeo, labelMat);
+      label.position.set(0, 0.1, 0.46);
+      boxGroup.add(label);
+
+      boxGroup.scale.set(0.7, 0.7, 0.7);
+      return boxGroup;
+    }
+
+    const deliveryBox = createDeliveryBox();
+    const BOX_ALTITUDE = 9.0;
+    deliveryBox.position.set(BOX_ALTITUDE, 0, 0);
+    boxOrbit.add(deliveryBox);
+
+    // 7. SNEAKER / PRODUIT SHOPPING STYLISÉ EN ORBITE
+    const sneakerOrbit = new THREE.Group();
+    scene.add(sneakerOrbit);
+    sneakerOrbit.rotation.x = -0.4;
+    sneakerOrbit.rotation.z = 0.8;
+
+    function createStylizedSneaker() {
+      const shoe = new THREE.Group();
+      const soleMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.5 });
+      const upperMat = new THREE.MeshStandardMaterial({ color: COLORS.primary, roughness: 0.6 });
+      const swooshMat = new THREE.MeshStandardMaterial({ color: COLORS.secondary, roughness: 0.4 });
+
+      // Semelle
+      const soleGeo = new THREE.BoxGeometry(0.4, 0.14, 0.9);
+      const sole = new THREE.Mesh(soleGeo, soleMat);
+      sole.castShadow = true;
+      shoe.add(sole);
+
+      // Empeigne
+      const upperGeo = new THREE.BoxGeometry(0.36, 0.28, 0.7);
+      const upper = new THREE.Mesh(upperGeo, upperMat);
+      upper.position.set(0, 0.18, -0.05);
+      shoe.add(upper);
+
+      // Cheville / ouverture
+      const collarGeo = new THREE.CylinderGeometry(0.16, 0.18, 0.2, 8);
+      const collar = new THREE.Mesh(collarGeo, soleMat);
+      collar.position.set(0, 0.32, -0.22);
+      shoe.add(collar);
+
+      // Virgule / Logo dynamique doré
+      const logoGeo = new THREE.BoxGeometry(0.42, 0.06, 0.35);
+      const logo = new THREE.Mesh(logoGeo, swooshMat);
+      logo.position.set(0, 0.18, 0.05);
+      shoe.add(logo);
+
+      shoe.scale.set(0.65, 0.65, 0.65);
+      return shoe;
+    }
+
+    const sneakerMesh = createStylizedSneaker();
+    const SNEAKER_ALTITUDE = 8.6;
+    sneakerMesh.position.set(-SNEAKER_ALTITUDE, 1.2, 0);
+    sneakerOrbit.add(sneakerMesh);
+
+    // 8. PARTICULES LUMINEUSES (ÉTOILES / POUSSIÈRES DORÉES DE COMMERCE)
+    const particleCount = 45;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let p = 0; p < particleCount * 3; p += 3) {
+      const radius = 10 + Math.random() * 8;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      particlePositions[p] = radius * Math.sin(phi) * Math.cos(theta);
+      particlePositions[p + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      particlePositions[p + 2] = radius * Math.cos(phi);
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: COLORS.secondary,
+      size: 0.18,
+      transparent: true,
+      opacity: 0.65
+    });
+    const starField = new THREE.Points(particleGeo, particleMat);
+    scene.add(starField);
+
+    // --- CONTRÔLES TACTILES / SOURIS INERTIE ---
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    let rotationVelocity = { x: 0.002, y: 0.004 };
+    let hintTimeout;
+
+    const hint = document.querySelector('.interaction-hint');
+
+    function onPointerDown(e) {
+      isDragging = true;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      previousMousePosition = { x: clientX, y: clientY };
+      if (hint) {
+        hint.style.opacity = '0';
+      }
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const deltaX = clientX - previousMousePosition.x;
+      const deltaY = clientY - previousMousePosition.y;
+
+      rotationVelocity.y = deltaX * 0.005;
+      rotationVelocity.x = deltaY * 0.005;
+
+      globePivot.rotation.y += rotationVelocity.y;
+      globePivot.rotation.x += rotationVelocity.x;
+
+      previousMousePosition = { x: clientX, y: clientY };
+    }
+
+    function onPointerUp() {
+      isDragging = false;
+    }
+
+    window.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('touchstart', onPointerDown, { passive: true });
+    window.addEventListener('touchmove', onPointerMove, { passive: true });
+    window.addEventListener('touchend', onPointerUp);
+
+    // --- ANIMATION EN BOUCLE FLUIDE (60 FPS) ---
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
+
+      // 1. Rotation de la planète
+      if (!isDragging) {
+        // Amortissement doux vers la rotation naturelle
+        rotationVelocity.y += (0.003 - rotationVelocity.y) * 0.04;
+        rotationVelocity.x += (0 - rotationVelocity.x) * 0.04;
+        globePivot.rotation.y += rotationVelocity.y;
+        globePivot.rotation.x += rotationVelocity.x;
+      }
+
+      // Nuages qui glissent un peu plus vite que la Terre
+      cloudsGroup.rotation.y += 0.0015;
+
+      // 2. Navigation du Bateau sur l'océan
+      // On déplace le bateau le long d'une route maritime circulaire à la surface
+      const shipAngle = time * 0.35;
+      const shipLat = Math.sin(shipAngle * 0.5) * 0.25; // Oscillation douce entre tropiques
+      const shipR = PLANET_RADIUS + 0.08;
+
+      const shipX = shipR * Math.cos(shipAngle) * Math.cos(shipLat);
+      const shipY = shipR * Math.sin(shipLat);
+      const shipZ = shipR * Math.sin(shipAngle) * Math.cos(shipLat);
+      shipMesh.position.set(shipX, shipY, shipZ);
+
+      // Orientation du bateau : la normale de la sphère vers le haut, et le cap vers l'avant
+      const normal = new THREE.Vector3(shipX, shipY, shipZ).normalize();
+      const tangent = new THREE.Vector3(-Math.sin(shipAngle), 0, Math.cos(shipAngle)).normalize();
+      const bitangent = new THREE.Vector3().crossVectors(normal, tangent).normalize();
+
+      // Tangage et roulis réalistes causés par les vagues
+      const roll = Math.sin(time * 3.5) * 0.08;
+      const pitch = Math.cos(time * 4.0) * 0.05;
+
+      const m = new THREE.Matrix4();
+      m.makeBasis(bitangent, normal, tangent);
+      shipMesh.quaternion.setFromRotationMatrix(m);
+      shipMesh.rotateZ(roll);
+      shipMesh.rotateX(pitch);
+
+      // 3. Vol de l'avion en orbite
+      planeOrbit.rotation.y += 0.014;
+      // Léger mouvement d'ondulation d'altitude (turbulences douces)
+      planeMesh.position.y = Math.sin(time * 2.5) * 0.15;
+
+      // 4. Culbute et révolution du carton DoGo
+      boxOrbit.rotation.y -= 0.009;
+      deliveryBox.rotation.x += 0.015;
+      deliveryBox.rotation.y += 0.02;
+      deliveryBox.position.y = Math.sin(time * 1.8) * 0.35;
+
+      // 5. Révolution de la sneaker en orbite
+      sneakerOrbit.rotation.y += 0.007;
+      sneakerMesh.rotation.x += 0.01;
+      sneakerMesh.rotation.z += 0.015;
+
+      // 6. Scintillement subtil des particules
+      starField.rotation.y = time * 0.02;
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // --- REDIMENSIONNEMENT FLUIDE ET RECENTRAGE ---
+    window.addEventListener('resize', () => {
+      updateCameraFraming();
+    });
+  </script>
+</body>
+</html>

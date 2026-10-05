@@ -11,14 +11,15 @@ class AjouterProduitScreen extends StatefulWidget {
 
 class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nomController = TextEditingController(text: "Sneakers Sport Pro V2");
+  final _nomController = TextEditingController(text: "Sneakers Nike Joyride");
   final _prixController = TextEditingController(text: "12500");
   final _descController = TextEditingController(
     text: "Chaussures de sport respirantes, semelle amortissante haute résistance.",
   );
 
   String _categorie = "Chaussures";
-  String _selectedImage = "assets/images/008_nike-vomero-plus-2-1067x800-removebg-preview.png";
+  String _selectedImage = "assets/images/Nike_Joyride-removebg-preview.png";
+  String _photoSourceLabel = "Modèle sélectionné";
 
   final List<Map<String, dynamic>> _variantes = [
     {"taille": "40", "couleur": "Noir / Blanc", "stock": 150},
@@ -29,7 +30,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   ];
 
   final List<String> _photosDisponibles = [
-    "assets/images/008_nike-vomero-plus-2-1067x800-removebg-preview.png",
+    "assets/images/Nike_Joyride-removebg-preview.png",
     "assets/images/black-dress-boots-2-mob.jpg",
     "assets/images/sandales-talon-rouge.jpg",
     "assets/images/Montre-Homme-Quartz-Acier-Inoxydable-Cadran-Rond-Affichage-Analogique-Et-Num-rique-Boucle-Pliante-Simple-Cristal-Renforc-Nihaojewelry-France.webp",
@@ -47,6 +48,118 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     setState(() {
       _variantes.add({"taille": "45", "couleur": "Blanc", "stock": 50});
     });
+  }
+
+  void _prendrePhoto() {
+    setState(() {
+      _selectedImage = "assets/images/Nike_Joyride.jpg";
+      _photoSourceLabel = "Prise de vue Caméra HD";
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.camera_alt, color: Colors.white),
+            SizedBox(width: 10),
+            Text("Photo capturée avec succès depuis l'appareil photo !"),
+          ],
+        ),
+        backgroundColor: AppTheme.success,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _importerGalerie() {
+    setState(() {
+      _selectedImage = "assets/images/black-dress-boots-2-mob.jpg";
+      _photoSourceLabel = "Importé depuis la galerie";
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.photo_library, color: Colors.white),
+            SizedBox(width: 10),
+            Text("Photo importée avec succès depuis vos fichiers / galerie !"),
+          ],
+        ),
+        backgroundColor: AppTheme.success,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _ouvrirSelectionPhoto(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Ajouter une photo du produit",
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              "Photographiez l'article ou importez une image haute définition",
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 12.5),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.camera_alt, color: AppTheme.primary),
+              ),
+              title: const Text("Prendre une photo (Caméra)", style: TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: const Text("Ouvrir l'appareil photo du smartphone/tablette", style: TextStyle(fontSize: 12)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _prendrePhoto();
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.secondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.photo_library, color: AppTheme.secondary),
+              ),
+              title: const Text("Importer depuis la galerie", style: TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: const Text("Sélectionner depuis la bibliothèque de photos ou vos fichiers", style: TextStyle(fontSize: 12)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _importerGalerie();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -71,40 +184,153 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // --- SÉLECTION DES PHOTOS DU PRODUIT ---
-              const Text(
-                "Photos du produit (depuis vos assets)",
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Photos du produit (Obligatoire)",
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _ouvrirSelectionPhoto(context),
+                    icon: const Icon(Icons.add_a_photo, size: 16, color: AppTheme.primary),
+                    label: const Text(
+                      "Options",
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
+
+              // Boutons d'action : Caméra & Galerie
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _prendrePhoto,
+                      icon: const Icon(Icons.camera_alt_outlined, size: 18, color: AppTheme.primary),
+                      label: const Text(
+                        "Prendre photo",
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: AppTheme.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _importerGalerie,
+                      icon: const Icon(Icons.photo_library_outlined, size: 18, color: Colors.white),
+                      label: const Text(
+                        "Importer galerie",
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.secondary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Aperçu de l'image sélectionnée avec badge de source
+              Container(
+                height: 170,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE2D8CF)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Image.asset(
+                          _selectedImage,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 60,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle, color: Colors.white, size: 12),
+                            const SizedBox(width: 4),
+                            Text(
+                              _photoSourceLabel,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Vignettes de modèles additionnels
               SizedBox(
-                height: 100,
+                height: 75,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _photosDisponibles.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
                   itemBuilder: (context, index) {
                     final photo = _photosDisponibles[index];
                     final isSelected = photo == _selectedImage;
                     return GestureDetector(
-                      onTap: () => setState(() => _selectedImage = photo),
+                      onTap: () => setState(() {
+                        _selectedImage = photo;
+                        _photoSourceLabel = "Modèle #${index + 1}";
+                      }),
                       child: Container(
-                        width: 100,
+                        width: 75,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected ? AppTheme.primary : const Color(0xFFE2D8CF),
                             width: isSelected ? 2.5 : 1,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                            ),
-                          ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(10),
                           child: Image.asset(
                             photo,
                             fit: BoxFit.contain,
@@ -221,7 +447,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                         child: Text(
                           v['taille'],
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 11.5,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.primaryDark,
                           ),
@@ -233,7 +459,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       ),
                       subtitle: Text(
                         "Disponible : ${v['stock']} unités",
-                        style: const TextStyle(color: AppTheme.success, fontSize: 11),
+                        style: const TextStyle(color: AppTheme.success, fontSize: 11.5),
                       ),
                       trailing: IconButton(
                         icon: const Icon(Icons.remove_circle_outline, size: 18, color: Colors.redAccent),

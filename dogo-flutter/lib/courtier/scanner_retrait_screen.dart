@@ -85,7 +85,7 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
               ),
 
               const SizedBox(height: 24),
-              const Text("— OU SAISISSEZ LE PIN DE RETRAIT —", style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold)),
+              const Text("— OU SAISISSEZ LE PIN DE RETRAIT —", style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
 
               // Champ PIN 4 chiffres

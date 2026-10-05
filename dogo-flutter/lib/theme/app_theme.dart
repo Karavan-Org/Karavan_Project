@@ -12,6 +12,7 @@ class AppTheme {
   static const Color surface = Color(0xFFFFFFFF);      // Blanc pur carte
   static const Color success = Color(0xFF34C759);      // Vert succès / confirmation
   static const Color textDark = Color(0xFF1E1E1E);     // Texte principal
+  static const Color textPrimary = textDark;           // Alias texte principal
   static const Color textMuted = Color(0xFF757575);    // Texte secondaire / description
 
   // --- THÈME MATERIAL 3 ---
@@ -20,6 +21,11 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      // Typographie globale Inter pour l'ensemble de l'application
+      fontFamily: GoogleFonts.inter().fontFamily,
+      primaryTextTheme: GoogleFonts.interTextTheme(
+        ThemeData.light().primaryTextTheme,
+      ),
       scaffoldBackgroundColor: background,
       colorScheme: const ColorScheme.light(
         primary: primary,

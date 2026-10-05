@@ -49,12 +49,24 @@ public class Expedition {
         this.transporteur = transporteur;
     }
 
+    public void changerStatut(StatutExpedition cible) {
+        this.statut = this.statut.verifierTransition(cible, "RG-EXPEDITION-FSM");
+    }
+
+    public void transfererTransitaire() {
+        changerStatut(StatutExpedition.CHEZ_TRANSITAIRE);
+    }
+
     public void lancerTransit() {
-        this.statut = StatutExpedition.EN_TRANSIT;
+        changerStatut(StatutExpedition.EN_TRANSIT);
     }
 
     public void declarerDouane() {
-        this.statut = StatutExpedition.BLOQUE_DOUANE;
+        changerStatut(StatutExpedition.BLOQUE_DOUANE);
+    }
+
+    public void marquerArrive() {
+        changerStatut(StatutExpedition.ARRIVE);
     }
 
     public Long getId() { return id; }

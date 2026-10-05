@@ -5,7 +5,7 @@ enum RoleActeur {
     description: 'Achetez en groupe à prix usine',
     titreAccueil: 'Des opportunités pour votre commerce',
     sousTitreAccueil:
-        "Rejoignez des groupes d'achat et accédez à des produits de qualité à des prix imbattables, depuis l'international.",
+        "Achetez en groupe, à prix de gros.",
   ),
   grossiste(
     libelle: 'Grossiste',
