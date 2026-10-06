@@ -13,32 +13,7 @@ class MesGroupesCourtierScreen extends StatefulWidget {
 class _MesGroupesCourtierScreenState extends State<MesGroupesCourtierScreen> {
   String _filtre = "Tous";
 
-  final List<Map<String, dynamic>> _groupesConvois = [
-    {
-      "code": "CV-IST-BKO-01",
-      "trajet": "Istanbul ➔ Bamako (Aérien)",
-      "mode": "Fret Express Aérien",
-      "lotsAssocies": "Sneakers Chunky + Bazin Riche",
-      "commercants": 19,
-      "poidsTotal": "1 450 kg / 2 000 kg",
-      "capaciteRatio": 0.72,
-      "commissionEstimee": "385 000 FCFA",
-      "statut": "En transit (Étape 3 : Douanes)",
-      "statutColor": AppTheme.primary,
-    },
-    {
-      "code": "CV-CAN-BKO-04",
-      "trajet": "Guangzhou ➔ Bamako (Maritime)",
-      "mode": "Conteneur 40ft Maritime",
-      "lotsAssocies": "Chaussures & Maroquinerie de gros",
-      "commercants": 42,
-      "poidsTotal": "8 200 kg / 12 000 kg",
-      "capaciteRatio": 0.68,
-      "commissionEstimee": "820 000 FCFA",
-      "statut": "En mer (Étape 2 : Fret)",
-      "statutColor": const Color(0xFF1976D2),
-    },
-  ];
+  final List<Map<String, dynamic>> _groupesConvois = [];
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +63,46 @@ class _MesGroupesCourtierScreenState extends State<MesGroupesCourtierScreen> {
 
           // Liste des groupes
           Expanded(
-            child: ListView.separated(
+            child: _groupesConvois.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.hub_outlined,
+                              size: 40,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            "Aucun groupe pris en charge",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: Color(0xFF2C241E),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            "Lancez ou prenez en charge un convoi pour démarrer les opérations.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
               itemCount: _groupesConvois.length,
               separatorBuilder: (_, __) => const SizedBox(height: 14),

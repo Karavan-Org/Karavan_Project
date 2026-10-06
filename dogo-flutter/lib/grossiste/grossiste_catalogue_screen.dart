@@ -12,52 +12,7 @@ class GrossisteCatalogueScreen extends StatefulWidget {
 class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
   String _selectedCategory = "Tous";
 
-  final List<Map<String, dynamic>> _articles = [
-    {
-      "nom": "Bazin Riche Getzner Authentique 10m",
-      "categorie": "Textile",
-      "origine": "Autriche / Dubai",
-      "stock": 140,
-      "moq": 10,
-      "prixGros": "42 000 FCFA",
-      "prixPublic": "65 000 FCFA",
-      "groupeActif": true,
-      "image": "assets/images/logo_dogo.png",
-    },
-    {
-      "nom": "Sneakers Chunky Sport Fashion 2026",
-      "categorie": "Chaussures",
-      "origine": "Guangzhou (Chine)",
-      "stock": 450,
-      "moq": 25,
-      "prixGros": "6 500 FCFA",
-      "prixPublic": "12 000 FCFA",
-      "groupeActif": true,
-      "image": "assets/images/Nike_Joyride-removebg-preview.png",
-    },
-    {
-      "nom": "Robes Abayas Brodées Dubaï Collection",
-      "categorie": "Mode",
-      "origine": "Dubaï (Émirats)",
-      "stock": 85,
-      "moq": 12,
-      "prixGros": "14 000 FCFA",
-      "prixPublic": "22 500 FCFA",
-      "groupeActif": false,
-      "image": "assets/images/soft-elegance-abaya-coat-nida-purple-noor-and-grace.webp",
-    },
-    {
-      "nom": "Lots Sacs à Main Cuir Verni Luxe",
-      "categorie": "Maroquinerie",
-      "origine": "Istanbul (Turquie)",
-      "stock": 210,
-      "moq": 20,
-      "prixGros": "9 200 FCFA",
-      "prixPublic": "16 000 FCFA",
-      "groupeActif": true,
-      "image": "assets/images/wallet.jpg",
-    },
-  ];
+  final List<Map<String, dynamic>> _articles = [];
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +94,49 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
 
           // Liste des articles
           Expanded(
-            child: ListView.builder(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(22),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.tertiary.withValues(alpha: 0.35),
+                            ),
+                            child: const Icon(
+                              Icons.inventory_2_outlined,
+                              size: 52,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          const Text(
+                            "Aucun article dans le catalogue",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16.5,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Ajoutez vos premiers articles en gros pour créer vos groupes d'approvisionnement.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textMuted,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
               itemCount: filtered.length,
               itemBuilder: (context, index) {

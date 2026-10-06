@@ -27,9 +27,12 @@ class MesFavorisScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: ValueListenableBuilder<Set<String>>(
-        valueListenable: FavorisService.instance.favorisNotifier,
-        builder: (context, favorisIds, _) {
+      body: AnimatedBuilder(
+        animation: Listenable.merge([
+          FavorisService.instance.favorisNotifier,
+          FavorisService.instance.campagnesNotifier,
+        ]),
+        builder: (context, _) {
           final groupesFavoris = FavorisService.instance.getGroupesFavoris();
 
           if (groupesFavoris.isEmpty) {

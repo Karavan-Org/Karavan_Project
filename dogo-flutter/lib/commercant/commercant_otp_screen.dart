@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
 import '../grossiste/grossiste_main_nav.dart';
 import '../courtier/courtier_main_nav.dart';
+import '../services/auth_service.dart';
+import '../services/api/api_exception.dart';
 import 'commercant_main_nav.dart';
 
 /// Écran de Vérification OTP du compte conforme au modèle Figma exact
@@ -24,7 +26,7 @@ class CommercantOtpScreen extends StatefulWidget {
 class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
   final List<TextEditingController> _controllers = List.generate(
     4,
-    (index) => TextEditingController(text: "${index + 1}"),
+    (_) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
 
@@ -63,28 +65,53 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
   }
 
   void _verifierOtp() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    final code = _controllers.map((c) => c.text.trim()).join();
 
-    Widget destination;
-    switch (widget.role) {
-      case RoleActeur.grossiste:
-        destination = const GrossisteMainNav();
-        break;
-      case RoleActeur.courtier:
-        destination = const CourtierMainNav();
-        break;
-      case RoleActeur.commercant:
-        destination = const CommercantMainNav();
-        break;
+    if (code.length < 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Veuillez saisir le code à 4 chiffres reçu par SMS")),
+      );
+      return;
     }
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => destination),
-      (route) => false,
-    );
+    setState(() => _isLoading = true);
+
+    try {
+      await AuthService.instance.verifierOtp(
+        telephone: widget.numeroTelephone,
+        code: code,
+      );
+      if (!mounted) return;
+
+      Widget destination;
+      switch (widget.role) {
+        case RoleActeur.grossiste:
+          destination = const GrossisteMainNav();
+          break;
+        case RoleActeur.courtier:
+          destination = const CourtierMainNav();
+          break;
+        case RoleActeur.commercant:
+          destination = const CommercantMainNav();
+          break;
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => destination),
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is ApiException ? e.messageComplet : 'Code invalide : ${e.toString()}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFFC0392B),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

@@ -13,32 +13,7 @@ class GestionConvoiScreen extends StatefulWidget {
 class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
   int _etapeActuelle = 3; // 1: Enlèvement, 2: Fret, 3: Douane, 4: Dépôt, 5: Retrait
 
-  final List<Map<String, dynamic>> _colis = [
-    {
-      "client": "Boutique Oumar S.",
-      "telephone": "+223 70 12 34 56",
-      "articles": "3 cartons Bazin Super Riche",
-      "poids": "45 kg",
-      "frais": "65 000 F",
-      "statut": "EN TRANSIT",
-    },
-    {
-      "client": "Fatoumata Couture",
-      "telephone": "+223 72 44 88 12",
-      "articles": "1 machine industrielle + fil",
-      "poids": "32 kg",
-      "frais": "48 000 F",
-      "statut": "EN TRANSIT",
-    },
-    {
-      "client": "Éts Diallo & Frères",
-      "telephone": "+223 76 99 00 11",
-      "articles": "6 cartons crème & beauté",
-      "poids": "60 kg",
-      "frais": "85 000 F",
-      "statut": "EN TRANSIT",
-    },
-  ];
+  final List<Map<String, dynamic>> _colis = [];
 
   void _validerEtapeSuivante() {
     if (_etapeActuelle < 5) {
@@ -170,7 +145,34 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
             ),
             const SizedBox(height: 10),
 
-            ListView.separated(
+            if (_colis.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFEFE8E0)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.inventory_2_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Aucun colis rattaché",
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF2C241E)),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Les colis des commerçants s'afficheront ici lors des réservations de fret.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _colis.length,

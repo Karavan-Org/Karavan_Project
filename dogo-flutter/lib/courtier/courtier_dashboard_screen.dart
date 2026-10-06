@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
 import 'gestion_convoi_screen.dart';
 import 'lancer_convoi_screen.dart';
 import 'portefeuille_courtier_screen.dart';
@@ -29,40 +30,45 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
         backgroundColor: AppTheme.surface,
         elevation: 0,
         centerTitle: false,
-        title: const Row(
-          children: [
-            CircleAvatar(
-              radius: 17,
-              backgroundColor: AppTheme.primary,
-              child: Icon(Icons.person, color: Colors.white, size: 20),
-            ),
-            SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        title: Builder(
+          builder: (context) {
+            final user = AuthService.instance.utilisateurCourant;
+            final nom = user?.nomComplet.isNotEmpty == true ? user!.nomComplet : "Courtier Partenaire";
+            final structure = user?.structure?.isNotEmpty == true ? user!.structure! : "Transit & Logistique SARL • Certifié";
+
+            return Row(
               children: [
-                Text(
-                  "Amadou Touré",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textDark),
+                const CircleAvatar(
+                  radius: 17,
+                  backgroundColor: AppTheme.primary,
+                  child: Icon(Icons.person, color: Colors.white, size: 20),
                 ),
-                Text(
-                  "Touré Transit & Logistique SARL • Certifié",
-                  style: TextStyle(fontSize: 11.5, color: AppTheme.success, fontWeight: FontWeight.w600),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nom,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textDark),
+                    ),
+                    Text(
+                      structure,
+                      style: const TextStyle(fontSize: 11.5, color: AppTheme.success, fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         ),
         actions: [
           IconButton(
-            icon: const Badge(
-              label: Text("3"),
-              child: Icon(Icons.notifications_none_rounded, color: AppTheme.textDark),
-            ),
+            icon: const Icon(Icons.notifications_none_rounded, color: AppTheme.textDark),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text("Notifications : 3 nouvelles commandes de groupage en attente de validation."),
-                  duration: Duration(seconds: 3),
+                  content: Text("Aucune nouvelle notification."),
+                  duration: Duration(seconds: 2),
                 ),
               );
             },
@@ -154,7 +160,7 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    "385 000 FCFA",
+                    "0 FCFA",
                     style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 12),
@@ -262,56 +268,26 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
             ),
 
             Container(
-              padding: const EdgeInsets.all(16),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: const Color(0xFFEFE8E0)),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Convoi Istanbul ➔ Bamako (Dabanani)",
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppTheme.success.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          "En transit",
-                          style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w700, fontSize: 11.5),
-                        ),
-                      ),
-                    ],
-                  ),
+                  Icon(Icons.local_shipping_outlined, size: 36, color: AppTheme.textMuted.withValues(alpha: 0.5)),
                   const SizedBox(height: 10),
-                  // Jauge d'avancement
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: const LinearProgressIndicator(
-                      value: 0.65,
-                      minHeight: 8,
-                      backgroundColor: Color(0xFFEFE8E0),
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.secondary),
-                    ),
+                  const Text(
+                    "Aucun convoi en cours",
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textDark),
                   ),
-                  const SizedBox(height: 10),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Colis déclarés : 19 / 40", style: TextStyle(fontSize: 11.5, color: AppTheme.textMuted)),
-                      Text(
-                        "Commissions : 85 000 FCFA",
-                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
-                      ),
-                    ],
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Créez ou prenez en charge un convoi pour démarrer le groupage.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
                   ),
                   const SizedBox(height: 14),
                   OutlinedButton.icon(

@@ -10,11 +10,11 @@ class LancerConvoiScreen extends StatefulWidget {
 }
 
 class _LancerConvoiScreenState extends State<LancerConvoiScreen> {
-  final _nomController = TextEditingController(text: "Convoi Express Istanbul ➔ Bamako (Dabanani)");
-  final _pointDepartController = TextEditingController(text: "Istanbul (Laleli - Entrepôt DoGo Transit)");
-  final _pointArriveeController = TextEditingController(text: "Bamako (Dépôt Dabanani - Grand Marché)");
-  final _capaciteController = TextEditingController(text: "40");
-  final _tarifKgController = TextEditingController(text: "4500");
+  final _nomController = TextEditingController();
+  final _pointDepartController = TextEditingController();
+  final _pointArriveeController = TextEditingController();
+  final _capaciteController = TextEditingController();
+  final _tarifKgController = TextEditingController();
 
   int _selectedDelai = 8; // 8 jours
 

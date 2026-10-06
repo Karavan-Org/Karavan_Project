@@ -1,96 +1,29 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/groupe_api_service.dart';
 import 'campagne_model.dart';
 
-/// Service centralisé de gestion des Favoris pour le Commerçant
-/// Utilise ValueNotifier pour une réactivité instantanée à travers tous les écrans.
+/// Service centralisé de gestion des Favoris et des Campagnes pour le Commerçant
+/// Sans données de test factices : alimenté par l'API Backend DoGo.
 class FavorisService {
   FavorisService._internal();
   static final FavorisService instance = FavorisService._internal();
 
-  // Catalogue central de démonstration basé sur les visuels officiels DoGo
-  final List<GroupeCampagneModel> toutesLesCampagnes = const [
-    GroupeCampagneModel(
-      id: "grp-nike-joyride",
-      titre: "Nike Joyride",
-      sousTitre: "Lot export Turquie • 20 paires assorties",
-      imagePath: "assets/images/Nike_Joyride.jpg",
-      prixGroupe: 18500,
-      prixPublic: 45000,
-      quantiteActuelle: 16,
-      quantiteObjectif: 20,
-      categorie: "Sneakers",
-      paysOrigine: "Istanbul, Turquie",
-      courtierNom: "Touré Transit & Logistique SARL",
-      grossisteNom: "Grossiste Cissé & Frères (Istanbul)",
-      tempsRestant: "3 jours restants",
-    ),
-    GroupeCampagneModel(
-      id: "grp-abaya-nida",
-      titre: "Abaya Douceur Nida Purple",
-      sousTitre: "Confection Dubaï • Lot de 15 pièces",
-      imagePath: "assets/images/soft-elegance-abaya-coat-nida-purple-noor-and-grace.webp",
-      prixGroupe: 22500,
-      prixPublic: 55000,
-      quantiteActuelle: 12,
-      quantiteObjectif: 15,
-      categorie: "Mode Féminine",
-      paysOrigine: "Dubaï, Émirats Arabes Unis",
-      courtierNom: "Touré Transit & Logistique SARL",
-      grossisteNom: "Grossiste Dubaï Fashion Ltd",
-      tempsRestant: "2 jours restants",
-    ),
-    GroupeCampagneModel(
-      id: "grp-sandales-rouges",
-      titre: "Sandales Talon Rouge Soirée",
-      sousTitre: "Lot de 12 paires assorties (36-41)",
-      imagePath: "assets/images/sandales-talon-rouge.jpg",
-      prixGroupe: 12000,
-      prixPublic: 28000,
-      quantiteActuelle: 9,
-      quantiteObjectif: 12,
-      categorie: "Chaussures",
-      paysOrigine: "Guangzhou, Chine",
-      courtierNom: "Diarra Logistique Express",
-      grossisteNom: "Grossiste Diallo Import Guangzhou",
-      tempsRestant: "4 jours restants",
-    ),
-    GroupeCampagneModel(
-      id: "grp-montre-homme-inox",
-      titre: "Montre Quartz Homme Acier Inox",
-      sousTitre: "Lot de 25 pièces • Cadran rond luxe",
-      imagePath: "assets/images/Montre-Homme-Quartz-Acier-Inoxydable-Cadran-Rond-Affichage-Analogique-Et-Num-rique-Boucle-Pliante-Simple-Cristal-Renforc-Nihaojewelry-France.webp",
-      prixGroupe: 7500,
-      prixPublic: 20000,
-      quantiteActuelle: 18,
-      quantiteObjectif: 25,
-      categorie: "Montres & Bijoux",
-      paysOrigine: "Yiwu, Chine",
-      courtierNom: "Touré Transit & Logistique SARL",
-      grossisteNom: "Grossiste Yiwu Commerce International",
-      tempsRestant: "5 jours restants",
-    ),
-    GroupeCampagneModel(
-      id: "grp-bottines-cuir",
-      titre: "Bottines en cuir noir de ville",
-      sousTitre: "Lot de 10 paires • Qualité premium",
-      imagePath: "assets/images/black-dress-boots-2-mob.jpg",
-      prixGroupe: 24000,
-      prixPublic: 58000,
-      quantiteActuelle: 7,
-      quantiteObjectif: 10,
-      categorie: "Chaussures",
-      paysOrigine: "Istanbul, Turquie",
-      courtierNom: "Touré Transit & Logistique SARL",
-      grossisteNom: "Grossiste Ozkan Leather Istanbul",
-      tempsRestant: "6 jours restants",
-    ),
-  ];
+  /// Catalogue dynamique alimenté par l'API Backend DoGo (initialement vide)
+  late final ValueNotifier<List<GroupeCampagneModel>> campagnesNotifier =
+      ValueNotifier<List<GroupeCampagneModel>>([]);
 
-  // Set des identifiants favoris avec un favori par défaut pour la démo
-  final ValueNotifier<Set<String>> favorisNotifier = ValueNotifier<Set<String>>({
-    "grp-nike-joyride",
-  });
+  List<GroupeCampagneModel> get toutesLesCampagnes => campagnesNotifier.value;
+
+  Future<void> actualiserDepuisBackend() async {
+    try {
+      final groupes = await GroupeApiService.instance.explorer();
+      campagnesNotifier.value = groupes;
+    } catch (_) {}
+  }
+
+  // Set des favoris utilisateur (initialement vide)
+  final ValueNotifier<Set<String>> favorisNotifier = ValueNotifier<Set<String>>({});
 
   bool estFavori(String id) {
     return favorisNotifier.value.contains(id);
@@ -139,15 +72,26 @@ class FavorisService {
   }
 
   void retirerFavoriParId(String id, BuildContext context) {
-    final groupe = toutesLesCampagnes.firstWhere(
+    final list = campagnesNotifier.value;
+    final groupe = list.firstWhere(
       (g) => g.id == id,
-      orElse: () => toutesLesCampagnes.first,
+      orElse: () => GroupeCampagneModel(
+        id: id,
+        titre: "Article",
+        sousTitre: "",
+        imagePath: "assets/images/logo_dogo.png",
+        prixGroupe: 0,
+        prixPublic: 0,
+        quantiteActuelle: 0,
+        quantiteObjectif: 0,
+        categorie: "",
+      ),
     );
     toggleFavori(groupe, context);
   }
 
   List<GroupeCampagneModel> getGroupesFavoris() {
-    return toutesLesCampagnes
+    return campagnesNotifier.value
         .where((g) => favorisNotifier.value.contains(g.id))
         .toList();
   }

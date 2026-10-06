@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
+import '../services/auth_service.dart';
+import '../services/api/api_exception.dart';
 import 'commercant_otp_screen.dart';
 
 /// Écran d'Inscription conforme au modèle Figma exact et aux specs backend (PIN + infos métier)
@@ -73,18 +75,44 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => CommercantOtpScreen(
-          numeroTelephone: phone,
-          role: widget.role,
+    try {
+      await AuthService.instance.inscrire(
+        typeActeur: widget.role.name.toUpperCase(),
+        telephone: phone,
+        nom: nom,
+        pin: pin,
+        nomBoutique: widget.role == RoleActeur.commercant ? _extraField1Controller.text.trim() : null,
+        quartierBamako: widget.role == RoleActeur.commercant ? _extraField2Controller.text.trim() : null,
+        numeroNif: widget.role == RoleActeur.grossiste ? _extraField1Controller.text.trim() : null,
+        nomSocieteImport: widget.role == RoleActeur.grossiste ? _extraField2Controller.text.trim() : null,
+        licenceTransit: widget.role == RoleActeur.courtier ? _extraField1Controller.text.trim() : null,
+        adresseDepot: widget.role == RoleActeur.courtier ? _extraField2Controller.text.trim() : null,
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CommercantOtpScreen(
+            numeroTelephone: phone,
+            role: widget.role,
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is ApiException ? e.messageComplet : 'Erreur d\'inscription : ${e.toString()}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFFC0392B),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

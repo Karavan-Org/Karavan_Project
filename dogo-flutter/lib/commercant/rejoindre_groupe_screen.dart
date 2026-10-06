@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/paiement_api_service.dart';
+import '../services/api/api_exception.dart';
 import 'reussite_paiement_screen.dart';
 
 /// Écran de confirmation de participation et paiement Mobile Money pour le Commerçant
 class RejoindreGroupeScreen extends StatefulWidget {
+  final dynamic groupeId;
+  final int? varianteId;
   final String titre;
   final int quantite;
   final String taille;
@@ -12,6 +16,8 @@ class RejoindreGroupeScreen extends StatefulWidget {
 
   const RejoindreGroupeScreen({
     super.key,
+    this.groupeId = 1,
+    this.varianteId = 1,
     this.titre = "Sneakers Nike Joyride (Export Turquie)",
     this.quantite = 5,
     this.taille = "42",
@@ -100,27 +106,43 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
       _enCoursDeTraitement = true;
     });
 
-    await Future.delayed(const Duration(milliseconds: 1400));
+    try {
+      // Appel API avec génération automatique de l'en-tête Idempotency-Key (RG-34)
+      await PaiementApiService.instance.initierPaiement(
+        participationId: widget.groupeId ?? 1,
+      );
 
-    if (!mounted) return;
-    setState(() => _enCoursDeTraitement = false);
+      if (!mounted) return;
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => ReussitePaiementScreen(
-          titreProduit: widget.titre,
-          paysOrigine: "Turquie",
-          prixUnitaire: widget.prixUnitaire,
-          quantite: widget.quantite,
-          montantTotal: _total,
-          moyenPaiement: _operateurSelectionne,
-          dateHeure: "12 sept. 2026 - 10:24",
-          imagePath: "assets/images/Nike_Joyride-removebg-preview.png",
-          piecesActuelles: 780,
-          piecesObjectif: 1000,
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ReussitePaiementScreen(
+            titreProduit: widget.titre,
+            paysOrigine: "Turquie",
+            prixUnitaire: widget.prixUnitaire,
+            quantite: widget.quantite,
+            montantTotal: _total,
+            moyenPaiement: _operateurSelectionne,
+            dateHeure: "Aujourd'hui - ${TimeOfDay.now().format(context)}",
+            imagePath: "assets/images/Nike_Joyride-removebg-preview.png",
+            piecesActuelles: 780,
+            piecesObjectif: 1000,
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is ApiException ? e.messageComplet : 'Erreur de paiement : ${e.toString()}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFFC0392B),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _enCoursDeTraitement = false);
+    }
   }
 
   @override

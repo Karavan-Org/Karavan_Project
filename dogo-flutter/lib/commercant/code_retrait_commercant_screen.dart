@@ -13,12 +13,12 @@ class CodeRetraitCommercantScreen extends StatelessWidget {
 
   const CodeRetraitCommercantScreen({
     super.key,
-    this.codeCommande = "CMD-2026-BKO-882",
+    this.codeCommande = "",
     this.codePin,
-    this.nomProduit = "Sneakers Nike Joyride (Lot de 10 paires)",
-    this.quantite = 10,
-    this.pointRetrait = "Magasin Dabanani, Porte 14 - Grand Marché Bamako",
-    this.courtierNom = "Touré Transit & Logistique SARL",
+    this.nomProduit = "Commande groupée",
+    this.quantite = 1,
+    this.pointRetrait = "Point de retrait DoGo Bamako",
+    this.courtierNom = "Service Transit DoGo",
   });
 
   @override

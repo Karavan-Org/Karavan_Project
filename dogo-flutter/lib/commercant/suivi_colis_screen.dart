@@ -36,9 +36,54 @@ class SuiviColisScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: ValueListenableBuilder<ColisGroupeModel>(
+      body: ValueListenableBuilder<ColisGroupeModel?>(
         valueListenable: SuiviColisService.instance.colisActifNotifier,
         builder: (context, colis, _) {
+          if (colis == null) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.local_shipping_outlined,
+                        size: 46,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Aucun colis en cours",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Rejoignez un groupe d'achat pour suivre l'acheminement de vos commandes en temps réel.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textMuted,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           final etapes = colis.etapesPrescrites;
           final totalPrescrit = colis.nombreEtapesPrescrites;
           final pct = colis.pourcentageEntier;

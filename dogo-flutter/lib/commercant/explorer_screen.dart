@@ -28,6 +28,12 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    FavorisService.instance.actualiserDepuisBackend();
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -46,9 +52,13 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
         foregroundColor: AppTheme.textPrimary,
         elevation: 0,
       ),
-      body: ValueListenableBuilder<Set<String>>(
-        valueListenable: FavorisService.instance.favorisNotifier,
-        builder: (context, favorisIds, _) {
+      body: AnimatedBuilder(
+        animation: Listenable.merge([
+          FavorisService.instance.favorisNotifier,
+          FavorisService.instance.campagnesNotifier,
+        ]),
+        builder: (context, _) {
+          final favorisIds = FavorisService.instance.favorisNotifier.value;
           final toutesCampagnes = FavorisService.instance.toutesLesCampagnes;
 
           final filtrees = toutesCampagnes.where((c) {
@@ -74,10 +84,13 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             return true;
           }).toList();
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          return RefreshIndicator(
+            onRefresh: () => FavorisService.instance.actualiserDepuisBackend(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Barre de recherche
                 Padding(
@@ -230,9 +243,10 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                   ),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
+    ),
     );
   }
 

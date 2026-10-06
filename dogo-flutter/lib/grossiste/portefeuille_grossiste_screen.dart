@@ -10,39 +10,10 @@ class PortefeuilleGrossisteScreen extends StatefulWidget {
 }
 
 class _PortefeuilleGrossisteScreenState extends State<PortefeuilleGrossisteScreen> {
-  final int _soldeDisponible = 4850000; // 4 850 000 FCFA (~7 400 €)
-  final int _soldeEnCoursSequestre = 2100000; // 2 100 000 FCFA
+  final int _soldeDisponible = 0;
+  final int _soldeEnCoursSequestre = 0;
 
-  final List<Map<String, dynamic>> _transactions = [
-    {
-      "titre": "Vente Lot #LOT-2026-BZN-04",
-      "detail": "Bazin Riche 50 pcs • Fonds sous séquestre sécurisés",
-      "montant": "+2 100 000 F",
-      "isEntree": true,
-      "date": "10 sept. 2026",
-    },
-    {
-      "titre": "Virement Bancaire SWIFT (USD)",
-      "detail": "Vers Bank of China (Compte #9902-WZ)",
-      "montant": "-3 500 000 F",
-      "isEntree": false,
-      "date": "02 sept. 2026",
-    },
-    {
-      "titre": "Vente Lot #LOT-2026-SNK-01",
-      "detail": "Sneakers Chunky 100 pcs • Paiement débloqué",
-      "montant": "+650 000 F",
-      "isEntree": true,
-      "date": "29 août 2026",
-    },
-    {
-      "titre": "Vente Lot #LOT-2026-ABY-08",
-      "detail": "Abayas Dubaï 40 pcs • Paiement débloqué",
-      "montant": "+560 000 F",
-      "isEntree": true,
-      "date": "20 août 2026",
-    },
-  ];
+  final List<Map<String, dynamic>> _transactions = [];
 
   void _demanderVirement() {
     showDialog(
@@ -195,7 +166,34 @@ class _PortefeuilleGrossisteScreenState extends State<PortefeuilleGrossisteScree
             ),
             const SizedBox(height: 12),
 
-            ListView.separated(
+            if (_transactions.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFEFE9E0)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.receipt_long_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Aucun règlement récent",
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF2C241E)),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Vos encaissements et déblocages séquestres s'afficheront ici.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _transactions.length,

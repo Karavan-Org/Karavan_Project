@@ -11,10 +11,10 @@ class CreerGroupeGrossisteScreen extends StatefulWidget {
 
 class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titreController = TextEditingController(text: "Groupe Import Bazin Super Riche 10m");
-  final _objectifPiecesController = TextEditingController(text: "50");
-  final _prixUnitaireGroupeController = TextEditingController(text: "42000");
-  final _prixPublicController = TextEditingController(text: "65000");
+  final _titreController = TextEditingController();
+  final _objectifPiecesController = TextEditingController();
+  final _prixUnitaireGroupeController = TextEditingController();
+  final _prixPublicController = TextEditingController();
   final _dureeJoursController = TextEditingController(text: "7");
 
   String _selectedProduit = "Bazin Riche Getzner Authentique";

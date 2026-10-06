@@ -14,44 +14,7 @@ class MesGroupesGrossisteScreen extends StatefulWidget {
 class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
   String _filtre = "Tous";
 
-  final List<Map<String, dynamic>> _groupes = [
-    {
-      "id": "GRP-BZN-004",
-      "titre": "Bazin Riche Getzner Authentique 10m",
-      "origine": "Autriche / Dubai",
-      "piecesReservees": 50,
-      "objectifPieces": 50,
-      "prixGros": "42 000 FCFA",
-      "commercants": 18,
-      "statut": "Objectif atteint (100%)",
-      "statutColor": AppTheme.success,
-      "tempsRestant": "Clôturé",
-    },
-    {
-      "id": "GRP-SNK-012",
-      "titre": "Sneakers Chunky Sport Fashion 2026",
-      "origine": "Guangzhou (Chine)",
-      "piecesReservees": 85,
-      "objectifPieces": 100,
-      "prixGros": "6 500 FCFA",
-      "commercants": 14,
-      "statut": "En cours (85%)",
-      "statutColor": AppTheme.primary,
-      "tempsRestant": "3 jours restants",
-    },
-    {
-      "id": "GRP-ABY-001",
-      "titre": "Robes Abayas Brodées Dubaï Collection",
-      "origine": "Dubaï (Émirats)",
-      "piecesReservees": 18,
-      "objectifPieces": 30,
-      "prixGros": "14 000 FCFA",
-      "commercants": 6,
-      "statut": "En cours (60%)",
-      "statutColor": AppTheme.secondary,
-      "tempsRestant": "5 jours restants",
-    },
-  ];
+  final List<Map<String, dynamic>> _groupes = [];
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +64,46 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
 
           // Liste des groupes
           Expanded(
-            child: ListView.separated(
+            child: _groupes.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.groups_outlined,
+                              size: 40,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            "Aucun groupe d'achat",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: Color(0xFF2C241E),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            "Créez un premier groupe pour proposer vos lots aux commerçants de Bamako.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
               itemCount: _groupes.length,
               separatorBuilder: (_, __) => const SizedBox(height: 14),

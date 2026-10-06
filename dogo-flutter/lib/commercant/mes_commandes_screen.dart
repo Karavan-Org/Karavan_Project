@@ -18,30 +18,7 @@ class MesCommandesScreen extends StatefulWidget {
 class _MesCommandesScreenState extends State<MesCommandesScreen> {
   int _selectedOrderIndex = 0;
 
-  final List<Map<String, dynamic>> _commandes = [
-    {
-      "titre": "Sneakers Premium",
-      "details": "25 pièces • 212 500 FCFA",
-      "numero": "Commande #AG2458",
-      "image": "assets/images/Nike_Joyride-removebg-preview.png",
-      "statut": "Votre colis est en transit",
-      "arrivee": "12 octobre 2026",
-      "etapeActive": 2, // 0 = Achat, 1 = Transitaire, 2 = En transit, 3 = Bamako, 4 = Retrait
-      "origine": "Chine",
-      "destination": "Bamako",
-    },
-    {
-      "titre": "Abaya Elegante",
-      "details": "25 pièces • 212 500 FCFA",
-      "numero": "Commande #AB3458",
-      "image": "assets/images/soft-elegance-abaya-coat-nida-purple-noor-and-grace.webp",
-      "statut": "Votre colis est chez le transitaire",
-      "arrivee": "18 octobre 2026",
-      "etapeActive": 1,
-      "origine": "Dubaï",
-      "destination": "Bamako",
-    },
-  ];
+  final List<Map<String, dynamic>> _commandes = [];
 
   void _annulerCommande(int index) {
     final cmd = _commandes[index];
@@ -281,10 +258,46 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                 ],
               ),
             )
-          : const Center(
-              child: Text(
-                "Aucune commande active pour le moment.",
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+          : Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 46,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Aucune commande active",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Rejoignez un groupe d'achat pour passer votre première commande groupée.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textMuted,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/logistique_api_service.dart';
+import '../services/api/api_exception.dart';
 
 /// Écran de scan du QR Code ou saisie du PIN de retrait par le Courtier (Frame 15)
 class ScannerRetraitScreen extends StatefulWidget {
@@ -12,6 +14,7 @@ class ScannerRetraitScreen extends StatefulWidget {
 class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
   final _pinController = TextEditingController();
   bool _valide = false;
+  bool _enCours = false;
 
   @override
   void dispose() {
@@ -19,17 +22,35 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
     super.dispose();
   }
 
-  void _validerRetrait() {
-    if (_pinController.text.length < 4) {
+  void _validerRetrait() async {
+    final pin = _pinController.text.trim();
+    if (pin.length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Veuillez saisir le code PIN de retrait à 4 chiffres")),
       );
       return;
     }
 
-    setState(() {
-      _valide = true;
-    });
+    setState(() => _enCours = true);
+
+    try {
+      await LogistiqueApiService.instance.validerRetrait(
+        pin: pin,
+        commandeId: 1,
+      );
+      if (!mounted) return;
+      setState(() {
+        _valide = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is ApiException ? e.messageComplet : 'Code invalide ou expiré';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: const Color(0xFFC0392B)),
+      );
+    } finally {
+      if (mounted) setState(() => _enCours = false);
+    }
   }
 
   @override
@@ -112,9 +133,17 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
               const SizedBox(height: 20),
 
               ElevatedButton.icon(
-                onPressed: _validerRetrait,
-                icon: const Icon(Icons.check_circle_rounded),
-                label: const Text("Valider la remise du colis"),
+                onPressed: _enCours ? null : _validerRetrait,
+                icon: _enCours
+                    ? const SizedBox.shrink()
+                    : const Icon(Icons.check_circle_rounded),
+                label: _enCours
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text("Valider la remise du colis"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   minimumSize: const Size(double.infinity, 54),
@@ -144,7 +173,7 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                     const Text("Retrait Confirmé !", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 6),
                     const Text(
-                      "Colis remis à Boutique Oumar S. (3 cartons Bazin)",
+                      "Le colis a été remis au commerçant. Les fonds séquestrés ont été libérés avec succès.",
                       textAlign: TextAlign.center,
                       style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
                     ),
@@ -158,8 +187,8 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Commission débloquée :", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                          Text("+24 000 FCFA", style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w800, fontSize: 16)),
+                          Text("Statut du paiement :", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                          Text("Fonds libérés", style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w800, fontSize: 15)),
                         ],
                       ),
                     ),

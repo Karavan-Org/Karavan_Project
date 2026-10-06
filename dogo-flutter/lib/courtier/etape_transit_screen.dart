@@ -10,24 +10,7 @@ class EtapeTransitScreen extends StatefulWidget {
 }
 
 class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
-  final List<Map<String, dynamic>> _convois = [
-    {
-      "code": "CV-IST-BKO-01",
-      "trajet": "Istanbul ➔ Bamako (Aérien)",
-      "mode": "Fret Express",
-      "colisCount": 18,
-      "poidsTotal": "1 450 kg",
-      "etapeActuelle": 3,
-    },
-    {
-      "code": "CV-CAN-BKO-04",
-      "trajet": "Guangzhou ➔ Bamako (Maritime)",
-      "mode": "Conteneur 40ft",
-      "colisCount": 42,
-      "poidsTotal": "8 200 kg",
-      "etapeActuelle": 2,
-    },
-  ];
+  final List<Map<String, dynamic>> _convois = [];
 
   final List<String> _etapes = [
     "Enlèvement entrepôt usine",
@@ -90,9 +73,36 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text("Sélectionner le convoi à pointer :", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-          const SizedBox(height: 12),
-          ...List.generate(_convois.length, (index) {
+          if (_convois.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.alt_route_rounded, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Aucun convoi actif",
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF2C241E)),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Les convois en cours d'acheminement apparaîtront ici pour le pointage des étapes.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            const Text("Sélectionner le convoi à pointer :", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+            const SizedBox(height: 12),
+            ...List.generate(_convois.length, (index) {
             final c = _convois[index];
             final int step = c["etapeActuelle"] as int;
             final isCompleted = step >= _etapes.length;
@@ -198,6 +208,7 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
               ),
             );
           }),
+        ],
         ],
       ),
     );

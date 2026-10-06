@@ -5,48 +5,7 @@ import '../theme/app_theme.dart';
 class HistoriqueGrossisteScreen extends StatelessWidget {
   const HistoriqueGrossisteScreen({super.key});
 
-  final List<Map<String, dynamic>> _historique = const [
-    {
-      "lot": "LOT-2026-BZN-04",
-      "article": "Bazin Super Riche 10m Getzner",
-      "destinataire": "Transitaire Touré Transit (Bamako)",
-      "date": "10 sept. 2026",
-      "pieces": "50 pièces",
-      "montant": "+2 100 000 FCFA",
-      "statut": "En transit maritime",
-      "statutColor": AppTheme.primary,
-    },
-    {
-      "lot": "LOT-2026-SNK-01",
-      "article": "Sneakers Chunky Sport Fashion",
-      "destinataire": "Dogo Cargo Express (Aérien)",
-      "date": "04 sept. 2026",
-      "pieces": "100 pièces",
-      "montant": "+650 000 FCFA",
-      "statut": "Livré & Soldé",
-      "statutColor": AppTheme.success,
-    },
-    {
-      "lot": "LOT-2026-ABY-08",
-      "article": "Robes Abayas Brodées Dubaï",
-      "destinataire": "Emirates Cargo Mali",
-      "date": "28 août 2026",
-      "pieces": "40 pièces",
-      "montant": "+560 000 FCFA",
-      "statut": "Livré & Soldé",
-      "statutColor": AppTheme.success,
-    },
-    {
-      "lot": "LOT-2026-BAG-02",
-      "article": "Sacs à Main Cuir Verni Luxe",
-      "destinataire": "Istanbul Express Fret",
-      "date": "15 août 2026",
-      "pieces": "60 pièces",
-      "montant": "+552 000 FCFA",
-      "statut": "Livré & Soldé",
-      "statutColor": AppTheme.success,
-    },
-  ];
+  final List<Map<String, dynamic>> _historique = const [];
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +23,46 @@ class HistoriqueGrossisteScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
         ),
       ),
-      body: ListView.separated(
+      body: _historique.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.history_rounded,
+                        size: 40,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Aucune vente dans l'historique",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        color: Color(0xFF2C241E),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      "Vos lots vendus et livrés aux transitaires s'afficheront ici.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
         itemCount: _historique.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),

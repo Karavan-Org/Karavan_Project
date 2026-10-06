@@ -35,14 +35,14 @@ class PortefeuilleCourtierScreen extends StatelessWidget {
                 children: [
                   const Text("Commissions prêtes au retrait", style: TextStyle(color: Color(0xFFD4C5B9), fontSize: 12.5)),
                   const SizedBox(height: 8),
-                  const Text("385 000 FCFA", style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900)),
+                  const Text("0 FCFA", style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Demande de virement Mobile Money initiée avec clé d'idempotence"),
-                          backgroundColor: AppTheme.success,
+                          content: Text("Solde insuffisant pour initier un virement."),
+                          backgroundColor: Color(0xFFC0392B),
                         ),
                       );
                     },
@@ -64,9 +64,9 @@ class PortefeuilleCourtierScreen extends StatelessWidget {
             const Text("Comptes de Versement Associés", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
             const SizedBox(height: 10),
 
-            _buildMoyenCard("Orange Money", "+223 76 45 88 12", true, Icons.phone_android_rounded),
+            _buildMoyenCard("Orange Money", "Compte Principal (Par défaut)", true, Icons.phone_android_rounded),
             const SizedBox(height: 10),
-            _buildMoyenCard("Moov Money", "+223 60 11 22 33", false, Icons.phone_android_rounded),
+            _buildMoyenCard("Moov Money", "Compte Secondaire", false, Icons.phone_android_rounded),
 
             const SizedBox(height: 24),
 
@@ -89,10 +89,31 @@ class PortefeuilleCourtierScreen extends StatelessWidget {
               ],
             ),
 
-            _buildMouvementItem("Commission • Boutique Oumar", "Colis POL-0931 • Istanbul", "+45 000 F", isCredited: true),
-            _buildMouvementItem("Retrait vers Orange Money", "Versement direct sur +223 76 45...", "-250 000 F", isCredited: false),
-            _buildMouvementItem("Commission • Bamba Fashion", "Colis POL-0720 • Istanbul", "+35 000 F", isCredited: true),
-            _buildMouvementItem("Commission • Fatoumata Couture", "Colis POL-0610 • Istanbul", "+65 000 F", isCredited: true),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.receipt_long_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Aucune commission pour le moment",
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textDark),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Vos commissions de transit apparaîtront ici dès l'arrivée des premiers convois.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                  ),
+                ],
+              ),
+            ),
 
             const SizedBox(height: 30),
           ],
@@ -134,51 +155,6 @@ class PortefeuilleCourtierScreen extends StatelessWidget {
               ),
               child: const Text("Par défaut", style: TextStyle(color: AppTheme.success, fontSize: 11.5, fontWeight: FontWeight.bold)),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMouvementItem(String titre, String sousTitre, String montant, {required bool isCredited}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEFE8E0)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: isCredited
-                ? AppTheme.success.withValues(alpha: 0.12)
-                : const Color(0xFFFFEBEE),
-            child: Icon(
-              isCredited ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-              color: isCredited ? AppTheme.success : Colors.redAccent,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(titre, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                Text(sousTitre, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11.5)),
-              ],
-            ),
-          ),
-          Text(
-            montant,
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-              color: isCredited ? AppTheme.success : AppTheme.textDark,
-            ),
-          ),
         ],
       ),
     );

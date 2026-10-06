@@ -12,53 +12,7 @@ class NotificationsCommercantScreen extends StatefulWidget {
 class _NotificationsCommercantScreenState extends State<NotificationsCommercantScreen> {
   String _selectedFiltre = "Toutes";
 
-  final List<Map<String, dynamic>> _notifications = [
-    {
-      "categorie": "Groupes",
-      "titre": "Groupe validé",
-      "message": "Sneakers Premium est validé",
-      "date": "12 sept. 2026 - 10:34",
-      "icon": Icons.check_circle_rounded,
-      "color": AppTheme.success,
-      "lu": false,
-    },
-    {
-      "categorie": "Commandes",
-      "titre": "Paiement confirmé",
-      "message": "Votre paiement a été reçu",
-      "date": "10 sept. 2026 - 09:48",
-      "icon": Icons.verified_rounded,
-      "color": AppTheme.success,
-      "lu": false,
-    },
-    {
-      "categorie": "Commandes",
-      "titre": "Colis chez le transitaire",
-      "message": "Votre marchandise est en transit",
-      "date": "08 sept. 2026 - 14:32",
-      "icon": Icons.local_shipping_rounded,
-      "color": const Color(0xFFF57C00),
-      "lu": false,
-    },
-    {
-      "categorie": "Groupes",
-      "titre": "Rappel de délai",
-      "message": "Le groupe Sneakers Premium se termine bientôt",
-      "date": "12 sept. 2026",
-      "icon": Icons.hourglass_top_rounded,
-      "color": const Color(0xFFF57C00),
-      "lu": true,
-    },
-    {
-      "categorie": "Commandes",
-      "titre": "Remboursement effectué",
-      "message": "212 500 FCFA versé",
-      "date": "05 sept. 2026",
-      "icon": Icons.account_balance_wallet_rounded,
-      "color": AppTheme.success,
-      "lu": true,
-    },
-  ];
+  final List<Map<String, dynamic>> _notifications = [];
 
   @override
   Widget build(BuildContext context) {
@@ -109,11 +63,11 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Row(
               children: [
-                _buildFilterChip("Toutes", "Toutes (8)"),
+                _buildFilterChip("Toutes", "Toutes (${_notifications.length})"),
                 const SizedBox(width: 8),
-                _buildFilterChip("Groupes", "Groupes (3)"),
+                _buildFilterChip("Groupes", "Groupes (${_notifications.where((n) => n["categorie"] == "Groupes").length})"),
                 const SizedBox(width: 8),
-                _buildFilterChip("Commandes", "Commandes (5)"),
+                _buildFilterChip("Commandes", "Commandes (${_notifications.where((n) => n["categorie"] == "Commandes").length})"),
               ],
             ),
           ),
@@ -122,7 +76,46 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
 
           // Liste des notifications
           Expanded(
-            child: ListView.separated(
+            child: list.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.notifications_none_rounded,
+                              size: 40,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            "Aucune notification",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: Color(0xFF2C241E),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            "Vous recevrez des alertes en temps réel sur l'avancement de vos groupes et colis.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
               itemCount: list.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),

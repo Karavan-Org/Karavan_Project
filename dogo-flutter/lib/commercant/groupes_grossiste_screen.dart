@@ -37,6 +37,12 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    FavorisService.instance.actualiserDepuisBackend();
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -76,9 +82,13 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
           ),
         ],
       ),
-      body: ValueListenableBuilder<Set<String>>(
-        valueListenable: FavorisService.instance.favorisNotifier,
-        builder: (context, favorisIds, _) {
+      body: AnimatedBuilder(
+        animation: Listenable.merge([
+          FavorisService.instance.favorisNotifier,
+          FavorisService.instance.campagnesNotifier,
+        ]),
+        builder: (context, _) {
+          final favorisIds = FavorisService.instance.favorisNotifier.value;
           final tousGroupes = FavorisService.instance.toutesLesCampagnes;
 
           final groupesFiltres = tousGroupes.where((g) {

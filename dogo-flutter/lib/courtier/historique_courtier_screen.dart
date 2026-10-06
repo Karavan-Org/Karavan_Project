@@ -5,35 +5,7 @@ import '../theme/app_theme.dart';
 class HistoriqueCourtierScreen extends StatelessWidget {
   const HistoriqueCourtierScreen({super.key});
 
-  final List<Map<String, dynamic>> _historique = const [
-    {
-      "convoi": "Convoi #CV-IST-BKO-01",
-      "trajet": "Istanbul ➔ Bamako (Dabanani)",
-      "date": "10 sept. 2026",
-      "colis": "19 colis • 1 450 kg",
-      "commission": "+385 000 FCFA",
-      "statut": "Livré & Soldé",
-      "statutColor": AppTheme.success,
-    },
-    {
-      "convoi": "Convoi #CV-CAN-BKO-99",
-      "trajet": "Guangzhou ➔ Bamako (Halles)",
-      "date": "22 août 2026",
-      "colis": "38 colis • 6 100 kg",
-      "commission": "+620 000 FCFA",
-      "statut": "Livré & Soldé",
-      "statutColor": AppTheme.success,
-    },
-    {
-      "convoi": "Convoi #CV-DXB-BKO-08",
-      "trajet": "Dubaï ➔ Bamako (Aérien Express)",
-      "date": "05 août 2026",
-      "colis": "14 colis • 890 kg",
-      "commission": "+290 000 FCFA",
-      "statut": "Livré & Soldé",
-      "statutColor": AppTheme.success,
-    },
-  ];
+  final List<Map<String, dynamic>> _historique = const [];
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +23,46 @@ class HistoriqueCourtierScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
         ),
       ),
-      body: ListView.separated(
+      body: _historique.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.history_rounded,
+                        size: 40,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Aucun convoi dans l'historique",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        color: Color(0xFF2C241E),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      "Les convois acheminés et clôturés apparaîtront ici.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
         itemCount: _historique.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),

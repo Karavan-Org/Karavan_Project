@@ -10,39 +10,10 @@ class PortefeuilleCommercantScreen extends StatefulWidget {
 }
 
 class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScreen> {
-  int _soldeDisponible = 385000;
-  final int _soldeSequestre = 110000;
+  int _soldeDisponible = 0;
+  final int _soldeSequestre = 0;
 
-  final List<Map<String, dynamic>> _mouvements = [
-    {
-      "titre": "Fret Convoi #TR-BKO-88",
-      "description": "Amadou Touré • 3 cartons Bazin - Bloqué sous séquestre",
-      "montant": "-45 000 F",
-      "isCredit": false,
-      "date": "11 sept. 2026",
-    },
-    {
-      "titre": "Recharge Portefeuille",
-      "description": "Orange Money (+223 76..) • Réf #OM-992",
-      "montant": "+300 000 F",
-      "isCredit": true,
-      "date": "10 sept. 2026",
-    },
-    {
-      "titre": "Sneakers Runner Pro (10 paires)",
-      "description": "Lot Grand Dépôt Mandé Dabanani • Paiement libéré",
-      "montant": "-65 000 F",
-      "isCredit": false,
-      "date": "08 sept. 2026",
-    },
-    {
-      "titre": "Remboursement ajustement poids",
-      "description": "Trop-perçu pesée convoi #TR-BKO-84",
-      "montant": "+15 000 F",
-      "isCredit": true,
-      "date": "05 sept. 2026",
-    },
-  ];
+  final List<Map<String, dynamic>> _mouvements = [];
 
   void _showRechargeModal() {
     final montantController = TextEditingController(text: "50000");
@@ -303,9 +274,9 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
             const SizedBox(height: 12),
             Row(
               children: [
-                _buildQuickMoneyCard("Orange Money", "+223 76 12 34 56", const Color(0xFFFF7900), "OM"),
+                _buildQuickMoneyCard("Orange Money", "Compte Mobile", const Color(0xFFFF7900), "OM"),
                 const SizedBox(width: 12),
-                _buildQuickMoneyCard("Moov Africa", "65 12 34 56", const Color(0xFF005DAA), "MM"),
+                _buildQuickMoneyCard("Moov Africa", "Compte Mobile", const Color(0xFF005DAA), "MM"),
               ],
             ),
 
@@ -338,8 +309,35 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
             ),
             const SizedBox(height: 8),
 
-            // Liste des mouvements
-            ListView.separated(
+            // Liste des mouvements ou état vide
+            if (_mouvements.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.receipt_long_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Aucun mouvement récent",
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textPrimary),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Vos recharges et paiements sécurisés s'afficheront ici.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _mouvements.length,

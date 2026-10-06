@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'campagne_model.dart';
+import '../services/auth_service.dart';
 import 'favoris_service.dart';
 import 'mes_favoris_screen.dart';
 import 'groupe_selection_service.dart';
@@ -35,6 +36,12 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    FavorisService.instance.actualiserDepuisBackend();
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -45,9 +52,13 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: ValueListenableBuilder<Set<String>>(
-          valueListenable: FavorisService.instance.favorisNotifier,
-          builder: (context, favorisIds, _) {
+        child: AnimatedBuilder(
+          animation: Listenable.merge([
+            FavorisService.instance.favorisNotifier,
+            FavorisService.instance.campagnesNotifier,
+          ]),
+          builder: (context, _) {
+            final favorisIds = FavorisService.instance.favorisNotifier.value;
             final toutesCampagnes = FavorisService.instance.toutesLesCampagnes;
 
             // Filtrage par catégorie, courtier, favoris et recherche
@@ -73,57 +84,85 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
               return true;
             }).toList();
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            return RefreshIndicator(
+              onRefresh: () => FavorisService.instance.actualiserDepuisBackend(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // 1. En-tête personnalisé Commerçant avec bouton Favoris & Notifications
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 22,
-                          backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
-                          child: const Text(
-                            "OD",
-                            style: TextStyle(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Bonjour Oumar 👋",
-                                style: TextStyle(
-                                  fontSize: 16,
+                        Builder(
+                          builder: (context) {
+                            final user = AuthService.instance.utilisateurCourant;
+                            final String initiales = (user?.nomComplet.isNotEmpty ?? false)
+                                ? user!.nomComplet
+                                    .split(' ')
+                                    .take(2)
+                                    .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
+                                    .join()
+                                : "DG";
+
+                            return CircleAvatar(
+                              radius: 22,
+                              backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+                              child: Text(
+                                initiales,
+                                style: const TextStyle(
+                                  color: AppTheme.primary,
                                   fontWeight: FontWeight.w800,
-                                  color: AppTheme.textPrimary,
+                                  fontSize: 14,
                                 ),
                               ),
-                              SizedBox(height: 2),
-                              Row(
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Builder(
+                            builder: (context) {
+                              final user = AuthService.instance.utilisateurCourant;
+                              final String prenom = (user?.nomComplet.isNotEmpty ?? false)
+                                  ? user!.nomComplet.split(' ').first
+                                  : "Commerçant";
+                              final String quartier = (user?.structure?.isNotEmpty ?? false)
+                                  ? user!.structure!
+                                  : "Grand Marché, Bamako";
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(Icons.location_on, size: 13, color: AppTheme.secondary),
-                                  SizedBox(width: 4),
                                   Text(
-                                    "Grand Marché, Bamako",
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      color: AppTheme.textMuted,
-                                      fontWeight: FontWeight.w600,
+                                    "Bonjour $prenom 👋",
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppTheme.textPrimary,
                                     ),
                                   ),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.location_on, size: 13, color: AppTheme.secondary),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        quartier,
+                                        style: const TextStyle(
+                                          fontSize: 11.5,
+                                          color: AppTheme.textMuted,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
-                              ),
-                            ],
+                              );
+                            },
                           ),
                         ),
 
@@ -600,9 +639,10 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                   ],
                 ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
+      ),
       ),
     );
   }

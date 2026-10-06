@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
 import '../grossiste/grossiste_main_nav.dart';
 import '../courtier/courtier_main_nav.dart';
+import '../services/auth_service.dart';
+import '../services/api/api_exception.dart';
 import 'commercant_main_nav.dart';
 import 'commercant_inscription_screen.dart';
 
@@ -52,26 +54,40 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    Widget destination;
-    switch (widget.role) {
-      case RoleActeur.grossiste:
-        destination = const GrossisteMainNav();
-        break;
-      case RoleActeur.courtier:
-        destination = const CourtierMainNav();
-        break;
-      case RoleActeur.commercant:
-        destination = const CommercantMainNav();
-        break;
+    try {
+      await AuthService.instance.connecter(telephone: phone, pin: pin);
+      if (!mounted) return;
+
+      Widget destination;
+      switch (widget.role) {
+        case RoleActeur.grossiste:
+          destination = const GrossisteMainNav();
+          break;
+        case RoleActeur.courtier:
+          destination = const CourtierMainNav();
+          break;
+        case RoleActeur.commercant:
+          destination = const CommercantMainNav();
+          break;
+      }
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => destination),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is ApiException ? e.messageComplet : 'Erreur de connexion : ${e.toString()}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFFC0392B),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => destination),
-    );
   }
 
   @override

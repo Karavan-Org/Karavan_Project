@@ -144,27 +144,13 @@ class SuiviColisService {
     ),
   ];
 
-  final ValueNotifier<ColisGroupeModel> colisActifNotifier =
-      ValueNotifier<ColisGroupeModel>(
-    const ColisGroupeModel(
-      idCommande: "CMD-2026-BKO-882",
-      idGroupe: "GRP-TURK-JOYRIDE-20",
-      nomProduit: "Sneakers Nike Joyride (Lot de 10 paires)",
-      imagePath: "assets/images/Nike_Joyride.jpg",
-      quantite: 10,
-      pointRetrait: "Magasin Dabanani Porte 14, Grand Marché Bamako",
-      courtierNom: "Touré Transit & Logistique SARL",
-      grossisteNom: "Bosphore Export Wholesale (Istanbul)",
-      etapeActuelle: 3, // 3/5 = 60%
-      derniereMiseAJourAdmin:
-          "Convoi aérien en vol vers Bamako.",
-      etapesPrescrites: etapesPrescritesStandard,
-    ),
-  );
+  final ValueNotifier<ColisGroupeModel?> colisActifNotifier =
+      ValueNotifier<ColisGroupeModel?>(null);
 
   /// Fait avancer la jauge sur le nombre d'étapes prescrites dédiées
   void avancerEtapeSuivante(BuildContext context) {
     final actuel = colisActifNotifier.value;
+    if (actuel == null) return;
     final total = actuel.nombreEtapesPrescrites;
 
     int nextEtape = actuel.etapeActuelle + 1;

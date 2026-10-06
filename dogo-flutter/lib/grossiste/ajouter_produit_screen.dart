@@ -11,23 +11,15 @@ class AjouterProduitScreen extends StatefulWidget {
 
 class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nomController = TextEditingController(text: "Sneakers Nike Joyride");
-  final _prixController = TextEditingController(text: "12500");
-  final _descController = TextEditingController(
-    text: "Chaussures de sport respirantes, semelle amortissante haute résistance.",
-  );
+  final _nomController = TextEditingController();
+  final _prixController = TextEditingController();
+  final _descController = TextEditingController();
 
   String _categorie = "Chaussures";
   String _selectedImage = "assets/images/Nike_Joyride-removebg-preview.png";
   String _photoSourceLabel = "Modèle sélectionné";
 
-  final List<Map<String, dynamic>> _variantes = [
-    {"taille": "40", "couleur": "Noir / Blanc", "stock": 150},
-    {"taille": "41", "couleur": "Noir / Blanc", "stock": 200},
-    {"taille": "42", "couleur": "Noir / Blanc", "stock": 250},
-    {"taille": "43", "couleur": "Noir / Blanc", "stock": 180},
-    {"taille": "44", "couleur": "Gris / Bleu", "stock": 100},
-  ];
+  final List<Map<String, dynamic>> _variantes = [];
 
   final List<String> _photosDisponibles = [
     "assets/images/Nike_Joyride-removebg-preview.png",
