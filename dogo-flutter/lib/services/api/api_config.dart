@@ -4,8 +4,24 @@ import 'package:flutter/foundation.dart';
 class ApiConfig {
   ApiConfig._();
 
-  /// URL de base configurable. Détection automatique selon la plateforme.
+  /// Paramètres passés au démarrage (ex: flutter run --dart-define=ip=10.13.11.11)
+  static const String _ipParam = String.fromEnvironment('ip', defaultValue: '');
+  static const String _portParam = String.fromEnvironment('port', defaultValue: '8080');
+
+  /// URL de base configurable.
+  /// Priorité :
+  /// 1. Paramètre --dart-define=ip=... (ex: --dart-define=ip=10.13.11.11)
+  /// 2. Détection automatique selon la plateforme (Web: localhost, Android: 10.0.2.2, iOS: localhost)
   static String get baseUrl {
+    if (_ipParam.isNotEmpty) {
+      final ip = _ipParam.trim();
+      final scheme = (ip.startsWith('http://') || ip.startsWith('https://')) ? '' : 'http://';
+      final sansScheme = ip.replaceFirst(RegExp(r'^https?://'), '');
+      final portSuffix = sansScheme.contains(':') ? '' : ':$_portParam';
+      final completeUrl = '$scheme$ip$portSuffix';
+      return completeUrl.endsWith('/') ? completeUrl.substring(0, completeUrl.length - 1) : completeUrl;
+    }
+
     if (kIsWeb) {
       return 'http://localhost:8080';
     }
@@ -44,4 +60,18 @@ class ApiConfig {
   static String codeRetrait(dynamic commandeId) => '/api/commandes/$commandeId/code-retrait';
   static const String validerRetrait = '/api/retraits/valider';
   static const String pointsRetrait = '/api/points-retrait';
+
+  // --- Endpoints Catalogue Grossiste & Upload Photos ---
+  static const String catalogueProduits = '/api/catalogue/produits';
+  static const String catalogueCategories = '/api/catalogue/categories';
+  static const String catalogueUploadPhoto = '/api/catalogue/upload-photo';
+
+  /// Résout une URL d'image (ex: /api/public/images/produits/xyz.jpg -> http://localhost:8080/api/public/images/produits/xyz.jpg)
+  static String resolutionImageUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    final base = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    final chemin = url.startsWith('/') ? url : '/$url';
+    return '$base$chemin';
+  }
 }

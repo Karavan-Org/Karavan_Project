@@ -172,6 +172,58 @@ class ApiClient {
     }
   }
 
+  // --- REQUÊTE MULTIPART (Upload photo / fichier) ---
+  Future<dynamic> postMultipart(
+    String endpoint, {
+    required List<int> fileBytes,
+    required String filename,
+    required String fieldName,
+    Map<String, String>? fields,
+    Map<String, String>? headers,
+  }) async {
+    try {
+      final uri = _construireUri(endpoint);
+      final request = http.MultipartRequest('POST', uri);
+
+      if (_jeton != null && _jeton!.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $_jeton';
+      }
+      if (headers != null) {
+        request.headers.addAll(headers);
+      }
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      request.files.add(http.MultipartFile.fromBytes(
+        fieldName,
+        fileBytes,
+        filename: filename,
+      ));
+
+      final streamedResponse = await request.send().timeout(ApiConfig.timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      return _traiterReponse(response);
+    } on SocketException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Impossible de joindre le serveur DoGo. Vérifiez votre connexion internet.',
+      );
+    } on TimeoutException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Délai d\'attente dépassé lors de l\'envoi de la photo.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        statusCode: 0,
+        message: 'Erreur réseau : ${e.toString()}',
+      );
+    }
+  }
+
   /// Analyse la réponse HTTP et extrait le JSON ou déclenche l'exception standardisée
   dynamic _traiterReponse(http.Response response) {
     final statusCode = response.statusCode;

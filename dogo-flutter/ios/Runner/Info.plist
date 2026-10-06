@@ -4,6 +4,10 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>DoGo a besoin de l'appareil photo pour vous permettre de photographier vos articles de gros pour votre catalogue.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>DoGo a besoin d'accéder à votre galerie photo pour sélectionner des images de vos produits de gros.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

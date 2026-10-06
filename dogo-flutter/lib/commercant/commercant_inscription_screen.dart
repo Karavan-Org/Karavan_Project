@@ -77,7 +77,7 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
     setState(() => _isLoading = true);
 
     try {
-      await AuthService.instance.inscrire(
+      final res = await AuthService.instance.inscrire(
         typeActeur: widget.role.name.toUpperCase(),
         telephone: phone,
         nom: nom,
@@ -85,18 +85,24 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
         nomBoutique: widget.role == RoleActeur.commercant ? _extraField1Controller.text.trim() : null,
         quartierBamako: widget.role == RoleActeur.commercant ? _extraField2Controller.text.trim() : null,
         numeroNif: widget.role == RoleActeur.grossiste ? _extraField1Controller.text.trim() : null,
-        nomSocieteImport: widget.role == RoleActeur.grossiste ? _extraField2Controller.text.trim() : null,
+        nomBoutiqueMarche: widget.role == RoleActeur.grossiste ? _extraField2Controller.text.trim() : null,
+        nomSocieteImport: widget.role == RoleActeur.courtier
+            ? (_extraField2Controller.text.trim().isNotEmpty ? _extraField2Controller.text.trim() : nom)
+            : (widget.role == RoleActeur.grossiste ? _extraField2Controller.text.trim() : null),
         licenceTransit: widget.role == RoleActeur.courtier ? _extraField1Controller.text.trim() : null,
         adresseDepot: widget.role == RoleActeur.courtier ? _extraField2Controller.text.trim() : null,
       );
 
       if (!mounted) return;
 
+      final codeSimule = res['code']?.toString() ?? '1234';
+
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => CommercantOtpScreen(
             numeroTelephone: phone,
             role: widget.role,
+            codeSimulation: codeSimule,
           ),
         ),
       );
@@ -262,19 +268,19 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
                 ),
               ] else if (widget.role == RoleActeur.grossiste) ...[
                 _buildFigmaInputField(
-                  icon: Icons.badge_outlined,
-                  label: "Numéro NIF / Registre de Commerce",
-                  hint: "Ex: 084192043M / RCCM-BKO",
-                  controller: _extraField1Controller,
+                  icon: Icons.store_mall_directory_outlined,
+                  label: "Nom de la boutique au marché",
+                  hint: "Ex: Grand Dépôt Dabanani ou SoloImport",
+                  controller: _extraField2Controller,
                   borderColor: borderColor,
                   camelColor: camelColor,
                 ),
                 const SizedBox(height: 14),
                 _buildFigmaInputField(
-                  icon: Icons.business_outlined,
-                  label: "Société d'importation",
-                  hint: "Ex: Cissé Import-Export SARL",
-                  controller: _extraField2Controller,
+                  icon: Icons.badge_outlined,
+                  label: "Numéro NIF / Registre de Commerce",
+                  hint: "Ex: 084192043M ou RCCM-BKO-2024",
+                  controller: _extraField1Controller,
                   borderColor: borderColor,
                   camelColor: camelColor,
                 ),

@@ -21,6 +21,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import ml.dogo.catalogue.application.StockageService;
+
 @RestController
 @RequestMapping("/api/catalogue")
 public class CatalogueController {
@@ -29,7 +34,7 @@ public class CatalogueController {
     }
 
     public record ProduitRequete(@NotNull Long categorieId, @NotBlank String nom, String description,
-                                 String paysOrigine, @NotEmpty @Valid List<VarianteRequete> variantes) {
+                                 String paysOrigine, String photoUrl, @NotEmpty @Valid List<VarianteRequete> variantes) {
     }
 
     public record ModificationRequete(String nom, String description, String paysOrigine) {
@@ -38,10 +43,23 @@ public class CatalogueController {
     public record StockRequete(@Min(0) int qteDisponible) {
     }
 
-    private final CatalogueService catalogue;
+    public record UploadPhotoReponse(String photoUrl) {
+    }
 
-    public CatalogueController(CatalogueService catalogue) {
+    private final CatalogueService catalogue;
+    private final StockageService stockage;
+
+    public CatalogueController(CatalogueService catalogue, StockageService stockage) {
         this.catalogue = catalogue;
+        this.stockage = stockage;
+    }
+
+    @PostMapping(value = "/upload-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('CATALOGUE_GERER')")
+    public UploadPhotoReponse uploaderPhoto(@AuthenticationPrincipal UtilisateurCourant moi,
+                                           @RequestParam("photo") MultipartFile photo) {
+        String url = stockage.stockerPhotoProduit(photo, moi.id());
+        return new UploadPhotoReponse(url);
     }
 
     @GetMapping("/categories")
@@ -61,7 +79,7 @@ public class CatalogueController {
     public CatalogueService.ProduitVue creer(@AuthenticationPrincipal UtilisateurCourant moi,
                                              @Valid @RequestBody ProduitRequete r) {
         return catalogue.creer(moi.id(), new CatalogueService.ProduitDemande(r.categorieId(), r.nom(),
-                r.description(), r.paysOrigine(), r.variantes().stream().map(CatalogueController::demande).toList()));
+                r.description(), r.paysOrigine(), r.photoUrl(), r.variantes().stream().map(CatalogueController::demande).toList()));
     }
 
     @PutMapping("/produits/{id}")

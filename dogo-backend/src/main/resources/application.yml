@@ -44,7 +44,7 @@ dogo:
   otp:
     validite: PT5M                 # RG-02
     max-tentatives: 3              # RG-02
-    afficher-dans-reponse: false   # démo uniquement : renvoie le code dans la réponse d'inscription
+    afficher-dans-reponse: true   # renvoie le code dans la réponse pour tests gratuits et démo
   pin:
     max-echecs: 5                  # RG-07
     verrouillage: PT15M            # RG-07

@@ -24,13 +24,13 @@ public class CatalogueService {
     }
 
     public record ProduitDemande(Long categorieId, String nom, String description, String paysOrigine,
-                                 List<VarianteDemande> variantes) {
+                                 String photoUrl, List<VarianteDemande> variantes) {
     }
 
     public record VarianteVue(long id, String sku, String taille, String couleur, int qteDisponible) {
     }
 
-    public record ProduitVue(long id, long categorieId, String nom, String description, String paysOrigine,
+    public record ProduitVue(long id, long categorieId, String nom, String description, String photoUrl, String paysOrigine,
                              List<VarianteVue> variantes) {
     }
 
@@ -81,7 +81,7 @@ public class CatalogueService {
             creees.add(nouvelleVariante(v, creees));
         }
         Produit p = produits.save(new Produit(grossisteId, categorie.getId(), d.nom().strip(), d.description(),
-                d.paysOrigine(), creees));
+                d.photoUrl(), d.paysOrigine(), creees));
         audit.tracer(grossisteId, "PRODUIT_CREE", null, "produit=" + p.getId());
         return vue(p);
     }
@@ -158,7 +158,7 @@ public class CatalogueService {
     }
 
     private static ProduitVue vue(Produit p) {
-        return new ProduitVue(p.getId(), p.getCategorieId(), p.getNom(), p.getDescription(), p.getPaysOrigine(),
+        return new ProduitVue(p.getId(), p.getCategorieId(), p.getNom(), p.getDescription(), p.getPhotoUrl(), p.getPaysOrigine(),
                 p.getVariantes().stream().map(CatalogueService::vue).toList());
     }
 

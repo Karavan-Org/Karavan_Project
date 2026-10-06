@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/public/images/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/paiements/callback").permitAll()
                         .requestMatchers("/api/dev/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
@@ -49,7 +50,9 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:[*]",
                 "http://127.0.0.1:[*]",
-                "http://10.0.2.2:[*]"
+                "http://10.0.2.2:[*]",
+                "http://*:[*]",
+                "https://*:[*]"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of(

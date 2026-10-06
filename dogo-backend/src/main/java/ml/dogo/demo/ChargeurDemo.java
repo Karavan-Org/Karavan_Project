@@ -93,7 +93,7 @@ public class ChargeurDemo {
 
         var categorie = catalogue.categories().get(0);
         catalogue.creer(grossisteId, new CatalogueService.ProduitDemande(categorie.id(), "Baskets Sport Homme",
-                "Baskets légères, semelle antidérapante", "Chine", List.of(
+                "Baskets légères, semelle antidérapante", "Chine", null, List.of(
                 new CatalogueService.VarianteDemande("BASK-40-NOIR", "40", "Noir", 500),
                 new CatalogueService.VarianteDemande("BASK-42-NOIR", "42", "Noir", 500),
                 new CatalogueService.VarianteDemande("BASK-42-BLANC", "42", "Blanc", 300))));

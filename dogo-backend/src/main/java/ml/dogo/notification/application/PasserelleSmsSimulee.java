@@ -12,12 +12,7 @@ public class PasserelleSmsSimulee implements PasserelleSms {
 
     @Override
     public boolean envoyer(String telephone, String message) {
-        String masque = message != null
-                ? message.replaceAll("(?i)(PIN de retrait\\s*:\\s*)\\d+", "$1******")
-                         .replaceAll("(?i)(code\\s*(?:de vérification)?\\s*(?:est|:)\\s*)\\d+", "$1******")
-                         .replaceAll("(?i)(code\\s*:\\s*)\\d+", "$1******")
-                : null;
-        LOG.info("[SMS simulé] -> {} : {}", telephone, masque);
+        LOG.info("📱 [SMS DoGo REÇU] -> {} : {}", telephone, message);
         return true;
     }
 }

@@ -1,11 +1,17 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 /// Écran "Mes documents" du Grossiste (Licences export, KYC, Registre commerce, Contrats)
-class DocumentsGrossisteScreen extends StatelessWidget {
+class DocumentsGrossisteScreen extends StatefulWidget {
   const DocumentsGrossisteScreen({super.key});
 
-  final List<Map<String, dynamic>> _docs = const [
+  @override
+  State<DocumentsGrossisteScreen> createState() => _DocumentsGrossisteScreenState();
+}
+
+class _DocumentsGrossisteScreenState extends State<DocumentsGrossisteScreen> {
+  final List<Map<String, dynamic>> _docs = [
     {
       "titre": "Licence d'Exportation Internationale",
       "reference": "LIC-EXP-2026-WZ-99",
@@ -36,6 +42,51 @@ class DocumentsGrossisteScreen extends StatelessWidget {
     },
   ];
 
+  Future<void> _importerDocumentDepuisPc() async {
+    try {
+      final files = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
+      );
+
+      if (files.isNotEmpty) {
+        final file = files.first;
+        final size = file.lengthSync() ?? await file.length() ?? 0;
+        setState(() {
+          _docs.insert(0, {
+            "titre": file.name,
+            "reference": "DOC-${DateTime.now().millisecondsSinceEpoch}",
+            "date": "Ajouté aujourd'hui (${(size / 1024).toStringAsFixed(1)} Ko)",
+            "statut": "En attente de validation KYC",
+            "icon": file.extension == 'pdf' ? Icons.picture_as_pdf_rounded : Icons.image_rounded,
+          });
+        });
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(child: Text("Document \"${file.name}\" importé avec succès depuis votre PC !")),
+              ],
+            ),
+            backgroundColor: AppTheme.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur lors de l'import : ${e.toString()}"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,12 +105,8 @@ class DocumentsGrossisteScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.upload_file_rounded, color: Color(0xFF9E6738)),
-            tooltip: "Ajouter un document",
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Sélection de document PDF / Photo pour mise à jour KYC")),
-              );
-            },
+            tooltip: "Importer un document depuis votre PC",
+            onPressed: _importerDocumentDepuisPc,
           ),
           const SizedBox(width: 8),
         ],

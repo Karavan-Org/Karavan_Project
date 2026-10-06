@@ -12,11 +12,13 @@ import 'commercant_main_nav.dart';
 class CommercantOtpScreen extends StatefulWidget {
   final String numeroTelephone;
   final RoleActeur role;
+  final String? codeSimulation;
 
   const CommercantOtpScreen({
     super.key,
     this.numeroTelephone = "+223 70 12 34 56",
     this.role = RoleActeur.commercant,
+    this.codeSimulation,
   });
 
   @override
@@ -38,6 +40,15 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
   void initState() {
     super.initState();
     _demarrerTimer();
+    // Pré-remplir automatiquement le code en mode simulation/test
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final codeToFill = widget.codeSimulation ?? '1234';
+      if (codeToFill.length >= 4) {
+        for (int i = 0; i < 4; i++) {
+          _controllers[i].text = codeToFill[i];
+        }
+      }
+    });
   }
 
   void _demarrerTimer() {
@@ -201,7 +212,36 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                 ),
               ),
 
-              const SizedBox(height: 38),
+              const SizedBox(height: 18),
+
+              // BANIÈRE MODE DÉMO / TEST GRATUIT
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFA5D6A7)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.verified_outlined, color: Color(0xFF2E7D32), size: 20),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        "Code de test gratuit : ${widget.codeSimulation ?? '1234'} (ou 1234)",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1B5E20),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
 
               // 3. LES 4 CASES DE SAISIE DU CODE OTP FIGMA
               Row(
