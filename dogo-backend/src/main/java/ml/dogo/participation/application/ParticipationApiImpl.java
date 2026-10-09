@@ -45,6 +45,13 @@ public class ParticipationApiImpl implements ParticipationApi {
         return service.confirmerApresPaiement(participationId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> groupeIdsParCommercant(long commercantId) {
+        return participations.findByCommercantIdOrderByIdDesc(commercantId).stream()
+                .map(Participation::getGroupeId).distinct().toList();
+    }
+
     private ParticipationInfo info(Participation p) {
         SnapshotGroupe s = snapshots.findByParticipationId(p.getId()).orElseThrow();
         return new ParticipationInfo(p.getId(), p.getGroupeId(), p.getCommercantId(), p.getVarianteId(),

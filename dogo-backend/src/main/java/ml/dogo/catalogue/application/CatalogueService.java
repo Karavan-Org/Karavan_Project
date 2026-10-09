@@ -1,7 +1,11 @@
 package ml.dogo.catalogue.application;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import ml.dogo.audit.api.AuditApi;
 import ml.dogo.catalogue.api.EngagementProduit;
 import ml.dogo.catalogue.persistence.Categorie;
@@ -24,17 +28,28 @@ public class CatalogueService {
     }
 
     public record ProduitDemande(Long categorieId, String nom, String description, String paysOrigine,
-                                 String photoUrl, List<VarianteDemande> variantes) {
+                                 String photoUrl, List<VarianteDemande> variantes, java.math.BigDecimal prixGros) {
+
+        public ProduitDemande(Long categorieId, String nom, String description, String paysOrigine, String photoUrl,
+                              List<VarianteDemande> variantes) {
+            this(categorieId, nom, description, paysOrigine, photoUrl, variantes, null);
+        }
     }
 
     public record VarianteVue(long id, String sku, String taille, String couleur, int qteDisponible) {
     }
 
     public record ProduitVue(long id, long categorieId, String nom, String description, String photoUrl, String paysOrigine,
-                             List<VarianteVue> variantes) {
+                             List<VarianteVue> variantes, java.math.BigDecimal prixGros) {
     }
 
     public record CategorieVue(long id, String nom, String description) {
+    }
+
+    /** Produit proposé au Courtier pour monter un groupe (RG-16) : il voit le grossiste fournisseur. */
+    public record ProduitDisponibleVue(long id, long grossisteId, String grossisteNom, long categorieId, String nom,
+                                       String description, String photoUrl, String paysOrigine,
+                                       List<VarianteVue> variantes) {
     }
 
     private final ProduitRepository produits;
@@ -82,6 +97,12 @@ public class CatalogueService {
         }
         Produit p = produits.save(new Produit(grossisteId, categorie.getId(), d.nom().strip(), d.description(),
                 d.photoUrl(), d.paysOrigine(), creees));
+        if (d.prixGros() != null) {
+            if (d.prixGros().signum() <= 0) {
+                throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-11", "Le prix de gros doit être positif");
+            }
+            p.definirPrixGros(d.prixGros());
+        }
         audit.tracer(grossisteId, "PRODUIT_CREE", null, "produit=" + p.getId());
         return vue(p);
     }
@@ -89,6 +110,24 @@ public class CatalogueService {
     @Transactional(readOnly = true)
     public List<ProduitVue> mesProduits(long grossisteId) {
         return produits.findByGrossisteIdOrderByIdDesc(grossisteId).stream().map(CatalogueService::vue).toList();
+    }
+
+    /** RG-16 : catalogue consultable par un Courtier, limité aux grossistes actifs. */
+    @Transactional(readOnly = true)
+    public List<ProduitDisponibleVue> produitsDisponibles() {
+        Map<Long, Optional<IdentiteApi.ActeurInfo>> grossistes = new HashMap<>();
+        return produits.findAllByOrderByIdDesc().stream()
+                .map(p -> {
+                    var g = grossistes.computeIfAbsent(p.getGrossisteId(), identite::acteur);
+                    if (g.isEmpty() || !g.get().actif()) {
+                        return null;
+                    }
+                    ProduitVue v = vue(p);
+                    return new ProduitDisponibleVue(v.id(), p.getGrossisteId(), g.get().nom(), v.categorieId(), v.nom(),
+                            v.description(), v.photoUrl(), v.paysOrigine(), v.variantes());
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     /** RG-15 : plus de modification d'un produit engagé dans un groupe OUVERT. */
@@ -159,7 +198,7 @@ public class CatalogueService {
 
     private static ProduitVue vue(Produit p) {
         return new ProduitVue(p.getId(), p.getCategorieId(), p.getNom(), p.getDescription(), p.getPhotoUrl(), p.getPaysOrigine(),
-                p.getVariantes().stream().map(CatalogueService::vue).toList());
+                p.getVariantes().stream().map(CatalogueService::vue).toList(), p.getPrixGros());
     }
 
     private static VarianteVue vue(VarianteProduit v) {

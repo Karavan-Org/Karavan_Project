@@ -10,6 +10,8 @@ public interface ProduitRepository extends JpaRepository<Produit, Long> {
 
     List<Produit> findByGrossisteIdOrderByIdDesc(Long grossisteId);
 
+    List<Produit> findAllByOrderByIdDesc();
+
     Optional<Produit> findByIdAndGrossisteId(Long id, Long grossisteId);
 
     @Query("select p from Produit p join p.variantes v where v.id = :varianteId")

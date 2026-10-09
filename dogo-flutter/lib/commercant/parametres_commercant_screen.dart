@@ -44,7 +44,7 @@ class _ParametresCommercantScreenState extends State<ParametresCommercantScreen>
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3))],
             ),
-            child: Column(
+            child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(18), clipBehavior: Clip.antiAlias, child: Column(
               children: [
                 ListTile(
                   leading: const Icon(Icons.language_rounded, color: Color(0xFF9E6738)),
@@ -75,7 +75,7 @@ class _ParametresCommercantScreenState extends State<ParametresCommercantScreen>
                   },
                 ),
               ],
-            ),
+            )),
           ),
 
           const SizedBox(height: 24),
@@ -89,7 +89,7 @@ class _ParametresCommercantScreenState extends State<ParametresCommercantScreen>
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3))],
             ),
-            child: Column(
+            child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(18), clipBehavior: Clip.antiAlias, child: Column(
               children: [
                 SwitchListTile(
                   activeThumbColor: const Color(0xFF9E6738),
@@ -109,7 +109,7 @@ class _ParametresCommercantScreenState extends State<ParametresCommercantScreen>
                   onChanged: (val) => setState(() => _pushNotif = val),
                 ),
               ],
-            ),
+            )),
           ),
 
           const SizedBox(height: 24),

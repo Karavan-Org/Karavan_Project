@@ -21,6 +21,7 @@ public class GestionnaireErreurs {
 
     @ExceptionHandler(ErreurMetier.class)
     public ProblemDetail metier(ErreurMetier e) {
+        LOG.info("Requête refusée ({}{}) : {}", e.code(), e.regle() == null ? "" : ", " + e.regle(), e.getMessage());
         ProblemDetail p = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(e.code().statutHttp()), e.getMessage());
         p.setProperty("code", e.code().name());
         if (e.regle() != null) {
@@ -34,6 +35,7 @@ public class GestionnaireErreurs {
         ProblemDetail p = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Données invalides");
         List<String> champs = e.getBindingResult().getFieldErrors().stream()
                 .map(f -> f.getField() + " : " + f.getDefaultMessage()).toList();
+        LOG.info("Requête refusée (DONNEES_INVALIDES) : {}", champs);
         p.setProperty("code", "DONNEES_INVALIDES");
         p.setProperty("erreurs", champs);
         return p;

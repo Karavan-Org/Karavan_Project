@@ -5,7 +5,7 @@ import 'courtier_dashboard_screen.dart';
 import 'gestion_convoi_screen.dart';
 import 'portefeuille_courtier_screen.dart';
 import 'courtier_profil_screen.dart';
-import 'lancer_convoi_screen.dart';
+import 'creer_groupe_courtier_screen.dart';
 import 'scanner_retrait_screen.dart';
 import 'etape_transit_screen.dart';
 
@@ -159,21 +159,21 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                           child: const SizedBox(width: 300, height: 180),
                         ),
 
-                        // Item 0 (Gauche - 152°) : Lancer Convoi
+                        // Item 0 (Gauche - 152°) : Créer un groupe d'achat
                         _buildArcButton(
                           index: 0,
                           total: 4,
                           angleDeg: 152.0,
                           radius: radius,
-                          label: "Lancer",
-                          subLabel: "Nouveau Convoi",
-                          hoverTooltip: "🚀 Créer un Fret Aérien/Maritime",
+                          label: "Groupe",
+                          subLabel: "Nouveau",
+                          hoverTooltip: "👥 Créer un groupe d'achat",
                           icon: Icons.rocket_launch_rounded,
                           color: AppTheme.primary,
                           onTap: () {
                             _fabController.reverse();
                             Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const LancerConvoiScreen()),
+                              MaterialPageRoute(builder: (_) => const CreerGroupeCourtierScreen()),
                             );
                           },
                         ),
@@ -269,6 +269,7 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                 width: 58,
                 margin: const EdgeInsets.only(top: 8),
                 child: FloatingActionButton(
+                  heroTag: 'fab-nav-courtier',
                   onPressed: _toggleFabMenu,
                   elevation: isExpanded ? 8 : 4,
                   backgroundColor: isExpanded ? const Color(0xFF4A3222) : AppTheme.primary,

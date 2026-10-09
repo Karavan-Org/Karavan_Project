@@ -18,6 +18,7 @@ dependencies:
   image_picker: ^1.2.4
   web: ^1.1.1
   permission_handler: ^11.3.1
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -29,6 +30,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/grossiste/
     - assets/icons/
     - assets/logo/
     - assets/html/

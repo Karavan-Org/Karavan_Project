@@ -91,7 +91,7 @@ public class CommandeService {
         }
         GroupeAchatApi.GroupeInfo g = campagne.groupe(groupeId).orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
         audit.tracer(null, "COMMANDES_CREEES", "groupe=" + groupeId, creees + " commande(s)");
-        notifications.notifier(g.courtierId(), "Groupe #" + groupeId + " : " + creees
+        notifications.notifier(g.porteurId(), "Groupe #" + groupeId + " : " + creees
                 + " commande(s) créée(s). Vous pouvez commencer la préparation.");
         notifications.notifier(g.grossisteId(), "Groupe #" + groupeId + " (" + g.produitNom() + ") : " + creees
                 + " commande(s) à préparer.");
@@ -123,7 +123,7 @@ public class CommandeService {
         }
         // Les commandes changent d'abord (en mémoire) : la transition du groupe les enregistre puis vide le contexte.
         duGroupe.forEach(c -> c.changerStatut(StatutCommande.EXPEDIEE));
-        campagne.transitionner(groupeId, "EN_EXPEDITION", "COURTIER:" + acteur.id());
+        campagne.transitionner(groupeId, "EN_EXPEDITION", (acteur.estAdministrateur() ? "ADMIN:" : "COURTIER:") + acteur.id());
         audit.tracer(acteur.id(), "GROUPE_EXPEDIE", "groupe=" + groupeId, duGroupe.size() + " commande(s)");
         duGroupe.forEach(c -> notifications.notifier(c.getCommercantId(),
                 "Votre commande #" + c.getId() + " (" + g.produitNom() + ") est expédiée."));
@@ -142,7 +142,7 @@ public class CommandeService {
         duGroupe.forEach(c -> c.changerStatut(StatutCommande.ARRIVEE));
         campagne.transitionner(groupeId, "LIVRE", "ADMIN:" + acteur.id());
         audit.tracer(acteur.id(), "RECEPTION_VALIDEE", "groupe=" + groupeId, duGroupe.size() + " commande(s)");
-        notifications.notifier(g.courtierId(), "Groupe #" + groupeId
+        notifications.notifier(g.porteurId(), "Groupe #" + groupeId
                 + " : la réception des colis est validée. Confirmez leur arrivée au point de retrait.");
         return duGroupe.stream().map(c -> vue(c, g, Vision.COMPLETE)).toList();
     }
@@ -203,7 +203,7 @@ public class CommandeService {
     private enum Vision { COMPLETE, SANS_ACHETEUR }
 
     private Vision visionSur(UtilisateurCourant acteur, GroupeAchatApi.GroupeInfo g) {
-        if (acteur.estAdministrateur() || g.courtierId() == acteur.id()) {
+        if (acteur.estAdministrateur() || g.porteurId() == acteur.id()) {
             return Vision.COMPLETE;
         }
         if (g.grossisteId() == acteur.id()) {
@@ -214,7 +214,9 @@ public class CommandeService {
 
     private GroupeAchatApi.GroupeInfo groupeDuCourtier(UtilisateurCourant acteur, long groupeId, String statutRequis) {
         GroupeAchatApi.GroupeInfo g = campagne.groupe(groupeId).orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
-        if (g.courtierId() != acteur.id()) {
+        // Un groupe porté par un grossiste est acheminé par ses soins : l'Administrateur en met à jour les étapes.
+        boolean autorise = g.porteParGrossiste() ? acteur.estAdministrateur() : g.courtierId() == acteur.id();
+        if (!autorise) {
             throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-50", "Seul le courtier de ce groupe peut faire avancer ses commandes");
         }
         if (!statutRequis.equals(g.statut())) {

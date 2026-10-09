@@ -1,3 +1,4 @@
+import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'favoris_service.dart';
@@ -361,7 +362,7 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                   children: [
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(16),
-                                      child: Image.asset(
+                                      child: imageProduit(
                                         groupe.imagePath,
                                         width: 88,
                                         height: 88,

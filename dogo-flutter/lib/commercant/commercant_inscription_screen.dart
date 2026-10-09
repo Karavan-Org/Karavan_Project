@@ -95,7 +95,7 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
 
       if (!mounted) return;
 
-      final codeSimule = res['code']?.toString() ?? '1234';
+      final codeSimule = res['codeOtp']?.toString();
 
       Navigator.of(context).push(
         MaterialPageRoute(

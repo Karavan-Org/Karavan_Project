@@ -83,14 +83,14 @@ public class LogistiqueController {
     // ---- acheminement
 
     @PostMapping("/groupes/{groupeId}/preparation")
-    @PreAuthorize("hasAuthority('COMMANDE_AVANCER')")
+    @PreAuthorize("hasAnyAuthority('COMMANDE_AVANCER', 'RECEPTION_VALIDER')")
     public List<CommandeService.CommandeVue> preparer(@AuthenticationPrincipal UtilisateurCourant moi,
                                                       @PathVariable long groupeId) {
         return commandes.preparer(moi, groupeId);
     }
 
     @PostMapping("/groupes/{groupeId}/expedition")
-    @PreAuthorize("hasAuthority('COMMANDE_AVANCER')")
+    @PreAuthorize("hasAnyAuthority('COMMANDE_AVANCER', 'RECEPTION_VALIDER')")
     public List<CommandeService.CommandeVue> expedier(@AuthenticationPrincipal UtilisateurCourant moi,
                                                       @PathVariable long groupeId) {
         return commandes.expedier(moi, groupeId);
@@ -104,7 +104,7 @@ public class LogistiqueController {
     }
 
     @PostMapping("/groupes/{groupeId}/reception-point-retrait")
-    @PreAuthorize("hasAuthority('COMMANDE_AVANCER')")
+    @PreAuthorize("hasAnyAuthority('COMMANDE_AVANCER', 'RECEPTION_VALIDER')")
     public List<CommandeService.CommandeVue> arriveeAuPoint(@AuthenticationPrincipal UtilisateurCourant moi,
                                                             @PathVariable long groupeId,
                                                             @Valid @RequestBody ArriveeRequete r) {

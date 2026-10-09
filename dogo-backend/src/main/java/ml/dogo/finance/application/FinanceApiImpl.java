@@ -72,10 +72,10 @@ public class FinanceApiImpl implements FinanceApi {
         ParticipationApi.ParticipationInfo part = participations.participation(participationId).orElseThrow();
         GroupeAchatApi.GroupeInfo g = campagne.groupe(part.groupeId()).orElseThrow();
         BigDecimal montantBloque = s.getMontantBloque();
-        // RG-37 : frais figés à la réservation ; RG-38 : le Courtier reçoit le reste.
+        // RG-37 : frais figés à la réservation ; RG-38 : le porteur du groupe (Courtier, ou Grossiste sans courtier) reçoit le reste.
         BigDecimal fraisMontant = part.fraisUnitaireFige().multiply(BigDecimal.valueOf(part.quantite()));
         BigDecimal versement = RegleFinance.partCourtier(montantBloque, fraisMontant);
-        long portefeuilleId = mouvements.portefeuilleDe(g.courtierId()).getId();
+        long portefeuilleId = mouvements.portefeuilleDe(g.porteurId()).getId();
         Instant maintenant = horloge.instant();
 
         s.liberer(maintenant);   // refuse un séquestre gelé (RG-62) ou déjà traité
@@ -93,7 +93,7 @@ public class FinanceApiImpl implements FinanceApi {
         }
         audit.tracer(null, "SEQUESTRE_LIBERE", "paiement=" + paiementId,
                 "versement=" + versement + ", frais=" + fraisMontant);
-        notifications.notifier(g.courtierId(), versement.toBigInteger() + " XOF sont disponibles dans votre portefeuille.");
+        notifications.notifier(g.porteurId(), versement.toBigInteger() + " XOF sont disponibles dans votre portefeuille.");
     }
 }
 

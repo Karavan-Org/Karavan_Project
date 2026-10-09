@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
-import '../grossiste/grossiste_main_nav.dart';
+import '../grossiste/grossiste_acces.dart';
+import '../grossiste/grossiste_connexion_screen.dart';
 import '../courtier/courtier_main_nav.dart';
 import '../services/auth_service.dart';
 import '../services/api/api_exception.dart';
@@ -14,11 +15,15 @@ class CommercantOtpScreen extends StatefulWidget {
   final RoleActeur role;
   final String? codeSimulation;
 
+  /// PIN choisi à l'inscription : permet d'ouvrir la session juste après la vérification
+  final String? pin;
+
   const CommercantOtpScreen({
     super.key,
     this.numeroTelephone = "+223 70 12 34 56",
     this.role = RoleActeur.commercant,
     this.codeSimulation,
+    this.pin,
   });
 
   @override
@@ -42,7 +47,8 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
     _demarrerTimer();
     // Pré-remplir automatiquement le code en mode simulation/test
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final codeToFill = widget.codeSimulation ?? '1234';
+      // Le backend ne renvoie le code qu'en profil demo (dogo.otp.afficher-dans-reponse)
+      final codeToFill = widget.codeSimulation ?? '';
       if (codeToFill.length >= 4) {
         for (int i = 0; i < 4; i++) {
           _controllers[i].text = codeToFill[i];
@@ -97,7 +103,14 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
       Widget destination;
       switch (widget.role) {
         case RoleActeur.grossiste:
-          destination = const GrossisteMainNav();
+          // Le compte attend son dossier KYC (RG-03) : on ouvre la session pour le déposer
+          if (widget.pin != null) {
+            final profil = await AuthService.instance.connecter(telephone: widget.numeroTelephone, pin: widget.pin!);
+            destination = await ecranGrossisteSelonDossier(profil);
+          } else {
+            destination = const GrossisteConnexionScreen();
+          }
+          if (!mounted) return;
           break;
         case RoleActeur.courtier:
           destination = const CourtierMainNav();
@@ -214,7 +227,8 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
 
               const SizedBox(height: 18),
 
-              // BANIÈRE MODE DÉMO / TEST GRATUIT
+              // BANIÈRE MODE DÉMO : seulement si le serveur a renvoyé le code
+              if (widget.codeSimulation != null)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
@@ -229,7 +243,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        "Code de test gratuit : ${widget.codeSimulation ?? '1234'} (ou 1234)",
+                        "Code de test (mode démo) : ${widget.codeSimulation}",
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,

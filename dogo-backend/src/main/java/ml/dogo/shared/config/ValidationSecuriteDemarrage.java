@@ -21,6 +21,8 @@ public class ValidationSecuriteDemarrage implements ApplicationRunner {
     private static final List<String> SECRETS_INTERDITS = List.of(
             "dogo-secret-jwt-a-changer-absolument-en-production-min-256-bits-ok!",
             "dogo-hmac-secret-orange-money-moov-min-256-bits-ok!",
+            "changez-moi-changez-moi-changez-moi-32-octets-minimum",
+            "secret-de-demo-a-remplacer",
             "secret",
             "password",
             "123456"
@@ -41,6 +43,15 @@ public class ValidationSecuriteDemarrage implements ApplicationRunner {
         String hmacSecret = proprietes.mobileMoney() != null ? proprietes.mobileMoney().secretCallback() : "";
 
         if (estProduction) {
+            if (Arrays.asList(environment.getActiveProfiles()).contains("demo")) {
+                throw new IllegalStateException("Le profil 'demo' ne peut pas être activé avec le profil 'prod'.");
+            }
+            String dbUser = environment.getProperty("spring.datasource.username", "");
+            String dbPassword = environment.getProperty("spring.datasource.password", "");
+            if ("root".equalsIgnoreCase(dbUser) || dbPassword == null || dbPassword.isBlank()
+                    || "1234".equals(dbPassword)) {
+                throw new IllegalStateException("SÉCURITÉ CRITIQUE : configurez un compte et mot de passe DB dédiés en profil 'prod'.");
+            }
             if (jwtSecret == null || jwtSecret.length() < 32 || SECRETS_INTERDITS.contains(jwtSecret)) {
                 throw new IllegalStateException(
                         "SÉCURITÉ CRITIQUE : dogo.jwt.secret par défaut ou trop faible détecté en profil 'prod' ! "
@@ -49,7 +60,7 @@ public class ValidationSecuriteDemarrage implements ApplicationRunner {
             if (hmacSecret == null || hmacSecret.length() < 32 || SECRETS_INTERDITS.contains(hmacSecret)) {
                 throw new IllegalStateException(
                         "SÉCURITÉ CRITIQUE : dogo.mobile-money.secret-callback par défaut ou trop faible détecté en profil 'prod' ! "
-                                + "Définissez la variable d'environnement DOGO_MOBILE_MONEY_SECRET.");
+                                + "Définissez la variable d'environnement DOGO_MM_SECRET.");
             }
             if (proprietes.otp() != null && proprietes.otp().afficherDansReponse()) {
                 throw new IllegalStateException(

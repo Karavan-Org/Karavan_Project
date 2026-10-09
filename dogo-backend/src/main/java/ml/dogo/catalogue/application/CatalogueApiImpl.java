@@ -26,7 +26,7 @@ public class CatalogueApiImpl implements CatalogueApi {
     public Optional<ProduitInfo> produit(long produitId) {
         return produits.findById(produitId).map(p -> new ProduitInfo(p.getId(), p.getGrossisteId(), p.getCategorieId(),
                 categories.findById(p.getCategorieId()).map(Categorie::getNom).orElse(""), p.getNom(),
-                p.getDescription(), p.getPaysOrigine(),
+                p.getDescription(), p.getPaysOrigine(), p.getPhotoUrl(),
                 p.getVariantes().stream().map(CatalogueApiImpl::info).toList()));
     }
 

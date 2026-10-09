@@ -1,6 +1,7 @@
 package ml.dogo.groupeachat.application;
 
 import java.time.Clock;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import ml.dogo.groupeachat.api.GroupeAchatApi;
@@ -9,6 +10,7 @@ import ml.dogo.groupeachat.persistence.ConditionCommerciale;
 import ml.dogo.groupeachat.persistence.ConditionCommercialeRepository;
 import ml.dogo.groupeachat.persistence.GrilleTarifaire;
 import ml.dogo.groupeachat.persistence.GrilleTarifaireRepository;
+import ml.dogo.groupeachat.persistence.GroupeAchat;
 import ml.dogo.groupeachat.persistence.GroupeAchatRepository;
 import ml.dogo.catalogue.api.CatalogueApi;
 import ml.dogo.shared.errors.CodeErreur;
@@ -99,6 +101,20 @@ public class GroupeAchatApiImpl implements GroupeAchatApi {
     @Transactional(propagation = Propagation.MANDATORY)
     public void transitionner(long groupeId, String cible, String auteur) {
         moteur.transitionner(groupeId, StatutGroupe.valueOf(cible.toUpperCase(Locale.ROOT)), auteur, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> groupeIdsParCourtier(long courtierId) {
+        return groupes.findByCourtierIdOrderByIdDesc(courtierId).stream()
+                .map(GroupeAchat::getId).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> groupeIdsParGrossiste(long grossisteId) {
+        return groupes.findByGrossisteIdOrderByIdDesc(grossisteId).stream()
+                .map(GroupeAchat::getId).toList();
     }
 }
 

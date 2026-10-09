@@ -42,7 +42,7 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3))],
             ),
-            child: Column(
+            child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(18), clipBehavior: Clip.antiAlias, child: Column(
               children: [
                 ListTile(
                   leading: const Icon(Icons.currency_exchange_rounded, color: Color(0xFF9E6738)),
@@ -74,7 +74,7 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
                   },
                 ),
               ],
-            ),
+            )),
           ),
 
           const SizedBox(height: 24),
@@ -87,7 +87,7 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3))],
             ),
-            child: Column(
+            child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(18), clipBehavior: Clip.antiAlias, child: Column(
               children: [
                 SwitchListTile(
                   activeThumbColor: const Color(0xFF9E6738),
@@ -107,7 +107,7 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
                   onChanged: (val) => setState(() => _notifCommandes = val),
                 ),
               ],
-            ),
+            )),
           ),
 
           const SizedBox(height: 24),

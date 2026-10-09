@@ -34,7 +34,8 @@ public class CatalogueController {
     }
 
     public record ProduitRequete(@NotNull Long categorieId, @NotBlank String nom, String description,
-                                 String paysOrigine, String photoUrl, @NotEmpty @Valid List<VarianteRequete> variantes) {
+                                 String paysOrigine, String photoUrl, @NotEmpty @Valid List<VarianteRequete> variantes,
+                                 java.math.BigDecimal prixGros) {
     }
 
     public record ModificationRequete(String nom, String description, String paysOrigine) {
@@ -67,6 +68,13 @@ public class CatalogueController {
         return catalogue.categories();
     }
 
+    @GetMapping("/produits-disponibles")
+    // Réservé aux courtiers : un grossiste crée ses groupes sur son propre catalogue, il ne voit pas celui des autres.
+    @PreAuthorize("hasAuthority('GROUPE_CREER') and hasAuthority('CAMPAGNE_EXPLORER')")
+    public List<CatalogueService.ProduitDisponibleVue> produitsDisponibles() {
+        return catalogue.produitsDisponibles();
+    }
+
     @GetMapping("/produits")
     @PreAuthorize("hasAuthority('CATALOGUE_GERER')")
     public List<CatalogueService.ProduitVue> mesProduits(@AuthenticationPrincipal UtilisateurCourant moi) {
@@ -79,7 +87,8 @@ public class CatalogueController {
     public CatalogueService.ProduitVue creer(@AuthenticationPrincipal UtilisateurCourant moi,
                                              @Valid @RequestBody ProduitRequete r) {
         return catalogue.creer(moi.id(), new CatalogueService.ProduitDemande(r.categorieId(), r.nom(),
-                r.description(), r.paysOrigine(), r.photoUrl(), r.variantes().stream().map(CatalogueController::demande).toList()));
+                r.description(), r.paysOrigine(), r.photoUrl(), r.variantes().stream().map(CatalogueController::demande).toList(),
+                r.prixGros()));
     }
 
     @PutMapping("/produits/{id}")

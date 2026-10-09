@@ -3,6 +3,7 @@ import '../services/api/api_config.dart';
 import '../services/catalogue_api_service.dart';
 import '../theme/app_theme.dart';
 import 'ajouter_produit_screen.dart';
+import 'creer_groupe_grossiste_screen.dart';
 
 /// Écran du Catalogue Grossiste (Stocks, Paliers de prix, MOQ et Affichage des Photos Produits)
 class GrossisteCatalogueScreen extends StatefulWidget {
@@ -20,101 +21,60 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
   @override
   void initState() {
     super.initState();
+    CatalogueApiService.instance.revision.addListener(_chargerProduits);
     _chargerProduits();
+  }
+
+  @override
+  void dispose() {
+    CatalogueApiService.instance.revision.removeListener(_chargerProduits);
+    super.dispose();
   }
 
   Future<void> _chargerProduits() async {
     setState(() => _isLoading = true);
     try {
       final produitsServeur = await CatalogueApiService.instance.mesProduits();
-      if (mounted) {
-        if (produitsServeur.isNotEmpty) {
-          final mapped = produitsServeur.map<Map<String, dynamic>>((p) {
-            final variantes = (p['variantes'] as List?) ?? [];
-            int totalStock = 0;
-            for (var v in variantes) {
-              totalStock += (v['qteDisponible'] as num? ?? 0).toInt();
-            }
-
-            return {
-              "id": p['id'],
-              "nom": p['nom'] ?? 'Produit sans nom',
-              "description": p['description'] ?? '',
-              "categorie": "Tous",
-              "origine": p['paysOrigine'] ?? "Mali",
-              "prixGros": "Prix catalogue",
-              "stock": totalStock > 0 ? totalStock : 50,
-              "moq": 10,
-              "groupeActif": true,
-              "image": p['photoUrl'] ?? "assets/images/Nike_Joyride-removebg-preview.png",
-            };
-          }).toList();
-
-          setState(() {
-            _articles = mapped;
-            _isLoading = false;
-          });
-          return;
-        }
-      }
-    } catch (_) {
-      // Fallback gracieux en mode hors-ligne
-    }
-
-    if (mounted) {
+      if (!mounted) return;
       setState(() {
-        _articles = [
-          {
-            "id": 1,
-            "nom": "Baskets Running Nike Joyride Dual Run",
-            "description": "Technologie amorti microbilles, coloris blanc et bleu turquoise",
-            "categorie": "Chaussures",
-            "origine": "Vietnam",
-            "prixGros": "24 500 XOF",
-            "stock": 350,
-            "moq": 20,
-            "groupeActif": true,
-            "image": "assets/images/Nike_Joyride-removebg-preview.png",
-          },
-          {
-            "id": 2,
-            "nom": "Bottines Chelsea Cuir Véritable Homme",
-            "description": "Cuir pleine fleur noir, semelle cousue Goodyear",
-            "categorie": "Chaussures",
-            "origine": "Turquie",
-            "prixGros": "32 000 XOF",
-            "stock": 180,
-            "moq": 15,
+        _articles = produitsServeur.map<Map<String, dynamic>>((p) {
+          final variantes = ((p['variantes'] as List?) ?? []).cast<Map>();
+          final stock = variantes.fold<int>(0, (t, v) => t + ((v['qteDisponible'] as num?) ?? 0).toInt());
+          String liste(String cle) =>
+              variantes.map((v) => v[cle]?.toString() ?? '').where((x) => x.isNotEmpty).toSet().join(', ');
+          final tailles = liste('taille');
+          final couleurs = liste('couleur');
+          final prixGros = p['prixGros'];
+          return {
+            "produit": Map<String, dynamic>.from(p as Map),
+            "id": p['id'],
+            "nom": p['nom'] ?? 'Produit sans nom',
+            "description": p['description'] ?? '',
+            "categorie": "Tous",
+            "origine": p['paysOrigine'] ?? '',
+            "prixGros": prixGros is num
+                ? "${prixGros.round()} F / pce"
+                : "${variantes.length} variante${variantes.length > 1 ? 's' : ''}",
+            "stock": stock,
+            "resume": [
+              if (tailles.isNotEmpty) "Tailles : $tailles",
+              if (couleurs.isNotEmpty) "Couleurs : $couleurs",
+            ].join(" • "),
             "groupeActif": false,
-            "image": "assets/images/black-dress-boots-2-mob.jpg",
-          },
-          {
-            "id": 3,
-            "nom": "Sandales à Talon Soirée Rouge Rubis",
-            "description": "Finition velours, talon 8cm, fermeture boucle dorée",
-            "categorie": "Chaussures",
-            "origine": "Italie",
-            "prixGros": "18 000 XOF",
-            "stock": 240,
-            "moq": 25,
-            "groupeActif": true,
-            "image": "assets/images/sandales-talon-rouge.jpg",
-          },
-          {
-            "id": 4,
-            "nom": "Montre Quartz Homme Acier Inoxydable",
-            "description": "Cadran rond analogique, étanche 50m, cristal renforcé",
-            "categorie": "Mode",
-            "origine": "Chine",
-            "prixGros": "12 500 XOF",
-            "stock": 500,
-            "moq": 50,
-            "groupeActif": true,
-            "image": "assets/images/Montre-Homme-Quartz-Acier-Inoxydable-Cadran-Rond-Affichage-Analogique-Et-Num-rique-Boucle-Pliante-Simple-Cristal-Renforc-Nihaojewelry-France.webp",
-          },
-        ];
+            "image": p['photoUrl'] ?? '',
+          };
+        }).toList();
         _isLoading = false;
       });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _articles = [];
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Impossible de charger votre catalogue : $e")),
+      );
     }
   }
 
@@ -193,6 +153,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab-catalogue-grossiste',
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_photo_alternate_rounded),
@@ -424,11 +385,27 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        "MOQ : ${item["moq"]} pièces minimum",
+                                        item["resume"] as String,
                                         style: const TextStyle(
                                           fontSize: 11.5,
                                           color: AppTheme.secondary,
                                           fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: TextButton.icon(
+                                          onPressed: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => CreerGroupeGrossisteScreen(
+                                                produit: item["produit"] as Map<String, dynamic>,
+                                              ),
+                                            ),
+                                          ),
+                                          icon: const Icon(Icons.group_add_rounded, size: 18),
+                                          label: const Text("Créer un groupe"),
+                                          style: TextButton.styleFrom(foregroundColor: AppTheme.primary),
                                         ),
                                       ),
                                     ],

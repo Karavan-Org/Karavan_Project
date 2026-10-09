@@ -10,6 +10,8 @@ import 'suivi_colis_screen.dart';
 import 'code_retrait_commercant_screen.dart';
 import 'rejoindre_groupe_screen.dart';
 import 'groupe_selection_service.dart';
+import 'ouvrir_groupe_screen.dart';
+import '../services/lien_groupe.dart';
 
 /// Navigation principale Commerçant reproduisant fidèlement la maquette Figma Dogo
 /// avec animation FLUTTER FAB en ARC DE CERCLE (Radial / Semicircular Speed Dial)
@@ -55,6 +57,17 @@ class _CommercantMainNavState extends State<CommercantMainNav>
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex.clamp(0, 3);
+
+    // Lien d'invitation reçu avant la connexion : on ouvre le groupe dès l'arrivée dans l'espace commerçant
+    final enAttente = LienGroupe.enAttente;
+    if (enAttente != null) {
+      LienGroupe.enAttente = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => OuvrirGroupeScreen(groupeId: enAttente)));
+        }
+      });
+    }
 
     // Contrôleur d'animation pour l'ouverture en arc de cercle avec effet d'onde
     _fabController = AnimationController(
@@ -294,6 +307,7 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                 width: 58,
                 margin: const EdgeInsets.only(top: 8),
                 child: FloatingActionButton(
+                  heroTag: 'fab-nav-commercant',
                   onPressed: _toggleFabMenu,
                   elevation: isExpanded ? 8 : 4,
                   backgroundColor: isExpanded ? const Color(0xFF4A3222) : AppTheme.primary,

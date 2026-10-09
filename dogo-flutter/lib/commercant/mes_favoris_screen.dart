@@ -1,3 +1,4 @@
+import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'campagne_model.dart';
@@ -133,7 +134,7 @@ class MesFavorisScreen extends StatelessWidget {
                   width: 75,
                   height: 75,
                   color: const Color(0xFFF7F2EB),
-                  child: Image.asset(
+                  child: imageProduit(
                     groupe.imagePath,
                     fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => const Icon(Icons.shopping_bag_outlined),

@@ -234,7 +234,7 @@ public class RetraitService {
     /** Le Courtier du groupe, ou un administrateur : personne d'autre ne valide un retrait (RG-55). */
     private GroupeAchatApi.GroupeInfo groupeGere(UtilisateurCourant acteur, long groupeId) {
         GroupeAchatApi.GroupeInfo g = campagne.groupe(groupeId).orElseThrow(RetraitService::codeInvalide);
-        if (!acteur.estAdministrateur() && g.courtierId() != acteur.id()) {
+        if (!acteur.estAdministrateur() && (g.porteParGrossiste() || g.courtierId() != acteur.id())) {
             throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-55",
                     "Seul le courtier de ce groupe peut valider le retrait");
         }

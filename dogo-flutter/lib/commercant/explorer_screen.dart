@@ -1,8 +1,10 @@
+import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'campagne_model.dart';
 import 'favoris_service.dart';
 import 'fiche_campagne_screen.dart';
+import 'ouvrir_groupe_screen.dart';
 
 /// Écran Explorer pour le Commerçant (Découverte avancée, catégories, filtres pays)
 class ExplorerScreen extends StatefulWidget {
@@ -51,6 +53,13 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
         backgroundColor: Colors.white,
         foregroundColor: AppTheme.textPrimary,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.link_rounded),
+            tooltip: "Rejoindre via un lien",
+            onPressed: () => OuvrirGroupeScreen.saisirLien(context),
+          ),
+        ],
       ),
       body: AnimatedBuilder(
         animation: Listenable.merge([
@@ -289,7 +298,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                 width: 80,
                 height: 80,
                 color: const Color(0xFFF7F2EB),
-                child: Image.asset(
+                child: imageProduit(
                   g.imagePath,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Icon(Icons.shopping_bag_outlined),

@@ -39,12 +39,14 @@ springdoc:
 
 # Paramètres métier (voir « Règles de gestion »). Les valeurs marquées [à confirmer] sont des propositions.
 dogo:
+  cors:
+    origines: ${DOGO_CORS_ORIGINS:http://localhost:[*],http://127.0.0.1:[*],http://10.0.2.2:[*]}
   jwt:
     secret: ${DOGO_JWT_SECRET:changez-moi-changez-moi-changez-moi-32-octets-minimum}
   otp:
     validite: PT5M                 # RG-02
     max-tentatives: 3              # RG-02
-    afficher-dans-reponse: true   # renvoie le code dans la réponse pour tests gratuits et démo
+    afficher-dans-reponse: false  # activé uniquement dans application-demo.yml
   pin:
     max-echecs: 5                  # RG-07
     verrouillage: PT15M            # RG-07

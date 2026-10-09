@@ -42,6 +42,10 @@ public class Produit {
     @Column(name = "pays_origine")
     private String paysOrigine;
 
+    /** Prix de gros unitaire indicatif (XOF) : il pré-remplit le prix marchandise d'un groupe d'achat. */
+    @Column(name = "prix_gros")
+    private java.math.BigDecimal prixGros;
+
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = false)
     @JoinColumn(name = "produit_id", nullable = false)
     @OrderBy("id ASC")
@@ -67,6 +71,10 @@ public class Produit {
     public Produit(Long grossisteId, Long categorieId, String nom, String description, String paysOrigine,
                    List<VarianteProduit> variantes) {
         this(grossisteId, categorieId, nom, description, null, paysOrigine, variantes);
+    }
+
+    public void definirPrixGros(java.math.BigDecimal prixGros) {
+        this.prixGros = prixGros;
     }
 
     public void uploaderPhoto(String photoUrl) {
@@ -95,6 +103,7 @@ public class Produit {
     public String getNom() { return nom; }
     public String getDescription() { return description; }
     public String getPhotoUrl() { return photoUrl; }
+    public java.math.BigDecimal getPrixGros() { return prixGros; }
     public String getPaysOrigine() { return paysOrigine; }
     public List<VarianteProduit> getVariantes() { return variantes; }
 }

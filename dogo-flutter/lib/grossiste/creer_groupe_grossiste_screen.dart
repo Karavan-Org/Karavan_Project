@@ -1,9 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../services/api/api_exception.dart';
+import '../services/catalogue_api_service.dart';
+import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/image_produit.dart';
+import '../widgets/partage_groupe.dart';
 
-/// Écran de création d'une campagne d'Achat Groupé par le Grossiste
+/// Création d'un groupe d'achat par le Grossiste sur l'un de ses produits, sans courtier :
+/// il achemine lui-même la marchandise. Le prix de gros et le stock du produit pré-remplissent le
+/// formulaire ; la soumission vaut confirmation du stock (RG-18), le groupe attend ensuite la publication
+/// par un administrateur, et le grossiste peut partager son lien d'invitation.
 class CreerGroupeGrossisteScreen extends StatefulWidget {
-  const CreerGroupeGrossisteScreen({super.key});
+  /// Produit déjà choisi (ProduitVue du backend) ; sinon le grossiste le choisit dans son catalogue
+  final Map<String, dynamic>? produit;
+
+  const CreerGroupeGrossisteScreen({super.key, this.produit});
 
   @override
   State<CreerGroupeGrossisteScreen> createState() => _CreerGroupeGrossisteScreenState();
@@ -12,339 +24,451 @@ class CreerGroupeGrossisteScreen extends StatefulWidget {
 class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titreController = TextEditingController();
-  final _objectifPiecesController = TextEditingController();
-  final _prixUnitaireGroupeController = TextEditingController();
-  final _prixPublicController = TextEditingController();
-  final _dureeJoursController = TextEditingController(text: "7");
+  final _quantiteController = TextEditingController();
+  final _prixController = TextEditingController();
+  final _minimumController = TextEditingController(text: '1');
+  final _transportController = TextEditingController(text: '0');
+  final _douaneController = TextEditingController(text: '0');
+  final _autresController = TextEditingController(text: '0');
+  final _delaiController = TextEditingController(text: '30');
+  final _politiqueController = TextEditingController(text: "Annulation possible tant que l'objectif n'est pas atteint");
 
-  String _selectedProduit = "Bazin Riche Getzner Authentique";
-  String _selectedTransitaire = "Touré Transit (Maritime - 25j)";
+  List<Map<String, dynamic>> _produits = [];
+  Map<String, dynamic>? _produit;
+  DateTime _dateLimite = DateTime.now().add(const Duration(days: 14));
+  bool _chargement = false;
+  String? _erreurChargement;
+  bool _envoi = false;
+  bool _fraisVisibles = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.produit != null) {
+      _choisir(widget.produit!);
+    } else {
+      _chargerProduits();
+    }
+  }
 
   @override
   void dispose() {
-    _titreController.dispose();
-    _objectifPiecesController.dispose();
-    _prixUnitaireGroupeController.dispose();
-    _prixPublicController.dispose();
-    _dureeJoursController.dispose();
+    for (final c in [
+      _titreController,
+      _quantiteController,
+      _prixController,
+      _minimumController,
+      _transportController,
+      _douaneController,
+      _autresController,
+      _delaiController,
+      _politiqueController,
+    ]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
-  void _lancerCampagne() {
-    if (_formKey.currentState?.validate() ?? false) {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 28),
-              SizedBox(width: 10),
-              Text("Campagne Lancée !", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-            ],
+  Future<void> _chargerProduits() async {
+    setState(() {
+      _chargement = true;
+      _erreurChargement = null;
+    });
+    try {
+      final produits = await CatalogueApiService.instance.mesProduits();
+      if (!mounted) return;
+      setState(() {
+        _produits = produits.map((p) => Map<String, dynamic>.from(p as Map)).toList();
+        _chargement = false;
+        if (_produits.length == 1) _choisir(_produits.first);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _erreurChargement = e is ApiException ? e.messageComplet : '$e';
+        _chargement = false;
+      });
+    }
+  }
+
+  /// Le prix de gros et le stock saisis à l'ajout du produit deviennent le prix et l'objectif du groupe
+  void _choisir(Map<String, dynamic> p) {
+    _produit = p;
+    final nom = p['nom']?.toString() ?? '';
+    _titreController.text = nom.isEmpty ? '' : "Achat groupé $nom";
+    final stock = _stock(p);
+    _quantiteController.text = stock > 0 ? '$stock' : '';
+    final prix = p['prixGros'];
+    final prixEntier = prix is num ? prix.round() : num.tryParse(prix?.toString() ?? '')?.round();
+    _prixController.text = (prixEntier != null && prixEntier > 0) ? '$prixEntier' : '';
+  }
+
+  int _entier(TextEditingController c) => int.tryParse(c.text.trim()) ?? 0;
+
+  int _stock(Map<String, dynamic> p) => CatalogueApiService.stockTotal(p);
+
+  Future<void> _choisirDate() async {
+    final choisie = await showDatePicker(
+      context: context,
+      initialDate: _dateLimite,
+      firstDate: DateTime.now().add(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (choisie != null) setState(() => _dateLimite = DateTime(choisie.year, choisie.month, choisie.day, 23, 59));
+  }
+
+  Future<void> _creer() async {
+    if (_produit == null) {
+      _erreur("Choisissez d'abord un produit");
+      return;
+    }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _envoi = true);
+    try {
+      final service = GroupeApiService.instance;
+      final brouillon = await service.creer(
+        titre: _titreController.text,
+        produitId: (_produit!['id'] as num).toInt(),
+        quantiteCible: _entier(_quantiteController),
+        dateLimite: _dateLimite,
+        marchandise: _entier(_prixController),
+        transport: _entier(_transportController),
+        douane: _entier(_douaneController),
+        autres: _entier(_autresController),
+        delaiLivraisonJours: _entier(_delaiController),
+        politiqueAnnulation: _politiqueController.text.trim(),
+        quantiteMinParCommercant: _entier(_minimumController),
+      );
+      final groupe = await service.soumettre(brouillon.id);
+      CatalogueApiService.instance.signalerChangement();
+      if (!mounted) return;
+      setState(() => _envoi = false);
+      await _succes(groupe);
+      if (mounted) Navigator.of(context).pop(groupe);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _envoi = false);
+        _erreur(e is ApiException ? e.messageComplet : 'Création impossible : $e');
+      }
+    }
+  }
+
+  Future<void> _succes(GroupeResume groupe) async {
+    final partager = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        icon: const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 48),
+        title: const Text("Groupe créé !", style: TextStyle(fontWeight: FontWeight.w800)),
+        content: Text(
+          "« ${groupe.titre} » (n° ${groupe.id}) attend sa publication par dɔgɔ.\n\n"
+          "Prix pour les commerçants : ${groupe.prixUnitaire} FCFA / pièce (frais de plateforme inclus).\n\n"
+          "Partagez son lien pour que les commerçants le rejoignent.",
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Plus tard")),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.share_rounded, size: 18),
+            label: const Text("Partager le lien"),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Le groupe d'achat pour \"${_titreController.text}\" est désormais visible par tous les commerçants de Bamako !",
-                style: const TextStyle(fontSize: 13.5, color: AppTheme.textDark),
+        ],
+      ),
+    );
+    if (partager == true && mounted) await afficherPartageGroupe(context, groupe);
+  }
+
+  void _erreur(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: const Color(0xFFC0392B), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final produit = _produit;
+    final stock = produit == null ? 0 : _stock(produit);
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: const Text("Créer un groupe d'achat", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+        backgroundColor: AppTheme.surface,
+        foregroundColor: AppTheme.textDark,
+        elevation: 0,
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            _titre("Produit"),
+            const SizedBox(height: 10),
+            if (produit != null && (widget.produit != null || _produits.length <= 1))
+              _carteProduit(produit, selectionne: true)
+            else
+              ..._sectionProduits(),
+            if (produit != null) ...[
+              const SizedBox(height: 22),
+              _titre("Votre groupe"),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _titreController,
+                maxLength: 120,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: _decoration("Titre du groupe"),
+                validator: (v) => (v == null || v.trim().isEmpty) ? "Donnez un titre au groupe" : null,
+              ),
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _champ(_quantiteController, "Objectif (pièces)", minimum: 1, maximum: stock > 0 ? stock : null,
+                        aide: "Stock : $stock pcs"),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: _champ(_prixController, "Prix par pièce (FCFA)", minimum: 1, aide: "Prix de gros")),
+                ],
               ),
               const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: _choisirDate,
+                      borderRadius: BorderRadius.circular(14),
+                      child: InputDecorator(
+                        decoration: _decoration("Date limite"),
+                        child: Text(
+                          "${_dateLimite.day.toString().padLeft(2, '0')}/${_dateLimite.month.toString().padLeft(2, '0')}/${_dateLimite.year}",
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _champ(_minimumController, "Min. par achat", minimum: 1, aide: "pièces / commerçant",
+                        // RG-27 : le minimum d'un commerçant ne peut pas dépasser l'objectif du groupe
+                        verifier: (n) => n > _entier(_quantiteController) ? "≤ objectif" : null),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _sectionFrais(),
+              const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppTheme.tertiary.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  children: [
-                    _buildRow("Objectif :", "${_objectifPiecesController.text} pièces"),
-                    _buildRow("Prix de groupe :", "${_prixUnitaireGroupeController.text} FCFA"),
-                    _buildRow("Économie commerçant :", "-35%"),
-                    _buildRow("Durée :", "${_dureeJoursController.text} jours"),
-                  ],
+                child: const Text(
+                  "Vous acheminez vous-même la marchandise et signalez ses étapes à dɔgɔ. Les frais de plateforme "
+                  "sont ajoutés automatiquement au prix ; le groupe est visible des commerçants après sa publication.",
+                  style: TextStyle(fontSize: 12, color: AppTheme.textDark),
                 ),
               ),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _envoi ? null : _creer,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 54),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ),
+                child: _envoi
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                      )
+                    : const Text("Créer le groupe", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               ),
-              child: const Text("Fermer et voir mes groupes"),
-            ),
+            ],
           ],
         ),
-      );
-    }
-  }
-
-  Widget _buildRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
-        ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text("Créer un Groupe d'Achat", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Info banner
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2C241E), Color(0xFF45362C)],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
+  Widget _sectionFrais() {
+    // Bloc dépliable simple : un ExpansionTile rognait les libellés flottants des champs
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => setState(() => _fraisVisibles = !_fraisVisibles),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text("Frais et conditions (facultatif)",
+                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
                 ),
-                child: const Row(
+                Icon(_fraisVisibles ? Icons.expand_less_rounded : Icons.expand_more_rounded, color: AppTheme.textDark),
+              ],
+            ),
+          ),
+        ),
+        if (_fraisVisibles) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _champ(_transportController, "Transport / pce")),
+              const SizedBox(width: 12),
+              Expanded(child: _champ(_douaneController, "Douane / pce")),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _champ(_autresController, "Autres / pce")),
+              const SizedBox(width: 12),
+              Expanded(child: _champ(_delaiController, "Livraison (jours)")),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _politiqueController,
+            maxLines: 2,
+            decoration: _decoration("Politique d'annulation"),
+          ),
+          const SizedBox(height: 4),
+        ],
+      ],
+    );
+  }
+
+  List<Widget> _sectionProduits() {
+    if (_chargement) {
+      return const [
+        Padding(
+          padding: EdgeInsets.all(24),
+          child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+        ),
+      ];
+    }
+    if (_erreurChargement != null) {
+      return [
+        Text("Catalogue indisponible : $_erreurChargement", style: const TextStyle(color: Color(0xFFC0392B))),
+        TextButton(onPressed: _chargerProduits, child: const Text("Réessayer")),
+      ];
+    }
+    if (_produits.isEmpty) {
+      return [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+          child: const Text(
+            "Votre catalogue est vide : ajoutez d'abord un produit, puis créez son groupe d'achat.",
+            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+          ),
+        ),
+      ];
+    }
+    return [
+      for (final p in _produits)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _carteProduit(p, selectionne: identical(_produit, p), onTap: () => setState(() => _choisir(p))),
+        ),
+    ];
+  }
+
+  Widget _carteProduit(Map<String, dynamic> p, {required bool selectionne, VoidCallback? onTap}) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selectionne ? AppTheme.primary : const Color(0xFFEDE7E1),
+              width: selectionne ? 2 : 1.2,
+            ),
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  color: const Color(0xFFF7F2EB),
+                  child: imageProduit(p['photoUrl']?.toString() ?? '', fit: BoxFit.cover),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.groups_rounded, color: AppTheme.secondary, size: 28),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        "Réunissez des commerçants pour atteindre votre volume de gros.",
-                        style: TextStyle(color: Colors.white, fontSize: 12.5),
-                      ),
+                    Text(
+                      p['nom']?.toString() ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Stock : ${_stock(p)} pcs${p['prixGros'] != null ? ' • ${(p['prixGros'] as num).round()} FCFA / pce' : ''}",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              // Produit associé
-              const Text("1. Sélectionner l'article du catalogue", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5DDD5)),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedProduit,
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(
-                        value: "Bazin Riche Getzner Authentique",
-                        child: Text("Bazin Riche Getzner Authentique"),
-                      ),
-                      DropdownMenuItem(
-                        value: "Sneakers Chunky Sport Fashion",
-                        child: Text("Sneakers Chunky Sport Fashion"),
-                      ),
-                      DropdownMenuItem(
-                        value: "Robes Abayas Brodées Dubaï",
-                        child: Text("Robes Abayas Brodées Dubaï"),
-                      ),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedProduit = val);
-                    },
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              // Titre de la campagne
-              const Text("2. Titre de l'offre groupée", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _titreController,
-                decoration: InputDecoration(
-                  hintText: "Ex : Grand arrivage Bazin - MOQ 50",
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                ),
-                validator: (val) => val == null || val.isEmpty ? "Champ requis" : null,
-              ),
-
-              const SizedBox(height: 18),
-
-              // Objectif & Durée
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Objectif (Pièces)", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _objectifPiecesController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            suffixText: "pcs",
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Durée limite (Jours)", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _dureeJoursController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            suffixText: "jours",
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 18),
-
-              // Prix public vs Prix Groupe
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Prix Unitaire Groupe", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _prixUnitaireGroupeController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            suffixText: "F",
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Prix Détail Normal", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _prixPublicController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            suffixText: "F",
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 18),
-
-              // Transitaire recommandé
-              const Text("3. Transitaire logistique assigné", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5DDD5)),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedTransitaire,
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(
-                        value: "Touré Transit (Maritime - 25j)",
-                        child: Text("Touré Transit (Maritime - 25j)"),
-                      ),
-                      DropdownMenuItem(
-                        value: "Dogo Cargo Express (Aérien - 7j)",
-                        child: Text("Dogo Cargo Express (Aérien - 7j)"),
-                      ),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedTransitaire = val);
-                    },
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // Bouton Lancer
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: _lancerCampagne,
-                  icon: const Icon(Icons.rocket_launch_rounded, color: Colors.white),
-                  label: const Text(
-                    "Publier & Ouvrir le Groupe",
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 4,
-                  ),
-                ),
+              Icon(
+                selectionne ? Icons.check_circle : Icons.radio_button_unchecked,
+                color: selectionne ? AppTheme.primary : const Color(0xFFC7B8AA),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _titre(String texte) =>
+      Text(texte, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textDark));
+
+  InputDecoration _decoration(String label, {String? aide}) => InputDecoration(
+        labelText: label,
+        helperText: aide,
+        filled: true,
+        fillColor: Colors.white,
+        counterText: '',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      );
+
+  Widget _champ(TextEditingController c, String label,
+      {int minimum = 0, int? maximum, String? aide, String? Function(int)? verifier}) {
+    return TextFormField(
+      controller: c,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      decoration: _decoration(label, aide: aide),
+      validator: (v) {
+        final n = int.tryParse(v?.trim() ?? '');
+        if (n == null) return "Obligatoire";
+        if (n < minimum) return "Minimum $minimum";
+        if (maximum != null && n > maximum) return "Maximum $maximum (stock)";
+        return verifier?.call(n);
+      },
     );
   }
 }

@@ -16,6 +16,8 @@ public interface GroupeAchatRepository extends JpaRepository<GroupeAchat, Long> 
 
     List<GroupeAchat> findByGrossisteIdAndStatutOrderByIdAsc(Long grossisteId, StatutGroupe statut);
 
+    List<GroupeAchat> findByGrossisteIdOrderByIdDesc(Long grossisteId);
+
     boolean existsByProduitIdAndStatut(Long produitId, StatutGroupe statut);
 
     /** Lecture directe en base du statut (les colonnes de statut ne sont jamais écrites par l'entité). */

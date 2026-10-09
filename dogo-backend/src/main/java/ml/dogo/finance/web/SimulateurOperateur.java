@@ -5,6 +5,7 @@ import ml.dogo.finance.application.CallbackService;
 import ml.dogo.finance.application.GenerateurCallbackDemo;
 import ml.dogo.finance.application.TraitementPaiement;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * le signe avec le secret partagé et le fait passer par le même chemin que celui d'un opérateur réel.
  */
 @Profile("demo")
+@PreAuthorize("hasAuthority('ADMIN_CREER')")
 @RestController
 @RequestMapping("/api/dev/mobile-money")
 public class SimulateurOperateur {

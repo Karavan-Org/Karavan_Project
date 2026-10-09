@@ -79,6 +79,11 @@ class FluxPrincipalIT {
         long produitId = produit.get("id").asLong();
         long varianteId = produit.get("variantes").get(0).get("id").asLong();
 
+        // le courtier choisit le produit dans le catalogue des grossistes actifs (RG-16)
+        JsonNode disponibles = appeler(HttpMethod.GET, "/api/catalogue/produits-disponibles", courtier, null, 200);
+        assertTrue(disponibles.findValues("id").stream().anyMatch(id -> id.asLong() == produitId));
+        appeler(HttpMethod.GET, "/api/catalogue/produits-disponibles", grossiste, null, 403);
+
         appeler(HttpMethod.POST, "/api/groupes", commercants[0], groupe(produitId), 403);  // un commerçant ne crée pas de groupe
         JsonNode g = appeler(HttpMethod.POST, "/api/groupes", courtier, groupe(produitId), 201);
         long groupeId = g.get("id").asLong();
@@ -86,6 +91,10 @@ class FluxPrincipalIT {
 
         assertEquals("EN_VALIDATION", appeler(HttpMethod.POST, "/api/groupes/" + groupeId + "/soumission", courtier, null, 200).get("statut").asText());
         appeler(HttpMethod.POST, "/api/groupes/" + groupeId + "/disponibilite", grossiste, null, 200);
+        // le grossiste retrouve tous les groupes montés sur ses produits
+        JsonNode duGrossiste = appeler(HttpMethod.GET, "/api/groupes/du-grossiste", grossiste, null, 200);
+        assertTrue(duGrossiste.findValues("id").stream().anyMatch(id -> id.asLong() == groupeId));
+        appeler(HttpMethod.GET, "/api/groupes/du-grossiste", courtier, null, 403);
         appeler(HttpMethod.POST, "/api/admin/groupes/" + groupeId + "/publication", technique,
                 Map.of("approuve", true, "commentaire", "ok"), 200);
         assertEquals("OUVERT", appeler(HttpMethod.GET, "/api/groupes/" + groupeId, courtier, null, 200).get("statut").asText());
@@ -107,7 +116,7 @@ class FluxPrincipalIT {
             JsonNode paiement = appeler(HttpMethod.POST, "/api/participations/" + participations[i] + "/paiement", commercants[i],
                     Map.of(), 200, "Idempotency-Key", UUID.randomUUID().toString());
             long paiementId = paiement.get("id").asLong();
-            JsonNode resultat = appeler(HttpMethod.POST, "/api/dev/mobile-money/" + paiementId + "/succes", null, null, 200);
+            JsonNode resultat = appeler(HttpMethod.POST, "/api/dev/mobile-money/" + paiementId + "/succes", technique, null, 200);  // simulateur réservé à ADMIN_CREER
             assertEquals("TRAITE", resultat.get("resultat").asText());
             assertEquals("CONFIRMEE", appeler(HttpMethod.GET, "/api/participations/" + participations[i], commercants[i], null, 200)
                     .get("statut").asText());
@@ -131,6 +140,30 @@ class FluxPrincipalIT {
         appeler(HttpMethod.POST, "/api/groupes/" + groupeId + "/preparation", courtier, null, 200);
         appeler(HttpMethod.POST, "/api/groupes/" + groupeId + "/expedition", courtier, null, 200);
         assertEquals("EN_EXPEDITION", appeler(HttpMethod.GET, "/api/groupes/" + groupeId, courtier, null, 200).get("statut").asText());
+
+        // suivi du convoi : ACHETE -> CHEZ_TRANSITAIRE -> EN_TRANSIT <-> BLOQUE_DOUANE -> ARRIVE
+        // Étape 1 : sécurité - un commerçant ne peut ni créer ni modifier le convoi du courtier
+        appeler(HttpMethod.POST, "/api/convois", commercants[0],
+                Map.of("groupeId", groupeId, "reference", "CNV-HACK", "transporteur", "Fret Demo"), 403);
+
+        long convoiId = appeler(HttpMethod.POST, "/api/convois", courtier,
+                Map.of("groupeId", groupeId, "reference", "CNV-" + groupeId, "transporteur", "Fret Demo"), 201).get("id").asLong();
+
+        // Le commerçant et le grossiste du groupe voient le convoi en lecture seule
+        assertEquals(1, appeler(HttpMethod.GET, "/api/convois", commercants[0], null, 200).size());
+        assertEquals(1, appeler(HttpMethod.GET, "/api/convois", grossiste, null, 200).size());
+
+        // Modification interdite aux non-courtiers
+        appeler(HttpMethod.POST, "/api/convois/" + convoiId + "/transitaire", commercants[0], Map.of("localisation", "Istanbul"), 403);
+
+        appeler(HttpMethod.POST, "/api/convois/" + convoiId + "/transit", courtier, null, 409);  // pas encore chez le transitaire
+        appeler(HttpMethod.POST, "/api/convois/" + convoiId + "/transitaire", courtier, Map.of("localisation", "Istanbul"), 200);
+        appeler(HttpMethod.POST, "/api/convois/" + convoiId + "/transit", courtier, null, 200);
+        appeler(HttpMethod.POST, "/api/convois/" + convoiId + "/douane", courtier, Map.of("localisation", "Kati"), 200);
+        appeler(HttpMethod.POST, "/api/convois/" + convoiId + "/transit", courtier, null, 200);
+        JsonNode convoi = appeler(HttpMethod.POST, "/api/convois/" + convoiId + "/arrivee", courtier, null, 200);
+        assertEquals("ARRIVE", convoi.get("statut").asText());
+        assertEquals(6, convoi.get("evenements").size());
         appeler(HttpMethod.POST, "/api/admin/groupes/" + groupeId + "/reception", courtier, null, 403);  // réservé aux administrateurs
         appeler(HttpMethod.POST, "/api/admin/groupes/" + groupeId + "/reception", technique, null, 200);
         assertEquals("LIVRE", appeler(HttpMethod.GET, "/api/groupes/" + groupeId, courtier, null, 200).get("statut").asText());

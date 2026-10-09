@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import 'gestion_convoi_screen.dart';
-import 'lancer_convoi_screen.dart';
+import 'creer_groupe_courtier_screen.dart';
 import 'portefeuille_courtier_screen.dart';
 import 'scanner_retrait_screen.dart';
 
@@ -84,7 +84,7 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                 if (index == 1) {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const GestionConvoiScreen()));
                 } else if (index == 2) {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const LancerConvoiScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CreerGroupeCourtierScreen()));
                 } else if (index == 3) {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const ScannerRetraitScreen()));
                 } else if (index == 4) {
@@ -200,7 +200,7 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
             // --- CARTE D'ACTION RAPIDE : CRÉER UN GROUPE / CONVOI ---
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const LancerConvoiScreen()));
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CreerGroupeCourtierScreen()));
               },
               child: Container(
                 padding: const EdgeInsets.all(18),

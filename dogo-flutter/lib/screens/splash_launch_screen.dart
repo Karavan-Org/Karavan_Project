@@ -38,7 +38,7 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
 
   Future<void> _loadLogo() async {
     try {
-      final ByteData data = await rootBundle.load('assets/images/logo_dogo.png');
+      final ByteData data = await rootBundle.load('assets/logo/logoV.png');
       final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
       final ui.FrameInfo fi = await codec.getNextFrame();
       if (mounted) {
@@ -96,7 +96,7 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
             ),
           ),
 
-          // 2. Rendu complet des spirales d'eau cisaillée + logo + DoGo (100% Canvas natif)
+          // 2. Rendu complet des spirales d'eau cisaillée + logo logoV.png + DoGo (100% Canvas natif)
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _controller,
@@ -149,7 +149,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
       _drawShearedWaterSpirals(canvas, cx, cy, phaseSpiral, phaseBox);
     }
 
-    // 2. FUSION ET GÉOMÉTRIE DU LOGO (à la place exacte de la boîte)
+    // 2. LOGO DOGO OFFICIEL (Formé par la fusion des spirales à la place de la boîte)
     if (phaseBox > 0.0) {
       _drawLogo(canvas, cx, cy, phaseBox, phaseReveal, phaseFinal);
     }
@@ -160,7 +160,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
     }
   }
 
-  /// Dessine les spirales de fluide aquatique cisaillÃ© avec vagues, crÃªtes et gouttelettes
+  /// Dessine les spirales de fluide aquatique cisaillé avec vagues, crêtes et gouttelettes
   void _drawShearedWaterSpirals(
     Canvas canvas,
     double cx,
@@ -168,11 +168,11 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
     double phaseSpiral,
     double phaseBox,
   ) {
-    // OpacitÃ© gÃ©nÃ©rale qui s'estompe quand la boÃ®te se forme
+    // Opacité générale qui s'estompe quand le logo se forme
     final fadeOut = (1.0 - phaseBox * 1.4).clamp(0.0, 1.0);
     if (fadeOut <= 0.01) return;
 
-    // DÃ©finition des 5 bras de fluide avec les couleurs du Design System
+    // Définition des 5 bras de fluide avec les couleurs du Design System
     const List<_SpiralStream> streams = [
       _SpiralStream(
         color: cGold,
@@ -217,72 +217,69 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
     ];
 
     // Temps fluide pour l'effet de cisaillement vivant
-    final double flowTime = progress * 6.5;
-
-    // Tourbillon central (vortex rotatif qui s'accÃ©lÃ¨re vers le centre)
-    final double vortexSpeed = math.pow(phaseSpiral, 1.4).toDouble() * 3.5;
+    final double flowTime = phaseSpiral * 8.5;
+    final double vortexSpeed = 1.0 + phaseSpiral * 2.2;
 
     for (final stream in streams) {
-      _renderSingleShearedStream(
-        canvas: canvas,
-        cx: cx,
-        cy: cy,
-        stream: stream,
-        flowTime: flowTime,
-        vortexSpeed: vortexSpeed,
-        phaseSpiral: phaseSpiral,
-        phaseBox: phaseBox,
-        opacity: fadeOut,
+      _drawSingleShearedStream(
+        canvas,
+        cx,
+        cy,
+        stream,
+        flowTime,
+        vortexSpeed,
+        phaseSpiral,
+        phaseBox,
+        fadeOut,
       );
     }
 
-    // Ã‰claboussures & micro-gouttelettes d'eau cisaillÃ©es gravitant dans le vortex
+    // Éclaboussures et gouttelettes orbitales
     _drawFluidDroplets(canvas, cx, cy, flowTime, phaseSpiral, fadeOut);
   }
 
-  /// Dessine un ruban d'eau cisaillÃ©e avec modulation d'Ã©paisseur et crÃªtes de vague
-  void _renderSingleShearedStream({
-    required Canvas canvas,
-    required double cx,
-    required double cy,
-    required _SpiralStream stream,
-    required double flowTime,
-    required double vortexSpeed,
-    required double phaseSpiral,
-    required double phaseBox,
-    required double opacity,
-  }) {
-    // Le rayon externe diminue Ã  mesure que les spirales convergent pour former la boÃ®te
+  /// Dessine un bras de fluide individuel avec vagues de cisaillement transversales
+  void _drawSingleShearedStream(
+    Canvas canvas,
+    double cx,
+    double cy,
+    _SpiralStream stream,
+    double flowTime,
+    double vortexSpeed,
+    double phaseSpiral,
+    double phaseBox,
+    double opacity,
+  ) {
     final double maxRadius = 240.0 * (1.0 - phaseBox * 0.85);
     final double minRadius = 14.0 * (1.0 - phaseBox);
 
-    // Trajectoire en spirale logarithmique cisaillÃ©e
+    // Trajectoire en spirale logarithmique cisaillée
     const int sampleCount = 45;
     final List<Offset> centerPoints = [];
     final List<double> widths = [];
 
     for (int i = 0; i <= sampleCount; i++) {
-      final double s = i / sampleCount; // 0 (extÃ©rieur) -> 1 (centre)
+      final double s = i / sampleCount; // 0 (extérieur) -> 1 (centre)
 
       // Rayon contractant vers le centre
       final double r = minRadius + (maxRadius - minRadius) * math.pow(1.0 - s, 1.35);
 
-      // Angle en spirale avec accÃ©lÃ©ration vers le centre (vortex)
+      // Angle en spirale avec accélération vers le centre (vortex)
       final double spiralAngle = stream.baseAngle +
           (vortexSpeed * 2.2 * math.pi * s) +
           (flowTime * 0.4);
 
-      // Effet d'eau cisaillÃ©e (onde hydrodynamique transversale le long du ruban)
+      // Effet d'eau cisaillée (onde hydrodynamique transversale le long du ruban)
       final double wavePhase = s * stream.shearFrequency - flowTime * 2.2;
       final double shearDisplacement = math.sin(wavePhase) * stream.waveAmplitude * math.sin(s * math.pi);
 
-      // Formule de la crÃªte d'eau cisaillÃ©e (effilement vers le bord extÃ©rieur, gonflement au centre)
+      // Formule de la crête d'eau cisaillée (effilement vers le bord extérieur, gonflement au centre)
       final double px = cx + (r + shearDisplacement) * math.cos(spiralAngle);
       final double py = cy + (r + shearDisplacement) * math.sin(spiralAngle);
 
       centerPoints.add(Offset(px, py));
 
-      // Ã‰paisseur du ruban d'eau (forme en gouttelette allongÃ©e / jet d'eau effilÃ©)
+      // Épaisseur du ruban d'eau (forme en gouttelette allongée / jet d'eau effilé)
       final double ribbonWidth = math.sin(s * math.pi) * (18.0 * (1.0 - phaseBox * 0.5));
       widths.add(ribbonWidth);
     }
@@ -298,7 +295,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
       final p = centerPoints[i];
       final w = widths[i];
 
-      // Vecteur tangent pour dÃ©terminer la normale
+      // Vecteur tangent pour déterminer la normale
       Offset tangent;
       if (i == 0) {
         tangent = centerPoints[1] - p;
@@ -326,7 +323,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
     }
     ribbonPath.close();
 
-    // Rendu avec dÃ©gradÃ© liquide chatoyant
+    // Rendu avec dégradé liquide chatoyant
     final gradient = LinearGradient(
       colors: [
         stream.accentColor.withValues(alpha: 0.1 * opacity),
@@ -352,7 +349,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
     canvas.drawPath(ribbonPath, ribbonPaint);
   }
 
-  /// Dessine les gouttelettes et Ã©claboussures en orbite hydrodynamique
+  /// Dessine les gouttelettes et éclaboussures en orbite hydrodynamique
   void _drawFluidDroplets(
     Canvas canvas,
     double cx,
@@ -433,11 +430,13 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
       canvas.drawCircle(Offset.zero, 60, flashPaint);
     }
 
-    // 3. Dessin du logo DoGo (sac avec anneau orbital)
+    // 3. Dessin du logo DoGo officiel (assets/logo/logoV.png)
     if (logoImage != null) {
+      final double imgW = logoImage!.width.toDouble();
+      final double imgH = logoImage!.height.toDouble();
       const double targetW = 96.0;
-      const double targetH = 96.0 * (704.0 / 764.0); // 88.4
-      final srcRect = Rect.fromLTWH(0, 0, logoImage!.width.toDouble(), logoImage!.height.toDouble());
+      final double targetH = targetW * (imgH / imgW);
+      final srcRect = Rect.fromLTWH(0, 0, imgW, imgH);
       final dstRect = Rect.fromCenter(center: Offset.zero, width: targetW, height: targetH);
       final paint = Paint()
         ..filterQuality = FilterQuality.high
@@ -448,7 +447,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
     canvas.restore();
   }
 
-  /// RÃ©vÃ¨le le nom de l'application Â« DoGo Â» avec une onde lumineuse Ã©lÃ©gante
+  /// Révèle le nom de l'application « DoGo » avec une onde lumineuse élégante
   void _drawRevealedBrandName(
     Canvas canvas,
     double cx,
@@ -456,17 +455,17 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
     double phaseReveal,
     double phaseFinal,
   ) {
-    // Position du texte Ã  droite de la boÃ®te
+    // Position du texte à droite du logo
     final logoX = cx + 20.0;
     final logoY = cy - 28.0;
 
-    // DÃ©roulement progressif de gauche Ã  droite
+    // Déroulement progressif de gauche à droite
     final revealWidth = 220.0 * Curves.easeOutCubic.transform(phaseReveal);
 
     canvas.save();
     canvas.clipRect(Rect.fromLTWH(logoX - 6, logoY - 20, revealWidth, 85));
 
-    // Dessin du texte Â« DoGo Â» avec la typographie officielle
+    // Dessin du texte « DoGo » avec la typographie officielle
     final textPainter = TextPainter(
       text: TextSpan(
         children: [
@@ -501,12 +500,12 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
     textPainter.layout();
     textPainter.paint(canvas, Offset(logoX, logoY));
 
-    // Sous-titre de marque : "ACHAT GROUPÃ‰ B2B"
+    // Sous-titre de marque : "ACHAT GROUPÉ B2B"
     if (phaseReveal > 0.35) {
       final subAlpha = ((phaseReveal - 0.35) / 0.45).clamp(0.0, 1.0);
       final subPainter = TextPainter(
         text: TextSpan(
-          text: "ACHAT GROUPÃ‰ B2B",
+          text: "ACHAT GROUPÉ B2B",
           style: TextStyle(
             fontSize: 10.5,
             fontWeight: FontWeight.w800,
@@ -520,7 +519,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
       subPainter.paint(canvas, Offset(logoX + 2, logoY + 54));
     }
 
-    // Balayage lumineux Ã©clatant une fois stabilisÃ©
+    // Balayage lumineux éclatant une fois stabilisé
     if (phaseFinal > 0.0) {
       final shineX = logoX + (phaseFinal * 220);
       final shinePaint = Paint()
@@ -543,7 +542,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
   }
 }
 
-/// CaractÃ©ristiques d'un flux de couleur fluide
+/// Caractéristiques d'un flux de couleur fluide
 class _SpiralStream {
   final Color color;
   final Color accentColor;
@@ -561,4 +560,3 @@ class _SpiralStream {
     required this.waveAmplitude,
   });
 }
-

@@ -116,7 +116,7 @@ public class TraitementPaiement {
         BigDecimal montant = p.getMontant();
         ParticipationApi.ParticipationInfo part = participations.participation(p.getParticipationId()).orElseThrow();
         GroupeAchatApi.GroupeInfo g = campagne.groupe(part.groupeId()).orElseThrow();
-        long portefeuilleId = mouvements.portefeuilleDe(g.courtierId()).getId();
+        long portefeuilleId = mouvements.portefeuilleDe(g.porteurId()).getId();
 
         p.changerStatut(StatutPaiement.PAYE, maintenant);
         sequestres.save(new Sequestre(paiementId, montant, maintenant));

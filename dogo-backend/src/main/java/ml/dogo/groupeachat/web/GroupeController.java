@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -27,13 +28,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class GroupeController {
 
     public record GroupeRequete(
-            Long produitId, @NotNull @Positive Integer quantiteCible, @NotNull Instant dateLimite,
+            @Size(max = 120) String titre, Long produitId, @NotNull @Positive Integer quantiteCible,
+            @NotNull Instant dateLimite,
             @NotNull BigDecimal marchandise, @NotNull BigDecimal transport, @NotNull BigDecimal douane,
             @NotNull BigDecimal autres, Integer delaiLivraisonJours, String politiqueAnnulation,
             Integer quantiteMinParCommercant) {
 
         GroupeService.Demande versDemande() {
-            return new GroupeService.Demande(produitId, quantiteCible, dateLimite, marchandise, transport, douane,
+            return new GroupeService.Demande(titre, produitId, quantiteCible, dateLimite, marchandise, transport, douane,
                     autres, delaiLivraisonJours, politiqueAnnulation, quantiteMinParCommercant);
         }
     }
@@ -42,6 +44,9 @@ public class GroupeController {
     }
 
     public record MotifRequete(@NotBlank String motif) {
+    }
+
+    public record EtapeRequete(@NotBlank @Size(max = 80) String etape, @Size(max = 500) String commentaire) {
     }
 
     private final GroupeService groupes;
@@ -53,7 +58,6 @@ public class GroupeController {
     // ------------------------------------------------------------- consultation
 
     @GetMapping("/groupes")
-    @PreAuthorize("hasAuthority('CAMPAGNE_EXPLORER')")
     public List<GroupeService.GroupeVue> explorer(@RequestParam(required = false) Long categorieId,
                                                   @RequestParam(required = false, name = "q") String recherche) {
         return groupes.explorer(categorieId, recherche);
@@ -62,13 +66,19 @@ public class GroupeController {
     @GetMapping("/groupes/mes-groupes")
     @PreAuthorize("hasAuthority('GROUPE_CREER')")
     public List<GroupeService.GroupeVue> mesGroupes(@AuthenticationPrincipal UtilisateurCourant moi) {
-        return groupes.duCourtier(moi.id());
+        return groupes.mesGroupes(moi);
     }
 
     @GetMapping("/groupes/a-valider")
     @PreAuthorize("hasAuthority('GROUPE_DISPONIBILITE_VALIDER')")
     public List<GroupeService.GroupeVue> aValider(@AuthenticationPrincipal UtilisateurCourant moi) {
         return groupes.aValiderParGrossiste(moi.id());
+    }
+
+    @GetMapping("/groupes/du-grossiste")
+    @PreAuthorize("hasAuthority('GROUPE_DISPONIBILITE_VALIDER')")
+    public List<GroupeService.GroupeVue> duGrossiste(@AuthenticationPrincipal UtilisateurCourant moi) {
+        return groupes.duGrossiste(moi.id());
     }
 
     @GetMapping("/admin/groupes/en-validation")
@@ -125,6 +135,20 @@ public class GroupeController {
     public GroupeService.GroupeVue decider(@AuthenticationPrincipal UtilisateurCourant moi, @PathVariable long id,
                                            @Valid @RequestBody DecisionRequete r) {
         return groupes.decider(moi.id(), id, r.approuve(), r.commentaire());
+    }
+
+    @GetMapping("/groupes/{id}/etapes")
+    @PreAuthorize("hasAnyAuthority('GROUPE_DISPONIBILITE_VALIDER', 'RECEPTION_VALIDER', 'GROUPE_PUBLICATION_VALIDER')")
+    public List<GroupeService.EtapeVue> etapes(@AuthenticationPrincipal UtilisateurCourant moi, @PathVariable long id) {
+        return groupes.etapes(moi, id);
+    }
+
+    @PostMapping("/groupes/{id}/etapes")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('GROUPE_DISPONIBILITE_VALIDER')")
+    public void signalerEtape(@AuthenticationPrincipal UtilisateurCourant moi, @PathVariable long id,
+                              @Valid @RequestBody EtapeRequete r) {
+        groupes.signalerEtape(moi.id(), id, r.etape(), r.commentaire());
     }
 
     @PostMapping("/groupes/{id}/annulation")

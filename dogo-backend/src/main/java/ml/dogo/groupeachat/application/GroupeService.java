@@ -14,6 +14,8 @@ import ml.dogo.groupeachat.persistence.GrilleTarifaire;
 import ml.dogo.groupeachat.persistence.GrilleTarifaireRepository;
 import ml.dogo.groupeachat.persistence.GroupeAchat;
 import ml.dogo.groupeachat.persistence.GroupeAchatRepository;
+import ml.dogo.groupeachat.persistence.EtapeAcheminement;
+import ml.dogo.groupeachat.persistence.EtapeAcheminementRepository;
 import ml.dogo.groupeachat.persistence.TransitionStatutGroupeRepository;
 import ml.dogo.groupeachat.persistence.ValidationGroupe;
 import ml.dogo.groupeachat.persistence.ValidationGroupeRepository;
@@ -33,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class GroupeService {
 
-    public record Demande(Long produitId, Integer quantiteCible, Instant dateLimite, BigDecimal marchandise,
+    public record Demande(String titre, Long produitId, Integer quantiteCible, Instant dateLimite, BigDecimal marchandise,
                           BigDecimal transport, BigDecimal douane, BigDecimal autres, Integer delaiLivraisonJours,
                           String politiqueAnnulation, Integer quantiteMinParCommercant) {
     }
@@ -42,7 +44,7 @@ public class GroupeService {
     }
 
     public record ProduitVue(long id, String nom, String description, String paysOrigine, String categorie,
-                             List<VarianteVue> variantes) {
+                             String photoUrl, List<VarianteVue> variantes) {
     }
 
     public record ActeurVue(long id, String nom) {
@@ -55,8 +57,9 @@ public class GroupeService {
     public record ConditionsVue(int delaiLivraisonJours, String politiqueAnnulation, int quantiteMinParCommercant) {
     }
 
-    public record GroupeVue(long id, String statut, ProduitVue produit, ActeurVue courtier, ActeurVue grossiste,
-                            int quantiteCible, int quantiteConfirmee, int quantiteReservee, int quantiteRestante,
+    /** {@code courtier} est nul pour un groupe porté par le grossiste ({@code porteParGrossiste}). */
+    public record GroupeVue(long id, String titre, String statut, ProduitVue produit, ActeurVue courtier,
+                            ActeurVue grossiste, boolean porteParGrossiste, int quantiteCible, int quantiteConfirmee, int quantiteReservee, int quantiteRestante,
                             BigDecimal prixUnitaire, GrilleVue grille, ConditionsVue conditions, Instant dateOuverture,
                             Instant dateLimite, boolean disponibiliteValidee) {
     }
@@ -64,7 +67,11 @@ public class GroupeService {
     public record TransitionVue(String ancien, String nouveau, Instant date, String auteur) {
     }
 
+    public record EtapeVue(long id, String etape, String commentaire, Instant date) {
+    }
+
     private final GroupeAchatRepository groupes;
+    private final EtapeAcheminementRepository etapes;
     private final GrilleTarifaireRepository grilles;
     private final ConditionCommercialeRepository conditions;
     private final TransitionStatutGroupeRepository transitions;
@@ -81,8 +88,9 @@ public class GroupeService {
                          ConditionCommercialeRepository conditions, TransitionStatutGroupeRepository transitions,
                          ValidationGroupeRepository validations, MoteurEtatsGroupe moteur, CatalogueApi catalogue,
                          IdentiteApi identite, AuditApi audit, NotificationApi notifications,
-                         DogoProperties proprietes, Clock horloge) {
+                         DogoProperties proprietes, Clock horloge, EtapeAcheminementRepository etapes) {
         this.groupes = groupes;
+        this.etapes = etapes;
         this.grilles = grilles;
         this.conditions = conditions;
         this.transitions = transitions;
@@ -98,39 +106,48 @@ public class GroupeService {
 
     // ------------------------------------------------------------- création / modification
 
-    /** RG-16, RG-17, RG-20 : un Courtier validé crée un brouillon avec une grille tarifaire complète. */
+    /**
+     * RG-16, RG-17, RG-20 : un Courtier validé crée un brouillon avec une grille tarifaire complète.
+     * Un Grossiste validé peut aussi monter un groupe sur l'un de ses propres produits : il en est alors le porteur
+     * (pas de courtier) et achemine lui-même la marchandise.
+     */
     @Transactional
-    public GroupeVue creer(long courtierId, Demande d) {
-        IdentiteApi.ActeurInfo courtier = identite.exigerActif(courtierId);
-        if (!"COURTIER".equals(courtier.type())) {
-            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-16", "Seul un courtier validé crée un groupe");
+    public GroupeVue creer(long acteurId, Demande d) {
+        IdentiteApi.ActeurInfo createur = identite.exigerActif(acteurId);
+        boolean parGrossiste = "GROSSISTE".equals(createur.type());
+        if (!parGrossiste && !"COURTIER".equals(createur.type())) {
+            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-16",
+                    "Seul un courtier ou un grossiste validé crée un groupe");
         }
         if (d.produitId() == null) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-16", "Le produit est obligatoire");
         }
         CatalogueApi.ProduitInfo produit = catalogue.produit(d.produitId())
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Produit", d.produitId()));
+        if (parGrossiste && produit.grossisteId() != acteurId) {
+            throw ErreurMetier.nonTrouve("Produit", d.produitId());
+        }
         identite.exigerActif(produit.grossisteId());
         Instant maintenant = horloge.instant();
         Calcul calcul = calculer(d, maintenant);
-        GroupeAchat g = groupes.save(new GroupeAchat(courtierId, produit.grossisteId(), produit.id(),
-                calcul.quantiteCible, calcul.prixUnitaire, maintenant, d.dateLimite()));
+        GroupeAchat g = groupes.save(new GroupeAchat(parGrossiste ? null : acteurId, produit.grossisteId(),
+                produit.id(), titre(d), calcul.quantiteCible, calcul.prixUnitaire, maintenant, d.dateLimite()));
         grilles.save(new GrilleTarifaire(g.getId(), calcul.composantes, proprietes.commission().taux()));
         conditions.save(new ConditionCommerciale(g.getId(), calcul.delai, d.politiqueAnnulation(), calcul.minimum));
-        audit.tracer(courtierId, "GROUPE_CREE", null, "groupe=" + g.getId() + ", produit=" + produit.id());
+        audit.tracer(acteurId, "GROUPE_CREE", null, "groupe=" + g.getId() + ", produit=" + produit.id());
         return vue(groupes.findById(g.getId()).orElseThrow());
     }
 
     /** RG-17 / RG-20 : un brouillon reste modifiable ; dès qu'il est soumis, la grille est figée. */
     @Transactional
-    public GroupeVue modifier(long courtierId, long groupeId, Demande d) {
-        GroupeAchat g = groupeDuCourtier(courtierId, groupeId);
+    public GroupeVue modifier(long porteurId, long groupeId, Demande d) {
+        GroupeAchat g = groupeDuPorteur(porteurId, groupeId);
         if (g.getStatut() != StatutGroupe.BROUILLON) {
             throw new ErreurMetier(CodeErreur.CONFLIT, "RG-20",
                     "La grille tarifaire est figée : seul un brouillon peut être modifié");
         }
         Calcul calcul = calculer(d, horloge.instant());
-        g.modifierBrouillon(calcul.quantiteCible, calcul.prixUnitaire, d.dateLimite());
+        g.modifierBrouillon(titre(d), calcul.quantiteCible, calcul.prixUnitaire, d.dateLimite());
         grilles.findByGroupeId(groupeId).orElseThrow().appliquer(calcul.composantes, proprietes.commission().taux());
         conditions.findByGroupeId(groupeId).orElseThrow().appliquer(calcul.delai, d.politiqueAnnulation(), calcul.minimum);
         groupes.flush();
@@ -139,11 +156,18 @@ public class GroupeService {
 
     // ---------------------------------------------------------------- circuit de validation
 
-    /** BROUILLON → EN_VALIDATION : le Grossiste doit maintenant valider la disponibilité (RG-18). */
+    /**
+     * BROUILLON → EN_VALIDATION : le Grossiste doit maintenant valider la disponibilité (RG-18).
+     * Quand le grossiste porte lui-même le groupe, sa soumission vaut attestation de disponibilité.
+     */
     @Transactional
-    public GroupeVue soumettre(long courtierId, long groupeId) {
-        GroupeAchat g = groupeDuCourtier(courtierId, groupeId);
-        moteur.transitionner(groupeId, StatutGroupe.EN_VALIDATION, "COURTIER:" + courtierId, null);
+    public GroupeVue soumettre(long porteurId, long groupeId) {
+        GroupeAchat g = groupeDuPorteur(porteurId, groupeId);
+        if (g.estPorteParGrossiste()) {
+            moteur.transitionner(groupeId, StatutGroupe.EN_VALIDATION, "GROSSISTE:" + porteurId, null);
+            return validerDisponibilite(porteurId, groupeId);
+        }
+        moteur.transitionner(groupeId, StatutGroupe.EN_VALIDATION, "COURTIER:" + porteurId, null);
         notifications.notifier(g.getGrossisteId(),
                 "Un groupe d'achat #" + groupeId + " attend la validation de la disponibilité de vos marchandises.");
         return vue(groupes.findById(groupeId).orElseThrow());
@@ -202,18 +226,18 @@ public class GroupeService {
         String message = approuve
                 ? "Votre groupe #" + groupeId + " est publié : les commerçants peuvent le rejoindre."
                 : "Votre groupe #" + groupeId + " n'a pas été publié. Motif : " + commentaire;
-        notifications.notifier(g.getCourtierId(), message);
+        notifications.notifier(g.getPorteurId(), message);
         return vue(groupes.findById(groupeId).orElseThrow());
     }
 
-    /** RG-24 : annulation par un Administrateur ou par le Courtier du groupe, avant l'objectif atteint. */
+    /** RG-24 : annulation par un Administrateur ou par le porteur du groupe (Courtier ou Grossiste), avant l'objectif atteint. */
     @Transactional
     public GroupeVue annuler(UtilisateurCourant acteur, long groupeId, String motif) {
         GroupeAchat g = groupes.findById(groupeId).orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
-        boolean proprietaire = g.getCourtierId().equals(acteur.id());
+        boolean proprietaire = g.getPorteurId().equals(acteur.id());
         if (!acteur.estAdministrateur() && !proprietaire) {
             throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-24",
-                    "Seul un administrateur ou le courtier du groupe peut l'annuler");
+                    "Seul un administrateur ou le porteur du groupe peut l'annuler");
         }
         if (motif == null || motif.isBlank()) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-68", "Un motif d'annulation est obligatoire");
@@ -222,11 +246,11 @@ public class GroupeService {
             throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, "RG-24",
                     "Un groupe ne peut plus être annulé une fois l'objectif atteint");
         }
-        String auteur = (acteur.estAdministrateur() ? "ADMIN:" : "COURTIER:") + acteur.id();
+        String auteur = (acteur.estAdministrateur() ? "ADMIN" : acteur.type()) + ":" + acteur.id();
         moteur.transitionner(groupeId, StatutGroupe.ANNULE, auteur, motif);
         audit.tracer(acteur.id(), "GROUPE_ANNULE", "groupe=" + groupeId, motif);
         if (!proprietaire) {
-            notifications.notifier(g.getCourtierId(), "Votre groupe #" + groupeId + " a été annulé. Motif : " + motif);
+            notifications.notifier(g.getPorteurId(), "Votre groupe #" + groupeId + " a été annulé. Motif : " + motif);
         }
         return vue(groupes.findById(groupeId).orElseThrow());
     }
@@ -242,12 +266,56 @@ public class GroupeService {
         moteur.transitionner(groupeId, atteint ? StatutGroupe.OBJECTIF_ATTEINT : StatutGroupe.ECHOUE, "SYSTEME", null);
         audit.tracer(null, atteint ? "GROUPE_OBJECTIF_ATTEINT" : "GROUPE_ECHOUE", "groupe=" + groupeId,
                 "confirmee=" + g.getQuantiteConfirmee() + "/" + g.getQuantiteCible());
-        notifications.notifier(g.getCourtierId(), atteint
+        notifications.notifier(g.getPorteurId(), atteint
                 ? "Le groupe #" + groupeId + " a atteint son objectif."
                 : "Le groupe #" + groupeId + " n'a pas atteint son objectif à la date limite : les paiements sont remboursés.");
     }
 
+    /**
+     * Le grossiste qui porte un groupe achemine la marchandise par ses propres moyens : il signale chaque étape
+     * (départ, transit, douane, arrivée…) aux administrateurs, qui mettent à jour le suivi vu par les commerçants.
+     */
+    @Transactional
+    public void signalerEtape(long grossisteId, long groupeId, String etape, String commentaire) {
+        GroupeAchat g = groupeDuPorteur(grossisteId, groupeId);
+        if (!g.estPorteParGrossiste()) {
+            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "L'acheminement de ce groupe est géré par son courtier");
+        }
+        StatutGroupe s = g.getStatut();
+        if (s != StatutGroupe.OBJECTIF_ATTEINT && s != StatutGroupe.EN_EXPEDITION && s != StatutGroupe.LIVRE) {
+            throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, null,
+                    "Les étapes d'acheminement se signalent une fois l'objectif atteint (état actuel : " + s + ")");
+        }
+        String precision = commentaire == null || commentaire.isBlank() ? null : commentaire.strip();
+        etapes.save(new EtapeAcheminement(groupeId, etape.strip(), precision, horloge.instant(), grossisteId));
+        String detail = etape.strip() + (precision == null ? "" : " — " + precision);
+        audit.tracer(grossisteId, "ETAPE_ACHEMINEMENT_SIGNALEE", "groupe=" + groupeId, detail);
+        String titre = g.getTitre() != null ? g.getTitre()
+                : catalogue.produit(g.getProduitId()).map(CatalogueApi.ProduitInfo::nom).orElse("");
+        for (Long admin : identite.administrateursActifs()) {
+            notifications.notifier(admin, "Suivi colis — groupe #" + groupeId + " « " + titre + " » : " + detail
+                    + ". Mettez à jour le suivi vu par les commerçants.");
+        }
+    }
+
+    /** Étapes signalées par le grossiste porteur, de la plus ancienne à la plus récente (lui et les administrateurs). */
+    @Transactional(readOnly = true)
+    public List<EtapeVue> etapes(UtilisateurCourant demandeur, long groupeId) {
+        GroupeAchat g = groupes.findById(groupeId).orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
+        if (!demandeur.estAdministrateur() && !g.getPorteurId().equals(demandeur.id())) {
+            throw ErreurMetier.nonTrouve("Groupe", groupeId);
+        }
+        return etapes.findByGroupeIdOrderByIdAsc(groupeId).stream()
+                .map(e -> new EtapeVue(e.getId(), e.getEtape(), e.getCommentaire(), e.getDateSignalee())).toList();
+    }
+
     // ---------------------------------------------------------------------- consultation
+
+    /** Les groupes que l'acteur pilote : ceux du courtier, ou tous ceux montés sur les produits du grossiste. */
+    @Transactional(readOnly = true)
+    public List<GroupeVue> mesGroupes(UtilisateurCourant moi) {
+        return "GROSSISTE".equals(moi.type()) ? duGrossiste(moi.id()) : duCourtier(moi.id());
+    }
 
     /** Groupes ouverts, avec filtres facultatifs sur la catégorie et le nom du produit (RG-14 : catégories inactives comprises). */
     @Transactional(readOnly = true)
@@ -269,6 +337,12 @@ public class GroupeService {
     public List<GroupeVue> aValiderParGrossiste(long grossisteId) {
         return groupes.findByGrossisteIdAndStatutOrderByIdAsc(grossisteId, StatutGroupe.EN_VALIDATION).stream()
                 .map(this::vue).toList();
+    }
+
+    /** Tous les groupes montés sur les produits du Grossiste, du plus récent au plus ancien. */
+    @Transactional(readOnly = true)
+    public List<GroupeVue> duGrossiste(long grossisteId) {
+        return groupes.findByGrossisteIdOrderByIdDesc(grossisteId).stream().map(this::vue).toList();
     }
 
     @Transactional(readOnly = true)
@@ -295,7 +369,7 @@ public class GroupeService {
     private GroupeAchat visible(UtilisateurCourant u, long groupeId) {
         GroupeAchat g = groupes.findById(groupeId).orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
         boolean admin = u.estAdministrateur();
-        boolean courtier = g.getCourtierId().equals(u.id());
+        boolean courtier = g.getCourtierId() != null && g.getCourtierId().equals(u.id());
         boolean grossiste = g.getGrossisteId().equals(u.id());
         if ("GROSSISTE".equals(u.type()) && !grossiste) {
             throw ErreurMetier.nonTrouve("Groupe", groupeId);
@@ -307,9 +381,20 @@ public class GroupeService {
         return g;
     }
 
-    private GroupeAchat groupeDuCourtier(long courtierId, long groupeId) {
-        return groupes.findById(groupeId).filter(g -> g.getCourtierId().equals(courtierId))
+    private GroupeAchat groupeDuPorteur(long porteurId, long groupeId) {
+        return groupes.findById(groupeId).filter(g -> g.getPorteurId().equals(porteurId))
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
+    }
+
+    private static String titre(Demande d) {
+        if (d.titre() == null || d.titre().isBlank()) {
+            return null;
+        }
+        String t = d.titre().strip();
+        if (t.length() > 120) {
+            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-17", "Le titre du groupe dépasse 120 caractères");
+        }
+        return t;
     }
 
     private record Calcul(int quantiteCible, CalculPrix.Composantes composantes, BigDecimal prixUnitaire, int delai,
@@ -347,10 +432,11 @@ public class GroupeService {
         CatalogueApi.ProduitInfo p = catalogue.produit(g.getProduitId()).orElseThrow();
         GrilleTarifaire grille = grilles.findByGroupeId(g.getId()).orElseThrow();
         ConditionCommerciale cond = conditions.findByGroupeId(g.getId()).orElseThrow();
-        return new GroupeVue(g.getId(), g.getStatut().name(),
-                new ProduitVue(p.id(), p.nom(), p.description(), p.paysOrigine(), p.categorie(),
+        return new GroupeVue(g.getId(), g.getTitre() != null ? g.getTitre() : p.nom(), g.getStatut().name(),
+                new ProduitVue(p.id(), p.nom(), p.description(), p.paysOrigine(), p.categorie(), p.photoUrl(),
                         p.variantes().stream().map(v -> new VarianteVue(v.id(), v.sku(), v.taille(), v.couleur())).toList()),
-                acteur(g.getCourtierId()), acteur(g.getGrossisteId()), g.getQuantiteCible(), g.getQuantiteConfirmee(),
+                g.getCourtierId() == null ? null : acteur(g.getCourtierId()), acteur(g.getGrossisteId()),
+                g.estPorteParGrossiste(), g.getQuantiteCible(), g.getQuantiteConfirmee(),
                 g.getQuantiteReservee(),
                 Math.max(0, g.getQuantiteCible() - g.getQuantiteConfirmee() - g.getQuantiteReservee()),
                 g.getPrixUnitaire(),

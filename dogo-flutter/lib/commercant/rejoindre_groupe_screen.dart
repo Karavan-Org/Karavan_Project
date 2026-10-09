@@ -13,16 +13,20 @@ class RejoindreGroupeScreen extends StatefulWidget {
   final String taille;
   final int prixUnitaire;
   final String courtierNom;
+  final String imagePath;
+  final String paysOrigine;
 
   const RejoindreGroupeScreen({
     super.key,
     this.groupeId = 1,
     this.varianteId = 1,
-    this.titre = "Sneakers Nike Joyride (Export Turquie)",
+    this.titre = "",
     this.quantite = 5,
     this.taille = "42",
-    this.prixUnitaire = 18500,
-    this.courtierNom = "Touré Transit & Logistique SARL",
+    this.prixUnitaire = 0,
+    this.courtierNom = "",
+    this.imagePath = "",
+    this.paysOrigine = "",
   });
 
   @override
@@ -118,13 +122,13 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
         MaterialPageRoute(
           builder: (_) => ReussitePaiementScreen(
             titreProduit: widget.titre,
-            paysOrigine: "Turquie",
+            paysOrigine: widget.paysOrigine,
             prixUnitaire: widget.prixUnitaire,
             quantite: widget.quantite,
             montantTotal: _total,
             moyenPaiement: _operateurSelectionne,
             dateHeure: "Aujourd'hui - ${TimeOfDay.now().format(context)}",
-            imagePath: "assets/images/Nike_Joyride-removebg-preview.png",
+            imagePath: widget.imagePath,
             piecesActuelles: 780,
             piecesObjectif: 1000,
           ),

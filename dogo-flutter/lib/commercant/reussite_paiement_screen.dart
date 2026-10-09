@@ -1,3 +1,4 @@
+import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'mes_commandes_screen.dart';
@@ -17,14 +18,14 @@ class ReussitePaiementScreen extends StatelessWidget {
 
   const ReussitePaiementScreen({
     super.key,
-    this.titreProduit = "Sneakers Premium",
-    this.paysOrigine = "Turquie",
+    this.titreProduit = "",
+    this.paysOrigine = "",
     this.prixUnitaire = 8500,
     this.quantite = 25,
     this.montantTotal = 212500,
     this.moyenPaiement = "Orange Money",
     this.dateHeure = "12 sept. 2026 - 10:24",
-    this.imagePath = "assets/images/Nike_Joyride-removebg-preview.png",
+    this.imagePath = "",
     this.piecesActuelles = 780,
     this.piecesObjectif = 1000,
   });
@@ -220,7 +221,7 @@ class ReussitePaiementScreen extends StatelessWidget {
 
             const SizedBox(height: 18),
 
-            // 4. MINI-CARTE PRODUIT FIGMA (Sneakers Premium / Nike Joyride)
+            // 4. MINI-CARTE PRODUIT FIGMA
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -245,7 +246,7 @@ class ReussitePaiementScreen extends StatelessWidget {
                       height: 82,
                       color: const Color(0xFFF6F0E6),
                       padding: const EdgeInsets.all(6),
-                      child: Image.asset(
+                      child: imageProduit(
                         imagePath,
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => const Icon(

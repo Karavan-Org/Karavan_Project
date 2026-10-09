@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Set;
 import java.util.UUID;
 
@@ -47,12 +46,20 @@ public class StockageService {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "TAILLE_MAX", "La taille du fichier dépasse la limite de 5 Mo.");
         }
 
-        String typeMime = fichier.getContentType();
-        if (typeMime == null || !TYPES_MIME_AUTORISES.contains(typeMime.toLowerCase())) {
+        // Le type est déduit de la signature du fichier : le Content-Type déclaré par le client
+        // (souvent application/octet-stream depuis mobile) n'est ni fiable ni sûr.
+        byte[] contenu;
+        try {
+            contenu = fichier.getBytes();
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors de la lecture de l'image.", e);
+        }
+        String typeMime = typeImage(contenu);
+        if (typeMime == null || !TYPES_MIME_AUTORISES.contains(typeMime)) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "TYPE_FICHIER", "Formats acceptés : JPEG, PNG, WEBP.");
         }
 
-        String extension = switch (typeMime.toLowerCase()) {
+        String extension = switch (typeMime) {
             case "image/png" -> ".png";
             case "image/webp" -> ".webp";
             default -> ".jpg";
@@ -67,12 +74,27 @@ public class StockageService {
         }
 
         try {
-            Files.copy(fichier.getInputStream(), cible, StandardCopyOption.REPLACE_EXISTING);
+            Files.write(cible, contenu);
         } catch (IOException e) {
             throw new RuntimeException("Erreur lors de l'enregistrement de l'image.", e);
         }
 
         return "/api/public/images/produits/" + nomSecurise;
+    }
+
+    /** Signature binaire : JPEG, PNG ou WEBP ; {@code null} sinon. */
+    static String typeImage(byte[] c) {
+        if (c.length >= 3 && (c[0] & 0xFF) == 0xFF && (c[1] & 0xFF) == 0xD8 && (c[2] & 0xFF) == 0xFF) {
+            return "image/jpeg";
+        }
+        if (c.length >= 4 && (c[0] & 0xFF) == 0x89 && c[1] == 'P' && c[2] == 'N' && c[3] == 'G') {
+            return "image/png";
+        }
+        if (c.length >= 12 && c[0] == 'R' && c[1] == 'I' && c[2] == 'F' && c[3] == 'F'
+                && c[8] == 'W' && c[9] == 'E' && c[10] == 'B' && c[11] == 'P') {
+            return "image/webp";
+        }
+        return null;
     }
 }
 

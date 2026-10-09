@@ -2,15 +2,26 @@ package ml.dogo.groupeachat.api;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 /** Ce que les autres modules ont le droit de faire avec les groupes d'achat. */
 public interface GroupeAchatApi {
 
-    record GroupeInfo(long id, long courtierId, long grossisteId, long produitId, String produitNom, String statut,
+    /** {@code courtierId} est nul pour un groupe porté par le grossiste du produit : voir {@link #porteurId()}. */
+    record GroupeInfo(long id, Long courtierId, long grossisteId, long produitId, String produitNom, String statut,
                       int quantiteCible, int quantiteConfirmee, int quantiteReservee, BigDecimal prixUnitaire,
                       BigDecimal fraisUnitaire, BigDecimal tauxCommission, int quantiteMinParCommercant,
                       Instant dateLimite) {
+
+        /** Celui qui pilote le groupe et tient le séquestre : le courtier, ou à défaut le grossiste. */
+        public long porteurId() {
+            return courtierId != null ? courtierId : grossisteId;
+        }
+
+        public boolean porteParGrossiste() {
+            return courtierId == null;
+        }
 
         public boolean ouvert() {
             return "OUVERT".equals(statut);
@@ -40,5 +51,11 @@ public interface GroupeAchatApi {
 
     /** Passage d'état demandé par la logistique (EN_EXPEDITION, LIVRE, TERMINE), toujours validé par le moteur d'états. */
     void transitionner(long groupeId, String cible, String auteur);
+
+    /** Renvoie les identifiants de groupes gérés par un courtier donné. */
+    List<Long> groupeIdsParCourtier(long courtierId);
+
+    /** Renvoie les identifiants de groupes montés sur les produits d'un grossiste donné. */
+    List<Long> groupeIdsParGrossiste(long grossisteId);
 }
 

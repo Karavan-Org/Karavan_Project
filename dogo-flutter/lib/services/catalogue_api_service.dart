@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
 
@@ -8,6 +8,23 @@ class CatalogueApiService {
   static final CatalogueApiService instance = CatalogueApiService._();
 
   final ApiClient _api = ApiClient.instance;
+
+  /// Incrémenté à chaque changement du catalogue ou des groupes du grossiste :
+  /// l'accueil et l'onglet Catalogue l'écoutent pour se recharger.
+  final ValueNotifier<int> revision = ValueNotifier<int>(0);
+
+  void signalerChangement() => revision.value++;
+
+  /// Stock total d'un produit (somme des variantes)
+  static int stockTotal(Map p) =>
+      ((p['variantes'] as List?) ?? []).fold<int>(0, (t, v) => t + (((v as Map)['qteDisponible'] as num?) ?? 0).toInt());
+
+  /// Le SKU est unique sur toute la plateforme (RG-12) : préfixe tiré du nom, horodatage, rang de la variante.
+  static List<String> genererSkus(String nomProduit, int nombre) {
+    final prefixe = nomProduit.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '').padRight(3, 'X').substring(0, 3);
+    final horodatage = DateTime.now().microsecondsSinceEpoch.toRadixString(36).toUpperCase();
+    return List.generate(nombre, (i) => '$prefixe-$horodatage-${i + 1}');
+  }
 
   /// Téléverse une photo de produit sur le serveur Spring Boot via multipart/form-data
   /// Retourne l'URL relative de la photo stockée (ex: /api/public/images/produits/prod_1_uuid.jpg)
@@ -35,6 +52,7 @@ class CatalogueApiService {
     String? description,
     String? paysOrigine,
     String? photoUrl,
+    num? prixGros,
     required List<Map<String, dynamic>> variantes,
   }) async {
     final body = {
@@ -43,6 +61,7 @@ class CatalogueApiService {
       'description': description,
       'paysOrigine': paysOrigine,
       'photoUrl': photoUrl,
+      if (prixGros != null && prixGros > 0) 'prixGros': prixGros,
       'variantes': variantes,
     };
 
@@ -51,6 +70,7 @@ class CatalogueApiService {
       body: body,
     );
 
+    signalerChangement();
     return Map<String, dynamic>.from(response as Map);
   }
 

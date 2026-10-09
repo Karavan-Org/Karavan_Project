@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import 'api_exception.dart';
@@ -224,6 +225,49 @@ class ApiClient {
     }
   }
 
+  // --- REQUÊTE MULTIPART À PLUSIEURS FICHIERS (Dossier KYC) ---
+  /// Chaque fichier est envoyé sous le même nom de champ [fieldName] ; [fields] accompagne la requête.
+  Future<dynamic> postMultipartFichiers(
+    String endpoint, {
+    required String fieldName,
+    required List<({List<int> bytes, String filename})> fichiers,
+    Map<String, String>? fields,
+  }) async {
+    try {
+      final request = http.MultipartRequest('POST', _construireUri(endpoint));
+      if (_jeton != null && _jeton!.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $_jeton';
+      }
+      request.headers['Accept'] = 'application/json';
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+      for (final f in fichiers) {
+        request.files.add(http.MultipartFile.fromBytes(fieldName, f.bytes, filename: f.filename));
+      }
+
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 60));
+      final response = await http.Response.fromStream(streamedResponse);
+      return _traiterReponse(response);
+    } on SocketException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Impossible de joindre le serveur DoGo. Vérifiez votre connexion internet.',
+      );
+    } on TimeoutException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Délai d\'attente dépassé lors de l\'envoi des documents.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        statusCode: 0,
+        message: 'Erreur réseau : ${e.toString()}',
+      );
+    }
+  }
+
   /// Analyse la réponse HTTP et extrait le JSON ou déclenche l'exception standardisée
   dynamic _traiterReponse(http.Response response) {
     final statusCode = response.statusCode;
@@ -237,6 +281,9 @@ class ApiClient {
       }
     }
 
-    throw ApiException.fromResponseBody(statusCode, response.body);
+    // La console du navigateur / de l'IDE affiche la raison du refus renvoyée par le backend
+    final corps = utf8.decode(response.bodyBytes, allowMalformed: true);
+    debugPrint('API ${response.request?.method} ${response.request?.url.path} -> $statusCode $corps');
+    throw ApiException.fromResponseBody(statusCode, corps);
   }
 }

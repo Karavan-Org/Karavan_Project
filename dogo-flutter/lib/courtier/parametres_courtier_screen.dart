@@ -42,7 +42,7 @@ class _ParametresCourtierScreenState extends State<ParametresCourtierScreen> {
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3))],
             ),
-            child: Column(
+            child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(18), clipBehavior: Clip.antiAlias, child: Column(
               children: [
                 ListTile(
                   leading: const Icon(Icons.flight_takeoff_rounded, color: Color(0xFF9E6738)),
@@ -78,7 +78,7 @@ class _ParametresCourtierScreenState extends State<ParametresCourtierScreen> {
                   trailing: Icon(Icons.verified, color: AppTheme.success, size: 18),
                 ),
               ],
-            ),
+            )),
           ),
 
           const SizedBox(height: 24),
@@ -91,7 +91,7 @@ class _ParametresCourtierScreenState extends State<ParametresCourtierScreen> {
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3))],
             ),
-            child: Column(
+            child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(18), clipBehavior: Clip.antiAlias, child: Column(
               children: [
                 SwitchListTile(
                   activeThumbColor: const Color(0xFF9E6738),
@@ -111,7 +111,7 @@ class _ParametresCourtierScreenState extends State<ParametresCourtierScreen> {
                   onChanged: (val) => setState(() => _alertesDouanes = val),
                 ),
               ],
-            ),
+            )),
           ),
 
           const SizedBox(height: 24),

@@ -177,7 +177,7 @@ class CourtierProfilScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Column(
+                child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(22), clipBehavior: Clip.antiAlias, child: Column(
                   children: [
                     // Item 1 : Mes groupes
                     _buildFigmaMenuItem(
@@ -249,7 +249,7 @@ class CourtierProfilScreen extends StatelessWidget {
                       onTap: () => _confirmerDeconnexion(context),
                     ),
                   ],
-                ),
+                )),
               ),
             ],
           ),

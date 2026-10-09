@@ -65,8 +65,9 @@ public class PortefeuilleService {
     @Transactional
     public PortefeuilleVue retirer(long courtierId, BigDecimal montant, Long moyenId, String cle) {
         IdentiteApi.ActeurInfo acteur = identite.exigerActif(courtierId);
-        if (!"COURTIER".equals(acteur.type())) {
-            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-41", "Réservé aux courtiers");
+        // Le porteur d'un groupe encaisse : le courtier, ou le grossiste qui monte ses propres groupes
+        if (!"COURTIER".equals(acteur.type()) && !"GROSSISTE".equals(acteur.type())) {
+            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-41", "Réservé aux courtiers et aux grossistes");
         }
         if (cle == null || cle.isBlank() || cle.length() > 60) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-41", "La clé d'idempotence est obligatoire");

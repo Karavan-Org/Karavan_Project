@@ -151,7 +151,7 @@ class AideSupportScreen extends StatelessWidget {
           BoxShadow(color: Color(0x0646321E), blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
-      child: ExpansionTile(
+      child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(16), clipBehavior: Clip.antiAlias, child: ExpansionTile(
         title: Text(
           question,
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF2C241E)),
@@ -164,7 +164,7 @@ class AideSupportScreen extends StatelessWidget {
             style: const TextStyle(fontSize: 12, color: Color(0xFF5A493B), height: 1.4),
           ),
         ],
-      ),
+      )),
     );
   }
 }

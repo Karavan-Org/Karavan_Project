@@ -1,3 +1,4 @@
+import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'campagne_model.dart';
@@ -21,18 +22,18 @@ class FicheCampagneScreen extends StatefulWidget {
 
   const FicheCampagneScreen({
     super.key,
-    this.id = "grp-nike-joyride",
-    this.titre = "Sneakers Nike Joyride",
-    this.sousTitre = "Série Export Qualité Supérieure - Lot groupé Turquie",
-    this.imagePath = "assets/images/Nike_Joyride.jpg",
-    this.prixGroupe = 18500,
-    this.prixPublic = 45000,
-    this.quantiteActuelle = 16,
-    this.quantiteObjectif = 20,
-    this.categorie = "Sneakers",
-    this.paysOrigine = "Istanbul, Turquie",
-    this.courtierNom = "Touré Transit & Logistique",
-    this.tempsRestant = "3 jours restants",
+    this.id = "",
+    this.titre = "",
+    this.sousTitre = "",
+    this.imagePath = "",
+    this.prixGroupe = 0,
+    this.prixPublic = 0,
+    this.quantiteActuelle = 0,
+    this.quantiteObjectif = 1,
+    this.categorie = "",
+    this.paysOrigine = "",
+    this.courtierNom = "",
+    this.tempsRestant = "",
   });
 
   @override
@@ -152,7 +153,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                   Container(
                     color: const Color(0xFFF7F2EC),
                     child: Center(
-                      child: Image.asset(
+                      child: imageProduit(
                         widget.imagePath,
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) => const Icon(
@@ -454,7 +455,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                         const Divider(height: 20, color: Color(0xFFF1EAE2)),
                         _buildInfoLigne(
                           icon: Icons.local_shipping_outlined,
-                          titre: "Courtier en charge",
+                          titre: "Acheminement assuré par",
                           valeur: widget.courtierNom,
                         ),
                         const Divider(height: 20, color: Color(0xFFF1EAE2)),
@@ -565,6 +566,8 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                         taille: _tailleSelectionnee,
                         prixUnitaire: widget.prixGroupe,
                         courtierNom: widget.courtierNom,
+                        imagePath: widget.imagePath,
+                        paysOrigine: widget.paysOrigine,
                       ),
                     ),
                   );

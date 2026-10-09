@@ -1,222 +1,194 @@
 import 'package:flutter/material.dart';
+import '../services/api/api_exception.dart';
+import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
-import 'creer_groupe_grossiste_screen.dart';
+import '../widgets/carte_groupe.dart';
+import '../widgets/partage_groupe.dart';
+import 'suivi_colis_grossiste_screen.dart';
 
-/// Écran "Mes groupes" du Grossiste
-/// Liste des campagnes d'achats groupés lancées, suivi des réservations et des jauges
+/// Groupes d'achat montés sur les produits du Grossiste (GET /api/groupes/du-grossiste) : ceux qu'il a créés
+/// lui-même (il les partage et signale les étapes de leur acheminement à dɔgɔ), et ceux des courtiers,
+/// dont il confirme la disponibilité du stock (RG-18).
 class MesGroupesGrossisteScreen extends StatefulWidget {
-  const MesGroupesGrossisteScreen({super.key});
+  final String titre;
+  final String filtreInitial;
+
+  const MesGroupesGrossisteScreen({super.key, this.titre = "Mes groupes d'achat", this.filtreInitial = "Tous"});
 
   @override
   State<MesGroupesGrossisteScreen> createState() => _MesGroupesGrossisteScreenState();
 }
 
 class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
-  String _filtre = "Tous";
+  static const _filtres = ["Tous", "À confirmer", "Ouverts", "Clôturés"];
 
-  final List<Map<String, dynamic>> _groupes = [];
+  late String _filtre = widget.filtreInitial;
+  List<GroupeResume> _groupes = [];
+  bool _chargement = true;
+  String? _erreur;
+  int? _enConfirmation;
+
+  @override
+  void initState() {
+    super.initState();
+    _charger();
+  }
+
+  Future<void> _charger() async {
+    setState(() {
+      _chargement = true;
+      _erreur = null;
+    });
+    try {
+      final groupes = await GroupeApiService.instance.groupesDuGrossiste();
+      if (!mounted) return;
+      setState(() {
+        _groupes = groupes;
+        _chargement = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _erreur = e is ApiException ? e.messageComplet : '$e';
+        _chargement = false;
+      });
+    }
+  }
+
+  bool _aConfirmer(GroupeResume g) => g.statut == 'EN_VALIDATION' && !g.disponibiliteValidee;
+
+  List<GroupeResume> get _filtres_ => switch (_filtre) {
+        "À confirmer" => _groupes.where(_aConfirmer).toList(),
+        "Ouverts" => _groupes.where((g) => g.statut == 'OUVERT').toList(),
+        "Clôturés" => _groupes
+            .where((g) => !['BROUILLON', 'EN_VALIDATION', 'OUVERT'].contains(g.statut))
+            .toList(),
+        _ => _groupes,
+      };
+
+  Future<void> _confirmer(GroupeResume g) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Confirmer le stock"),
+        content: Text(
+          "Vous confirmez disposer de ${g.quantiteCible} pièces de « ${g.produitNom} » pour le groupe n° ${g.id} "
+          "(courtier : ${g.courtierNom}).",
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Annuler")),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+            child: const Text("Je confirme"),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _enConfirmation = g.id);
+    try {
+      await GroupeApiService.instance.validerDisponibilite(g.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Stock confirmé : le groupe attend maintenant la publication par dɔgɔ"),
+          backgroundColor: AppTheme.success,
+        ),
+      );
+      await _charger();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e is ApiException ? e.messageComplet : 'Confirmation impossible : $e'),
+          backgroundColor: const Color(0xFFC0392B),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _enConfirmation = null);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final groupes = _filtres_;
     return Scaffold(
       backgroundColor: const Color(0xFFFAF7F2),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: Text(
+          widget.titre,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
         ),
-        title: const Text(
-          "Mes Groupes d'Achat",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF9E6738)),
-            tooltip: "Nouveau groupe",
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CreerGroupeGrossisteScreen()),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: Column(
         children: [
-          // Filtres
-          Padding(
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Row(
               children: [
-                _buildFilterChip("Tous"),
-                const SizedBox(width: 8),
-                _buildFilterChip("En cours"),
-                const SizedBox(width: 8),
-                _buildFilterChip("Atteints"),
+                for (final f in _filtres) ...[_puce(f), const SizedBox(width: 8)],
               ],
             ),
           ),
-
-          const SizedBox(height: 8),
-
-          // Liste des groupes
           Expanded(
-            child: _groupes.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.08),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
+            child: RefreshIndicator(
+              color: AppTheme.primary,
+              onRefresh: _charger,
+              child: _chargement
+                  ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                  : _erreur != null
+                      ? _etat(Icons.cloud_off_outlined, "Chargement impossible", _erreur!)
+                      : groupes.isEmpty
+                          ? _etat(
                               Icons.groups_outlined,
-                              size: 40,
-                              color: AppTheme.primary,
+                              "Aucun groupe",
+                              "Sélectionnez un produit de votre catalogue et appuyez sur + pour lancer un groupe. "
+                                  "Les groupes montés par des courtiers sur vos produits apparaissent aussi ici.",
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+                              itemCount: groupes.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 14),
+                              itemBuilder: (context, i) {
+                                final g = groupes[i];
+                                return CarteGroupe(
+                                  groupe: g,
+                                  partenaire: g.porteParGrossiste
+                                      ? "Votre groupe • acheminement par vos soins"
+                                      : (g.courtierNom.isEmpty ? '' : "Courtier : ${g.courtierNom}"),
+                                  action: _aConfirmer(g)
+                                      ? ElevatedButton.icon(
+                                          onPressed: _enConfirmation == null ? () => _confirmer(g) : null,
+                                          icon: _enConfirmation == g.id
+                                              ? const SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                                )
+                                              : const Icon(Icons.fact_check_rounded, size: 18),
+                                          label: const Text("Confirmer mon stock"),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppTheme.primary,
+                                            foregroundColor: Colors.white,
+                                            minimumSize: const Size(double.infinity, 42),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                                          ),
+                                        )
+                                      : _actions(g),
+                                );
+                              },
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            "Aucun groupe d'achat",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: Color(0xFF2C241E),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            "Créez un premier groupe pour proposer vos lots aux commerçants de Bamako.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-              itemCount: _groupes.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 14),
-              itemBuilder: (context, index) {
-                final g = _groupes[index];
-                final double ratio = (g["piecesReservees"] as int) / (g["objectifPieces"] as int);
-
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFEFE9E0)),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF7EFE7),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              g["id"] as String,
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF9E6738),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: (g["statutColor"] as Color).withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              g["statut"] as String,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: g["statutColor"] as Color,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        g["titre"] as String,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Color(0xFF2C241E)),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Origine : ${g["origine"]} • ${g["tempsRestant"]}",
-                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74)),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Jauge
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "${g["piecesReservees"]} / ${g["objectifPieces"]} pièces réservées",
-                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF2C241E)),
-                          ),
-                          Text(
-                            "${(ratio * 100).toInt()}%",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: g["statutColor"] as Color,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: ratio,
-                          minHeight: 6,
-                          backgroundColor: const Color(0xFFEFE9E0),
-                          valueColor: AlwaysStoppedAnimation<Color>(g["statutColor"] as Color),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "${g["commercants"]} commerçants engagés",
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF8C7E74)),
-                          ),
-                          Text(
-                            g["prixGros"] as String,
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF9E6738)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
             ),
           ),
         ],
@@ -224,23 +196,84 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label) {
-    final isSelected = _filtre == label;
+  /// Partage du lien (groupe en attente de publication ou ouvert) et signalement des étapes d'acheminement
+  Widget? _actions(GroupeResume g) {
+    final partageable = g.statut == 'OUVERT' || (g.porteParGrossiste && g.statut == 'EN_VALIDATION');
+    if (!partageable && !g.acheminementAuGrossiste) return null;
+    return Row(
+      children: [
+        if (partageable)
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => afficherPartageGroupe(context, g),
+              icon: const Icon(Icons.share_rounded, size: 18),
+              label: const Text("Partager le lien"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primary,
+                side: const BorderSide(color: AppTheme.primary),
+                minimumSize: const Size(0, 42),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              ),
+            ),
+          ),
+        if (g.acheminementAuGrossiste)
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SuiviColisGrossisteScreen()),
+              ).then((_) => _charger()),
+              icon: const Icon(Icons.local_shipping_rounded, size: 18),
+              label: const Text("Suivi du colis"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(0, 42),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _etat(IconData icone, String titre, String texte) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(32),
+      children: [
+        const SizedBox(height: 40),
+        Icon(icone, size: 48, color: AppTheme.primary),
+        const SizedBox(height: 14),
+        Text(
+          titre,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF2C241E)),
+        ),
+        const SizedBox(height: 6),
+        Text(texte, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+      ],
+    );
+  }
+
+  Widget _puce(String label) {
+    final actif = _filtre == label;
+    final nombre = label == "À confirmer" ? _groupes.where(_aConfirmer).length : 0;
     return GestureDetector(
       onTap: () => setState(() => _filtre = label),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF9E6738) : Colors.white,
+          color: actif ? const Color(0xFF9E6738) : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: isSelected ? const Color(0xFF9E6738) : const Color(0xFFE5DDD5)),
+          border: Border.all(color: actif ? const Color(0xFF9E6738) : const Color(0xFFE5DDD5)),
         ),
         child: Text(
-          label,
+          nombre > 0 ? "$label ($nombre)" : label,
           style: TextStyle(
             fontSize: 11.5,
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF5A493B),
+            fontWeight: actif ? FontWeight.w800 : FontWeight.w600,
+            color: actif ? Colors.white : const Color(0xFF5A493B),
           ),
         ),
       ),

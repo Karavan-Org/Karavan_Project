@@ -25,10 +25,10 @@ class GroupeCampagneModel {
     required this.quantiteActuelle,
     required this.quantiteObjectif,
     required this.categorie,
-    this.paysOrigine = "Istanbul, Turquie",
-    this.courtierNom = "Touré Transit & Logistique SARL",
-    this.grossisteNom = "Grossiste Cissé & Fils (Turquie)",
-    this.tempsRestant = "3 jours restants",
+    this.paysOrigine = "",
+    this.courtierNom = "",
+    this.grossisteNom = "",
+    this.tempsRestant = "",
     this.varianteId,
   });
 
@@ -58,27 +58,26 @@ class GroupeCampagneModel {
     final rawQteCible = json['quantiteCible'] ?? json['quantiteObjectif'];
     final int qteCible = rawQteCible is num ? rawQteCible.toInt() : int.tryParse(rawQteCible?.toString() ?? '100') ?? 100;
 
-    // Association intelligente d'image selon la catégorie
+    // Photo réelle du produit (servie par le backend) ; à défaut, le logo dɔgɔ
     String resolveImage() {
-      final img = json['imagePath']?.toString() ?? '';
-      if (img.isNotEmpty) return img;
+      final photo = produit?['photoUrl']?.toString() ?? json['imagePath']?.toString() ?? '';
+      return photo.isNotEmpty ? photo : 'assets/images/logo_dogo.png';
+    }
 
-      final cat = (produit?['categorie'] ?? json['categorie'] ?? '').toString().toLowerCase();
-      if (cat.contains('chauss') || cat.contains('sneaker')) {
-        return 'assets/images/Nike_Joyride-removebg-preview.png';
-      }
-      if (cat.contains('mode') || cat.contains('abaya') || cat.contains('robe')) {
-        return 'assets/images/soft-elegance-abaya-coat-nida-purple-noor-and-grace.webp';
-      }
-      if (cat.contains('maroquinerie') || cat.contains('sac')) {
-        return 'assets/images/wallet.jpg';
-      }
-      return 'assets/images/logo_dogo.png';
+    String resolveTempsRestant() {
+      if (json['tempsRestant'] is String) return json['tempsRestant'] as String;
+      final limite = DateTime.tryParse(json['dateLimite']?.toString() ?? '');
+      if (limite == null) return '';
+      final reste = limite.difference(DateTime.now());
+      if (reste.isNegative) return 'Clôturé';
+      if (reste.inDays >= 1) return '${reste.inDays} jour${reste.inDays > 1 ? 's' : ''} restant${reste.inDays > 1 ? 's' : ''}';
+      return '${reste.inHours} h restantes';
     }
 
     return GroupeCampagneModel(
       id: json['id']?.toString() ?? '1',
-      titre: produit?['nom'] as String? ?? json['titre'] as String? ?? 'Lot Import Groupé',
+      // Titre choisi par le créateur du groupe (le backend renvoie le nom du produit à défaut)
+      titre: json['titre'] as String? ?? produit?['nom'] as String? ?? 'Lot Import Groupé',
       sousTitre: produit?['description'] as String? ?? json['sousTitre'] as String? ?? 'Achat groupé international B2B',
       imagePath: resolveImage(),
       prixGroupe: pGroupe,
@@ -86,10 +85,11 @@ class GroupeCampagneModel {
       quantiteActuelle: qteActuelle,
       quantiteObjectif: qteCible > 0 ? qteCible : 100,
       categorie: produit?['categorie'] as String? ?? json['categorie'] as String? ?? 'Général',
-      paysOrigine: produit?['paysOrigine'] as String? ?? json['paysOrigine'] as String? ?? 'Istanbul, Turquie',
-      courtierNom: courtier?['nom'] as String? ?? json['courtierNom'] as String? ?? 'Touré Transit & Logistique SARL',
-      grossisteNom: grossiste?['nom'] as String? ?? json['grossisteNom'] as String? ?? 'Grossiste Partenaire',
-      tempsRestant: json['tempsRestant'] as String? ?? '3 jours restants',
+      paysOrigine: produit?['paysOrigine'] as String? ?? json['paysOrigine'] as String? ?? '',
+      // Groupe porté par un grossiste (sans courtier) : c'est lui qui achemine la marchandise
+      courtierNom: courtier?['nom'] as String? ?? json['courtierNom'] as String? ?? grossiste?['nom'] as String? ?? '',
+      grossisteNom: grossiste?['nom'] as String? ?? json['grossisteNom'] as String? ?? '',
+      tempsRestant: resolveTempsRestant(),
       varianteId: vId,
     );
   }

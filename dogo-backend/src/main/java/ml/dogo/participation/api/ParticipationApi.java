@@ -28,4 +28,7 @@ public interface ParticipationApi {
      * le paiement doit alors être remboursé.
      */
     boolean confirmerApresPaiement(long participationId);
+
+    /** Renvoie les identifiants uniques de groupes auxquels participe un commerçant. */
+    List<Long> groupeIdsParCommercant(long commercantId);
 }

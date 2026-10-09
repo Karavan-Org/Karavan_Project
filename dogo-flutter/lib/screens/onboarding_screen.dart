@@ -3,6 +3,7 @@ import '../models/role_acteur.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dogo_planet_3d_widget.dart';
 import '../commercant/commercant_connexion_screen.dart';
+import '../grossiste/grossiste_connexion_screen.dart';
 
 /// Écran d'accueil Onboarding unifié avec animation 3D Three.js
 /// Adaptable dynamiquement pour les 3 acteurs : Commerçant, Grossiste, Courtier.
@@ -59,7 +60,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _naviguerVersEspace(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CommercantConnexionScreen(role: _currentRole),
+        builder: (_) => _currentRole == RoleActeur.grossiste
+            ? const GrossisteConnexionScreen()
+            : CommercantConnexionScreen(role: _currentRole),
       ),
     );
   }

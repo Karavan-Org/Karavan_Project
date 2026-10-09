@@ -7,8 +7,10 @@ import 'grossiste_commandes_screen.dart';
 import 'grossiste_profil_screen.dart';
 import 'ajouter_produit_screen.dart';
 import 'creer_groupe_grossiste_screen.dart';
+import 'selection_produit_grossiste.dart';
 import 'validation_stock_grossiste_screen.dart';
 import 'expedier_lot_screen.dart';
+import 'suivi_colis_grossiste_screen.dart';
 
 /// Navigation principale Grossiste avec barre d'onglets Figma et FAB central (+)
 /// animé en arc de cercle avec effet de vague aquatique et prévisualisation au survol
@@ -97,9 +99,22 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
   void _toggleFabMenu() {
     if (_fabController.isCompleted) {
       _fabController.reverse();
-    } else {
-      _fabController.forward();
+      return;
     }
+    // Un produit est sélectionné dans « Mon catalogue actif » : le (+) crée directement son groupe
+    final produit = SelectionProduitGrossiste.produit.value;
+    if (produit != null && _currentIndex == 0) {
+      _creerGroupe(produit);
+      return;
+    }
+    _fabController.forward();
+  }
+
+  void _creerGroupe(Map<String, dynamic>? produit) {
+    SelectionProduitGrossiste.effacer();
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => CreerGroupeGrossisteScreen(produit: produit)),
+    );
   }
 
   @override
@@ -136,7 +151,7 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
             builder: (context, child) {
               if (_fabController.value <= 0.01) return const SizedBox.shrink();
 
-              const double radius = 124.0;
+              const double radius = 136.0;
 
               return Positioned(
                 bottom: 40,
@@ -163,8 +178,8 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                         // Item 0 (Gauche - 152°) : Ajouter Produit
                         _buildArcButton(
                           index: 0,
-                          total: 4,
-                          angleDeg: 152.0,
+                          total: 5,
+                          angleDeg: 160.0,
                           radius: radius,
                           label: "Produit",
                           subLabel: "Nouveau",
@@ -182,27 +197,25 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                         // Item 1 (Haut-Gauche - 112°) : Créer Groupe d'Achat
                         _buildArcButton(
                           index: 1,
-                          total: 4,
-                          angleDeg: 112.0,
+                          total: 5,
+                          angleDeg: 125.0,
                           radius: radius,
                           label: "Groupe",
-                          subLabel: "Campagne",
-                          hoverTooltip: "👥 Lancer un Achat Groupé (MOQ)",
+                          subLabel: "Créer",
+                          hoverTooltip: "👥 Lancer un groupe d'achat",
                           icon: Icons.group_add_rounded,
                           color: const Color(0xFF2E7D32),
                           onTap: () {
                             _fabController.reverse();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const CreerGroupeGrossisteScreen()),
-                            );
+                            _creerGroupe(SelectionProduitGrossiste.produit.value);
                           },
                         ),
 
                         // Item 2 (Haut-Droite - 68°) : Valider Disponibilité RG-18
                         _buildArcButton(
                           index: 2,
-                          total: 4,
-                          angleDeg: 68.0,
+                          total: 5,
+                          angleDeg: 90.0,
                           radius: radius,
                           label: "Stock",
                           subLabel: "RG-18 (24h)",
@@ -217,11 +230,30 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                           },
                         ),
 
-                        // Item 3 (Droite - 28°) : Expédier Lot au Transitaire
+                        // Item 4 (Droite - 20°) : Suivi du colis (chaque étape validée notifie l'administrateur)
+                        _buildArcButton(
+                          index: 4,
+                          total: 5,
+                          angleDeg: 20.0,
+                          radius: radius,
+                          label: "Suivi",
+                          subLabel: "Colis",
+                          hoverTooltip: "📍 Valider les étapes du colis",
+                          icon: Icons.location_on_rounded,
+                          color: const Color(0xFF6A1B9A),
+                          onTap: () {
+                            _fabController.reverse();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const SuiviColisGrossisteScreen()),
+                            );
+                          },
+                        ),
+
+                        // Item 3 (Droite - 55°) : Expédier Lot au Transitaire
                         _buildArcButton(
                           index: 3,
-                          total: 4,
-                          angleDeg: 28.0,
+                          total: 5,
+                          angleDeg: 55.0,
                           radius: radius,
                           label: "Expédier",
                           subLabel: "Au Courtier",
@@ -270,16 +302,21 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                 width: 58,
                 margin: const EdgeInsets.only(top: 8),
                 child: FloatingActionButton(
+                  heroTag: 'fab-nav-grossiste',
                   onPressed: _toggleFabMenu,
                   elevation: isExpanded ? 8 : 4,
                   backgroundColor: isExpanded ? const Color(0xFF4A3222) : AppTheme.primary,
                   shape: const CircleBorder(),
                   child: Transform.rotate(
                     angle: _rotateAnimation.value,
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 30,
+                    // Produit sélectionné sur l'accueil : le (+) annonce la création de son groupe
+                    child: ValueListenableBuilder<Map<String, dynamic>?>(
+                      valueListenable: SelectionProduitGrossiste.produit,
+                      builder: (_, produit, __) => Icon(
+                        produit != null && _currentIndex == 0 && !isExpanded ? Icons.group_add_rounded : Icons.add,
+                        color: Colors.white,
+                        size: 30,
+                      ),
                     ),
                   ),
                 ),

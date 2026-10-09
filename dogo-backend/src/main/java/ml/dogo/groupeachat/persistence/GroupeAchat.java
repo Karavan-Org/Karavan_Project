@@ -25,7 +25,8 @@ public class GroupeAchat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "courtier_id", nullable = false, updatable = false)
+    /** NULL : groupe porté par le grossiste du produit, sans courtier. */
+    @Column(name = "courtier_id", updatable = false)
     private Long courtierId;
 
     @Column(name = "grossiste_id", nullable = false, updatable = false)
@@ -33,6 +34,9 @@ public class GroupeAchat {
 
     @Column(name = "produit_id", nullable = false, updatable = false)
     private Long produitId;
+
+    @Column(length = 120)
+    private String titre;
 
     @Column(name = "quantite_cible", nullable = false)
     private int quantiteCible;
@@ -62,9 +66,10 @@ public class GroupeAchat {
     protected GroupeAchat() {
     }
 
-    public GroupeAchat(Long courtierId, Long grossisteId, Long produitId, int quantiteCible, BigDecimal prixUnitaire,
-                       Instant dateOuverture, Instant dateLimite) {
+    public GroupeAchat(Long courtierId, Long grossisteId, Long produitId, String titre, int quantiteCible,
+                       BigDecimal prixUnitaire, Instant dateOuverture, Instant dateLimite) {
         this.courtierId = courtierId;
+        this.titre = titre;
         this.grossisteId = grossisteId;
         this.produitId = produitId;
         this.quantiteCible = quantiteCible;
@@ -74,7 +79,8 @@ public class GroupeAchat {
     }
 
     /** Modification d'un brouillon (RG-17) : après publication, la grille et la cible sont figées (RG-20). */
-    public void modifierBrouillon(int quantiteCible, BigDecimal prixUnitaire, Instant dateLimite) {
+    public void modifierBrouillon(String titre, int quantiteCible, BigDecimal prixUnitaire, Instant dateLimite) {
+        this.titre = titre;
         this.quantiteCible = quantiteCible;
         this.prixUnitaire = prixUnitaire;
         this.dateLimite = dateLimite;
@@ -96,6 +102,10 @@ public class GroupeAchat {
     public Long getId() { return id; }
     public Long getCourtierId() { return courtierId; }
     public Long getGrossisteId() { return grossisteId; }
+    /** Celui qui pilote le groupe : son courtier, ou à défaut le grossiste du produit. */
+    public Long getPorteurId() { return courtierId != null ? courtierId : grossisteId; }
+    public boolean estPorteParGrossiste() { return courtierId == null; }
+    public String getTitre() { return titre; }
     public Long getProduitId() { return produitId; }
     public int getQuantiteCible() { return quantiteCible; }
     public int getQuantiteConfirmee() { return quantiteConfirmee; }

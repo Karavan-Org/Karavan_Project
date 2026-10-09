@@ -158,7 +158,7 @@ public class RemboursementService {
         long paiementId = p.getId();
         ParticipationApi.ParticipationInfo part = participations.participation(p.getParticipationId()).orElseThrow();
         GroupeAchatApi.GroupeInfo g = campagne.groupe(part.groupeId()).orElseThrow();
-        long portefeuilleId = mouvements.portefeuilleDe(g.courtierId()).getId();
+        long portefeuilleId = mouvements.portefeuilleDe(g.porteurId()).getId();
         IdentiteApi.MoyenPaiementInfo moyen = identite.moyenPaiementDe(part.commercantId(), p.getMoyenPaiementId());
 
         // 1) modifications des entités

@@ -3,13 +3,16 @@ package ml.dogo.logistique.application;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import ml.dogo.groupeachat.api.GroupeAchatApi;
 import ml.dogo.logistique.domain.StatutExpedition;
 import ml.dogo.logistique.persistence.EvenementLogistique;
 import ml.dogo.logistique.persistence.EvenementLogistiqueRepository;
 import ml.dogo.logistique.persistence.Expedition;
 import ml.dogo.logistique.persistence.ExpeditionRepository;
+import ml.dogo.participation.api.ParticipationApi;
 import ml.dogo.shared.errors.CodeErreur;
 import ml.dogo.shared.errors.ErreurMetier;
+import ml.dogo.shared.security.UtilisateurCourant;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,29 +37,89 @@ public class ConvoiService {
 
     private final ExpeditionRepository expeditions;
     private final EvenementLogistiqueRepository evenements;
+    private final GroupeAchatApi groupes;
+    private final ParticipationApi participations;
     private final Clock horloge;
 
-    public ConvoiService(ExpeditionRepository expeditions, EvenementLogistiqueRepository evenements, Clock horloge) {
+    public ConvoiService(ExpeditionRepository expeditions,
+                         EvenementLogistiqueRepository evenements,
+                         GroupeAchatApi groupes,
+                         ParticipationApi participations,
+                         Clock horloge) {
         this.expeditions = expeditions;
         this.evenements = evenements;
+        this.groupes = groupes;
+        this.participations = participations;
         this.horloge = horloge;
     }
 
     @Transactional(readOnly = true)
-    public List<ConvoiVue> lister() {
-        return expeditions.findAll().stream().map(this::versVue).toList();
+    public List<ConvoiVue> lister(UtilisateurCourant moi) {
+        if (moi == null) {
+            throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, null, "Authentification requise");
+        }
+        if (moi.estAdministrateur()) {
+            return expeditions.findAll().stream().map(this::versVue).toList();
+        }
+        List<Long> groupeIds = switch (moi.type()) {
+            case "COURTIER" -> groupes.groupeIdsParCourtier(moi.id());
+            case "GROSSISTE" -> groupes.groupeIdsParGrossiste(moi.id());
+            case "COMMERCANT" -> participations.groupeIdsParCommercant(moi.id());
+            default -> List.of();
+        };
+        if (groupeIds.isEmpty()) {
+            return List.of();
+        }
+        return expeditions.findByGroupeIdIn(groupeIds).stream().map(this::versVue).toList();
     }
 
     @Transactional(readOnly = true)
-    public ConvoiVue detail(long id) {
-        return expeditions.findById(id).map(this::versVue)
+    public ConvoiVue detail(long id, UtilisateurCourant moi) {
+        if (moi == null) {
+            throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, null, "Authentification requise");
+        }
+        Expedition e = expeditions.findById(id)
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Convoi", id));
+        if (!moi.estAdministrateur()) {
+            boolean autorise = switch (moi.type()) {
+                case "COURTIER" -> {
+                    GroupeAchatApi.GroupeInfo g = groupes.groupe(e.getGroupeId()).orElse(null);
+                    yield g != null && !g.porteParGrossiste() && g.courtierId() == moi.id();
+                }
+                case "GROSSISTE" -> {
+                    GroupeAchatApi.GroupeInfo g = groupes.groupe(e.getGroupeId()).orElse(null);
+                    yield g != null && g.grossisteId() == moi.id();
+                }
+                case "COMMERCANT" -> participations.groupeIdsParCommercant(moi.id()).contains(e.getGroupeId());
+                default -> false;
+            };
+            if (!autorise) {
+                throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Accès refusé à ce convoi");
+            }
+        }
+        return versVue(e);
     }
 
     @Transactional
-    public ConvoiVue creer(CreationDemande d) {
+    public ConvoiVue creer(CreationDemande d, UtilisateurCourant moi) {
+        if (moi == null) {
+            throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, null, "Authentification requise");
+        }
+        if (d.groupeId() == null) {
+            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, null, "Le groupeId est obligatoire");
+        }
         if (d.reference() == null || d.reference().isBlank()) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, null, "La référence du convoi est obligatoire");
+        }
+        if (!moi.estAdministrateur()) {
+            if (!"COURTIER".equals(moi.type())) {
+                throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Seul le courtier responsable peut créer un convoi");
+            }
+            GroupeAchatApi.GroupeInfo g = groupes.groupe(d.groupeId())
+                    .orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", d.groupeId()));
+            if (g.porteParGrossiste() || g.courtierId() != moi.id()) {
+                throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Seul le courtier responsable de ce groupe peut créer son convoi");
+            }
         }
         if (expeditions.findByReference(d.reference()).isPresent()) {
             throw new ErreurMetier(CodeErreur.CONFLIT, null, "Cette référence de convoi existe déjà");
@@ -68,10 +131,28 @@ public class ConvoiService {
         return versVue(e);
     }
 
+    private void verifierProprieteCourtier(Expedition e, UtilisateurCourant moi) {
+        if (moi == null) {
+            throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, null, "Authentification requise");
+        }
+        if (moi.estAdministrateur()) {
+            return;
+        }
+        if (!"COURTIER".equals(moi.type())) {
+            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Seul le courtier responsable peut modifier ce convoi");
+        }
+        GroupeAchatApi.GroupeInfo g = groupes.groupe(e.getGroupeId())
+                .orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", e.getGroupeId()));
+        if (g.porteParGrossiste() || g.courtierId() != moi.id()) {
+            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Seul le courtier responsable de ce groupe peut modifier ce convoi");
+        }
+    }
+
     @Transactional
-    public ConvoiVue ajouterEtape(long convoiId, EvenementDemande d) {
+    public ConvoiVue ajouterEtape(long convoiId, EvenementDemande d, UtilisateurCourant moi) {
         Expedition e = expeditions.findById(convoiId)
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Convoi", convoiId));
+        verifierProprieteCourtier(e, moi);
         if (d.statut() == null || d.statut().isBlank() || d.localisation() == null || d.localisation().isBlank()) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, null, "Statut et localisation sont obligatoires");
         }
@@ -80,22 +161,48 @@ public class ConvoiService {
         return versVue(e);
     }
 
+    /** ACHETE -> CHEZ_TRANSITAIRE : les marchandises sont remises au transitaire. */
     @Transactional
-    public ConvoiVue lancerTransit(long convoiId) {
+    public ConvoiVue remettreAuTransitaire(long convoiId, String localisation, UtilisateurCourant moi) {
         Expedition e = expeditions.findById(convoiId)
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Convoi", convoiId));
+        verifierProprieteCourtier(e, moi);
+        e.transfererTransitaire();
+        evenements.save(new EvenementLogistique(e.getId(), "CHEZ_TRANSITAIRE", horloge.instant(),
+                localisation != null && !localisation.isBlank() ? localisation.strip() : "Entrepôt du transitaire"));
+        return versVue(e);
+    }
+
+    @Transactional
+    public ConvoiVue lancerTransit(long convoiId, UtilisateurCourant moi) {
+        Expedition e = expeditions.findById(convoiId)
+                .orElseThrow(() -> ErreurMetier.nonTrouve("Convoi", convoiId));
+        verifierProprieteCourtier(e, moi);
         e.lancerTransit();
         evenements.save(new EvenementLogistique(e.getId(), "EN_TRANSIT", horloge.instant(), "En route"));
         return versVue(e);
     }
 
     @Transactional
-    public ConvoiVue declarerDouane(long convoiId, String localisation) {
+    public ConvoiVue declarerDouane(long convoiId, String localisation, UtilisateurCourant moi) {
         Expedition e = expeditions.findById(convoiId)
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Convoi", convoiId));
+        verifierProprieteCourtier(e, moi);
         e.declarerDouane();
         evenements.save(new EvenementLogistique(e.getId(), "BLOQUE_DOUANE", horloge.instant(),
                 localisation != null ? localisation : "Poste frontalier / Douane"));
+        return versVue(e);
+    }
+
+    /** EN_TRANSIT -> ARRIVE : le convoi est arrivé à destination. */
+    @Transactional
+    public ConvoiVue marquerArrive(long convoiId, String localisation, UtilisateurCourant moi) {
+        Expedition e = expeditions.findById(convoiId)
+                .orElseThrow(() -> ErreurMetier.nonTrouve("Convoi", convoiId));
+        verifierProprieteCourtier(e, moi);
+        e.marquerArrive();
+        evenements.save(new EvenementLogistique(e.getId(), "ARRIVE", horloge.instant(),
+                localisation != null && !localisation.isBlank() ? localisation.strip() : "Bamako"));
         return versVue(e);
     }
 

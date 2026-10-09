@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'ajouter_produit_screen.dart';
 import 'grossiste_dashboard_screen.dart';
+import 'mes_groupes_grossiste_screen.dart';
 
 /// Menu Burger latéral du Grossiste (Drawer)
 class GrossisteDrawer extends StatelessWidget {
@@ -170,6 +171,19 @@ class GrossisteDrawer extends StatelessWidget {
                   ),
                   _buildMenuItem(
                     context: context,
+                    icon: Icons.groups_rounded,
+                    title: "Mes groupes d'achat",
+                    isActive: activeRoute == 'groupes',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MesGroupesGrossisteScreen()),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    context: context,
                     icon: Icons.fact_check_rounded,
                     title: "Disponibilités à valider",
                     badge: "3",
@@ -248,17 +262,13 @@ class GrossisteDrawer extends StatelessWidget {
     required bool isActive,
     required VoidCallback onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        color: isActive
-            ? AppTheme.primary.withValues(alpha: 0.12)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
       child: ListTile(
         onTap: onTap,
         dense: true,
+        // Le fond de l'élément actif est peint par le ListTile lui-même (pas par un Container au-dessus du Material)
+        tileColor: isActive ? AppTheme.primary.withValues(alpha: 0.12) : null,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Icon(
           icon,

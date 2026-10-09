@@ -42,6 +42,10 @@ class ApiConfig {
   static const String verifierOtp = '/api/auth/verifier-otp';
   static const String renvoyerOtp = '/api/auth/renvoyer-otp';
 
+  // --- Endpoints Dossier KYC (Grossiste / Courtier) ---
+  static const String kyc = '/api/kyc';
+  static const String monDossierKyc = '/api/kyc/moi';
+
   // --- Endpoints Groupes d'Achat ---
   static const String groupes = '/api/groupes';
   static const String mesGroupes = '/api/groupes/mes-groupes';

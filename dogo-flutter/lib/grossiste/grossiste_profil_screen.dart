@@ -165,9 +165,9 @@ class GrossisteProfilScreen extends StatelessWidget {
               const SizedBox(height: 26),
 
               // --- CARTE MENU BLANCHE COMPRENANT LES 7 ITEMS FIGMA ---
+              // Le fond blanc est porté par un Material (et non le Container) : les ListTile y dessinent leurs effets
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: const Color(0xFFEFE9E0)),
                   boxShadow: const [
@@ -178,89 +178,94 @@ class GrossisteProfilScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Column(
-                  children: [
-                    // Item 1 : Mes groupes
-                    _buildFigmaMenuItem(
-                      context: context,
-                      icon: Icons.campaign_rounded,
-                      label: "Mes groupes",
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const MesGroupesGrossisteScreen()),
-                        );
-                      },
-                    ),
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      // Item 1 : Mes groupes
+                      _buildFigmaMenuItem(
+                        context: context,
+                        icon: Icons.campaign_rounded,
+                        label: "Mes groupes",
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const MesGroupesGrossisteScreen()),
+                          );
+                        },
+                      ),
 
-                    // Item 2 : Historiques
-                    _buildFigmaMenuItem(
-                      context: context,
-                      icon: Icons.receipt_long_outlined,
-                      label: "Historiques",
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const HistoriqueGrossisteScreen()),
-                        );
-                      },
-                    ),
+                      // Item 2 : Historiques
+                      _buildFigmaMenuItem(
+                        context: context,
+                        icon: Icons.receipt_long_outlined,
+                        label: "Historiques",
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const HistoriqueGrossisteScreen()),
+                          );
+                        },
+                      ),
 
-                    // Item 3 : Paramètres
-                    _buildFigmaMenuItem(
-                      context: context,
-                      icon: Icons.tune_rounded,
-                      label: "Paramètres",
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const ParametresGrossisteScreen()),
-                        );
-                      },
-                    ),
+                      // Item 3 : Paramètres
+                      _buildFigmaMenuItem(
+                        context: context,
+                        icon: Icons.tune_rounded,
+                        label: "Paramètres",
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const ParametresGrossisteScreen()),
+                          );
+                        },
+                      ),
 
-                    // Item 4 : Mes documents
-                    _buildFigmaMenuItem(
-                      context: context,
-                      icon: Icons.description_outlined,
-                      label: "Mes documents",
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const DocumentsGrossisteScreen()),
-                        );
-                      },
-                    ),
+                      // Item 4 : Mes documents
+                      _buildFigmaMenuItem(
+                        context: context,
+                        icon: Icons.description_outlined,
+                        label: "Mes documents",
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const DocumentsGrossisteScreen()),
+                          );
+                        },
+                      ),
 
-                    // Item 5 : Assistance
-                    _buildFigmaMenuItem(
-                      context: context,
-                      icon: Icons.help_outline_rounded,
-                      label: "Assistance",
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const AssistanceGrossisteScreen()),
-                        );
-                      },
-                    ),
+                      // Item 5 : Assistance
+                      _buildFigmaMenuItem(
+                        context: context,
+                        icon: Icons.help_outline_rounded,
+                        label: "Assistance",
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const AssistanceGrossisteScreen()),
+                          );
+                        },
+                      ),
 
-                    // Item 6 : Mon portefeuille
-                    _buildFigmaMenuItem(
-                      context: context,
-                      icon: Icons.account_balance_wallet_outlined,
-                      label: "Mon portefeuille",
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const PortefeuilleGrossisteScreen()),
-                        );
-                      },
-                    ),
+                      // Item 6 : Mon portefeuille
+                      _buildFigmaMenuItem(
+                        context: context,
+                        icon: Icons.account_balance_wallet_outlined,
+                        label: "Mon portefeuille",
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const PortefeuilleGrossisteScreen()),
+                          );
+                        },
+                      ),
 
-                    // Item 7 : Déconnexion
-                    _buildFigmaMenuItem(
-                      context: context,
-                      icon: Icons.logout_rounded,
-                      label: "Déconnexion",
-                      isLast: true,
-                      onTap: () => _confirmerDeconnexion(context),
-                    ),
-                  ],
+                      // Item 7 : Déconnexion
+                      _buildFigmaMenuItem(
+                        context: context,
+                        icon: Icons.logout_rounded,
+                        label: "Déconnexion",
+                        isLast: true,
+                        onTap: () => _confirmerDeconnexion(context),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

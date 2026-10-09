@@ -10,7 +10,7 @@ public interface CatalogueApi {
     }
 
     record ProduitInfo(long id, long grossisteId, long categorieId, String categorie, String nom, String description,
-                       String paysOrigine, List<VarianteInfo> variantes) {
+                       String paysOrigine, String photoUrl, List<VarianteInfo> variantes) {
     }
 
     Optional<ProduitInfo> produit(long produitId);

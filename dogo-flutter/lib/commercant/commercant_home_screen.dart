@@ -1,3 +1,4 @@
+import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'campagne_model.dart';
@@ -702,7 +703,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                         height: 125,
                         width: double.infinity,
                         color: const Color(0xFFF7F2EB),
-                        child: Image.asset(
+                        child: imageProduit(
                           groupe.imagePath,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Icon(
@@ -952,7 +953,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                     width: 75,
                     height: 75,
                     color: const Color(0xFFF7F2EB),
-                    child: Image.asset(
+                    child: imageProduit(
                       groupe.imagePath,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => const Icon(Icons.shopping_bag_outlined),

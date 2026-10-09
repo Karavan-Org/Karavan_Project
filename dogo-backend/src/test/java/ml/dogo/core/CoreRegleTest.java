@@ -108,8 +108,8 @@ class CoreRegleTest {
     @Test
     void rg07_format_du_pin() {
         RegleAcces.verifierFormatPin("4821");
-        RegleAcces.verifierFormatPin("482193");
-        for (String mauvais : new String[]{null, "123", "1234567", "abcd", "1111"}) {
+        RegleAcces.verifierFormatPin("9283");
+        for (String mauvais : new String[]{null, "123", "482193", "1234567", "abcd", "1111"}) {
             assertThrows(ErreurMetier.class, () -> RegleAcces.verifierFormatPin(mauvais));
         }
     }

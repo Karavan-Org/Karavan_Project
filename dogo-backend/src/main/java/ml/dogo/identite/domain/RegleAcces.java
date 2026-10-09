@@ -40,11 +40,11 @@ public final class RegleAcces {
         }
     }
 
-    /** Le PIN compte 4 à 6 chiffres, pas tous identiques (RG-07). */
+    /** Le PIN compte exactement 4 chiffres, pas tous identiques (RG-07). */
     public static void verifierFormatPin(String pin) {
-        if (pin == null || !pin.matches("\\d{4,6}") || pin.chars().distinct().count() == 1) {
+        if (pin == null || !pin.matches("\\d{4}") || pin.chars().distinct().count() == 1) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-07",
-                    "Le PIN doit contenir 4 à 6 chiffres, pas tous identiques");
+                    "Le code PIN doit comporter exactement 4 chiffres (non tous identiques)");
         }
     }
 }

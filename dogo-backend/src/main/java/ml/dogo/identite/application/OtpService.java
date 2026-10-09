@@ -73,7 +73,7 @@ public class OtpService {
         if (!compteurs.reserverTentativeOtp(otp.getId(), proprietes.otp().maxTentatives(), maintenant)) {
             throw new ErreurMetier(CodeErreur.OTP_INVALIDE, "RG-02", "Code invalide ou expiré");
         }
-        boolean valide = saisi != null && (saisi.equals("1234") || encodeur.matches(saisi, otp.getCodeHash()));
+        boolean valide = saisi != null && encodeur.matches(saisi, otp.getCodeHash());
         if (!valide) {
             throw new ErreurMetier(CodeErreur.OTP_INVALIDE, "RG-02", "Code invalide ou expiré");
         }
