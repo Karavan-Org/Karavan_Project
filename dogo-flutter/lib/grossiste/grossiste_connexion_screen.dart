@@ -32,19 +32,23 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
 
   Future<void> _seConnecter() async {
     final telephone = _telephoneController.text.trim();
-    final pin = _pinController.text.trim();
+    final motDePasse = _pinController.text.trim();
     if (telephone.length < 8) {
       afficherErreur(context, "Veuillez renseigner un numéro de téléphone valide");
       return;
     }
-    if (pin.length != 4) {
-      afficherErreur(context, "Le mot de passe est votre code PIN à 4 chiffres");
+    if (motDePasse.length < 8) {
+      afficherErreur(context, "Le mot de passe doit comporter au moins 8 caractères");
       return;
     }
 
     setState(() => _chargement = true);
     try {
-      final profil = await AuthService.instance.connecter(telephone: telephone, pin: pin);
+      final profil = await AuthService.instance.connecter(
+        telephone: telephone,
+        motDePasse: motDePasse,
+        pin: motDePasse,
+      );
       if (profil.type != 'GROSSISTE') {
         AuthService.instance.deconnecter();
         throw const ApiException(statusCode: 403, message: "Ce numéro n'est pas celui d'un compte Grossiste");
@@ -70,7 +74,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text("Mot de passe oublié"),
         content: const Text(
-          "Pour des raisons de sécurité, la réinitialisation du code PIN se fait avec l'équipe d'intégration dɔgɔ. "
+          "Pour des raisons de sécurité, la réinitialisation du mot de passe se fait avec l'équipe d'intégration dɔgɔ. "
           "Contactez le support depuis votre agence ou par WhatsApp à Bamako.",
         ),
         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Compris"))],
@@ -133,8 +137,8 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                     icone: Icons.lock_outline,
                     indice: "Mot de passe",
                     controller: _pinController,
-                    clavier: TextInputType.number,
-                    formateurs: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
+                    clavier: TextInputType.visiblePassword,
+                    formateurs: [LengthLimitingTextInputFormatter(64)],
                     masque: _pinMasque,
                     couleurBordure: CouleursArrivee.bordureConnexion,
                     couleurIndice: AppTheme.primary,

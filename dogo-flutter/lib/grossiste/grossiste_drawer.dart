@@ -3,6 +3,8 @@ import '../theme/app_theme.dart';
 import 'ajouter_produit_screen.dart';
 import 'grossiste_dashboard_screen.dart';
 import 'mes_groupes_grossiste_screen.dart';
+import '../services/auth_service.dart';
+import '../screens/onboarding_screen.dart';
 
 /// Menu Burger latéral du Grossiste (Drawer)
 class GrossisteDrawer extends StatelessWidget {
@@ -235,8 +237,11 @@ class GrossisteDrawer extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: OutlinedButton.icon(
                 onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
+                  AuthService.instance.deconnecter();
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                    (route) => false,
+                  );
                 },
                 icon: const Icon(Icons.logout_rounded, size: 18),
                 label: const Text("Déconnexion"),

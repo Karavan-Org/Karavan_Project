@@ -39,6 +39,8 @@ class ApiConfig {
   // --- Endpoints Authentification ---
   static const String inscription = '/api/auth/inscription';
   static const String connexion = '/api/auth/connexion';
+  static const String deconnexion = '/api/moi/deconnexion';
+  static const String notifications = '/api/moi/notifications';
   static const String verifierOtp = '/api/auth/verifier-otp';
   static const String renvoyerOtp = '/api/auth/renvoyer-otp';
 

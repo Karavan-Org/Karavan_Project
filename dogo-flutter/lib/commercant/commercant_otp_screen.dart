@@ -15,7 +15,8 @@ class CommercantOtpScreen extends StatefulWidget {
   final RoleActeur role;
   final String? codeSimulation;
 
-  /// PIN choisi à l'inscription : permet d'ouvrir la session juste après la vérification
+  /// Mot de passe choisi à l'inscription : permet d'ouvrir la session juste après la vérification
+  final String? motDePasse;
   final String? pin;
 
   const CommercantOtpScreen({
@@ -23,6 +24,7 @@ class CommercantOtpScreen extends StatefulWidget {
     this.numeroTelephone = "+223 70 12 34 56",
     this.role = RoleActeur.commercant,
     this.codeSimulation,
+    this.motDePasse,
     this.pin,
   });
 
@@ -104,8 +106,13 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
       switch (widget.role) {
         case RoleActeur.grossiste:
           // Le compte attend son dossier KYC (RG-03) : on ouvre la session pour le déposer
-          if (widget.pin != null) {
-            final profil = await AuthService.instance.connecter(telephone: widget.numeroTelephone, pin: widget.pin!);
+          final secret = widget.motDePasse ?? widget.pin;
+          if (secret != null) {
+            final profil = await AuthService.instance.connecter(
+              telephone: widget.numeroTelephone,
+              motDePasse: secret,
+              pin: secret,
+            );
             destination = await ecranGrossisteSelonDossier(profil);
           } else {
             destination = const GrossisteConnexionScreen();

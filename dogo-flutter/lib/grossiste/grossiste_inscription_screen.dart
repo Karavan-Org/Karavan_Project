@@ -9,7 +9,6 @@ import '../theme/app_theme.dart';
 import 'grossiste_onboarding_widgets.dart';
 
 /// Inscription du Grossiste (maquette Figma « inscription »)
-/// Le « mot de passe » est le code PIN à 4 chiffres exigé par le backend (RG-07).
 class GrossisteInscriptionScreen extends StatefulWidget {
   const GrossisteInscriptionScreen({super.key});
 
@@ -52,8 +51,8 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
       afficherErreur(context, "L'adresse email n'est pas valide");
       return;
     }
-    if (!RegExp(r'^\d{4}$').hasMatch(pin) || pin.split('').toSet().length == 1) {
-      afficherErreur(context, "Le mot de passe est un code de 4 chiffres, pas tous identiques");
+    if (pin.length < 8) {
+      afficherErreur(context, "Le mot de passe doit comporter au moins 8 caractères");
       return;
     }
 
@@ -63,6 +62,7 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
         typeActeur: 'GROSSISTE',
         telephone: telephone,
         nom: entreprise,
+        motDePasse: pin,
         pin: pin,
         nomBoutiqueMarche: entreprise,
       );
@@ -73,6 +73,7 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
             numeroTelephone: telephone,
             role: RoleActeur.grossiste,
             codeSimulation: res['codeOtp']?.toString(),
+            motDePasse: pin,
             pin: pin,
           ),
         ),
@@ -138,11 +139,11 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
               const SizedBox(height: 12),
               ChampArrivee(
                 icone: Icons.lock_outline,
-                indice: "Mot de passe",
+                indice: "Mot de passe (8 caractères minimum)",
                 obligatoire: true,
                 controller: _pinController,
-                clavier: TextInputType.number,
-                formateurs: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
+                clavier: TextInputType.visiblePassword,
+                formateurs: [LengthLimitingTextInputFormatter(64)],
                 masque: _pinMasque,
                 suffixe: IconButton(
                   icon: Icon(
@@ -158,7 +159,7 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    "Code PIN de 4 chiffres, utilisé pour vous connecter",
+                    "Au moins 8 caractères, utilisé pour vous connecter",
                     style: TextStyle(fontSize: 11, color: CouleursArrivee.indice),
                   ),
                 ),

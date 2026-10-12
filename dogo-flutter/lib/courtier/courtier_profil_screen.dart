@@ -5,6 +5,7 @@ import 'parametres_courtier_screen.dart';
 import 'notifications_courtier_screen.dart';
 import 'assistance_courtier_screen.dart';
 import '../screens/onboarding_screen.dart';
+import '../services/auth_service.dart';
 
 /// Écran du Profil Courtier fidèle à la maquette Figma Dogo (Frame "profil" Courtier)
 /// Nom : Amadou Touré
@@ -34,6 +35,7 @@ class CourtierProfilScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
+              AuthService.instance.deconnecter();
               Navigator.of(ctx).pop();
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const OnboardingScreen()),

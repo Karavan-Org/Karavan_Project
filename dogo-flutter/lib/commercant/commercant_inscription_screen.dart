@@ -5,7 +5,7 @@ import '../services/auth_service.dart';
 import '../services/api/api_exception.dart';
 import 'commercant_otp_screen.dart';
 
-/// Écran d'Inscription conforme au modèle Figma exact et aux specs backend (PIN + infos métier)
+/// Écran d'Inscription conforme au modèle Figma exact et aux specs backend (mot de passe + infos métier)
 class CommercantInscriptionScreen extends StatefulWidget {
   final RoleActeur role;
 
@@ -60,16 +60,16 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
       return;
     }
 
-    if (pin.length < 4) {
+    if (pin.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Le code PIN secret doit comporter au moins 4 chiffres")),
+        const SnackBar(content: Text("Le mot de passe doit comporter au moins 8 caractères")),
       );
       return;
     }
 
     if (pin != confirmPin) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Les deux codes PIN saisis ne correspondent pas")),
+        const SnackBar(content: Text("Les deux mots de passe saisis ne correspondent pas")),
       );
       return;
     }
@@ -81,6 +81,7 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
         typeActeur: widget.role.name.toUpperCase(),
         telephone: phone,
         nom: nom,
+        motDePasse: pin,
         pin: pin,
         nomBoutique: widget.role == RoleActeur.commercant ? _extraField1Controller.text.trim() : null,
         quartierBamako: widget.role == RoleActeur.commercant ? _extraField2Controller.text.trim() : null,
@@ -103,6 +104,8 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
             numeroTelephone: phone,
             role: widget.role,
             codeSimulation: codeSimule,
+            motDePasse: pin,
+            pin: pin,
           ),
         ),
       );
@@ -191,17 +194,16 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
 
               const SizedBox(height: 14),
 
-              // 4. CHAMP CODE PIN SECRET (4 à 6 chiffres)
+              // 4. CHAMP MOT DE PASSE (8 caractères minimum)
               _buildFigmaInputField(
-                icon: Icons.pin_outlined,
-                label: "Code PIN secret (4 à 6 chiffres)",
-                hint: "•••• (Clé de connexion sécurisée)",
+                icon: Icons.lock_outline,
+                label: "Mot de passe (8 caractères minimum)",
+                hint: "•••••••• (Au moins 8 caractères)",
                 controller: _pinController,
                 obscureText: _obscurePin,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.visiblePassword,
                 inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(6),
+                  LengthLimitingTextInputFormatter(64),
                 ],
                 borderColor: borderColor,
                 camelColor: camelColor,
@@ -219,17 +221,16 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
 
               const SizedBox(height: 14),
 
-              // 5. CHAMP CONFIRMATION DU PIN
+              // 5. CHAMP CONFIRMATION DU MOT DE PASSE
               _buildFigmaInputField(
                 icon: Icons.lock_outline,
-                label: "Confirmer le code PIN",
-                hint: "•••• (Répéter le code PIN)",
+                label: "Confirmer le mot de passe",
+                hint: "•••••••• (Répéter le mot de passe)",
                 controller: _confirmPinController,
                 obscureText: _obscureConfirmPin,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.visiblePassword,
                 inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(6),
+                  LengthLimitingTextInputFormatter(64),
                 ],
                 borderColor: borderColor,
                 camelColor: camelColor,

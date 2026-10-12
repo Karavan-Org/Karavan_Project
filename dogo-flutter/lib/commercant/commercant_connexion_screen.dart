@@ -46,9 +46,9 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
       return;
     }
 
-    if (pin.length < 4) {
+    if (pin.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Le code PIN secret doit contenir au moins 4 chiffres")),
+        const SnackBar(content: Text("Le mot de passe doit contenir au moins 8 caractères")),
       );
       return;
     }
@@ -56,7 +56,7 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await AuthService.instance.connecter(telephone: phone, pin: pin);
+      await AuthService.instance.connecter(telephone: phone, motDePasse: pin);
       if (!mounted) return;
 
       Widget destination;
@@ -140,18 +140,13 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
 
               const SizedBox(height: 16),
 
-              // 3. CHAMP CODE PIN SECRET FIGMA
+              // 3. CHAMP MOT DE PASSE FIGMA
               _buildFigmaInputField(
-                icon: Icons.pin_outlined,
-                label: "Code PIN secret",
-                hint: "•••• (4 à 6 chiffres)",
+                icon: Icons.lock_outline,
+                label: "Mot de passe",
+                hint: "Entrez votre mot de passe",
                 controller: _pinController,
                 obscureText: _obscurePin,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(6),
-                ],
                 borderColor: borderColor,
                 camelColor: camelColor,
                 trailing: IconButton(
@@ -168,7 +163,7 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
 
               const SizedBox(height: 14),
 
-              // 4. LIGNE "SE SOUVENIR DE MOI" & "CODE PIN OUBLIÉ ?"
+              // 4. LIGNE "SE SOUVENIR DE MOI" & "MOT DE PASSE OUBLIÉ ?"
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -210,12 +205,12 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
                     ),
                   ),
 
-                  // Lien code PIN oublié
+                  // Lien mot de passe oublié
                   TextButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Un SMS de réinitialisation de votre PIN vous a été envoyé."),
+                          content: Text("Un SMS de réinitialisation de votre mot de passe vous a été envoyé."),
                           backgroundColor: camelColor,
                         ),
                       );
@@ -226,7 +221,7 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: const Text(
-                      "Code PIN oublié ?",
+                      "Mot de passe oublié ?",
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,

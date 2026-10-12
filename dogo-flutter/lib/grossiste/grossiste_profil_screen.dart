@@ -6,6 +6,7 @@ import 'documents_grossiste_screen.dart';
 import 'assistance_grossiste_screen.dart';
 import 'portefeuille_grossiste_screen.dart';
 import '../screens/onboarding_screen.dart';
+import '../services/auth_service.dart';
 
 /// Écran du Profil Grossiste fidèle à la maquette Figma Dogo (Frame "profil" Grossiste)
 /// Nom : Aliou Traoré
@@ -35,6 +36,7 @@ class GrossisteProfilScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
+              AuthService.instance.deconnecter();
               Navigator.of(ctx).pop();
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const OnboardingScreen()),

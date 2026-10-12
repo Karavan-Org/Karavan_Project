@@ -38,7 +38,7 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
 
   Future<void> _loadLogo() async {
     try {
-      final ByteData data = await rootBundle.load('assets/logo/logoV.png');
+      final ByteData data = await rootBundle.load('assets/logo/logo.png');
       final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
       final ui.FrameInfo fi = await codec.getNextFrame();
       if (mounted) {
@@ -430,7 +430,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
       canvas.drawCircle(Offset.zero, 60, flashPaint);
     }
 
-    // 3. Dessin du logo DoGo officiel (assets/logo/logoV.png)
+    // 3. Dessin du logo DoGo officiel (assets/logo/logo.png)
     if (logoImage != null) {
       final double imgW = logoImage!.width.toDouble();
       final double imgH = logoImage!.height.toDouble();

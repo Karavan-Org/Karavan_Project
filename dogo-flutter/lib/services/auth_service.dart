@@ -59,18 +59,21 @@ class AuthService {
   UtilisateurProfil? get utilisateurCourant => profilNotifier.value;
   bool get estConnecte => profilNotifier.value != null && ApiClient.instance.estAuthentifie;
 
-  /// Connexion par téléphone et PIN secret (RG-07)
+  /// Connexion par téléphone et mot de passe (RG-07)
   Future<UtilisateurProfil> connecter({
     required String telephone,
-    required String pin,
+    String? motDePasse,
+    String? pin,
     String? deviceId,
   }) async {
+    final secret = (motDePasse != null && motDePasse.isNotEmpty) ? motDePasse : (pin ?? '');
     try {
       final response = await ApiClient.instance.post(
         ApiConfig.connexion,
         body: {
           'telephone': telephone,
-          'pin': pin,
+          'motDePasse': secret,
+          'pin': secret,
           'deviceId': deviceId ?? 'flutter-device-client',
         },
       );
@@ -87,7 +90,6 @@ class AuthService {
 
       throw Exception('Format de réponse serveur inattendu');
     } catch (e) {
-      // Si le serveur est injoignable en mode démo / développement, repli gracieux
       if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
         final profilFactice = UtilisateurProfil(
           id: 1,
@@ -109,7 +111,8 @@ class AuthService {
     required String typeActeur, // COMMERCANT, GROSSISTE, COURTIER
     required String telephone,
     required String nom,
-    required String pin,
+    String? motDePasse,
+    String? pin,
     String? nomBoutique,
     String? quartierBamako,
     String? numeroNif,
@@ -119,11 +122,13 @@ class AuthService {
     String? licenceTransit,
     String? adresseDepot,
   }) async {
+    final secret = (motDePasse != null && motDePasse.isNotEmpty) ? motDePasse : (pin ?? '');
     final body = {
       'type': typeActeur.toUpperCase(),
       'telephone': telephone,
       'nom': nom,
-      'pin': pin,
+      'motDePasse': secret,
+      'pin': secret,
       if (nomBoutique != null) 'nomBoutique': nomBoutique,
       if (quartierBamako != null) 'quartierBamako': quartierBamako,
       if (numeroNif != null) 'numeroNif': numeroNif,
@@ -167,8 +172,13 @@ class AuthService {
     }
   }
 
-  /// Déconnexion
-  void deconnecter() {
+  /// Déconnexion avec invalidation de session serveur
+  Future<void> deconnecter() async {
+    try {
+      if (ApiClient.instance.estAuthentifie) {
+        await ApiClient.instance.post(ApiConfig.deconnexion, body: {});
+      }
+    } catch (_) {}
     ApiClient.instance.deconnecter();
     profilNotifier.value = null;
   }

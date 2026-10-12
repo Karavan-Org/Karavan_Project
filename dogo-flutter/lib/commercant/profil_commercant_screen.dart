@@ -7,6 +7,7 @@ import 'notifications_commercant_screen.dart';
 import 'aide_support_screen.dart';
 import 'parametres_commercant_screen.dart';
 import '../screens/onboarding_screen.dart';
+import '../services/auth_service.dart';
 
 /// Écran du Profil Commerçant fidèle à la maquette Figma Dogo (Frame "profil")
 /// Nom : Hawa Dagno
@@ -45,6 +46,7 @@ class ProfilCommercantScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
+              AuthService.instance.deconnecter();
               Navigator.of(ctx).pop();
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const OnboardingScreen()),
