@@ -33,6 +33,9 @@ public class KycController {
     public record DecisionRequete(@NotNull StatutValidation decision, String commentaire) {
     }
 
+    public record ValidationCompteRequete(String commentaire) {
+    }
+
     private final KycService kyc;
 
     public KycController(KycService kyc) {
@@ -67,6 +70,21 @@ public class KycController {
     @PreAuthorize("hasAuthority('KYC_VALIDER')")
     public List<KycService.DossierVue> enAttente() {
         return kyc.enAttente();
+    }
+
+    /** Valide le compte d'un grossiste ou d'un courtier : dossier en attente approuvé, ou validation manuelle tracée. */
+    @PostMapping("/admin/kyc/utilisateurs/{utilisateurId}/validation")
+    @PreAuthorize("hasAuthority('KYC_VALIDER')")
+    public KycService.DossierVue validerCompte(@AuthenticationPrincipal UtilisateurCourant moi,
+                                               @PathVariable long utilisateurId,
+                                               @RequestBody ValidationCompteRequete r) {
+        return kyc.validerCompte(moi.id(), utilisateurId, r.commentaire());
+    }
+
+    @GetMapping("/admin/kyc/utilisateurs/{utilisateurId}")
+    @PreAuthorize("hasAnyAuthority('KYC_VALIDER', 'COMPTE_SUSPENDRE', 'AUDIT_LIRE')")
+    public List<KycService.DossierVue> dossiersDe(@PathVariable long utilisateurId) {
+        return kyc.dossiersDe(utilisateurId);
     }
 
     @PostMapping("/admin/kyc/{dossierId}/decision")

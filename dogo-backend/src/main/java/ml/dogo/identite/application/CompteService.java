@@ -1,6 +1,7 @@
 package ml.dogo.identite.application;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +37,22 @@ public class CompteService {
     }
 
     public record CommercantVue(long id, String telephone, String nom, String statut, String nomBoutique,
-                                String adresseLivraison, String quartierBamako, String canalVente) {
+                                String adresseLivraison, String quartierBamako, String canalVente,
+                                Instant dateCreation) {
     }
 
     public record GrossisteVue(long id, String telephone, String nom, String statut, String nomBoutiqueMarche,
-                               String numeroNif, String registreCommerce, BigDecimal noteFiabilite) {
+                               String numeroNif, String registreCommerce, BigDecimal noteFiabilite,
+                               Instant dateCreation) {
     }
 
     public record CourtierVue(long id, String telephone, String nom, String statut, String nomSocieteImport,
-                              String licenceTransit, String adresseDepot, BigDecimal noteFiabilite) {
+                              String licenceTransit, String adresseDepot, BigDecimal noteFiabilite,
+                              Instant dateCreation) {
+    }
+
+    public record AdministrateurVue(long id, String telephone, String nom, String statut, String matricule,
+                                    String roleAdministratif, Instant dateCreation) {
     }
 
     public record SupervisionStatsVue(long totalCommercants, long totalGrossistes, long totalCourtiers,
@@ -160,7 +168,7 @@ public class CompteService {
         Utilisateur u = charger(cibleId);
         if (u.typeActeur().exigeKyc()
                 && !dossiers.existsByUtilisateurIdAndStatut(cibleId, StatutValidation.APPROUVE)) {
-            throw new ErreurMetier(CodeErreur.CONFLIT, "RG-03", "Aucun dossier KYC approuvé pour ce compte");
+            throw new ErreurMetier(CodeErreur.CONFLIT, "RG-03", "Aucun dossier KYC approuvé pour ce compte : validez d'abord son dossier (Valider le compte)");
         }
         u.changerStatut(StatutCompte.ACTIF);
         audit.tracer(administrateurId, "COMPTE_REACTIVE", "utilisateur=" + cibleId, null);
@@ -181,7 +189,8 @@ public class CompteService {
     public List<CommercantVue> listerCommercants() {
         return utilisateurs.tousLesCommercants().stream()
                 .map(c -> new CommercantVue(c.getId(), c.getTelephone(), c.getNom(), c.getStatutCompte().name(),
-                        c.getNomBoutique(), c.getAdresseLivraison(), c.getQuartierBamako(), c.getCanalVente()))
+                        c.getNomBoutique(), c.getAdresseLivraison(), c.getQuartierBamako(), c.getCanalVente(),
+                        c.getDateCreation()))
                 .toList();
     }
 
@@ -189,7 +198,8 @@ public class CompteService {
     public List<GrossisteVue> listerGrossistes() {
         return utilisateurs.tousLesGrossistes().stream()
                 .map(g -> new GrossisteVue(g.getId(), g.getTelephone(), g.getNom(), g.getStatutCompte().name(),
-                        g.getNomBoutiqueMarche(), g.getNumeroNif(), g.getRegistreCommerce(), g.getNoteFiabilite()))
+                        g.getNomBoutiqueMarche(), g.getNumeroNif(), g.getRegistreCommerce(), g.getNoteFiabilite(),
+                        g.getDateCreation()))
                 .toList();
     }
 
@@ -197,7 +207,16 @@ public class CompteService {
     public List<CourtierVue> listerCourtiers() {
         return utilisateurs.tousLesCourtiers().stream()
                 .map(c -> new CourtierVue(c.getId(), c.getTelephone(), c.getNom(), c.getStatutCompte().name(),
-                        c.getNomSocieteImport(), c.getLicenceTransit(), c.getAdresseDepot(), c.getNoteFiabilite()))
+                        c.getNomSocieteImport(), c.getLicenceTransit(), c.getAdresseDepot(), c.getNoteFiabilite(),
+                        c.getDateCreation()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdministrateurVue> listerAdministrateurs() {
+        return utilisateurs.tousLesAdministrateurs().stream()
+                .map(a -> new AdministrateurVue(a.getId(), a.getTelephone(), a.getNom(), a.getStatutCompte().name(),
+                        a.getMatriculeAgent(), a.getRoleAdministratif().name(), a.getDateCreation()))
                 .toList();
     }
 

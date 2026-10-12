@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../theme/app_theme.dart';
 import '../services/logistique_api_service.dart';
 import '../services/api/api_exception.dart';
 
-/// Écran de scan du QR Code ou saisie du PIN de retrait par le Courtier (Frame 15)
+/// Écran de scan du QR Code ou saisie du PIN de retrait par le Courtier (Frame 15, RG-53 à RG-55)
+/// La caméra lit le QR code affiché par l'application du commerçant ; sans QR code, le courtier saisit le
+/// numéro de commande et le PIN reçu par SMS. Le backend libère alors le séquestre et notifie le commerçant.
 class ScannerRetraitScreen extends StatefulWidget {
   const ScannerRetraitScreen({super.key});
 
@@ -12,45 +15,71 @@ class ScannerRetraitScreen extends StatefulWidget {
 }
 
 class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
+  final _commandeController = TextEditingController();
   final _pinController = TextEditingController();
-  bool _valide = false;
+  final _camera = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    formats: const [BarcodeFormat.qrCode],
+  );
+  Map<String, dynamic>? _retrait;
   bool _enCours = false;
 
   @override
   void dispose() {
+    _commandeController.dispose();
     _pinController.dispose();
+    _camera.dispose();
     super.dispose();
   }
 
-  void _validerRetrait() async {
+  /// QR code détecté par la caméra : son contenu est le jeton de retrait de la commande
+  void _surDetection(BarcodeCapture capture) {
+    final jeton = capture.barcodes.map((b) => b.rawValue).whereType<String>().firstOrNull;
+    if (jeton == null || jeton.isEmpty || _enCours || _retrait != null) return;
+    _valider(qrToken: jeton);
+  }
+
+  void _validerParPin() {
+    final commande = int.tryParse(_commandeController.text.trim().replaceAll('#', ''));
     final pin = _pinController.text.trim();
-    if (pin.length < 4) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Veuillez saisir le code PIN de retrait à 4 chiffres")),
-      );
+    if (commande == null || pin.length < 4) {
+      _erreur("Saisissez le numéro de commande et le code PIN à 4 chiffres");
       return;
     }
+    _valider(commandeId: commande, pin: pin);
+  }
 
+  Future<void> _valider({String? qrToken, int? commandeId, String? pin}) async {
     setState(() => _enCours = true);
-
+    await _camera.stop();
     try {
-      await LogistiqueApiService.instance.validerRetrait(
+      final r = await LogistiqueApiService.instance.validerRetrait(
+        qrToken: qrToken,
+        commandeId: commandeId,
         pin: pin,
-        commandeId: 1,
       );
       if (!mounted) return;
-      setState(() {
-        _valide = true;
-      });
+      setState(() => _retrait = r);
     } catch (e) {
       if (!mounted) return;
-      final message = e is ApiException ? e.messageComplet : 'Code invalide ou expiré';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: const Color(0xFFC0392B)),
-      );
+      _erreur(e is ApiException ? e.messageComplet : 'Code invalide ou expiré');
+      await _camera.start();
     } finally {
       if (mounted) setState(() => _enCours = false);
     }
+  }
+
+  void _erreur(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: const Color(0xFFC0392B)),
+    );
+  }
+
+  void _nouveauRetrait() {
+    _commandeController.clear();
+    _pinController.clear();
+    setState(() => _retrait = null);
+    _camera.start();
   }
 
   @override
@@ -67,11 +96,12 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            if (!_valide) ...[
-              // --- CADRE VISEUR SCANNER QR CODE ---
+            if (_retrait == null) ...[
+              // --- VISEUR : CAMÉRA RÉELLE ---
               Container(
                 width: double.infinity,
-                height: 240,
+                height: 260,
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   color: Colors.black,
                   borderRadius: BorderRadius.circular(28),
@@ -82,61 +112,81 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Container(
-                      width: 170,
-                      height: 170,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppTheme.secondary, width: 3),
-                        borderRadius: BorderRadius.circular(20),
+                    MobileScanner(
+                      controller: _camera,
+                      onDetect: _surDetection,
+                      errorBuilder: (context, erreur) => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text(
+                            "Caméra indisponible : autorisez-la dans les réglages, ou utilisez le numéro de commande et le PIN.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white70, fontSize: 12.5),
+                          ),
+                        ),
                       ),
                     ),
-                    const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.qr_code_2_rounded, color: Colors.white70, size: 70),
-                        SizedBox(height: 8),
-                        Text(
-                          "Pointez vers le QR Code du client",
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                    IgnorePointer(
+                      child: Container(
+                        width: 180,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppTheme.secondary, width: 3),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                      ],
+                      ),
+                    ),
+                    if (_enCours)
+                      const ColoredBox(
+                        color: Color(0x88000000),
+                        child: Center(child: CircularProgressIndicator(color: Colors.white)),
+                      ),
+                    const Positioned(
+                      bottom: 12,
+                      child: Text(
+                        "Pointez vers le QR Code du commerçant",
+                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ],
                 ),
               ),
 
               const SizedBox(height: 24),
-              const Text("— OU SAISISSEZ LE PIN DE RETRAIT —", style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5, fontWeight: FontWeight.bold)),
+              const Text(
+                "— OU NUMÉRO DE COMMANDE + PIN —",
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
 
-              // Champ PIN 4 chiffres
+              TextField(
+                controller: _commandeController,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                decoration: _decoration("N° de commande (ex. 12)"),
+              ),
+              const SizedBox(height: 12),
+
+              // Champ PIN 4 chiffres (reçu par SMS par le commerçant)
               TextField(
                 controller: _pinController,
                 maxLength: 6,
+                obscureText: true,
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 28, letterSpacing: 10, fontWeight: FontWeight.bold),
-                decoration: InputDecoration(
+                decoration: _decoration("••••").copyWith(
                   counterText: "",
-                  hintText: "••••",
                   hintStyle: const TextStyle(letterSpacing: 8, color: Color(0xFFC7BCB2)),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
-                  ),
                 ),
               ),
 
               const SizedBox(height: 20),
 
               ElevatedButton.icon(
-                onPressed: _enCours ? null : _validerRetrait,
-                icon: _enCours
-                    ? const SizedBox.shrink()
-                    : const Icon(Icons.check_circle_rounded),
+                onPressed: _enCours ? null : _validerParPin,
+                icon: _enCours ? const SizedBox.shrink() : const Icon(Icons.check_circle_rounded),
                 label: _enCours
                     ? const SizedBox(
                         width: 20,
@@ -172,10 +222,11 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                     const SizedBox(height: 16),
                     const Text("Retrait Confirmé !", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 6),
-                    const Text(
-                      "Le colis a été remis au commerçant. Les fonds séquestrés ont été libérés avec succès.",
+                    Text(
+                      "Commande #${_retrait!['commandeId'] ?? ''} remise au commerçant "
+                      "(${_retrait!['mode'] == 'QR' ? 'QR code' : 'PIN'}). Les fonds séquestrés sont libérés.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                      style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                     ),
                     const Divider(height: 30),
                     Container(
@@ -188,11 +239,24 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text("Statut du paiement :", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                          Text("Fonds libérés", style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w800, fontSize: 15)),
+                          Text(
+                            "Fonds libérés",
+                            style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w800, fontSize: 15),
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
+                    OutlinedButton.icon(
+                      onPressed: _nouveauRetrait,
+                      icon: const Icon(Icons.qr_code_scanner_rounded),
+                      label: const Text("Scanner un autre retrait"),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
@@ -211,4 +275,15 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
       ),
     );
   }
+
+  InputDecoration _decoration(String indice) => InputDecoration(
+        hintText: indice,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+        ),
+      );
 }

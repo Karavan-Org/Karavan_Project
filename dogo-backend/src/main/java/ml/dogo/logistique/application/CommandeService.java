@@ -144,6 +144,8 @@ public class CommandeService {
         audit.tracer(acteur.id(), "RECEPTION_VALIDEE", "groupe=" + groupeId, duGroupe.size() + " commande(s)");
         notifications.notifier(g.porteurId(), "Groupe #" + groupeId
                 + " : la réception des colis est validée. Confirmez leur arrivée au point de retrait.");
+        duGroupe.forEach(c -> notifications.notifier(c.getCommercantId(), "Votre commande #" + c.getId() + " ("
+                + g.produitNom() + ") est réceptionnée au dépôt dɔgɔ. Vous recevrez votre code de retrait très bientôt."));
         return duGroupe.stream().map(c -> vue(c, g, Vision.COMPLETE)).toList();
     }
 

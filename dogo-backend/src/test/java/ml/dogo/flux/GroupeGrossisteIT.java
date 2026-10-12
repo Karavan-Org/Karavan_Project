@@ -96,6 +96,9 @@ class GroupeGrossisteIT {
         assertEquals("Sandales pour la rentrée", cree.get("titre").asText());
         assertTrue(cree.get("porteParGrossiste").asBoolean());
         assertTrue(cree.get("courtier").isNull());
+        // la politique d'annulation est celle de la plateforme : le grossiste ne la fixe pas
+        assertEquals(ml.dogo.groupeachat.application.GroupeService.POLITIQUE_ANNULATION_PLATEFORME,
+                cree.get("conditions").get("politiqueAnnulation").asText());
 
         // un courtier ne pilote pas le groupe d'un grossiste
         appeler(HttpMethod.POST, "/api/groupes/" + groupeId + "/soumission", courtier, null, 404);

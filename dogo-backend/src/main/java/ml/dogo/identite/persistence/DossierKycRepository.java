@@ -17,6 +17,8 @@ public interface DossierKycRepository extends JpaRepository<DossierKyc, Long> {
 
     Optional<DossierKyc> findFirstByUtilisateurIdOrderByDateSoumissionDesc(Long utilisateurId);
 
+    List<DossierKyc> findByUtilisateurIdOrderByDateSoumissionDesc(Long utilisateurId);
+
     /** Verrou d'écriture : deux administrateurs ne peuvent pas décider le même dossier en même temps (RG-05). */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select d from DossierKyc d where d.id = :id")

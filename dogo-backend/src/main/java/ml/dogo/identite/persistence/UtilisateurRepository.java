@@ -50,6 +50,9 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     @Query("select c from Courtier c order by c.id desc")
     List<Courtier> tousLesCourtiers();
 
+    @Query("select a from Administrateur a order by a.id")
+    List<Administrateur> tousLesAdministrateurs();
+
     @Query("select count(c) from Commercant c")
     long nombreCommercants();
 

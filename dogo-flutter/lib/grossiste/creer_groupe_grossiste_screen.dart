@@ -31,7 +31,10 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
   final _douaneController = TextEditingController(text: '0');
   final _autresController = TextEditingController(text: '0');
   final _delaiController = TextEditingController(text: '30');
-  final _politiqueController = TextEditingController(text: "Annulation possible tant que l'objectif n'est pas atteint");
+  /// Politique d'annulation imposée par dɔgɔ (RG-24) : affichée, jamais modifiable ni supprimable par le grossiste.
+  /// Le backend l'applique de lui-même (GroupeService.POLITIQUE_ANNULATION_PLATEFORME).
+  static const _politiqueAnnulation = "Annulation possible tant que l'objectif n'est pas atteint ; "
+      "remboursement intégral si le groupe est annulé ou n'atteint pas son objectif.";
 
   List<Map<String, dynamic>> _produits = [];
   Map<String, dynamic>? _produit;
@@ -62,7 +65,6 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
       _douaneController,
       _autresController,
       _delaiController,
-      _politiqueController,
     ]) {
       c.dispose();
     }
@@ -137,7 +139,6 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
         douane: _entier(_douaneController),
         autres: _entier(_autresController),
         delaiLivraisonJours: _entier(_delaiController),
-        politiqueAnnulation: _politiqueController.text.trim(),
         quantiteMinParCommercant: _entier(_minimumController),
       );
       final groupe = await service.soumettre(brouillon.id);
@@ -336,10 +337,12 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
             ],
           ),
           const SizedBox(height: 12),
-          TextFormField(
-            controller: _politiqueController,
-            maxLines: 2,
-            decoration: _decoration("Politique d'annulation"),
+          // Lecture seule : la politique d'annulation est fixée par la plateforme
+          InputDecorator(
+            decoration: _decoration("Politique d'annulation (fixée par dɔgɔ)").copyWith(
+              prefixIcon: const Icon(Icons.lock_outline_rounded, size: 18),
+            ),
+            child: const Text(_politiqueAnnulation, style: TextStyle(fontSize: 13, height: 1.35)),
           ),
           const SizedBox(height: 4),
         ],

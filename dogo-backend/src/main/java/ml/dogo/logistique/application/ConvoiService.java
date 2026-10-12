@@ -9,6 +9,7 @@ import ml.dogo.logistique.persistence.EvenementLogistique;
 import ml.dogo.logistique.persistence.EvenementLogistiqueRepository;
 import ml.dogo.logistique.persistence.Expedition;
 import ml.dogo.logistique.persistence.ExpeditionRepository;
+import ml.dogo.notification.api.NotificationApi;
 import ml.dogo.participation.api.ParticipationApi;
 import ml.dogo.shared.errors.CodeErreur;
 import ml.dogo.shared.errors.ErreurMetier;
@@ -39,17 +40,20 @@ public class ConvoiService {
     private final EvenementLogistiqueRepository evenements;
     private final GroupeAchatApi groupes;
     private final ParticipationApi participations;
+    private final NotificationApi notifications;
     private final Clock horloge;
 
     public ConvoiService(ExpeditionRepository expeditions,
                          EvenementLogistiqueRepository evenements,
                          GroupeAchatApi groupes,
                          ParticipationApi participations,
+                         NotificationApi notifications,
                          Clock horloge) {
         this.expeditions = expeditions;
         this.evenements = evenements;
         this.groupes = groupes;
         this.participations = participations;
+        this.notifications = notifications;
         this.horloge = horloge;
     }
 
@@ -128,6 +132,7 @@ public class ConvoiService {
         Expedition e = new Expedition(d.groupeId(), d.reference().strip(), StatutExpedition.ACHETE, maintenant, d.transporteur());
         e = expeditions.save(e);
         evenements.save(new EvenementLogistique(e.getId(), "CREATION_CONVOI", maintenant, "Origine"));
+        informer(e, "le suivi de votre colis est ouvert (convoi " + e.getReference() + ")");
         return versVue(e);
     }
 
@@ -158,6 +163,7 @@ public class ConvoiService {
         }
         Instant maintenant = horloge.instant();
         evenements.save(new EvenementLogistique(e.getId(), d.statut().strip(), maintenant, d.localisation().strip()));
+        informer(e, d.statut().strip() + " (" + d.localisation().strip() + ")");
         return versVue(e);
     }
 
@@ -170,6 +176,7 @@ public class ConvoiService {
         e.transfererTransitaire();
         evenements.save(new EvenementLogistique(e.getId(), "CHEZ_TRANSITAIRE", horloge.instant(),
                 localisation != null && !localisation.isBlank() ? localisation.strip() : "Entrepôt du transitaire"));
+        informer(e, "vos marchandises sont remises au transitaire");
         return versVue(e);
     }
 
@@ -180,6 +187,7 @@ public class ConvoiService {
         verifierProprieteCourtier(e, moi);
         e.lancerTransit();
         evenements.save(new EvenementLogistique(e.getId(), "EN_TRANSIT", horloge.instant(), "En route"));
+        informer(e, "votre colis est en transit");
         return versVue(e);
     }
 
@@ -191,6 +199,7 @@ public class ConvoiService {
         e.declarerDouane();
         evenements.save(new EvenementLogistique(e.getId(), "BLOQUE_DOUANE", horloge.instant(),
                 localisation != null ? localisation : "Poste frontalier / Douane"));
+        informer(e, "votre colis est en contrôle douanier");
         return versVue(e);
     }
 
@@ -203,7 +212,22 @@ public class ConvoiService {
         e.marquerArrive();
         evenements.save(new EvenementLogistique(e.getId(), "ARRIVE", horloge.instant(),
                 localisation != null && !localisation.isBlank() ? localisation.strip() : "Bamako"));
+        informer(e, "votre colis est arrivé à destination");
         return versVue(e);
+    }
+
+    /** Chaque étape du convoi est notifiée aux commerçants du groupe, à son grossiste et à son porteur. */
+    private void informer(Expedition e, String etape) {
+        GroupeAchatApi.GroupeInfo g = groupes.groupe(e.getGroupeId()).orElse(null);
+        if (g == null) {
+            return;
+        }
+        String message = "Groupe #" + g.id() + " (" + g.produitNom() + ") : " + etape + ".";
+        java.util.Set<Long> destinataires = new java.util.LinkedHashSet<>();
+        participations.confirmees(g.id()).forEach(p -> destinataires.add(p.commercantId()));
+        destinataires.add(g.grossisteId());
+        destinataires.add(g.porteurId());
+        destinataires.forEach(id -> notifications.notifier(id, message));
     }
 
     private ConvoiVue versVue(Expedition e) {

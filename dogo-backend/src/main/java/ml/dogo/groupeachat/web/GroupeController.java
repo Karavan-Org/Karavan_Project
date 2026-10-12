@@ -81,6 +81,12 @@ public class GroupeController {
         return groupes.duGrossiste(moi.id());
     }
 
+    @GetMapping("/admin/groupes")
+    @PreAuthorize("hasAnyAuthority('GROUPE_PUBLICATION_VALIDER', 'RECEPTION_VALIDER', 'AUDIT_LIRE', 'REMBOURSEMENT_APPROUVER')")
+    public List<GroupeService.GroupeVue> tous() {
+        return groupes.tous();
+    }
+
     @GetMapping("/admin/groupes/en-validation")
     @PreAuthorize("hasAuthority('GROUPE_PUBLICATION_VALIDER')")
     public List<GroupeService.GroupeVue> enValidation() {

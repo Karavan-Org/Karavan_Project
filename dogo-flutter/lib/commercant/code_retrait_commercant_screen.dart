@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../services/api/api_exception.dart';
+import '../services/logistique_api_service.dart';
 import '../theme/app_theme.dart';
 
-/// Écran du Code de Retrait sécurisé pour le Commerçant
-/// Affiche le QR Code dynamique et le code PIN à 4 chiffres à présenter au courtier/magasinier.
-class CodeRetraitCommercantScreen extends StatelessWidget {
+/// Écran du Code de Retrait sécurisé pour le Commerçant (RG-53, RG-71)
+/// Affiche le vrai QR code de la commande (jeton généré par le backend) à présenter au point de retrait ;
+/// le PIN à 4 chiffres, lui, n'est envoyé que par SMS (le backend n'en garde que l'empreinte).
+/// Sans numéro de commande, l'écran cherche lui-même les commandes prêtes à être retirées.
+class CodeRetraitCommercantScreen extends StatefulWidget {
   final String codeCommande;
   final String? codePin;
   final String nomProduit;
@@ -22,6 +27,85 @@ class CodeRetraitCommercantScreen extends StatelessWidget {
   });
 
   @override
+  State<CodeRetraitCommercantScreen> createState() => _CodeRetraitCommercantScreenState();
+}
+
+class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScreen> {
+  static const _rouge = Color(0xFFC0392B);
+  bool _chargement = true;
+  String? _erreur;
+  List<Map<String, dynamic>> _aRetirer = [];
+  Map<String, dynamic>? _commande;
+  CodeRetraitDonnees? _code;
+
+  @override
+  void initState() {
+    super.initState();
+    _charger();
+  }
+
+  /// Commande demandée par l'écran appelant, sinon les commandes EN_ATTENTE_RETRAIT du commerçant
+  Future<void> _charger() async {
+    setState(() {
+      _chargement = true;
+      _erreur = null;
+    });
+    try {
+      final aRetirer = await LogistiqueApiService.instance.commandesARetirer();
+      final demandee = int.tryParse(widget.codeCommande.replaceAll(RegExp(r'[^0-9]'), ''));
+      final choisie = aRetirer.where((c) => (c['id'] as num?)?.toInt() == demandee).firstOrNull ??
+          (aRetirer.length == 1 ? aRetirer.first : null);
+      if (!mounted) return;
+      setState(() {
+        _aRetirer = aRetirer;
+        _chargement = false;
+      });
+      if (choisie != null) {
+        await _choisir(choisie);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _chargement = false;
+        _erreur = e is ApiException ? e.messageComplet : 'Impossible de charger vos commandes : $e';
+      });
+    }
+  }
+
+  Future<void> _choisir(Map<String, dynamic> commande) async {
+    setState(() {
+      _commande = commande;
+      _code = null;
+      _chargement = true;
+      _erreur = null;
+    });
+    try {
+      final code = await LogistiqueApiService.instance.obtenirCodeRetrait(commande['id']);
+      if (!mounted) return;
+      setState(() {
+        _code = code;
+        _chargement = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _chargement = false;
+        _erreur = e is ApiException ? e.messageComplet : 'Code de retrait indisponible : $e';
+      });
+    }
+  }
+
+  String get _nomProduit => (_commande?['produit'] as String?) ?? widget.nomProduit;
+  int get _quantite => (_commande?['quantite'] as num?)?.toInt() ?? widget.quantite;
+  String get _pointRetrait {
+    final point = _commande?['pointRetrait'];
+    if (point is Map && point['nom'] != null) {
+      return [point['nom'], point['adresse']].whereType<String>().where((s) => s.isNotEmpty).join(' — ');
+    }
+    return widget.pointRetrait;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -38,420 +122,309 @@ class CodeRetraitCommercantScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Actualiser',
+            onPressed: _chargement ? null : _charger,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          children: [
-            // Carte principale du QR Code et PIN
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0C46321E),
-                    blurRadius: 20,
-                    offset: Offset(0, 6),
-                  ),
-                ],
-                border: Border.all(
-                  color: AppTheme.primary.withValues(alpha: 0.15),
+      body: RefreshIndicator(
+        onRefresh: _charger,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            children: [
+              if (_chargement)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 80),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_code == null)
+                _etatSansCode()
+              else ...[
+                _carteQr(_code!),
+                const SizedBox(height: 20),
+                _carteLieu(),
+              ],
+              const SizedBox(height: 24),
+              // Sécurité et déblocage séquestre
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9F5F0),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.shield_outlined, color: AppTheme.primary, size: 28),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        "Vos fonds restent protégés jusqu'à votre retrait.",
+                        style: TextStyle(fontSize: 11.5, height: 1.35, color: AppTheme.textPrimary),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                children: [
-                  // Statut Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.success.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check_circle, color: AppTheme.success, size: 16),
-                        SizedBox(width: 6),
-                        Text(
-                          "Colis disponible au point de retrait",
-                          style: TextStyle(
-                            color: AppTheme.success,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Simulation de QR Code stylisé
-                  Container(
-                    width: 200,
-                    height: 200,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE5DDD5), width: 2),
-                    ),
-                    child: CustomPaint(
-                      painter: _QrCodePainter(primaryColor: AppTheme.primaryDark),
-                      child: const Center(
-                        child: ContainerLogoBadge(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-                  Text(
-                    codeCommande,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textMuted,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                  const Divider(color: Color(0xFFF0EAE4)),
-                  const SizedBox(height: 16),
-
-                  // Affichage du Code PIN ou consigne SMS (Conformité RG-71)
-                  if (codePin != null && codePin!.isNotEmpty) ...[
-                    const Text(
-                      "VOTRE CODE PIN CONFIDENTIEL",
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textMuted,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(4, (index) {
-                        final digit = index < codePin!.length ? codePin![index] : '-';
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
-                          width: 50,
-                          height: 58,
-                          decoration: BoxDecoration(
-                            color: AppTheme.tertiary.withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppTheme.primary,
-                              width: 1.8,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              digit,
-                              style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w900,
-                                color: AppTheme.primaryDark,
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  // Badge explicatif SMS conforme RG-71
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.tertiary.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.sms_outlined, color: AppTheme.primary, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            codePin != null && codePin!.isNotEmpty
-                                ? "Code PIN également transmis par SMS au commerçant pour le retrait au guichet."
-                                : "Code PIN confidentiel envoyé par SMS sur votre numéro. À dicter au guichet lors du scan du QR code.",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textDark,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-                  TextButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Un SMS avec votre code PIN de retrait vient d'être réexpédié."),
-                          duration: Duration(seconds: 3),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.refresh_rounded, size: 16, color: AppTheme.primary),
-                    label: const Text(
-                      "Renvoyer le code PIN par SMS",
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primary,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.lock_outline, size: 14, color: AppTheme.textMuted),
-                      SizedBox(width: 5),
-                      Text(
-                        "À communiquer uniquement au guichet de retrait",
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: AppTheme.textMuted,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Détails du point relais et du courtier
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0846321E),
-                    blurRadius: 15,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Lieu de retrait",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.secondary.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.location_on,
-                          color: AppTheme.secondary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              pointRetrait,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Courtier responsable : $courtierNom",
-                              style: const TextStyle(
-                                color: AppTheme.textMuted,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(color: Color(0xFFF3ECE5)),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Article",
-                        style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                      ),
-                      Text(
-                        "$quantite unités",
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    nomProduit,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Sécurité et déblocage séquestre
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9F5F0),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.shield_outlined, color: AppTheme.primary, size: 28),
-                  SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      "Vos fonds restent protégés jusqu'à votre retrait.",
-                      style: TextStyle(fontSize: 11.5, height: 1.35, color: AppTheme.textPrimary),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ContainerLogoBadge extends StatelessWidget {
-  const ContainerLogoBadge({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: AppTheme.primary,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: const Center(
-        child: Text(
-          "DG",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: 16,
-            letterSpacing: 1,
+            ],
           ),
         ),
       ),
     );
   }
-}
 
-/// Peintre géométrique de simulation de QR Code
-class _QrCodePainter extends CustomPainter {
-  final Color primaryColor;
-
-  _QrCodePainter({required this.primaryColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = primaryColor
-      ..style = PaintingStyle.fill;
-
-    // Coins repères (Finders)
-    _drawFinderPattern(canvas, 0, 0, size.width * 0.28, paint);
-    _drawFinderPattern(canvas, size.width * 0.72, 0, size.width * 0.28, paint);
-    _drawFinderPattern(canvas, 0, size.height * 0.72, size.width * 0.28, paint);
-
-    // Grille de pixels de données simulée
-    final step = size.width / 14;
-    for (int i = 0; i < 14; i++) {
-      for (int j = 0; j < 14; j++) {
-        // Éviter les coins repères et le centre logo
-        final inTopLeft = i < 5 && j < 5;
-        final inTopRight = i >= 9 && j < 5;
-        final inBottomLeft = i < 5 && j >= 9;
-        final inCenter = i >= 4 && i <= 9 && j >= 4 && j <= 9;
-
-        if (!inTopLeft && !inTopRight && !inBottomLeft && !inCenter) {
-          if ((i * 3 + j * 7 + (i * j)) % 3 == 0) {
-            canvas.drawRRect(
-              RRect.fromRectAndRadius(
-                Rect.fromLTWH(i * step + 1, j * step + 1, step - 2, step - 2),
-                const Radius.circular(2),
-              ),
-              paint,
-            );
-          }
-        }
-      }
+  /// Erreur, aucune commande prête, ou plusieurs commandes à choisir
+  Widget _etatSansCode() {
+    if (_erreur != null) {
+      return _message(Icons.error_outline_rounded, _erreur!, _rouge);
     }
+    if (_aRetirer.isEmpty) {
+      return _message(
+        Icons.local_shipping_outlined,
+        "Aucune commande n'est encore prête à être retirée. Votre code apparaîtra ici dès que votre colis sera "
+        "disponible au point de retrait (vous recevrez aussi le PIN par SMS).",
+        AppTheme.textMuted,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          "Choisissez la commande à retirer",
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textPrimary),
+        ),
+        const SizedBox(height: 12),
+        ..._aRetirer.map((c) => Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: ListTile(
+                leading: const Icon(Icons.qr_code_2_rounded, color: AppTheme.primary),
+                title: Text(
+                  "Commande #${c['id']} · ${c['produit'] ?? ''}",
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                ),
+                subtitle: Text("${c['quantite'] ?? ''} pièce(s)"),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _choisir(c),
+              ),
+            )),
+      ],
+    );
   }
 
-  void _drawFinderPattern(Canvas canvas, double x, double y, double size, Paint paint) {
-    // Carré externe
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(x, y, size, size), const Radius.circular(6)),
-      paint,
-    );
-    // Carré blanc intermédiaire
-    final whitePaint = Paint()..color = Colors.white;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(x + size * 0.16, y + size * 0.16, size * 0.68, size * 0.68),
-        const Radius.circular(4),
+  Widget _message(IconData icone, String texte, Color couleur) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+      child: Column(
+        children: [
+          Icon(icone, size: 48, color: couleur),
+          const SizedBox(height: 12),
+          Text(texte, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, height: 1.4)),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: _charger,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text("Réessayer"),
+          ),
+        ],
       ),
-      whitePaint,
-    );
-    // Carré noir interne
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(x + size * 0.32, y + size * 0.32, size * 0.36, size * 0.36),
-        const Radius.circular(3),
-      ),
-      paint,
     );
   }
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget _carteQr(CodeRetraitDonnees code) {
+    final couleurEtat = code.bloque ? _rouge : AppTheme.success;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [BoxShadow(color: Color(0x0C46321E), blurRadius: 20, offset: Offset(0, 6))],
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        children: [
+          // Statut Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: couleurEtat.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(code.bloque ? Icons.block : Icons.check_circle, color: couleurEtat, size: 16),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    code.bloque
+                        ? "Code bloqué : demandez-en un nouveau au guichet"
+                        : "Colis disponible au point de retrait",
+                    style: TextStyle(color: couleurEtat, fontWeight: FontWeight.w700, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Vrai QR code : le jeton est scanné au point de retrait (POST /api/retraits/valider)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE5DDD5), width: 2),
+            ),
+            child: QrImageView(
+              data: code.qrToken,
+              size: 220,
+              backgroundColor: Colors.white,
+              eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AppTheme.primaryDark),
+              dataModuleStyle: const QrDataModuleStyle(
+                dataModuleShape: QrDataModuleShape.square,
+                color: AppTheme.primaryDark,
+              ),
+              semanticsLabel: 'QR code de retrait de la commande ${code.commandeId}',
+            ),
+          ),
+
+          const SizedBox(height: 16),
+          Text(
+            "Commande #${code.commandeId}",
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+          ),
+          if (code.expiration.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              "Valable jusqu'au ${_date(code.expiration)}",
+              style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+            ),
+          ],
+
+          const SizedBox(height: 20),
+          const Divider(color: Color(0xFFF0EAE4)),
+          const SizedBox(height: 16),
+
+          // Consigne PIN (RG-71) : le PIN n'est connu que par SMS
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.tertiary.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.sms_outlined, color: AppTheme.primary, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "Faites scanner ce QR code au guichet. Sans scanner, donnez le n° de commande "
+                    "#${code.commandeId} et le code PIN reçu par SMS "
+                    "(${code.tentativesRestantes} essai(s) restant(s)).",
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textDark, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+          const Text(
+            "Code perdu ou bloqué ? Le guichet peut vous envoyer un nouveau code par SMS.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+          ),
+          const SizedBox(height: 10),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_outline, size: 14, color: AppTheme.textMuted),
+              SizedBox(width: 5),
+              Text(
+                "À montrer uniquement au guichet de retrait",
+                style: TextStyle(fontSize: 11.5, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          if (_aRetirer.length > 1) ...[
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => setState(() {
+                _code = null;
+                _commande = null;
+              }),
+              child: Text("Voir mes ${_aRetirer.length} commandes à retirer"),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _carteLieu() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [BoxShadow(color: Color(0x0846321E), blurRadius: 15, offset: Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Lieu de retrait",
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.secondary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.location_on, color: AppTheme.secondary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(_pointRetrait, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(color: Color(0xFFF3ECE5)),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Article", style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+              Text("$_quantite unité(s)", style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(_nomProduit, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
+        ],
+      ),
+    );
+  }
+
+  static String _date(String iso) {
+    final d = DateTime.tryParse(iso)?.toLocal();
+    if (d == null) return iso;
+    String deux(int n) => n.toString().padLeft(2, '0');
+    return "${deux(d.day)}/${deux(d.month)}/${d.year} à ${deux(d.hour)}:${deux(d.minute)}";
+  }
 }

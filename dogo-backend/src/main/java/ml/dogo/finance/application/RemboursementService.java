@@ -200,9 +200,11 @@ public class RemboursementService {
     }
 
     private void exigerFinance(long adminId) {
-        if (!"FINANCE".equals(identite.roleAdministratif(adminId).orElse(null))) {
+        // FINANCE, ou TECHNIQUE (super-administrateur, qui détient toutes les permissions)
+        String role = identite.roleAdministratif(adminId).orElse(null);
+        if (!"FINANCE".equals(role) && !"TECHNIQUE".equals(role)) {
             throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-60",
-                    "Seul un administrateur du rôle FINANCE traite les remboursements");
+                    "Seul un administrateur FINANCE ou TECHNIQUE traite les remboursements");
         }
     }
 

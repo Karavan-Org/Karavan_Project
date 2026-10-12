@@ -24,6 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/admin")
 public class AdminComptesController {
 
+    /** Tous les rôles administratifs consultent les comptes : le support pour les retraits, la finance pour les litiges. */
+    private static final String LECTURE_COMPTES = "hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'KYC_VALIDER', "
+            + "'AUDIT_LIRE', 'RECEPTION_VALIDER', 'REMBOURSEMENT_APPROUVER')";
+
     public record SuspensionRequete(@NotBlank String motif) {
     }
 
@@ -64,20 +68,26 @@ public class AdminComptesController {
         return Map.of("id", id);
     }
 
+    @GetMapping("/administrateurs")
+    @PreAuthorize("hasAuthority('ADMIN_CREER')")
+    public List<CompteService.AdministrateurVue> listerAdministrateurs() {
+        return comptes.listerAdministrateurs();
+    }
+
     @GetMapping("/commercants")
-    @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'KYC_VALIDER', 'AUDIT_LIRE')")
+    @PreAuthorize(LECTURE_COMPTES)
     public List<CompteService.CommercantVue> listerCommercants() {
         return comptes.listerCommercants();
     }
 
     @GetMapping("/grossistes")
-    @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'KYC_VALIDER', 'AUDIT_LIRE')")
+    @PreAuthorize(LECTURE_COMPTES)
     public List<CompteService.GrossisteVue> listerGrossistes() {
         return comptes.listerGrossistes();
     }
 
     @GetMapping("/courtiers")
-    @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'KYC_VALIDER', 'AUDIT_LIRE')")
+    @PreAuthorize(LECTURE_COMPTES)
     public List<CompteService.CourtierVue> listerCourtiers() {
         return comptes.listerCourtiers();
     }

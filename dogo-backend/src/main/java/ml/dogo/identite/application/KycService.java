@@ -109,16 +109,12 @@ public class KycService {
         return vue(dossier, u);
     }
 
-    /** RG-05 : seul un administrateur du rôle VALIDATION décide ; un rejet exige un motif. */
+    /**
+     * RG-05 : un administrateur VALIDATION (ou TECHNIQUE, super-administrateur) décide ; un rejet exige un motif.
+     */
     @Transactional
     public DossierVue decider(long administrateurId, long dossierId, StatutValidation decision, String commentaire) {
-        Administrateur admin = utilisateurs.findById(administrateurId)
-                .filter(x -> x instanceof Administrateur).map(x -> (Administrateur) x)
-                .orElseThrow(() -> new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-05", "Réservé aux administrateurs"));
-        if (admin.getRoleAdministratif() != RoleAdministratif.VALIDATION) {
-            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-05",
-                    "Seul un administrateur du rôle VALIDATION peut décider d'un dossier");
-        }
+        exigerValidateur(administrateurId);
         DossierKyc dossier = dossiers.trouverPourDecision(dossierId)
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Dossier KYC", dossierId));
         dossier.decider(decision, commentaire);
@@ -140,6 +136,62 @@ public class KycService {
     public List<DossierVue> enAttente() {
         return dossiers.findByStatutOrderByDateSoumissionAsc(StatutValidation.EN_ATTENTE).stream()
                 .map(d -> vue(d, utilisateurs.findById(d.getUtilisateurId()).orElseThrow())).toList();
+    }
+
+    /**
+     * Validation d'un compte Grossiste / Courtier par l'administrateur (RG-03, RG-05) : le dossier en attente est
+     * approuvé ; sans dossier (pièces vérifiées hors application, comptes créés avant le KYC), une validation
+     * manuelle est enregistrée comme dossier approuvé, tracée avec son motif. Le compte en attente devient actif ;
+     * un compte suspendu le reste (il se réactive ensuite, RG-09).
+     */
+    @Transactional
+    public DossierVue validerCompte(long administrateurId, long utilisateurId, String commentaire) {
+        exigerValidateur(administrateurId);
+        Utilisateur u = utilisateurs.findById(utilisateurId)
+                .orElseThrow(() -> ErreurMetier.nonTrouve("Utilisateur", utilisateurId));
+        if (!u.typeActeur().exigeKyc()) {
+            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-03",
+                    "Seuls les grossistes et les courtiers passent par la validation KYC");
+        }
+        if (commentaire == null || commentaire.isBlank()) {
+            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-05", "Indiquez ce qui a été vérifié");
+        }
+        List<DossierKyc> historique = dossiers.findByUtilisateurIdOrderByDateSoumissionDesc(utilisateurId);
+        DossierKyc approuve = historique.stream().filter(d -> d.getStatut() == StatutValidation.APPROUVE).findFirst()
+                .orElse(null);
+        if (approuve != null) {
+            if (u.getStatutCompte() == StatutCompte.EN_ATTENTE) {
+                u.changerStatut(StatutCompte.ACTIF);
+            }
+            return vue(approuve, u);
+        }
+        DossierKyc enAttente = historique.stream().filter(d -> d.getStatut() == StatutValidation.EN_ATTENTE)
+                .findFirst().orElse(null);
+        if (enAttente == null) {
+            enAttente = dossiers.save(new DossierKyc(utilisateurId, horloge.instant()));
+            audit.tracer(administrateurId, "KYC_VALIDATION_MANUELLE", "utilisateur=" + utilisateurId,
+                    "dossier=" + enAttente.getId() + ", " + commentaire.strip());
+        }
+        return decider(administrateurId, enAttente.getId(), StatutValidation.APPROUVE, commentaire.strip());
+    }
+
+    private void exigerValidateur(long administrateurId) {
+        Administrateur admin = utilisateurs.findById(administrateurId)
+                .filter(x -> x instanceof Administrateur).map(x -> (Administrateur) x)
+                .orElseThrow(() -> new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-05", "Réservé aux administrateurs"));
+        if (admin.getRoleAdministratif() != RoleAdministratif.VALIDATION
+                && admin.getRoleAdministratif() != RoleAdministratif.TECHNIQUE) {
+            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-05",
+                    "Seul un administrateur VALIDATION ou TECHNIQUE peut décider d'un dossier");
+        }
+    }
+
+    /** Historique des dossiers d'un acteur, du plus récent au plus ancien (fiche utilisateur de l'administrateur). */
+    @Transactional(readOnly = true)
+    public List<DossierVue> dossiersDe(long utilisateurId) {
+        Utilisateur u = utilisateurs.findById(utilisateurId)
+                .orElseThrow(() -> ErreurMetier.nonTrouve("Utilisateur", utilisateurId));
+        return dossiers.findByUtilisateurIdOrderByDateSoumissionDesc(utilisateurId).stream().map(d -> vue(d, u)).toList();
     }
 
     @Transactional(readOnly = true)

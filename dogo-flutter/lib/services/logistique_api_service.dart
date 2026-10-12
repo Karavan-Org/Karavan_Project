@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
 
-/// Données du code de retrait selon RG-71
+/// Données du code de retrait selon RG-71 (CodeVue du backend)
 class CodeRetraitDonnees {
   final int commandeId;
+
+  /// Contenu du QR code : jeton unique généré par le backend, scanné au point de retrait
   final String qrToken;
   final String expiration;
   final int tentativesRestantes;
@@ -20,10 +22,10 @@ class CodeRetraitDonnees {
 
   factory CodeRetraitDonnees.fromJson(Map<String, dynamic> json) {
     return CodeRetraitDonnees(
-      commandeId: json['commandeId'] as int? ?? 1,
-      qrToken: json['qrToken'] as String? ?? 'DOGO-RETRAIT-TOKEN-DEMO',
+      commandeId: (json['commandeId'] as num).toInt(),
+      qrToken: json['qrToken'] as String,
       expiration: json['expiration']?.toString() ?? '',
-      tentativesRestantes: json['tentativesRestantes'] as int? ?? 3,
+      tentativesRestantes: (json['tentativesRestantes'] as num?)?.toInt() ?? 3,
       bloque: json['bloque'] as bool? ?? false,
     );
   }
@@ -48,39 +50,38 @@ class LogistiqueApiService {
     }
   }
 
-  /// Récupère le jeton sécurisé QR Code pour le retrait (GET /api/commandes/{id}/code-retrait)
-  Future<CodeRetraitDonnees> obtenirCodeRetrait(dynamic commandeId) async {
-    try {
-      final response = await ApiClient.instance.get(ApiConfig.codeRetrait(commandeId));
-      if (response is Map<String, dynamic>) {
-        return CodeRetraitDonnees.fromJson(response);
-      }
-      throw Exception('Format de code retrait invalide');
-    } catch (e) {
-      debugPrint('LogistiqueApiService.obtenirCodeRetrait - Repli mode démo : $e');
-      return CodeRetraitDonnees(
-        commandeId: int.tryParse(commandeId.toString()) ?? 1,
-        qrToken: 'DOGO-TOKEN-BKO-${commandeId.toString()}-SECURE',
-        expiration: DateTime.now().add(const Duration(days: 7)).toIso8601String(),
-      );
-    }
+  /// Commandes prêtes à être retirées (statut EN_ATTENTE_RETRAIT) : ce sont les seules qui ont un code
+  Future<List<Map<String, dynamic>>> commandesARetirer() async {
+    final commandes = await mesCommandes();
+    return commandes.where((c) => c['statut'] == 'EN_ATTENTE_RETRAIT').toList();
   }
 
-  /// Validation du retrait par le courtier / magasinier (POST /api/retraits/valider)
+  /// Jeton du QR code de retrait (GET /api/commandes/{id}/code-retrait). Aucun jeton de repli : un code
+  /// inventé ne serait jamais accepté au point de retrait, l'erreur est donc remontée à l'écran.
+  Future<CodeRetraitDonnees> obtenirCodeRetrait(dynamic commandeId) async {
+    final response = await ApiClient.instance.get(ApiConfig.codeRetrait(commandeId));
+    if (response is Map<String, dynamic>) {
+      return CodeRetraitDonnees.fromJson(response);
+    }
+    throw Exception('Format de code retrait invalide');
+  }
+
+  /// Validation du retrait par le courtier (POST /api/retraits/valider, RG-53) :
+  /// soit le contenu du QR code scanné, soit le numéro de commande avec le PIN reçu par SMS.
   Future<Map<String, dynamic>> validerRetrait({
     dynamic commandeId,
     String? qrToken,
-    required String pin,
+    String? pin,
   }) async {
     final response = await ApiClient.instance.post(
       ApiConfig.validerRetrait,
       body: {
-        if (commandeId != null) 'commandeId': commandeId,
         if (qrToken != null) 'qrToken': qrToken,
-        'pin': pin,
+        if (qrToken == null && commandeId != null) 'commandeId': commandeId,
+        if (qrToken == null && pin != null) 'pin': pin,
       },
     );
 
-    return response is Map<String, dynamic> ? response : {'statut': 'LIVRE'};
+    return response is Map<String, dynamic> ? response : {'statut': 'COLLECTEE'};
   }
 }

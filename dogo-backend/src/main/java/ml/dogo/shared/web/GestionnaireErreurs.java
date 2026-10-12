@@ -70,4 +70,13 @@ public class GestionnaireErreurs {
         p.setProperty("code", "CONFLIT");
         return p;
     }
+
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail inattendu(Exception e) {
+        LOG.error("Erreur serveur inattendue", e);
+        ProblemDetail p = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Une erreur technique inattendue est survenue");
+        p.setProperty("code", "ERREUR_TECHNIQUE");
+        return p;
+    }
 }

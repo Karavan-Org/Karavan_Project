@@ -35,6 +35,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class GroupeService {
 
+    /**
+     * Politique d'annulation de la plateforme (RG-24) : imposée aux groupes portés par un grossiste, qui ne peut ni
+     * la modifier ni la supprimer.
+     */
+    public static final String POLITIQUE_ANNULATION_PLATEFORME = "Annulation possible tant que l'objectif n'est pas "
+            + "atteint ; remboursement intégral si le groupe est annulé ou n'atteint pas son objectif.";
+
     public record Demande(String titre, Long produitId, Integer quantiteCible, Instant dateLimite, BigDecimal marchandise,
                           BigDecimal transport, BigDecimal douane, BigDecimal autres, Integer delaiLivraisonJours,
                           String politiqueAnnulation, Integer quantiteMinParCommercant) {
@@ -133,7 +140,8 @@ public class GroupeService {
         GroupeAchat g = groupes.save(new GroupeAchat(parGrossiste ? null : acteurId, produit.grossisteId(),
                 produit.id(), titre(d), calcul.quantiteCible, calcul.prixUnitaire, maintenant, d.dateLimite()));
         grilles.save(new GrilleTarifaire(g.getId(), calcul.composantes, proprietes.commission().taux()));
-        conditions.save(new ConditionCommerciale(g.getId(), calcul.delai, d.politiqueAnnulation(), calcul.minimum));
+        conditions.save(new ConditionCommerciale(g.getId(), calcul.delai,
+                parGrossiste ? POLITIQUE_ANNULATION_PLATEFORME : d.politiqueAnnulation(), calcul.minimum));
         audit.tracer(acteurId, "GROUPE_CREE", null, "groupe=" + g.getId() + ", produit=" + produit.id());
         return vue(groupes.findById(g.getId()).orElseThrow());
     }
@@ -149,7 +157,8 @@ public class GroupeService {
         Calcul calcul = calculer(d, horloge.instant());
         g.modifierBrouillon(titre(d), calcul.quantiteCible, calcul.prixUnitaire, d.dateLimite());
         grilles.findByGroupeId(groupeId).orElseThrow().appliquer(calcul.composantes, proprietes.commission().taux());
-        conditions.findByGroupeId(groupeId).orElseThrow().appliquer(calcul.delai, d.politiqueAnnulation(), calcul.minimum);
+        conditions.findByGroupeId(groupeId).orElseThrow().appliquer(calcul.delai,
+                g.estPorteParGrossiste() ? POLITIQUE_ANNULATION_PLATEFORME : d.politiqueAnnulation(), calcul.minimum);
         groupes.flush();
         return vue(groupes.findById(groupeId).orElseThrow());
     }
@@ -343,6 +352,13 @@ public class GroupeService {
     @Transactional(readOnly = true)
     public List<GroupeVue> duGrossiste(long grossisteId) {
         return groupes.findByGrossisteIdOrderByIdDesc(grossisteId).stream().map(this::vue).toList();
+    }
+
+    /** Tous les groupes, du plus récent au plus ancien (supervision administrateur). */
+    @Transactional(readOnly = true)
+    public List<GroupeVue> tous() {
+        return groupes.findAll(org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Direction.DESC, "id")).stream().map(this::vue).toList();
     }
 
     @Transactional(readOnly = true)
