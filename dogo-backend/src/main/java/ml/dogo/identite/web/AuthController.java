@@ -20,13 +20,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     public record InscriptionRequete(
-            @NotNull TypeActeur type, @NotBlank String telephone, @NotBlank String nom, @NotBlank String pin,
+            @NotNull TypeActeur type, @NotBlank String telephone, @NotBlank String nom,
+            String motDePasse, String pin,
             String nomBoutique, String adresseLivraison, String quartierBamako, String canalVente,
             String nomBoutiqueMarche, String numeroNif, String registreCommerce,
             String nomSocieteImport, String licenceTransit, String adresseDepot) {
 
+        public String motDePasseEffectif() {
+            return motDePasse != null && !motDePasse.isBlank() ? motDePasse : pin;
+        }
+
         InscriptionService.Demande versDemande() {
-            return new InscriptionService.Demande(type, telephone, nom, pin, nomBoutique, adresseLivraison,
+            return new InscriptionService.Demande(type, telephone, nom, motDePasseEffectif(), nomBoutique, adresseLivraison,
                     quartierBamako, canalVente, nomBoutiqueMarche, numeroNif, registreCommerce, nomSocieteImport,
                     licenceTransit, adresseDepot);
         }
@@ -38,7 +43,10 @@ public class AuthController {
     public record OtpRequete(@NotBlank String telephone, @NotBlank String code) {
     }
 
-    public record ConnexionRequete(@NotBlank String telephone, @NotBlank String pin, String deviceId) {
+    public record ConnexionRequete(@NotBlank String telephone, String motDePasse, String pin, String deviceId) {
+        public String motDePasseEffectif() {
+            return motDePasse != null && !motDePasse.isBlank() ? motDePasse : pin;
+        }
     }
 
     private final InscriptionService inscription;
@@ -67,6 +75,6 @@ public class AuthController {
 
     @PostMapping("/connexion")
     public AuthService.Connexion connecter(@Valid @RequestBody ConnexionRequete r, HttpServletRequest http) {
-        return auth.connecter(r.telephone(), r.pin(), r.deviceId(), http.getRemoteAddr());
+        return auth.connecter(r.telephone(), r.motDePasseEffectif(), r.deviceId(), http.getRemoteAddr());
     }
 }

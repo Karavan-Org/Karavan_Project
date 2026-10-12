@@ -40,11 +40,28 @@ public final class RegleAcces {
         }
     }
 
-    /** Le PIN compte exactement 4 chiffres, pas tous identiques (RG-07). */
+    /**
+     * Règle de sécurité mot de passe : entre 8 et 64 caractères, au moins 1 majuscule, 1 minuscule et 1 chiffre.
+     */
+    public static void verifierFormatMotDePasse(String motDePasse) {
+        if (motDePasse == null || motDePasse.length() < 8 || motDePasse.length() > 64
+                || motDePasse.chars().noneMatch(Character::isUpperCase)
+                || motDePasse.chars().noneMatch(Character::isLowerCase)
+                || motDePasse.chars().noneMatch(Character::isDigit)) {
+            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-07",
+                    "Le mot de passe doit comporter entre 8 et 64 caractères, avec au moins une majuscule, une minuscule et un chiffre");
+        }
+    }
+
+    /** Rétrocompatibilité transitoire. */
     public static void verifierFormatPin(String pin) {
+        if (pin != null && pin.length() >= 8) {
+            verifierFormatMotDePasse(pin);
+            return;
+        }
         if (pin == null || !pin.matches("\\d{4}") || pin.chars().distinct().count() == 1) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-07",
-                    "Le code PIN doit comporter exactement 4 chiffres (non tous identiques)");
+                    "Le mot de passe doit comporter entre 8 et 64 caractères, avec au moins une majuscule, une minuscule et un chiffre");
         }
     }
 }

@@ -31,8 +31,11 @@ public class AdminComptesController {
     public record SuspensionRequete(@NotBlank String motif) {
     }
 
-    public record AdministrateurRequete(@NotBlank String telephone, @NotBlank String nom, @NotBlank String pin,
+    public record AdministrateurRequete(@NotBlank String telephone, @NotBlank String nom, String motDePasse, String pin,
                                         @NotBlank String matricule, @NotNull RoleAdministratif role) {
+        public String motDePasseEffectif() {
+            return motDePasse != null && !motDePasse.isBlank() ? motDePasse : pin;
+        }
     }
 
     private final CompteService comptes;
@@ -63,7 +66,7 @@ public class AdminComptesController {
     @PreAuthorize("hasAuthority('ADMIN_CREER')")
     public Map<String, Long> creer(@AuthenticationPrincipal UtilisateurCourant moi,
                                    @Valid @RequestBody AdministrateurRequete r) {
-        long id = administrateurs.creerParAdministrateur(moi.id(), r.telephone(), r.nom(), r.pin(), r.matricule(),
+        long id = administrateurs.creerParAdministrateur(moi.id(), r.telephone(), r.nom(), r.motDePasseEffectif(), r.matricule(),
                 r.role());
         return Map.of("id", id);
     }

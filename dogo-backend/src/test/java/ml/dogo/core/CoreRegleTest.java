@@ -115,6 +115,15 @@ class CoreRegleTest {
     }
 
     @Test
+    void rg07_format_du_mot_de_passe() {
+        RegleAcces.verifierFormatMotDePasse("Dogo2026!");
+        RegleAcces.verifierFormatMotDePasse("Pass1234");
+        for (String mauvais : new String[]{null, "court", "toutenminuscule1", "TOUTENMAJUSCULE1", "SansChiffre", "12345678"}) {
+            assertThrows(ErreurMetier.class, () -> RegleAcces.verifierFormatMotDePasse(mauvais));
+        }
+    }
+
+    @Test
     void rg19_transitions_valides_du_groupe() {
         assertTrue(StatutGroupe.BROUILLON.peutAllerVers(StatutGroupe.EN_VALIDATION));
         assertTrue(StatutGroupe.EN_VALIDATION.peutAllerVers(StatutGroupe.OUVERT));

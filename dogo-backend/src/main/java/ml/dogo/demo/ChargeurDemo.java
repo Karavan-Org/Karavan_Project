@@ -36,7 +36,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Component
 public class ChargeurDemo {
 
-    static final String PIN = "2580";
+    static final String MOT_DE_PASSE = "Dogo2026!";
 
     private static final Logger LOG = LoggerFactory.getLogger(ChargeurDemo.class);
 
@@ -70,14 +70,14 @@ public class ChargeurDemo {
             LOG.info("Données de démo : la base contient déjà des administrateurs, rien à charger");
             return;
         }
-        long technique = administrateurs.creerInitial("+22370000001", "Admin Technique", PIN, "ADM-0001", RoleAdministratif.TECHNIQUE);
-        administrateurs.creerInitial("+22370000002", "Admin Validation", PIN, "ADM-0002", RoleAdministratif.VALIDATION);
-        administrateurs.creerInitial("+22370000003", "Admin Finance", PIN, "ADM-0003", RoleAdministratif.FINANCE);
-        administrateurs.creerInitial("+22370000004", "Admin Support", PIN, "ADM-0004", RoleAdministratif.SUPPORT);
+        long technique = administrateurs.creerInitial("+22370000001", "Admin Technique", MOT_DE_PASSE, "ADM-0001", RoleAdministratif.TECHNIQUE);
+        administrateurs.creerInitial("+22370000002", "Admin Validation", MOT_DE_PASSE, "ADM-0002", RoleAdministratif.VALIDATION);
+        administrateurs.creerInitial("+22370000003", "Admin Finance", MOT_DE_PASSE, "ADM-0003", RoleAdministratif.FINANCE);
+        administrateurs.creerInitial("+22370000004", "Admin Support", MOT_DE_PASSE, "ADM-0004", RoleAdministratif.SUPPORT);
 
-        long grossisteId = creerCompte(role -> new Grossiste("+22371000001", "Grossiste Demo", encodeur.encode(PIN), role,
+        long grossisteId = creerCompte(role -> new Grossiste("+22371000001", "Grossiste Demo", encodeur.encode(MOT_DE_PASSE), role,
                 horloge.instant(), "Grand Marché de Guangzhou", "NIF-DEMO-001", "RC-DEMO-001"), "GROSSISTE");
-        long courtierId = creerCompte(role -> new Courtier("+22372000001", "Courtier Demo", encodeur.encode(PIN), role, horloge.instant(),
+        long courtierId = creerCompte(role -> new Courtier("+22372000001", "Courtier Demo", encodeur.encode(MOT_DE_PASSE), role, horloge.instant(),
                 "Sahel Import", "LT-DEMO-001", "Dépôt de Badalabougou"), "COURTIER");
         comptes.ajouterMoyen(courtierId, "+22372000001", OperateurMobileMoney.ORANGE_MONEY, true);
         String[] noms = {"Aminata Traoré", "Moussa Keïta", "Fatoumata Diallo"};
@@ -86,7 +86,7 @@ public class ChargeurDemo {
         for (int i = 0; i < noms.length; i++) {
             String telephone = "+2237300000" + (i + 1);
             String nomBoutique = "Boutique " + noms[i].split(" ")[0];
-            long id = creerCompte(role -> new Commercant(telephone, nomDe(noms, telephone), encodeur.encode(PIN),
+            long id = creerCompte(role -> new Commercant(telephone, nomDe(noms, telephone), encodeur.encode(MOT_DE_PASSE),
                     role, horloge.instant(), nomBoutique, "Bamako", "Hamdallaye", "BOUTIQUE"), "COMMERCANT");
             comptes.ajouterMoyen(id, telephone, operateurs[i], true);
         }
@@ -102,11 +102,11 @@ public class ChargeurDemo {
         points.creer(technique, "Point Marché de Dibida", "Marché de Dibida", "Dibida");
 
         LOG.info("""
-                Données de démo chargées (PIN de tous les comptes : {})
+                Données de démo chargées (Mot de passe de tous les comptes : {})
                   admins       : +22370000001 (TECHNIQUE) / 002 (VALIDATION) / 003 (FINANCE) / 004 (SUPPORT)
                   grossiste    : +22371000001
                   courtier     : +22372000001
-                  commerçants  : +22373000001 / 002 / 003""", PIN);
+                  commerçants  : +22373000001 / 002 / 003""", MOT_DE_PASSE);
     }
 
     private static String nomDe(String[] noms, String telephone) {

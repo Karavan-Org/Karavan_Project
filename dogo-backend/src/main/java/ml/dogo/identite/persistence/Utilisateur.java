@@ -37,8 +37,8 @@ public abstract class Utilisateur {
     @Column(nullable = false)
     private String nom;
 
-    @Column(name = "pin_hash", nullable = false)
-    private String pinHash;
+    @Column(name = "mot_de_passe_hash", nullable = false)
+    private String motDePasseHash;
 
     @Column(nullable = false)
     private String langue = "fr";
@@ -50,8 +50,8 @@ public abstract class Utilisateur {
     @Column(name = "telephone_verifie", nullable = false)
     private boolean telephoneVerifie;
 
-    @Column(name = "tentatives_pin", nullable = false)
-    private int tentativesPin;
+    @Column(name = "tentatives_echecs", nullable = false)
+    private int tentativesEchecs;
 
     @Column(name = "verrouille_jusqua")
     private Instant verrouilleJusqua;
@@ -66,10 +66,10 @@ public abstract class Utilisateur {
     protected Utilisateur() {
     }
 
-    protected Utilisateur(String telephone, String nom, String pinHash, Role role, Instant dateCreation) {
+    protected Utilisateur(String telephone, String nom, String motDePasseHash, Role role, Instant dateCreation) {
         this.telephone = telephone;
         this.nom = nom;
-        this.pinHash = pinHash;
+        this.motDePasseHash = motDePasseHash;
         this.role = role;
         this.dateCreation = dateCreation;
     }
@@ -78,9 +78,13 @@ public abstract class Utilisateur {
 
     // ---- comportements (RG-01, RG-03, RG-07, RG-09)
 
-    public void reinitialiserEchecsPin() {
-        this.tentativesPin = 0;
+    public void reinitialiserEchecs() {
+        this.tentativesEchecs = 0;
         this.verrouilleJusqua = null;
+    }
+
+    public void reinitialiserEchecsPin() {
+        reinitialiserEchecs();
     }
 
     public void verifierNonVerrouille(Instant maintenant) {
@@ -111,7 +115,8 @@ public abstract class Utilisateur {
     public Long getId() { return id; }
     public String getTelephone() { return telephone; }
     public String getNom() { return nom; }
-    public String getPinHash() { return pinHash; }
+    public String getMotDePasseHash() { return motDePasseHash; }
+    public String getPinHash() { return motDePasseHash; }
     public String getLangue() { return langue; }
     public StatutCompte getStatutCompte() { return statutCompte; }
     public boolean isTelephoneVerifie() { return telephoneVerifie; }

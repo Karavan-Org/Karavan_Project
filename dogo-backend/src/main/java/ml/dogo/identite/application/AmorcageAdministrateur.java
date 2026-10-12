@@ -21,27 +21,27 @@ public class AmorcageAdministrateur {
     private final AdministrateurService administrateurs;
     private final UtilisateurRepository utilisateurs;
     private final String telephone;
-    private final String pin;
+    private final String motDePasse;
 
     public AmorcageAdministrateur(AdministrateurService administrateurs, UtilisateurRepository utilisateurs,
                                   @Value("${dogo.admin.telephone:${dogo.admin.tel:}}") String telephone,
-                                  @Value("${dogo.admin.pin:}") String pin) {
+                                  @Value("${dogo.admin.mot-de-passe:${dogo.admin.password:${dogo.admin.pin:}}}") String motDePasse) {
         this.administrateurs = administrateurs;
         this.utilisateurs = utilisateurs;
         this.telephone = telephone;
-        this.pin = pin;
+        this.motDePasse = motDePasse;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void amorcer() {
-        if (telephone.isBlank() || pin.isBlank()) {
-            LOG.info("Amorçage administrateur : aucune variable (DOGO_ADMIN_TELEPHONE / DOGO_ADMIN_TEL) renseignée.");
+        if (telephone.isBlank() || motDePasse.isBlank()) {
+            LOG.info("Amorçage administrateur : aucune variable (DOGO_ADMIN_TELEPHONE / DOGO_ADMIN_MOT_DE_PASSE) renseignée.");
             return;
         }
         if (utilisateurs.nombreAdministrateurs() > 0) {
             return;
         }
-        administrateurs.creerInitial(telephone, "Administrateur technique", pin, "ADM-0001", RoleAdministratif.TECHNIQUE);
+        administrateurs.creerInitial(telephone, "Administrateur technique", motDePasse, "ADM-0001", RoleAdministratif.TECHNIQUE);
         LOG.info("Administrateur technique créé pour le numéro {}", telephone);
     }
 }

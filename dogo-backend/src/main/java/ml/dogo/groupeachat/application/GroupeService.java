@@ -330,7 +330,9 @@ public class GroupeService {
     @Transactional(readOnly = true)
     public List<GroupeVue> explorer(Long categorieId, String recherche) {
         String q = recherche == null ? null : recherche.strip().toLowerCase(Locale.ROOT);
-        return groupes.findByStatutOrderByDateLimiteAsc(StatutGroupe.OUVERT).stream().map(this::vue)
+        return groupes.findByStatutOrderByDateLimiteAsc(StatutGroupe.OUVERT).stream()
+                .map(this::vue)
+                .map(this::anonymiserPourCommercant)
                 .filter(v -> categorieId == null || catalogue.produit(v.produit().id())
                         .map(p -> p.categorieId() == categorieId).orElse(false))
                 .filter(v -> q == null || q.isEmpty() || v.produit().nom().toLowerCase(Locale.ROOT).contains(q))
@@ -368,7 +370,18 @@ public class GroupeService {
 
     @Transactional(readOnly = true)
     public GroupeVue detail(UtilisateurCourant demandeur, long groupeId) {
-        return vue(visible(demandeur, groupeId));
+        GroupeVue v = vue(visible(demandeur, groupeId));
+        if (demandeur != null && "COMMERCANT".equals(demandeur.type())) {
+            return anonymiserPourCommercant(v);
+        }
+        return v;
+    }
+
+    private GroupeVue anonymiserPourCommercant(GroupeVue v) {
+        return new GroupeVue(v.id(), v.titre(), v.statut(), v.produit(), v.courtier(),
+                null, v.porteParGrossiste(), v.quantiteCible(), v.quantiteConfirmee(), v.quantiteReservee(),
+                v.quantiteRestante(), v.prixUnitaire(), null, v.conditions(), v.dateOuverture(),
+                v.dateLimite(), v.disponibiliteValidee());
     }
 
     @Transactional(readOnly = true)

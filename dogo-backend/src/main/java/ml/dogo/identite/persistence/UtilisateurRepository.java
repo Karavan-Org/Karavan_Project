@@ -27,10 +27,10 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     // Les compteurs d'échecs sont incrémentés en SQL pour rester exacts même sous requêtes parallèles (RG-07).
 
     @Modifying
-    @Query(nativeQuery = true, value = "UPDATE utilisateur SET tentatives_pin = tentatives_pin + 1 WHERE id = :id")
+    @Query(nativeQuery = true, value = "UPDATE utilisateur SET tentatives_echecs = tentatives_echecs + 1 WHERE id = :id")
     int incrementerEchecsPin(@Param("id") long id);
 
-    @Query(nativeQuery = true, value = "SELECT tentatives_pin FROM utilisateur WHERE id = :id")
+    @Query(nativeQuery = true, value = "SELECT tentatives_echecs FROM utilisateur WHERE id = :id")
     int tentativesPin(@Param("id") long id);
 
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
