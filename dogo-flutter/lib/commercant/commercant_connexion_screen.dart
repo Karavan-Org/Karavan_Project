@@ -114,6 +114,13 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
             children: [
               const SizedBox(height: 10),
 
+              Image.asset(
+                'assets/images/logo_dogo.png',
+                height: 64,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 14),
+
               // 1. TITRE PRINCIPAL FIGMA
               const Text(
                 "Connexion",

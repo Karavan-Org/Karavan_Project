@@ -1,11 +1,11 @@
 {
-    "name": "dogo_app",
-    "short_name": "dogo_app",
+    "name": "dɔgɔ",
+    "short_name": "dɔgɔ",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FAF8F5",
+    "theme_color": "#AC7F5E",
+    "description": "dɔgɔ - Plateforme malienne d'achats groupés internationaux B2B",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

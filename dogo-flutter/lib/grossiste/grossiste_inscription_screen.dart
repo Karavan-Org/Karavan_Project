@@ -96,10 +96,7 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
           child: Column(
             children: [
               const SizedBox(height: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.asset('assets/images/grossiste/logo_dogo_figma.png', width: 56, height: 56, fit: BoxFit.cover),
-              ),
+              Image.asset('assets/images/logo_dogo.png', height: 56, fit: BoxFit.contain),
               const SizedBox(height: 14),
               SvgPicture.asset('assets/images/grossiste/port_scene.svg', width: 346, height: 86),
               const SizedBox(height: 8),

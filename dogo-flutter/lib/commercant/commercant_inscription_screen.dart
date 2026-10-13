@@ -146,6 +146,13 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Image.asset(
+                'assets/images/logo_dogo.png',
+                height: 58,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 12),
+
               // 1. TITRE PRINCIPAL FIGMA
               const Text(
                 "Inscription",

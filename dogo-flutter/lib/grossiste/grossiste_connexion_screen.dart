@@ -110,7 +110,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
                   ),
-                  Image.asset('assets/images/grossiste/logo_dogo_figma.png', width: 81, height: 81, fit: BoxFit.cover),
+                  Image.asset('assets/images/logo_dogo.png', height: 72, fit: BoxFit.contain),
                   const SizedBox(height: 18),
                   const Text(
                     "Bienvenue Grossiste !",
