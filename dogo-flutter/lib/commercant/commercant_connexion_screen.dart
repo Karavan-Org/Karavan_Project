@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
-import '../grossiste/grossiste_main_nav.dart';
-import '../courtier/courtier_main_nav.dart';
 import '../services/auth_service.dart';
 import '../services/api/api_exception.dart';
-import 'commercant_main_nav.dart';
 import 'commercant_inscription_screen.dart';
 
 /// Écran de Connexion conforme au modèle Figma exact et aux specs backend (PIN)
@@ -59,22 +56,20 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
       await AuthService.instance.connecter(telephone: phone, motDePasse: pin);
       if (!mounted) return;
 
-      Widget destination;
+      String route;
       switch (widget.role) {
         case RoleActeur.grossiste:
-          destination = const GrossisteMainNav();
+          route = '/grossiste';
           break;
         case RoleActeur.courtier:
-          destination = const CourtierMainNav();
+          route = '/courtier';
           break;
         case RoleActeur.commercant:
-          destination = const CommercantMainNav();
+          route = '/commercant';
           break;
       }
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => destination),
-      );
+      Navigator.of(context).pushReplacementNamed(route);
     } catch (e) {
       if (!mounted) return;
       final message = e is ApiException ? e.messageComplet : 'Erreur de connexion : ${e.toString()}';

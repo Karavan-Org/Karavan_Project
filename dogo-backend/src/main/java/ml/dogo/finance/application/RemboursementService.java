@@ -14,6 +14,7 @@ import ml.dogo.finance.domain.StatutRemboursement;
 import ml.dogo.finance.domain.StatutSequestre;
 import ml.dogo.finance.domain.TypeMouvement;
 import ml.dogo.finance.persistence.Paiement;
+import ml.dogo.finance.persistence.PaiementRepository;
 import ml.dogo.finance.persistence.PorteFeuilleCourtierRepository;
 import ml.dogo.finance.persistence.Remboursement;
 import ml.dogo.finance.persistence.RemboursementRepository;
@@ -36,11 +37,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class RemboursementService {
 
-    public record RemboursementVue(long id, long paiementId, BigDecimal montant, String statut, String motif,
-                                   Instant dateDemande) {
+    public record RemboursementVue(long id, long paiementId, Long participationId, Long groupeId, String produitNom,
+                                   BigDecimal montant, String statut, String motif, Instant dateDemande) {
     }
 
     private final RemboursementRepository remboursements;
+    private final PaiementRepository paiements;
     private final SequestreRepository sequestres;
     private final PorteFeuilleCourtierRepository portefeuilles;
     private final MouvementService mouvements;
@@ -53,12 +55,14 @@ public class RemboursementService {
     private final Verrou verrou;
     private final Clock horloge;
 
-    public RemboursementService(RemboursementRepository remboursements, SequestreRepository sequestres,
+    public RemboursementService(RemboursementRepository remboursements, PaiementRepository paiements,
+                                SequestreRepository sequestres,
                                 PorteFeuilleCourtierRepository portefeuilles, MouvementService mouvements,
                                 ParticipationApi participations, GroupeAchatApi campagne, IdentiteApi identite,
                                 PasserelleMobileMoney passerelle, AuditApi audit, NotificationApi notifications,
                                 Verrou verrou, Clock horloge) {
         this.remboursements = remboursements;
+        this.paiements = paiements;
         this.sequestres = sequestres;
         this.portefeuilles = portefeuilles;
         this.mouvements = mouvements;
@@ -96,6 +100,37 @@ public class RemboursementService {
         Remboursement r = remboursements.save(new Remboursement(paiementId, montant, motif, maintenant));
         audit.tracer(demandeurId, "REMBOURSEMENT_DEMANDE", "paiement=" + paiementId,
                 "motif=" + motif + ", montant=" + montant);
+
+        // Notifications RG-31 & RG-60 : alerte admin et accusé de traitement pour le commerçant
+        ParticipationApi.ParticipationInfo part = participations.participation(p.getParticipationId()).orElse(null);
+        if (motif == MotifRemboursement.ANNULATION_CLIENT) {
+            String commercantNom = "Commerçant";
+            String produitNom = "";
+            Long groupeId = null;
+            if (part != null) {
+                commercantNom = identite.acteur(part.commercantId()).map(IdentiteApi.ActeurInfo::nom)
+                        .orElse("Commerçant #" + part.commercantId());
+                groupeId = part.groupeId();
+                produitNom = campagne.groupe(part.groupeId()).map(GroupeAchatApi.GroupeInfo::produitNom).orElse("");
+            }
+
+            // 1. Notifier tous les administrateurs actifs pour action dans l'arbitrage financier
+            for (Long adminId : identite.administrateursActifs()) {
+                notifications.notifier(adminId, "Demande de remboursement : " + montant.toBigInteger()
+                        + " XOF pour le commerçant " + commercantNom
+                        + (produitNom.isEmpty() ? "" : " (Groupe #" + (groupeId != null ? groupeId : "") + " - " + produitNom + ")")
+                        + ". En attente de votre traitement.");
+            }
+
+            // 2. Notifier immédiatement le commerçant que sa demande est prise en compte et en cours de traitement
+            if (part != null) {
+                notifications.notifier(part.commercantId(),
+                        "Votre demande de remboursement de " + montant.toBigInteger()
+                        + " XOF pour « " + (produitNom.isEmpty() ? "votre commande" : produitNom)
+                        + " » a bien été enregistrée. Elle est actuellement en cours de traitement par l'administration DoGo. Les fonds vous seront restitués après validation.");
+            }
+        }
+
         if (motif.automatique()) {
             r.approuver(null, maintenant);
             executer(r, p, s);
@@ -129,6 +164,13 @@ public class RemboursementService {
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Remboursement", remboursementId));
         r.rejeter(adminId, horloge.instant());
         audit.tracer(adminId, "REMBOURSEMENT_REJETE", "remboursement=" + remboursementId, justification);
+        Paiement p = verrou.ecriture(Paiement.class, r.getPaiementId()).orElseThrow();
+        ParticipationApi.ParticipationInfo part = participations.participation(p.getParticipationId()).orElse(null);
+        if (part != null) {
+            notifications.notifier(part.commercantId(),
+                    "Votre demande de remboursement de " + r.getMontant().toBigInteger()
+                    + " XOF a été rejetée par l'administration DoGo. Motif : " + justification);
+        }
         return vue(r);
     }
 
@@ -145,8 +187,22 @@ public class RemboursementService {
 
     @Transactional(readOnly = true)
     public List<RemboursementVue> enAttente() {
-        return remboursements.findByStatutOrderByIdAsc(StatutRemboursement.DEMANDE).stream().map(RemboursementService::vue)
+        return remboursements.findByStatutOrderByIdAsc(StatutRemboursement.DEMANDE).stream().map(this::vue)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RemboursementVue> pourCommercant(long commercantId) {
+        List<Long> partIds = participations.participationIdsParCommercant(commercantId);
+        if (partIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> payIds = paiements.paiementIdsPourParticipations(partIds);
+        if (payIds.isEmpty()) {
+            return List.of();
+        }
+        return remboursements.findByPaiementIdInOrderByIdDesc(payIds).stream()
+                .map(this::vue).toList();
     }
 
     // ---------------------------------------------------------------------------------- exécution
@@ -175,7 +231,7 @@ public class RemboursementService {
         audit.tracer(null, "REMBOURSEMENT_EXECUTE", "paiement=" + paiementId, "montant=" + montant);
         passerelle.rembourser(reference, moyen.numero(), moyen.operateur(), montant);
         notifications.notifier(part.commercantId(),
-                "Vous avez été remboursé de " + montant.toBigInteger() + " XOF sur votre compte Mobile Money.");
+                "Votre remboursement de " + montant.toBigInteger() + " XOF a été validé par l'administration DoGo et transféré sur votre compte Mobile Money.");
     }
 
     // ------------------------------------------------------------------------------- vérifications
@@ -208,9 +264,20 @@ public class RemboursementService {
         }
     }
 
-    private static RemboursementVue vue(Remboursement r) {
-        return new RemboursementVue(r.getId(), r.getPaiementId(), r.getMontant(), r.getStatut().name(),
-                r.getMotif().name(), r.getDateDemande());
+    private RemboursementVue vue(Remboursement r) {
+        Paiement p = paiements.findById(r.getPaiementId()).orElse(null);
+        Long partId = p != null ? p.getParticipationId() : null;
+        Long grpId = null;
+        String prod = null;
+        if (partId != null) {
+            ParticipationApi.ParticipationInfo part = participations.participation(partId).orElse(null);
+            if (part != null) {
+                grpId = part.groupeId();
+                prod = campagne.groupe(part.groupeId()).map(GroupeAchatApi.GroupeInfo::produitNom).orElse(null);
+            }
+        }
+        return new RemboursementVue(r.getId(), r.getPaiementId(), partId, grpId, prod,
+                r.getMontant(), r.getStatut().name(), r.getMotif().name(), r.getDateDemande());
     }
 }
 

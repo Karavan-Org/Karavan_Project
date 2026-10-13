@@ -34,7 +34,7 @@ public class EcouteursFinance {
             return;
         }
         paiements.findFirstByParticipationIdAndStatut(e.participationId(), StatutPaiement.PAYE).ifPresentOrElse(
-                p -> remboursements.demander(p.getId(), MotifRemboursement.valueOf(e.motif()), null),
+                p -> remboursements.demander(p.getId(), MotifRemboursement.valueOf(e.motif()), e.commercantId()),
                 () -> LOG.error("Participation {} payée mais sans paiement PAYE : remboursement impossible",
                         e.participationId()));
     }

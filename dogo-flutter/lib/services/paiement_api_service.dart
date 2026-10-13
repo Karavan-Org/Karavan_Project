@@ -60,7 +60,16 @@ class PaiementApiService {
       );
 
       if (response is Map<String, dynamic>) {
-        return PaiementResultat.fromJson(response);
+        final resultat = PaiementResultat.fromJson(response);
+        // En environnement démo, déclencher le callback de succès de l'opérateur Mobile Money (RG-34)
+        if (resultat.statut == 'EN_ATTENTE') {
+          try {
+            await ApiClient.instance.post(ApiConfig.simulerSuccesPaiement(resultat.id));
+          } catch (callbackErr) {
+            debugPrint('Simulation callback opérateur démo (ignoré si hors démo) : $callbackErr');
+          }
+        }
+        return resultat;
       }
 
       return PaiementResultat(

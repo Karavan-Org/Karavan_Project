@@ -62,17 +62,48 @@ class ApiClient {
     return uri;
   }
 
-  // --- REQUÊTE GET ---
-  Future<dynamic> get(
-    String endpoint, {
-    Map<String, dynamic>? queryParams,
-    Map<String, String>? headers,
-  }) async {
+  /// Callback appelé lorsqu'un rafraîchissement de jeton est requis sur 401
+  Future<bool> Function()? onRefreshRequired;
+
+  bool _enRafraichissement = false;
+  Completer<bool>? _completerRafraichissement;
+
+  Future<bool> _rafraichirJeton() async {
+    final callback = onRefreshRequired;
+    if (callback == null) return false;
+    if (_enRafraichissement) {
+      return await (_completerRafraichissement?.future ?? Future.value(false));
+    }
+    _enRafraichissement = true;
+    _completerRafraichissement = Completer<bool>();
     try {
-      final uri = _construireUri(endpoint, queryParams);
-      final response = await _httpClient
-          .get(uri, headers: _construireEnTetes(headers))
-          .timeout(ApiConfig.timeout);
+      final res = await callback();
+      _completerRafraichissement?.complete(res);
+      return res;
+    } catch (_) {
+      _completerRafraichissement?.complete(false);
+      return false;
+    } finally {
+      _enRafraichissement = false;
+      _completerRafraichissement = null;
+    }
+  }
+
+  Future<dynamic> _executerRequete(
+    String endpoint,
+    Future<http.Response> Function() action,
+  ) async {
+    try {
+      http.Response response = await action().timeout(ApiConfig.timeout);
+
+      // Si 401 sur un endpoint métier (hors /api/auth/), on tente le rafraîchissement
+      if (response.statusCode == 401 && !endpoint.startsWith('/api/auth/')) {
+        final reussi = await _rafraichirJeton();
+        if (reussi) {
+          // Rejouer la requête une seule fois avec le nouveau token
+          response = await action().timeout(ApiConfig.timeout);
+        }
+      }
 
       return _traiterReponse(response);
     } on SocketException {
@@ -83,7 +114,7 @@ class ApiClient {
     } on TimeoutException {
       throw const ApiException(
         statusCode: 0,
-        message: 'Délai d\'attente dépassé. Le serveur DoGo met trop de temps à répondre.',
+        message: 'Délai d\'attente dépassé lors de la requête au serveur DoGo.',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -94,8 +125,8 @@ class ApiClient {
     }
   }
 
-  // --- REQUÊTE POST ---
-  Future<dynamic> post(
+  // --- REQUÊTE SANS AUTH (connexion, refresh, logout) ---
+  Future<dynamic> postSansAuth(
     String endpoint, {
     dynamic body,
     Map<String, String>? headers,
@@ -103,9 +134,14 @@ class ApiClient {
     try {
       final uri = _construireUri(endpoint);
       final bodyEncode = body != null ? jsonEncode(body) : null;
+      final Map<String, String> entetes = {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+      };
+      if (headers != null) entetes.addAll(headers);
 
       final response = await _httpClient
-          .post(uri, headers: _construireEnTetes(headers), body: bodyEncode)
+          .post(uri, headers: entetes, body: bodyEncode)
           .timeout(ApiConfig.timeout);
 
       return _traiterReponse(response);
@@ -128,49 +164,66 @@ class ApiClient {
     }
   }
 
+  // --- REQUÊTE GET ---
+  Future<dynamic> get(
+    String endpoint, {
+    Map<String, dynamic>? queryParams,
+    Map<String, String>? headers,
+  }) {
+    return _executerRequete(
+      endpoint,
+      () => _httpClient.get(_construireUri(endpoint, queryParams), headers: _construireEnTetes(headers)),
+    );
+  }
+
+  // --- REQUÊTE POST ---
+  Future<dynamic> post(
+    String endpoint, {
+    dynamic body,
+    Map<String, String>? headers,
+  }) {
+    final bodyEncode = body != null ? jsonEncode(body) : null;
+    return _executerRequete(
+      endpoint,
+      () => _httpClient.post(_construireUri(endpoint), headers: _construireEnTetes(headers), body: bodyEncode),
+    );
+  }
+
   // --- REQUÊTE PUT ---
   Future<dynamic> put(
     String endpoint, {
     dynamic body,
     Map<String, String>? headers,
-  }) async {
-    try {
-      final uri = _construireUri(endpoint);
-      final bodyEncode = body != null ? jsonEncode(body) : null;
+  }) {
+    final bodyEncode = body != null ? jsonEncode(body) : null;
+    return _executerRequete(
+      endpoint,
+      () => _httpClient.put(_construireUri(endpoint), headers: _construireEnTetes(headers), body: bodyEncode),
+    );
+  }
 
-      final response = await _httpClient
-          .put(uri, headers: _construireEnTetes(headers), body: bodyEncode)
-          .timeout(ApiConfig.timeout);
-
-      return _traiterReponse(response);
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        statusCode: 0,
-        message: 'Erreur réseau : ${e.toString()}',
-      );
-    }
+  // --- REQUÊTE PATCH ---
+  Future<dynamic> patch(
+    String endpoint, {
+    dynamic body,
+    Map<String, String>? headers,
+  }) {
+    final bodyEncode = body != null ? jsonEncode(body) : null;
+    return _executerRequete(
+      endpoint,
+      () => _httpClient.patch(_construireUri(endpoint), headers: _construireEnTetes(headers), body: bodyEncode),
+    );
   }
 
   // --- REQUÊTE DELETE ---
   Future<dynamic> delete(
     String endpoint, {
     Map<String, String>? headers,
-  }) async {
-    try {
-      final uri = _construireUri(endpoint);
-      final response = await _httpClient
-          .delete(uri, headers: _construireEnTetes(headers))
-          .timeout(ApiConfig.timeout);
-
-      return _traiterReponse(response);
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        statusCode: 0,
-        message: 'Erreur réseau : ${e.toString()}',
-      );
-    }
+  }) {
+    return _executerRequete(
+      endpoint,
+      () => _httpClient.delete(_construireUri(endpoint), headers: _construireEnTetes(headers)),
+    );
   }
 
   // --- REQUÊTE MULTIPART (Upload photo / fichier) ---

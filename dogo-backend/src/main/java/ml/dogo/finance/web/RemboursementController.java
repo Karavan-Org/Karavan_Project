@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Traitement des remboursements par un administrateur FINANCE (RG-60). */
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/api")
 public class RemboursementController {
 
     public record DemandeRequete(@NotNull MotifRemboursement motif) {
@@ -35,13 +35,13 @@ public class RemboursementController {
         this.remboursements = remboursements;
     }
 
-    @GetMapping("/remboursements")
+    @GetMapping("/admin/remboursements")
     @PreAuthorize("hasAuthority('REMBOURSEMENT_APPROUVER')")
     public List<RemboursementService.RemboursementVue> enAttente() {
         return remboursements.enAttente();
     }
 
-    @PostMapping("/paiements/{paiementId}/remboursements")
+    @PostMapping("/admin/paiements/{paiementId}/remboursements")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('REMBOURSEMENT_APPROUVER')")
     public RemboursementService.RemboursementVue demander(@AuthenticationPrincipal UtilisateurCourant moi,
@@ -50,17 +50,23 @@ public class RemboursementController {
         return remboursements.demanderManuellement(moi.id(), paiementId, r.motif());
     }
 
-    @PostMapping("/remboursements/{id}/approbation")
+    @PostMapping("/admin/remboursements/{id}/approbation")
     @PreAuthorize("hasAuthority('REMBOURSEMENT_APPROUVER')")
     public RemboursementService.RemboursementVue approuver(@AuthenticationPrincipal UtilisateurCourant moi,
                                                            @PathVariable long id) {
         return remboursements.approuver(moi.id(), id);
     }
 
-    @PostMapping("/remboursements/{id}/rejet")
+    @PostMapping("/admin/remboursements/{id}/rejet")
     @PreAuthorize("hasAuthority('REMBOURSEMENT_APPROUVER')")
     public RemboursementService.RemboursementVue rejeter(@AuthenticationPrincipal UtilisateurCourant moi,
                                                          @PathVariable long id, @Valid @RequestBody RejetRequete r) {
         return remboursements.rejeter(moi.id(), id, r.justification());
+    }
+
+    @GetMapping("/moi/remboursements")
+    @PreAuthorize("hasAuthority('PARTICIPATION_GERER')")
+    public List<RemboursementService.RemboursementVue> mesRemboursements(@AuthenticationPrincipal UtilisateurCourant moi) {
+        return remboursements.pourCommercant(moi.id());
     }
 }

@@ -1,13 +1,210 @@
 import 'package:flutter/material.dart';
+import '../models/participation_model.dart';
+import '../models/remboursement_model.dart';
+import '../services/groupe_api_service.dart';
+import '../services/logistique_api_service.dart';
 import '../theme/app_theme.dart';
 import 'code_retrait_commercant_screen.dart';
 
+/// Modèle unifié pour l'affichage d'une commande ou participation de commerçant
+class ElementCommande {
+  final int id;
+  final bool estParticipation;
+  final int? participationId;
+  final int? commandeId;
+  final String titre;
+  final String details;
+  final String numero;
+  final String statutBrut;
+  final String statutLibelle;
+  final double montant;
+  final int quantite;
+  final String? photoUrl;
+  final String imageLocale;
+  final int etapeActive;
+  final String origine;
+  final String destination;
+  final String arriveeEstimee;
+  final bool annulable;
+  final bool payee;
+  final bool annulee;
+  final RemboursementModel? remboursement;
+  final DateTime? dateCreation;
+
+  ElementCommande({
+    required this.id,
+    required this.estParticipation,
+    this.participationId,
+    this.commandeId,
+    required this.titre,
+    required this.details,
+    required this.numero,
+    required this.statutBrut,
+    required this.statutLibelle,
+    required this.montant,
+    required this.quantite,
+    this.photoUrl,
+    required this.imageLocale,
+    required this.etapeActive,
+    this.origine = 'Chine (Yiwu)',
+    this.destination = 'Bamako (Mali)',
+    this.arriveeEstimee = 'En attente d\'expédition',
+    required this.annulable,
+    required this.payee,
+    required this.annulee,
+    this.remboursement,
+    this.dateCreation,
+  });
+
+  static String _imagePourProduit(String nom) {
+    final lower = nom.toLowerCase();
+    if (lower.contains('sac')) return 'assets/images/sac.png';
+    if (lower.contains('chaussure') || lower.contains('basket') || lower.contains('sneaker')) {
+      return 'assets/images/chaussure.png';
+    }
+    if (lower.contains('montre') || lower.contains('accessoire')) {
+      return 'assets/images/montre.png';
+    }
+    return 'assets/images/chaussure.png';
+  }
+
+  factory ElementCommande.fromParticipation(ParticipationModel p, {RemboursementModel? remboursement}) {
+    final parts = <String>[];
+    if (p.detailsVariante.isNotEmpty) parts.add(p.detailsVariante);
+    if (p.montant > 0) parts.add('${p.montant.toStringAsFixed(0)} FCFA');
+
+    int etape = 0;
+    String arrivee = 'En attente de regroupement';
+    String statutLibelle = p.libelleStatut;
+
+    if (p.statut == 'CONFIRMEE') {
+      arrivee = 'Fonds en séquestre • En attente clôture groupe';
+    } else if (p.statut == 'ANNULEE') {
+      if (remboursement != null) {
+        if (remboursement.statut == 'DEMANDE') {
+          statutLibelle = 'Remboursement en traitement';
+          arrivee = 'En cours d\'examen par l\'administrateur';
+        } else if (remboursement.statut == 'APPROUVE') {
+          statutLibelle = 'Remboursement approuvé';
+          arrivee = 'Virement vers votre Mobile Money en cours';
+        } else if (remboursement.statut == 'EXECUTE') {
+          statutLibelle = 'Remboursé sur Mobile Money';
+          arrivee = 'Montant de ${remboursement.montant.toStringAsFixed(0)} FCFA restitué';
+        } else if (remboursement.statut == 'REJETE') {
+          statutLibelle = 'Demande de remboursement rejetée';
+          arrivee = 'Veuillez contacter le support DoGo';
+        }
+      } else {
+        arrivee = 'Participation annulée • Remboursement';
+      }
+    } else if (p.statut == 'RESERVEE') {
+      arrivee = 'Réservé • En attente de paiement';
+    }
+
+    return ElementCommande(
+      id: p.id,
+      estParticipation: true,
+      participationId: p.id,
+      titre: p.produit,
+      details: parts.join(' • '),
+      numero: 'Participation #${p.id}',
+      statutBrut: p.statut,
+      statutLibelle: statutLibelle,
+      montant: p.montant,
+      quantite: p.quantite,
+      imageLocale: _imagePourProduit(p.produit),
+      etapeActive: etape,
+      arriveeEstimee: arrivee,
+      annulable: p.estAnnulable,
+      payee: p.estPayee,
+      annulee: p.estAnnulee,
+      remboursement: remboursement,
+      dateCreation: p.dateCreation,
+    );
+  }
+
+  factory ElementCommande.fromCommande(Map<String, dynamic> c) {
+    final id = (c['id'] as num?)?.toInt() ?? 1;
+    final partId = (c['participationId'] as num?)?.toInt();
+    final produit = c['produit']?.toString() ?? 'Commande groupée';
+    final qte = (c['quantite'] as num?)?.toInt() ?? 1;
+    final statut = c['statut']?.toString() ?? 'CREEE';
+
+    final parts = <String>[];
+    if (c['taille'] != null && c['taille'].toString().isNotEmpty) {
+      parts.add('Taille ${c['taille']}');
+    }
+    if (c['couleur'] != null && c['couleur'].toString().isNotEmpty) {
+      parts.add('${c['couleur']}');
+    }
+    parts.add('Qté: $qte');
+
+    int etape = 1;
+    String libelle = 'En cours';
+    String arrivee = 'En cours de préparation';
+
+    switch (statut) {
+      case 'CREEE':
+        etape = 0;
+        libelle = 'Commande confirmée';
+        arrivee = 'Regroupement finalisé';
+        break;
+      case 'EN_PREPARATION':
+        etape = 1;
+        libelle = 'Chez le transitaire';
+        arrivee = 'Préparation en cours';
+        break;
+      case 'EXPEDIEE':
+        etape = 2;
+        libelle = 'En transit maritime/aérien';
+        arrivee = 'Arrivée estimée : sous 10 à 15 jours';
+        break;
+      case 'ARRIVEE':
+        etape = 3;
+        libelle = 'Arrivée à Bamako';
+        arrivee = 'Au centre de tri';
+        break;
+      case 'EN_ATTENTE_RETRAIT':
+        etape = 4;
+        libelle = 'Disponible au retrait';
+        arrivee = 'Prêt au point de retrait';
+        break;
+      case 'COLLECTEE':
+        etape = 4;
+        libelle = 'Colis retiré';
+        arrivee = 'Retrait effectué';
+        break;
+    }
+
+    return ElementCommande(
+      id: id,
+      estParticipation: false,
+      commandeId: id,
+      participationId: partId,
+      titre: produit,
+      details: parts.join(' • '),
+      numero: 'Commande #$id',
+      statutBrut: statut,
+      statutLibelle: libelle,
+      montant: 0.0,
+      quantite: qte,
+      imageLocale: _imagePourProduit(produit),
+      etapeActive: etape,
+      arriveeEstimee: arrivee,
+      annulable: false, // Une fois en commande logistique, l'annulation libre n'est plus permise (RG-31)
+      payee: true,
+      annulee: false,
+      dateCreation: DateTime.tryParse(c['dateCreation']?.toString() ?? ''),
+    );
+  }
+}
+
 /// Écran "Mes commandes" conforme au modèle Figma exact
 /// Présente :
-/// 1. La liste des commandes actives (cartes horizontales avec visuels, détails et bouton "Annuler")
+/// 1. La liste des commandes et participations réelles avec visuels, détails et bouton "Annuler"
 /// 2. Le stepper de suivi d'étapes (Achat effectué, Chez le transitaire, En transit, Arrivée à Bamako, Disponible au retrait)
-/// 3. La carte d'illustration du trajet maritime/aérien (Chine 📍 ---> 🚢 Cargo ---> 📍 Bamako)
-/// 4. La bannière flottante de statut ("Votre colis est en transit - Arrivée estimée : 12 octobre 2026")
+/// 3. La carte d'illustration du trajet maritime (Chine 📍 ---> 🚢 Cargo ---> 📍 Bamako)
+/// 4. La bannière flottante de statut avec gestion du code de retrait et du remboursement
 class MesCommandesScreen extends StatefulWidget {
   const MesCommandesScreen({super.key});
 
@@ -17,62 +214,258 @@ class MesCommandesScreen extends StatefulWidget {
 
 class _MesCommandesScreenState extends State<MesCommandesScreen> {
   int _selectedOrderIndex = 0;
+  bool _isLoading = true;
+  String? _errorMessage;
+  final List<ElementCommande> _commandes = [];
 
-  final List<Map<String, dynamic>> _commandes = [];
+  @override
+  void initState() {
+    super.initState();
+    _chargerDonnees();
+  }
 
-  void _annulerCommande(int index) {
-    final cmd = _commandes[index];
-    showDialog(
+  Future<void> _chargerDonnees() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final futures = await Future.wait([
+        GroupeApiService.instance.mesParticipations(),
+        LogistiqueApiService.instance.mesCommandes(),
+        GroupeApiService.instance.mesRemboursements(),
+      ]);
+
+      final participations = futures[0] as List<ParticipationModel>;
+      final commandesLogistiques = futures[1] as List<Map<String, dynamic>>;
+      final remboursements = futures[2] as List<RemboursementModel>;
+
+      // Map des remboursements par ID de participation
+      final rembParPartId = <int, RemboursementModel>{};
+      for (final r in remboursements) {
+        if (r.participationId != null) {
+          rembParPartId[r.participationId!] = r;
+        }
+      }
+
+      // Récupérer les identifiants des participations déjà converties en commandes
+      final partIdsDejaEnCommandes = commandesLogistiques
+          .map((c) => (c['participationId'] as num?)?.toInt())
+          .whereType<int>()
+          .toSet();
+
+      final elements = <ElementCommande>[];
+
+      // 1. Ajouter d'abord les commandes logistiques réelles (statut avancé)
+      for (final c in commandesLogistiques) {
+        elements.add(ElementCommande.fromCommande(c));
+      }
+
+      // 2. Ajouter les participations qui ne sont pas encore devenues des commandes logistiques
+      for (final p in participations) {
+        if (!partIdsDejaEnCommandes.contains(p.id)) {
+          final remb = rembParPartId[p.id];
+          elements.add(ElementCommande.fromParticipation(p, remboursement: remb));
+        }
+      }
+
+      // Trier : éléments récents en premier
+      elements.sort((a, b) {
+        if (a.dateCreation != null && b.dateCreation != null) {
+          return b.dateCreation!.compareTo(a.dateCreation!);
+        }
+        return b.id.compareTo(a.id);
+      });
+
+      if (mounted) {
+        setState(() {
+          _commandes.clear();
+          _commandes.addAll(elements);
+          if (_selectedOrderIndex >= _commandes.length) {
+            _selectedOrderIndex = 0;
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = "Impossible de charger vos commandes : $e";
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _annulerCommande(ElementCommande item) async {
+    final bool estPaye = item.payee;
+    final String montantTexte = '${item.montant.toStringAsFixed(0)} FCFA';
+
+    final bool? confirmer = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: Text(
-          "Annuler ${cmd['titre']} ?",
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.cancel_outlined, color: Color(0xFFE53935), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                estPaye ? "Demande de remboursement" : "Annuler la réservation",
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+            ),
+          ],
         ),
-        content: Text(
-          "Êtes-vous sûr de vouloir annuler la ${cmd['numero']} ? Le montant intégral de 212 500 FCFA sera recrédité sur votre portefeuille.",
-          style: const TextStyle(fontSize: 13, color: AppTheme.textMuted, height: 1.4),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Souhaitez-vous annuler votre participation à « ${item.titre} » (${item.quantite} unité${item.quantite > 1 ? 's' : ''}) ?",
+              style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary, height: 1.4),
+            ),
+            const SizedBox(height: 14),
+            if (estPaye)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.security, color: Color(0xFF16A34A), size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Sécurité & Garantie DoGo (RG-31) :",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF166534),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "• L'annulation n'est autorisée qu'avant les 100% du quota du groupe.\n"
+                      "• Une notification est transmise immédiatement à l'administrateur.\n"
+                      "• Le montant intégral de $montantTexte sera restitué sur votre compte Mobile Money dès validation.",
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: Color(0xFF14532D),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFFE0B2)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Color(0xFFE65100), size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        "Votre réservation de quota sera immédiatement libérée pour les autres commerçants.",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFBF360C),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(ctx, false),
             child: const Text("Retour", style: TextStyle(color: AppTheme.textMuted)),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              setState(() {
-                _commandes.removeAt(index);
-                if (_selectedOrderIndex >= _commandes.length) {
-                  _selectedOrderIndex = 0;
-                }
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Commande annulée avec succès. Montant remboursé."),
-                  backgroundColor: Color(0xFFE53935),
-                ),
-              );
-            },
+            onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFE53935),
               foregroundColor: Colors.white,
+              elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text("Confirmer l'annulation"),
+            child: Text(estPaye ? "Confirmer le remboursement" : "Confirmer l'annulation"),
           ),
         ],
       ),
     );
+
+    if (confirmer != true) return;
+
+    try {
+      if (item.estParticipation && item.participationId != null) {
+        await GroupeApiService.instance.annulerParticipation(item.participationId);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    estPaye
+                        ? "Demande enregistrée ! Votre remboursement de $montantTexte est en cours de traitement par l'administrateur."
+                        : "Réservation annulée avec succès.",
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF2E7D32),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        _chargerDonnees();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Échec de l'annulation : $e"),
+            backgroundColor: const Color(0xFFE53935),
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool hasOrders = _commandes.isNotEmpty;
-    final activeCmd = hasOrders ? _commandes[_selectedOrderIndex] : null;
-
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8F5), // Fond doux Design System
       appBar: AppBar(
@@ -91,176 +484,66 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
             letterSpacing: -0.4,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Color(0xFF1E1E1E), size: 22),
+            onPressed: _chargerDonnees,
+            tooltip: "Actualiser",
+          ),
+        ],
       ),
-      body: hasOrders
-          ? SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. LISTE DES CARTES DE COMMANDES (Figma Top Cards)
-                  for (int i = 0; i < _commandes.length; i++) ...[
-                    _buildOrderCard(i),
-                    const SizedBox(height: 12),
-                  ],
+      body: _buildBody(),
+    );
+  }
 
-                  const SizedBox(height: 8),
+  Widget _buildBody() {
+    if (_isLoading && _commandes.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppTheme.primary),
+      );
+    }
 
-                  // 2. CARTE BLANCHE DE SUIVI : LE STEPPER VERTICAL FIGMA
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x0A46321E),
-                          blurRadius: 14,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStepRow(
-                          stepIndex: 0,
-                          currentActiveStep: activeCmd!['etapeActive'] as int,
-                          title: "Achat effectué",
-                          dateOrSubtitle: "12 sept. 2026",
-                          isFirst: true,
-                        ),
-                        _buildConnectingLine(
-                          isPassed: (activeCmd['etapeActive'] as int) > 0,
-                        ),
-                        _buildStepRow(
-                          stepIndex: 1,
-                          currentActiveStep: activeCmd['etapeActive'] as int,
-                          title: "Chez le transitaire",
-                          dateOrSubtitle: "18 sept. 2026",
-                        ),
-                        _buildConnectingLine(
-                          isPassed: (activeCmd['etapeActive'] as int) > 1,
-                        ),
-                        _buildStepRow(
-                          stepIndex: 2,
-                          currentActiveStep: activeCmd['etapeActive'] as int,
-                          title: "En transit",
-                          dateOrSubtitle: "Arrivée estimée : 12 oct. 2026",
-                          isActiveStep: (activeCmd['etapeActive'] as int) == 2,
-                        ),
-                        _buildConnectingLine(
-                          isPassed: (activeCmd['etapeActive'] as int) > 2,
-                          isDashed: true,
-                        ),
-                        _buildStepRow(
-                          stepIndex: 3,
-                          currentActiveStep: activeCmd['etapeActive'] as int,
-                          title: "Arrivée à Bamako",
-                          dateOrSubtitle: null,
-                          isPending: (activeCmd['etapeActive'] as int) < 3,
-                        ),
-                        _buildConnectingLine(
-                          isPassed: (activeCmd['etapeActive'] as int) > 3,
-                          isDashed: true,
-                        ),
-                        _buildStepRow(
-                          stepIndex: 4,
-                          currentActiveStep: activeCmd['etapeActive'] as int,
-                          title: "Disponible au retrait",
-                          dateOrSubtitle: null,
-                          isPending: (activeCmd['etapeActive'] as int) < 4,
-                          isLast: true,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // 3. ILLUSTRATION DU TRAJET MARITIME (Chine 📍 ---> 🚢 ---> 📍 Bamako)
-                  Container(
-                    width: double.infinity,
-                    height: 110,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE9F2F8), // Fond bleu ciel doux Figma
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFD4E6F2), width: 1.2),
-                    ),
-                    child: CustomPaint(
-                      painter: _MaritimeRoutePainter(
-                        departLabel: activeCmd['origine'] as String,
-                        arriveeLabel: activeCmd['destination'] as String,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // 4. BANNIÈRE FLOTTANTE DE STATUT : "Votre colis est en transit"
-                  InkWell(
-                    onTap: () {
-                      if ((activeCmd['etapeActive'] as int) >= 4) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => CodeRetraitCommercantScreen(
-                              nomProduit: activeCmd['titre'] as String,
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(28),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF9E6E4B), // Brun/Camel Figma
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x2E9E6E4B),
-                            blurRadius: 16,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            activeCmd['statut'] as String,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            "Arrivée estimée : ${activeCmd['arrivee']}",
-                            style: const TextStyle(
-                              color: Color(0xFFFFDFA6),
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-                ],
+    if (_errorMessage != null && _commandes.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
               ),
-            )
-          : Center(
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _chargerDonnees,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text("Réessayer"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_commandes.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _chargerDonnees,
+        color: AppTheme.primary,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+            Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
+                padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -300,6 +583,218 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                 ),
               ),
             ),
+          ],
+        ),
+      );
+    }
+
+    final activeCmd = _commandes[_selectedOrderIndex.clamp(0, _commandes.length - 1)];
+
+    return RefreshIndicator(
+      onRefresh: _chargerDonnees,
+      color: AppTheme.primary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. LISTE DES CARTES DE COMMANDES (Figma Top Cards)
+            for (int i = 0; i < _commandes.length; i++) ...[
+              _buildOrderCard(i),
+              const SizedBox(height: 12),
+            ],
+
+            const SizedBox(height: 8),
+
+            // 2. CARTE BLANCHE DE SUIVI : LE STEPPER VERTICAL FIGMA
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x0A46321E),
+                    blurRadius: 14,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStepRow(
+                    stepIndex: 0,
+                    currentActiveStep: activeCmd.etapeActive,
+                    title: activeCmd.annulee ? "Participation annulée" : "Achat effectué",
+                    dateOrSubtitle: activeCmd.annulee
+                        ? "Remboursement portefeuille"
+                        : (activeCmd.payee ? "Paiement validé • Séquestre" : "Réservation active"),
+                    isFirst: true,
+                    isAnnulee: activeCmd.annulee,
+                  ),
+                  _buildConnectingLine(
+                    isPassed: activeCmd.etapeActive > 0 && !activeCmd.annulee,
+                  ),
+                  _buildStepRow(
+                    stepIndex: 1,
+                    currentActiveStep: activeCmd.etapeActive,
+                    title: "Chez le transitaire",
+                    dateOrSubtitle: activeCmd.etapeActive >= 1 ? "Validation & Préparation" : null,
+                    isPending: activeCmd.etapeActive < 1,
+                  ),
+                  _buildConnectingLine(
+                    isPassed: activeCmd.etapeActive > 1,
+                  ),
+                  _buildStepRow(
+                    stepIndex: 2,
+                    currentActiveStep: activeCmd.etapeActive,
+                    title: "En transit",
+                    dateOrSubtitle: activeCmd.etapeActive == 2
+                        ? activeCmd.arriveeEstimee
+                        : (activeCmd.etapeActive > 2 ? "Acheminé" : null),
+                    isActiveStep: activeCmd.etapeActive == 2,
+                    isPending: activeCmd.etapeActive < 2,
+                  ),
+                  _buildConnectingLine(
+                    isPassed: activeCmd.etapeActive > 2,
+                    isDashed: true,
+                  ),
+                  _buildStepRow(
+                    stepIndex: 3,
+                    currentActiveStep: activeCmd.etapeActive,
+                    title: "Arrivée à Bamako",
+                    dateOrSubtitle: activeCmd.etapeActive >= 3 ? "Colis réceptionné" : null,
+                    isActiveStep: activeCmd.etapeActive == 3,
+                    isPending: activeCmd.etapeActive < 3,
+                  ),
+                  _buildConnectingLine(
+                    isPassed: activeCmd.etapeActive > 3,
+                    isDashed: true,
+                  ),
+                  _buildStepRow(
+                    stepIndex: 4,
+                    currentActiveStep: activeCmd.etapeActive,
+                    title: "Disponible au retrait",
+                    dateOrSubtitle: activeCmd.etapeActive == 4 ? "Présentez votre QR Code / PIN" : null,
+                    isActiveStep: activeCmd.etapeActive == 4,
+                    isPending: activeCmd.etapeActive < 4,
+                    isLast: true,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // 3. ILLUSTRATION DU TRAJET MARITIME (Chine 📍 ---> 🚢 ---> 📍 Bamako)
+            Container(
+              width: double.infinity,
+              height: 110,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE9F2F8), // Fond bleu ciel doux Figma
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFD4E6F2), width: 1.2),
+              ),
+              child: CustomPaint(
+                painter: _MaritimeRoutePainter(
+                  departLabel: activeCmd.origine,
+                  arriveeLabel: activeCmd.destination,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
+            // 4. BANNIÈRE FLOTTANTE DE STATUT : Statut actif & action retrait
+            InkWell(
+              onTap: () {
+                if (activeCmd.etapeActive >= 4 && activeCmd.commandeId != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CodeRetraitCommercantScreen(
+                        codeCommande: activeCmd.commandeId.toString(),
+                        nomProduit: activeCmd.titre,
+                        quantite: activeCmd.quantite,
+                      ),
+                    ),
+                  );
+                }
+              },
+              borderRadius: BorderRadius.circular(28),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                decoration: BoxDecoration(
+                  color: activeCmd.annulee
+                      ? (activeCmd.remboursement?.execute == true
+                          ? const Color(0xFF16A34A)
+                          : (activeCmd.remboursement?.enTraitement == true
+                              ? const Color(0xFFD97706)
+                              : const Color(0xFFC0392B)))
+                      : (activeCmd.etapeActive >= 4 ? const Color(0xFF1EB980) : const Color(0xFF9E6E4B)),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (activeCmd.annulee
+                              ? (activeCmd.remboursement?.execute == true
+                                  ? const Color(0xFF16A34A)
+                                  : (activeCmd.remboursement?.enTraitement == true
+                                      ? const Color(0xFFD97706)
+                                      : const Color(0xFFC0392B)))
+                              : (activeCmd.etapeActive >= 4 ? const Color(0xFF1EB980) : const Color(0xFF9E6E4B)))
+                          .withValues(alpha: 0.28),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (activeCmd.etapeActive >= 4 && activeCmd.commandeId != null) ...[
+                          const Icon(Icons.qr_code, color: Colors.white, size: 20),
+                          const SizedBox(width: 8),
+                        ],
+                        Text(
+                          activeCmd.statutLibelle,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      activeCmd.arriveeEstimee,
+                      style: TextStyle(
+                        color: activeCmd.annulee
+                            ? (activeCmd.remboursement?.enTraitement == true
+                                ? const Color(0xFFFEF3C7)
+                                : Colors.white70)
+                            : const Color(0xFFFFDFA6),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
     );
   }
 
@@ -341,7 +836,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                 color: const Color(0xFFF6F0E6),
                 padding: const EdgeInsets.all(5),
                 child: Image.asset(
-                  cmd['image'] as String,
+                  cmd.imageLocale,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Icon(
                     Icons.inventory_2_outlined,
@@ -358,56 +853,199 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    cmd['titre'] as String,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14.5,
-                      color: Color(0xFF1E1E1E),
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          cmd.titre,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14.5,
+                            color: Color(0xFF1E1E1E),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    cmd['details'] as String,
+                    cmd.details,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 12,
                       color: Color(0xFF7A7A7A),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    cmd['numero'] as String,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF9E9E9E),
-                      fontWeight: FontWeight.w500,
-                    ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Text(
+                        cmd.numero,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF9E9E9E),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      // Badge de statut
+                      _buildStatutChip(cmd),
+                    ],
                   ),
                 ],
               ),
             ),
 
-            // Bouton "Annuler" en rouge
-            TextButton(
-              onPressed: () => _annulerCommande(index),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFE53935),
+            const SizedBox(width: 8),
+
+            // Bouton "Annuler" ou indicateur de retrait
+            if (cmd.annulee)
+              Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: const Text(
-                "Annuler",
-                style: TextStyle(
-                  color: Color(0xFFE53935),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                decoration: BoxDecoration(
+                  color: cmd.remboursement?.enTraitement == true
+                      ? const Color(0xFFFEF3C7)
+                      : (cmd.remboursement?.execute == true
+                          ? const Color(0xFFE8F5E9)
+                          : const Color(0xFFFFEBEE)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  cmd.remboursement?.enTraitement == true
+                      ? "En cours"
+                      : (cmd.remboursement?.execute == true
+                          ? "Remboursé"
+                          : "Annulé"),
+                  style: TextStyle(
+                    color: cmd.remboursement?.enTraitement == true
+                        ? const Color(0xFFB45309)
+                        : (cmd.remboursement?.execute == true
+                            ? const Color(0xFF2E7D32)
+                            : const Color(0xFFE53935)),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              )
+            else if (cmd.annulable)
+              TextButton(
+                onPressed: () => _annulerCommande(cmd),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFE53935),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text(
+                  "Annuler",
+                  style: TextStyle(
+                    color: Color(0xFFE53935),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              )
+            else if (cmd.etapeActive >= 4)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  "À retirer",
+                  style: TextStyle(
+                    color: Color(0xFF2E7D32),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatutChip(ElementCommande cmd) {
+    if (cmd.annulee) {
+      if (cmd.remboursement != null) {
+        if (cmd.remboursement!.enTraitement) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              "En traitement",
+              style: TextStyle(color: Color(0xFFB45309), fontSize: 9.5, fontWeight: FontWeight.w700),
+            ),
+          );
+        } else if (cmd.remboursement!.execute) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              "Remboursé",
+              style: TextStyle(color: Color(0xFF2E7D32), fontSize: 9.5, fontWeight: FontWeight.w700),
+            ),
+          );
+        } else if (cmd.remboursement!.rejete) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFEBEE),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              "Rejeté",
+              style: TextStyle(color: Color(0xFFC0392B), fontSize: 9.5, fontWeight: FontWeight.w700),
+            ),
+          );
+        }
+      }
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFEBEE),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Text(
+          "Annulé",
+          style: TextStyle(color: Color(0xFFC0392B), fontSize: 9.5, fontWeight: FontWeight.w700),
+        ),
+      );
+    }
+    if (cmd.payee) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F5E9),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Text(
+          "Séquestre actif",
+          style: TextStyle(color: Color(0xFF2E7D32), fontSize: 9.5, fontWeight: FontWeight.w700),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Text(
+        "Réservé",
+        style: TextStyle(color: Color(0xFFE65100), fontSize: 9.5, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -422,14 +1060,15 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
     bool isPending = false,
     bool isFirst = false,
     bool isLast = false,
+    bool isAnnulee = false,
   }) {
-    final bool isCompleted = stepIndex < currentActiveStep;
+    final bool isCompleted = stepIndex < currentActiveStep && !isAnnulee;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Icône / Pastille circulaire de l'étape
-        _buildStepBadge(isCompleted, isActiveStep, isPending),
+        _buildStepBadge(isCompleted, isActiveStep, isPending, isAnnulee),
         const SizedBox(width: 14),
 
         // Libellé et sous-titre de l'étape
@@ -443,9 +1082,11 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                 style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: (isActiveStep || isCompleted) ? FontWeight.w800 : FontWeight.w600,
-                  color: isActiveStep
-                      ? const Color(0xFF9E6E4B)
-                      : (isCompleted ? const Color(0xFF1E1E1E) : const Color(0xFF6B6B6B)),
+                  color: isAnnulee
+                      ? const Color(0xFFC0392B)
+                      : (isActiveStep
+                          ? const Color(0xFF9E6E4B)
+                          : (isCompleted ? const Color(0xFF1E1E1E) : const Color(0xFF6B6B6B))),
                 ),
               ),
               if (dateOrSubtitle != null) ...[
@@ -454,7 +1095,9 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                   dateOrSubtitle,
                   style: TextStyle(
                     fontSize: 11,
-                    color: isActiveStep ? const Color(0xFF8C5F3E) : const Color(0xFF888888),
+                    color: isAnnulee
+                        ? const Color(0xFFE53935)
+                        : (isActiveStep ? const Color(0xFF8C5F3E) : const Color(0xFF888888)),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -464,7 +1107,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
         ),
 
         // Chevron droit '>' si étape validée ou active
-        if (!isPending)
+        if (!isPending && !isAnnulee)
           const Icon(
             Icons.chevron_right,
             size: 20,
@@ -474,7 +1117,18 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
     );
   }
 
-  Widget _buildStepBadge(bool isCompleted, bool isActive, bool isPending) {
+  Widget _buildStepBadge(bool isCompleted, bool isActive, bool isPending, bool isAnnulee) {
+    if (isAnnulee) {
+      return Container(
+        width: 28,
+        height: 28,
+        decoration: const BoxDecoration(
+          color: Color(0xFFE53935),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.close, size: 17, color: Colors.white),
+      );
+    }
     if (isCompleted) {
       // Pastille verte avec coche blanche
       return Container(

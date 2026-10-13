@@ -10,5 +10,7 @@ public interface RemboursementRepository extends JpaRepository<Remboursement, Lo
 
     List<Remboursement> findByPaiementIdOrderByIdAsc(Long paiementId);
 
+    List<Remboursement> findByPaiementIdInOrderByIdDesc(java.util.Collection<Long> paiementIds);
+
     boolean existsByPaiementIdAndStatutIn(Long paiementId, java.util.Collection<StatutRemboursement> statuts);
 }

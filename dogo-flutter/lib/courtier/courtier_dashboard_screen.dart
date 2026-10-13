@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
+import '../services/api/api_config.dart';
 import 'gestion_convoi_screen.dart';
 import 'creer_groupe_courtier_screen.dart';
 import 'portefeuille_courtier_screen.dart';
@@ -30,18 +31,24 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
         backgroundColor: AppTheme.surface,
         elevation: 0,
         centerTitle: false,
-        title: Builder(
-          builder: (context) {
-            final user = AuthService.instance.utilisateurCourant;
+        title: ValueListenableBuilder<UtilisateurProfil?>(
+          valueListenable: AuthService.instance.profilNotifier,
+          builder: (context, user, _) {
             final nom = user?.nomComplet.isNotEmpty == true ? user!.nomComplet : "Courtier Partenaire";
             final structure = user?.structure?.isNotEmpty == true ? user!.structure! : "Transit & Logistique SARL • Certifié";
+            final bool aPhoto = user?.photoUrl != null && user!.photoUrl!.isNotEmpty;
 
             return Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 17,
                   backgroundColor: AppTheme.primary,
-                  child: Icon(Icons.person, color: Colors.white, size: 20),
+                  backgroundImage: aPhoto
+                      ? NetworkImage(ApiConfig.resolutionImageUrl(user.photoUrl))
+                      : null,
+                  child: !aPhoto
+                      ? const Icon(Icons.person, color: Colors.white, size: 20)
+                      : null,
                 ),
                 const SizedBox(width: 10),
                 Column(

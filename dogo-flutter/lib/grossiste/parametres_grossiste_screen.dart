@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../commercant/commercant_main_nav.dart';
-import '../courtier/courtier_main_nav.dart';
 
 /// Écran des Paramètres du Grossiste
 class ParametresGrossisteScreen extends StatefulWidget {
@@ -134,11 +132,7 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const CommercantMainNav()),
-                          );
-                        },
+                        onPressed: () => Navigator.of(context).pushNamed('/commercant'),
                         icon: const Icon(Icons.store, size: 16),
                         label: const Text("Commerçant", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                         style: OutlinedButton.styleFrom(
@@ -151,11 +145,7 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const CourtierMainNav()),
-                          );
-                        },
+                        onPressed: () => Navigator.of(context).pushNamed('/courtier'),
                         icon: const Icon(Icons.local_shipping_rounded, size: 16),
                         label: const Text("Courtier", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                         style: OutlinedButton.styleFrom(

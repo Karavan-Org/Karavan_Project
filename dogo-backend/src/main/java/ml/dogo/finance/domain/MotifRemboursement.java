@@ -2,7 +2,7 @@ package ml.dogo.finance.domain;
 
 /** Motifs de remboursement (RG-57) et mode d'approbation (RG-60). */
 public enum MotifRemboursement {
-    ANNULATION_CLIENT(true),
+    ANNULATION_CLIENT(false),
     ECHEC_GROUPE(true),
     ECHEC_FOURNISSEUR(true),
     COLIS_PERDU(false),

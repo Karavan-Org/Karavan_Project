@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../commercant/commercant_main_nav.dart';
-import '../grossiste/grossiste_main_nav.dart';
+
 
 /// Écran des Paramètres du Courtier (Tarifs au kg, Dépôts relais, Agréments douane, Rôles)
 class ParametresCourtierScreen extends StatefulWidget {
@@ -138,11 +137,7 @@ class _ParametresCourtierScreenState extends State<ParametresCourtierScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const CommercantMainNav()),
-                          );
-                        },
+                        onPressed: () => Navigator.of(context).pushNamed('/commercant'),
                         icon: const Icon(Icons.store, size: 16),
                         label: const Text("Commerçant", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                         style: OutlinedButton.styleFrom(
@@ -155,11 +150,7 @@ class _ParametresCourtierScreenState extends State<ParametresCourtierScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const GrossisteMainNav()),
-                          );
-                        },
+                        onPressed: () => Navigator.of(context).pushNamed('/grossiste'),
                         icon: const Icon(Icons.storefront_rounded, size: 16),
                         label: const Text("Grossiste", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                         style: OutlinedButton.styleFrom(

@@ -30,4 +30,7 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long> {
     @Query("select p.id from Paiement p where p.statut in (ml.dogo.finance.domain.StatutPaiement.INITIE, "
             + "ml.dogo.finance.domain.StatutPaiement.EN_ATTENTE) and p.dateInitiation <= :limite")
     List<Long> identifiantsEnCoursAvant(@Param("limite") Instant limite);
+
+    @Query("select p.id from Paiement p where p.participationId in :participationIds")
+    List<Long> paiementIdsPourParticipations(@Param("participationIds") java.util.Collection<Long> participationIds);
 }

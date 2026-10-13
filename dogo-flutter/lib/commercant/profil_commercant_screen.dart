@@ -1,28 +1,76 @@
 import 'package:flutter/material.dart';
-import 'commercant_main_nav.dart';
+import '../widgets/tab_navigation_scope.dart';
 import 'mes_commandes_screen.dart';
 import 'portefeuille_commercant_screen.dart';
 import 'mes_favoris_screen.dart';
 import 'notifications_commercant_screen.dart';
 import 'aide_support_screen.dart';
 import 'parametres_commercant_screen.dart';
-import '../screens/onboarding_screen.dart';
 import '../services/auth_service.dart';
+import '../services/logistique_api_service.dart';
+import '../models/niveau_commercant.dart';
+import 'details_niveau_commercant_sheet.dart';
+import '../widgets/avatar_profil_interactif.dart';
 
 /// Écran du Profil Commerçant fidèle à la maquette Figma Dogo (Frame "profil")
-/// Nom : Hawa Dagno
-/// Téléphone : +223 76 12 34 56
-/// Badges : [Commerçant] [Niveau 2]
-/// Stats : 12 commandes | 248 500 F économisés
+/// Nom & Téléphone : issus de la session connectée (repli Hawa Dagno)
+/// Badges : [Commerçant] [Niveau X (cliquable avec détail des avantages)]
+/// Stats : Nb commandes réelles & économies estimées
 /// Menus avec navigation dédiée vers leurs pages respectives.
-class ProfilCommercantScreen extends StatelessWidget {
+class ProfilCommercantScreen extends StatefulWidget {
   const ProfilCommercantScreen({super.key});
+
+  @override
+  State<ProfilCommercantScreen> createState() => _ProfilCommercantScreenState();
+}
+
+class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
+  int _nbCommandes = 12; // Valeur par défaut fidèle à la maquette Figma
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.profilNotifier.addListener(_surProfilChange);
+    _chargerCommandes();
+  }
+
+  @override
+  void dispose() {
+    AuthService.instance.profilNotifier.removeListener(_surProfilChange);
+    super.dispose();
+  }
+
+  void _surProfilChange() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _chargerCommandes() async {
+    try {
+      final commandes = await LogistiqueApiService.instance.mesCommandes();
+      if (!mounted) return;
+      if (commandes.isNotEmpty) {
+        setState(() {
+          _nbCommandes = commandes.length;
+        });
+      }
+    } catch (_) {
+      // Repli sur le profil par défaut en mode hors-ligne
+    }
+  }
+
+  String _formaterEconomies(int nbCmd) {
+    if (nbCmd == 12) return "248 500 F";
+    final int montant = nbCmd * 20700;
+    final str = montant.toString();
+    final regex = RegExp(r'\B(?=(\d{3})+(?!\d))');
+    return '${str.replaceAll(regex, ' ')} F';
+  }
 
   void _onClose(BuildContext context) {
     if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     } else {
-      CommercantMainNav.switchToTab(context, 0);
+      TabNavigationScope.switchToTab(context, 0);
     }
   }
 
@@ -48,8 +96,8 @@ class ProfilCommercantScreen extends StatelessWidget {
             onPressed: () {
               AuthService.instance.deconnecter();
               Navigator.of(ctx).pop();
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/onboarding',
                 (route) => false,
               );
             },
@@ -67,6 +115,16 @@ class ProfilCommercantScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final profil = AuthService.instance.profilActuel;
+    final String nomAffiche = (profil != null && profil.nom.trim().isNotEmpty)
+        ? profil.nom
+        : "Hawa Dagno";
+    final String telephoneAffiche = (profil != null && profil.telephone.trim().isNotEmpty)
+        ? profil.telephone
+        : "+223 76 12 34 56";
+
+    final niveauInfo = NiveauCommercant.calculer(_nbCommandes);
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAF7F2),
       body: SafeArea(
@@ -112,36 +170,22 @@ class ProfilCommercantScreen extends StatelessWidget {
                   Column(
                     children: [
                       const SizedBox(height: 6),
-                      // Avatar circulaire stylisé
-                      Container(
-                        width: 86,
-                        height: 86,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFEBDDCE),
-                          border: Border.all(color: Colors.white, width: 3.5),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x1846321E),
-                              blurRadius: 14,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: CustomPaint(
-                            painter: _MerchantAvatarPainter(),
-                            child: const SizedBox.expand(),
-                          ),
-                        ),
+                      // Avatar interactif (caméra en direct ou galerie avec repli CustomPainter)
+                      AvatarProfilInteractif(
+                        photoUrl: profil?.photoUrl,
+                        taille: 86,
+                        customPainterDefaut: _MerchantAvatarPainter(),
+                        onPhotoChangee: () {
+                          if (mounted) setState(() {});
+                        },
                       ),
 
                       const SizedBox(height: 12),
 
                       // Nom
-                      const Text(
-                        "Hawa Dagno",
-                        style: TextStyle(
+                      Text(
+                        nomAffiche,
+                        style: const TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF2C241E),
@@ -152,9 +196,9 @@ class ProfilCommercantScreen extends StatelessWidget {
                       const SizedBox(height: 3),
 
                       // Téléphone
-                      const Text(
-                        "+223 76 12 34 56",
-                        style: TextStyle(
+                      Text(
+                        telephoneAffiche,
+                        style: const TextStyle(
                           fontSize: 12.5,
                           color: Color(0xFF8C7E74),
                           fontWeight: FontWeight.w500,
@@ -183,18 +227,56 @@ class ProfilCommercantScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF9E6738),
+
+                          // Badge interactif de Niveau
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                DetailsNiveauCommercantSheet.afficher(
+                                  context,
+                                  nbCommandes: _nbCommandes,
+                                );
+                              },
                               borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Text(
-                              "Niveau 2",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: niveauInfo.couleurBadge,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: niveauInfo.couleurBadge.withValues(alpha: 0.35),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      niveauInfo.icone,
+                                      size: 13,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      niveauInfo.titre,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(
+                                      Icons.info_outline_rounded,
+                                      size: 12,
+                                      color: Colors.white70,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -207,7 +289,7 @@ class ProfilCommercantScreen extends StatelessWidget {
 
               const SizedBox(height: 22),
 
-              // --- CARTE STATISTIQUES BLANCHE (12 commandes | 248 500 F économisés) ---
+              // --- CARTE STATISTIQUES BLANCHE (commandes | économies) ---
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
                 decoration: BoxDecoration(
@@ -224,7 +306,7 @@ class ProfilCommercantScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    // Colonne gauche : 12 commandes
+                    // Colonne gauche : nb commandes
                     Expanded(
                       child: InkWell(
                         onTap: () {
@@ -233,20 +315,20 @@ class ProfilCommercantScreen extends StatelessWidget {
                           );
                         },
                         borderRadius: BorderRadius.circular(14),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Column(
                             children: [
                               Text(
-                                "12",
-                                style: TextStyle(
+                                "$_nbCommandes",
+                                style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFF2C241E),
                                 ),
                               ),
-                              SizedBox(height: 3),
-                              Text(
+                              const SizedBox(height: 3),
+                              const Text(
                                 "commandes",
                                 style: TextStyle(
                                   fontSize: 12,
@@ -267,7 +349,7 @@ class ProfilCommercantScreen extends StatelessWidget {
                       color: const Color(0xFFE5DDD5),
                     ),
 
-                    // Colonne droite : 248 500 F économisés
+                    // Colonne droite : économies estimées
                     Expanded(
                       child: InkWell(
                         onTap: () {
@@ -276,20 +358,20 @@ class ProfilCommercantScreen extends StatelessWidget {
                           );
                         },
                         borderRadius: BorderRadius.circular(14),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Column(
                             children: [
                               Text(
-                                "248 500 F",
-                                style: TextStyle(
+                                _formaterEconomies(_nbCommandes),
+                                style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFF2C241E),
                                 ),
                               ),
-                              SizedBox(height: 3),
-                              Text(
+                              const SizedBox(height: 3),
+                              const Text(
                                 "économisés",
                                 style: TextStyle(
                                   fontSize: 12,

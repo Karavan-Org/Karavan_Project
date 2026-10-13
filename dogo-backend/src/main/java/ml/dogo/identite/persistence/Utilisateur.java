@@ -43,6 +43,9 @@ public abstract class Utilisateur {
     @Column(nullable = false)
     private String langue = "fr";
 
+    @Column(name = "photo_url")
+    private String photoUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "statut_compte", nullable = false)
     private StatutCompte statutCompte = StatutCompte.EN_ATTENTE;
@@ -100,6 +103,10 @@ public abstract class Utilisateur {
         }
     }
 
+    public void modifierPhoto(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
     public void marquerTelephoneVerifie() {
         this.telephoneVerifie = true;
     }
@@ -112,12 +119,19 @@ public abstract class Utilisateur {
         return statutCompte == StatutCompte.ACTIF;
     }
 
+    public void changerMotDePasse(String nouveauHash) {
+        if (nouveauHash != null && !nouveauHash.isBlank()) {
+            this.motDePasseHash = nouveauHash;
+        }
+    }
+
     public Long getId() { return id; }
     public String getTelephone() { return telephone; }
     public String getNom() { return nom; }
     public String getMotDePasseHash() { return motDePasseHash; }
     public String getPinHash() { return motDePasseHash; }
     public String getLangue() { return langue; }
+    public String getPhotoUrl() { return photoUrl; }
     public StatutCompte getStatutCompte() { return statutCompte; }
     public boolean isTelephoneVerifie() { return telephoneVerifie; }
     public Role getRole() { return role; }

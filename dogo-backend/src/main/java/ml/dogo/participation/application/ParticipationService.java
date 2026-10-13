@@ -117,6 +117,11 @@ public class ParticipationService {
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Participation", participationId));
         Instant maintenant = horloge.instant();
         StatutParticipation avant = p.getStatut();
+        GroupeAchatApi.GroupeInfo g = campagne.groupe(p.getGroupeId()).orElseThrow();
+        if (!g.ouvert() || g.quantiteConfirmee() >= g.quantiteCible()) {
+            throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, "RG-31",
+                    "L'annulation et le remboursement ne sont possibles qu'avant l'atteinte des 100% de l'objectif du groupe.");
+        }
         switch (avant) {
             case DEMANDEE, RESERVEE -> {
                 transiter(p, StatutParticipation.ANNULEE, maintenant);
@@ -125,11 +130,6 @@ public class ParticipationService {
                         commercantId, p.getQuantite(), false, "ANNULATION_CLIENT"));
             }
             case CONFIRMEE -> {
-                GroupeAchatApi.GroupeInfo g = campagne.groupe(p.getGroupeId()).orElseThrow();
-                if (!g.ouvert()) {
-                    throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, "RG-31",
-                            "L'annulation n'est plus possible une fois l'objectif atteint (sauf litige accepté)");
-                }
                 // Ordre voulu : l'entité est modifiée d'abord ; la requête atomique qui suit l'enregistre puis vide le contexte.
                 transiter(p, StatutParticipation.ANNULEE, maintenant);
                 campagne.retirerConfirmation(p.getGroupeId(), p.getQuantite());

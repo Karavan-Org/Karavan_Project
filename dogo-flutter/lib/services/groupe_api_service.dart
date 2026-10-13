@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../commercant/campagne_model.dart';
+import '../models/participation_model.dart';
+import '../models/remboursement_model.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
 
@@ -67,6 +69,50 @@ class GroupeApiService {
     );
 
     return response is Map<String, dynamic> ? response : {'participationId': 1};
+  }
+
+  /// Récupère la liste des participations du commerçant connecté (GET /api/moi/participations)
+  Future<List<ParticipationModel>> mesParticipations() async {
+    try {
+      final response = await ApiClient.instance.get(ApiConfig.mesParticipations);
+      if (response is List) {
+        return response
+            .map((item) => ParticipationModel.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('GroupeApiService.mesParticipations - Erreur API : $e');
+      return [];
+    }
+  }
+
+  /// Annule une participation active (POST /api/participations/{id}/annulation, RG-31)
+  /// Déclenche la libération du quota et le remboursement intégral des fonds en séquestre.
+  Future<ParticipationModel> annulerParticipation(dynamic participationId) async {
+    final response = await ApiClient.instance.post(
+      ApiConfig.annulerParticipation(participationId),
+    );
+    if (response is Map) {
+      return ParticipationModel.fromJson(Map<String, dynamic>.from(response));
+    }
+    throw Exception('Erreur lors de l\'annulation de la participation');
+  }
+
+  /// Récupère l'historique et l'état des demandes de remboursement du commerçant (GET /api/moi/remboursements)
+  Future<List<RemboursementModel>> mesRemboursements() async {
+    try {
+      final response = await ApiClient.instance.get(ApiConfig.mesRemboursements);
+      if (response is List) {
+        return response
+            .map((item) => RemboursementModel.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('GroupeApiService.mesRemboursements - Erreur API : $e');
+      return [];
+    }
   }
 
   // ---------------------------------------------------------------- gestion des groupes (courtier / grossiste)

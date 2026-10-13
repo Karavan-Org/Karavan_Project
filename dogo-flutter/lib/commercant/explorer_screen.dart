@@ -277,6 +277,9 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
               paysOrigine: g.paysOrigine,
               courtierNom: g.courtierNom,
               tempsRestant: g.tempsRestant,
+              groupe: g,
+              variantes: g.variantes,
+              quantiteMin: g.quantiteMinParCommercant,
             ),
           ),
         );

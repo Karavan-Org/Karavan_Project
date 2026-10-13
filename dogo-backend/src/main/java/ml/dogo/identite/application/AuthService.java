@@ -25,16 +25,20 @@ public class AuthService {
     /** La session serveur fait foi : le jeton peut vivre longtemps, il est refusé dès que la session ne l'est plus. */
     private static final Duration DUREE_MAX_JETON = Duration.ofDays(365);
 
-    public record Profil(long id, String type, String nom, String telephone, String statut, List<String> permissions) {
+    public record Profil(long id, String type, String nom, String telephone, String photoUrl, String statut, List<String> permissions) {
     }
 
-    public record Connexion(String jeton, Instant expiration, Profil profil) {
+    public record Connexion(String jeton, String refreshToken, Instant expiration, Instant refreshExpiration, Profil profil) {
+        public Connexion(String jeton, Instant expiration, Profil profil) {
+            this(jeton, null, expiration, null, profil);
+        }
     }
 
     private final UtilisateurRepository utilisateurs;
     private final SessionUtilisateurRepository sessions;
     private final CompteursAuthentification compteurs;
     private final SessionService sessionService;
+    private final RefreshTokenService refreshTokenService;
     private final PasswordEncoder encodeur;
     private final JwtService jwt;
     private final DogoProperties proprietes;
@@ -44,12 +48,14 @@ public class AuthService {
     private final String hacheFactice;
 
     public AuthService(UtilisateurRepository utilisateurs, SessionUtilisateurRepository sessions,
-                       CompteursAuthentification compteurs, SessionService sessionService, PasswordEncoder encodeur,
+                       CompteursAuthentification compteurs, SessionService sessionService,
+                       RefreshTokenService refreshTokenService, PasswordEncoder encodeur,
                        JwtService jwt, DogoProperties proprietes, Clock horloge) {
         this.utilisateurs = utilisateurs;
         this.sessions = sessions;
         this.compteurs = compteurs;
         this.sessionService = sessionService;
+        this.refreshTokenService = refreshTokenService;
         this.encodeur = encodeur;
         this.jwt = jwt;
         this.proprietes = proprietes;
@@ -88,17 +94,23 @@ public class AuthService {
         SessionUtilisateur session = sessions.save(new SessionUtilisateur(u.getId(), deviceId, ip, null, maintenant,
                 maintenant.plus(proprietes.session().inactivite())));
         List<String> permissions = codesPermissions(u);
-        Instant expiration = maintenant.plus(DUREE_MAX_JETON);
+
+        boolean estAdmin = u instanceof Administrateur || "ADMIN".equals(u.typeActeur().name());
+        Duration accessDuration = estAdmin ? RefreshTokenService.DUREE_ACCESS_ADMIN : RefreshTokenService.DUREE_ACCESS_STANDARD;
+        Instant expiration = maintenant.plus(accessDuration);
         String jeton = jwt.generer(u.getId(), session.getId(), u.typeActeur().name(), permissions, maintenant, expiration);
-        return new Connexion(jeton, expiration, profil(u, permissions));
+
+        var nouveauRt = refreshTokenService.creerToken(u.getId(), session.getId(), deviceId, ip, estAdmin);
+        return new Connexion(jeton, nouveauRt.jetonBrut(), expiration, nouveauRt.expiration(), profil(u, permissions));
     }
 
     @Transactional
     public void deconnecter(long sessionId) {
+        refreshTokenService.revoquerPourSession(sessionId);
         sessionService.invalider(sessionId);
     }
 
-    private static List<String> codesPermissions(Utilisateur u) {
+    public static List<String> codesPermissions(Utilisateur u) {
         if (u instanceof Administrateur admin && admin.getRoleAdministratif() != null) {
             return switch (admin.getRoleAdministratif()) {
                 case TECHNIQUE -> List.of("ADMIN_CREER", "AUDIT_LIRE", "CAMPAGNE_EXPLORER", "COMMANDE_LIRE", "COMPTE_SUSPENDRE",
@@ -112,9 +124,9 @@ public class AuthService {
         return u.getRole().getPermissions().stream().map(p -> p.getCode()).sorted().toList();
     }
 
-    private static Profil profil(Utilisateur u, List<String> permissions) {
+    public static Profil profil(Utilisateur u, List<String> permissions) {
         return new Profil(u.getId(), u.typeActeur().name(), u.getNom(), u.getTelephone(),
-                u.getStatutCompte().name(), permissions);
+                u.getPhotoUrl(), u.getStatutCompte().name(), permissions);
     }
 
     private static ErreurMetier identifiantsInvalides() {

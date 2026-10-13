@@ -260,6 +260,7 @@ class MesFavorisScreen extends StatelessWidget {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => FicheCampagneScreen(
+                    id: groupe.id,
                     titre: groupe.titre,
                     sousTitre: groupe.sousTitre,
                     imagePath: groupe.imagePath,
@@ -270,6 +271,9 @@ class MesFavorisScreen extends StatelessWidget {
                     paysOrigine: groupe.paysOrigine,
                     courtierNom: groupe.courtierNom,
                     tempsRestant: groupe.tempsRestant,
+                    groupe: groupe,
+                    variantes: groupe.variantes,
+                    quantiteMin: groupe.quantiteMinParCommercant,
                   ),
                 ),
               );

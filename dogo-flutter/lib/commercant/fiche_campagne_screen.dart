@@ -1,6 +1,7 @@
 import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/groupe_api_service.dart';
 import 'campagne_model.dart';
 import 'favoris_service.dart';
 import 'rejoindre_groupe_screen.dart';
@@ -19,6 +20,9 @@ class FicheCampagneScreen extends StatefulWidget {
   final String paysOrigine;
   final String courtierNom;
   final String tempsRestant;
+  final GroupeCampagneModel? groupe;
+  final List<VarianteGroupeModel>? variantes;
+  final int? quantiteMin;
 
   const FicheCampagneScreen({
     super.key,
@@ -34,6 +38,9 @@ class FicheCampagneScreen extends StatefulWidget {
     this.paysOrigine = "",
     this.courtierNom = "",
     this.tempsRestant = "",
+    this.groupe,
+    this.variantes,
+    this.quantiteMin,
   });
 
   @override
@@ -41,9 +48,59 @@ class FicheCampagneScreen extends StatefulWidget {
 }
 
 class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
-  int _quantite = 2;
-  String _tailleSelectionnee = "42";
-  final List<String> _tailles = ["40", "41", "42", "43", "44"];
+  late int _quantite;
+  late int _quantiteMin;
+  List<VarianteGroupeModel> _variantes = [];
+  VarianteGroupeModel? _varianteSelectionnee;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialiserVariantesEtQuantite();
+  }
+
+  void _initialiserVariantesEtQuantite() {
+    _quantiteMin = widget.quantiteMin ?? widget.groupe?.quantiteMinParCommercant ?? 1;
+    if (_quantiteMin <= 0) _quantiteMin = 1;
+    _quantite = _quantiteMin;
+
+    if (widget.variantes != null && widget.variantes!.isNotEmpty) {
+      _variantes = List.from(widget.variantes!);
+    } else if (widget.groupe != null && widget.groupe!.variantes.isNotEmpty) {
+      _variantes = List.from(widget.groupe!.variantes);
+    }
+
+    if (_variantes.isNotEmpty) {
+      _varianteSelectionnee = _variantes.first;
+    }
+
+    _chargerDetailsGroupe();
+  }
+
+  Future<void> _chargerDetailsGroupe() async {
+    final gid = widget.id.isNotEmpty ? widget.id : widget.groupe?.id;
+    if (gid == null || gid.isEmpty) return;
+
+    try {
+      final detail = await GroupeApiService.instance.detail(gid);
+      if (!mounted) return;
+      setState(() {
+        if (detail.variantes.isNotEmpty) {
+          _variantes = detail.variantes;
+          if (_varianteSelectionnee == null ||
+              !_variantes.any((v) => v.id == _varianteSelectionnee!.id)) {
+            _varianteSelectionnee = _variantes.first;
+          }
+        }
+        if (detail.quantiteMinParCommercant > 0) {
+          _quantiteMin = detail.quantiteMinParCommercant;
+          if (_quantite < _quantiteMin) {
+            _quantite = _quantiteMin;
+          }
+        }
+      });
+    } catch (_) {}
+  }
 
   double get _pourcentage =>
       (widget.quantiteActuelle / widget.quantiteObjectif).clamp(0.0, 1.0);
@@ -52,8 +109,11 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final economie = widget.prixPublic - widget.prixGroupe;
-    final pourcentageEconomie = ((economie / widget.prixPublic) * 100).round();
+    final int prixPub = widget.prixPublic > 0
+        ? widget.prixPublic
+        : (widget.prixGroupe > 0 ? (widget.prixGroupe * 1.45).round() : 0);
+    final economie = prixPub > widget.prixGroupe ? prixPub - widget.prixGroupe : 0;
+    final pourcentageEconomie = prixPub > 0 ? ((economie / prixPub) * 100).round() : 0;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -356,44 +416,94 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
 
                   const SizedBox(height: 22),
 
-                  // SÉLECTEUR DE TAILLE / POINTURE
-                  const Text(
-                    "Choisir la pointure :",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  // SÉLECTEUR DE VARIANTES DU GROSSISTE (RG-12)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Variantes du grossiste :",
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                      ),
+                      if (_variantes.isNotEmpty)
+                        Text(
+                          "${_variantes.length} référence${_variantes.length > 1 ? 's' : ''}",
+                          style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: _tailles.map((taille) {
-                      final isSelected = taille == _tailleSelectionnee;
-                      return GestureDetector(
-                        onTap: () => setState(() => _tailleSelectionnee = taille),
-                        child: Container(
-                          margin: const EdgeInsets.only(right: 12),
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.primary : Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppTheme.primary
-                                  : const Color(0xFFDED6CE),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              taille,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: isSelected ? Colors.white : AppTheme.textPrimary,
+                  if (_variantes.isNotEmpty)
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: _variantes.map((v) {
+                        final isSelected = _varianteSelectionnee?.id == v.id;
+                        return InkWell(
+                          onTap: () => setState(() => _varianteSelectionnee = v),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppTheme.primary : Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isSelected ? AppTheme.primary : const Color(0xFFDED6CE),
+                                width: isSelected ? 2 : 1.2,
                               ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: AppTheme.primary.withValues(alpha: 0.25),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      )
+                                    ]
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+                                  size: 16,
+                                  color: isSelected ? Colors.white : AppTheme.textMuted,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  v.libelleComplet,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                        );
+                      }).toList(),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFEFE8E1)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.inventory_2_outlined, size: 18, color: AppTheme.primary),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Lot standard conforme au catalogue du grossiste",
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                   const SizedBox(height: 20),
 
@@ -401,9 +511,18 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        "Quantité à réserver :",
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Quantité à réserver :",
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                          ),
+                          Text(
+                            "Min: $_quantiteMin lot${_quantiteMin > 1 ? 's' : ''} (RG-27)",
+                            style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+                          ),
+                        ],
                       ),
                       Container(
                         decoration: BoxDecoration(
@@ -415,7 +534,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.remove, size: 18),
-                              onPressed: _quantite > 1
+                              onPressed: _quantite > _quantiteMin
                                   ? () => setState(() => _quantite--)
                                   : null,
                             ),
@@ -558,12 +677,18 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
+                  final gid = widget.id.isNotEmpty ? widget.id : (widget.groupe?.id ?? "1");
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => RejoindreGroupeScreen(
+                        groupeId: gid,
+                        varianteId: _varianteSelectionnee?.id,
+                        variante: _varianteSelectionnee,
+                        variantesDisponibles: _variantes,
                         titre: widget.titre,
                         quantite: _quantite,
-                        taille: _tailleSelectionnee,
+                        quantiteMin: _quantiteMin,
+                        taille: _varianteSelectionnee?.libelleComplet ?? "",
                         prixUnitaire: widget.prixGroupe,
                         courtierNom: widget.courtierNom,
                         imagePath: widget.imagePath,

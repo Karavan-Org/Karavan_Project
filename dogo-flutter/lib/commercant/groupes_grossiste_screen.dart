@@ -525,6 +525,9 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                               paysOrigine: groupe.paysOrigine,
                                               courtierNom: groupe.courtierNom,
                                               tempsRestant: groupe.tempsRestant,
+                                              groupe: groupe,
+                                              variantes: groupe.variantes,
+                                              quantiteMin: groupe.quantiteMinParCommercant,
                                             ),
                                           ),
                                         );
@@ -548,11 +551,16 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
                                               builder: (_) => RejoindreGroupeScreen(
+                                                groupeId: groupe.id,
+                                                varianteId: groupe.varianteId,
+                                                variantesDisponibles: groupe.variantes,
                                                 titre: groupe.titre,
-                                                quantite: 2,
-                                                taille: "M",
+                                                quantite: groupe.quantiteMinParCommercant,
+                                                quantiteMin: groupe.quantiteMinParCommercant,
                                                 prixUnitaire: groupe.prixGroupe,
                                                 courtierNom: groupe.courtierNom,
+                                                imagePath: groupe.imagePath,
+                                                paysOrigine: groupe.paysOrigine,
                                               ),
                                             ),
                                           );

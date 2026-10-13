@@ -12,6 +12,9 @@ import 'rejoindre_groupe_screen.dart';
 import 'groupe_selection_service.dart';
 import 'ouvrir_groupe_screen.dart';
 import '../services/lien_groupe.dart';
+import '../services/session_storage_service.dart';
+import '../services/url_route_helper.dart';
+import '../widgets/tab_navigation_scope.dart';
 
 /// Navigation principale Commerçant reproduisant fidèlement la maquette Figma Dogo
 /// avec animation FLUTTER FAB en ARC DE CERCLE (Radial / Semicircular Speed Dial)
@@ -56,6 +59,8 @@ class _CommercantMainNavState extends State<CommercantMainNav>
   @override
   void initState() {
     super.initState();
+    SessionStorageService.instance.sauvegarderDernierEspace('commercant');
+    definirRouteWeb('/commercant');
     _currentIndex = widget.initialIndex.clamp(0, 3);
 
     // Lien d'invitation reçu avant la connexion : on ouvre le groupe dès l'arrivée dans l'espace commerçant
@@ -127,7 +132,9 @@ class _CommercantMainNavState extends State<CommercantMainNav>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TabNavigationScope(
+      onSwitchTab: setTabIndex,
+      child: Scaffold(
       body: Stack(
         children: [
           // 1. Écrans principaux avec IndexedStack
@@ -201,15 +208,19 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => RejoindreGroupeScreen(
+                                  groupeId: groupe.id,
+                                  varianteId: groupe.varianteId,
+                                  variantesDisponibles: groupe.variantes,
                                   titre: groupe.titre,
-                                  quantite: 1,
-                                  taille: groupe.titre.toLowerCase().contains("sneaker") ||
-                                          groupe.titre.toLowerCase().contains("chaussure") ||
-                                          groupe.titre.toLowerCase().contains("botte")
-                                      ? "42"
+                                  quantite: groupe.quantiteMinParCommercant,
+                                  quantiteMin: groupe.quantiteMinParCommercant,
+                                  taille: groupe.variantes.isNotEmpty
+                                      ? groupe.variantes.first.libelleComplet
                                       : "",
                                   prixUnitaire: groupe.prixGroupe,
                                   courtierNom: groupe.courtierNom,
+                                  imagePath: groupe.imagePath,
+                                  paysOrigine: groupe.paysOrigine,
                                 ),
                               ),
                             );
@@ -335,60 +346,71 @@ class _CommercantMainNavState extends State<CommercantMainNav>
         elevation: 16,
         color: Colors.white,
         padding: EdgeInsets.zero,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // Côté gauche : Accueil + Explorer
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavItem(
-                      index: 0,
-                      label: "Accueil",
-                      activeIcon: Icons.home,
-                      inactiveIcon: Icons.home_outlined,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 100) return const SizedBox(height: 64);
+            return SizedBox(
+              height: 64,
+              child: Row(
+                children: [
+                  // Côté gauche : Accueil + Explorer
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 0,
+                            label: "Accueil",
+                            activeIcon: Icons.home,
+                            inactiveIcon: Icons.home_outlined,
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 1,
+                            label: "Explorer",
+                            activeIcon: Icons.explore,
+                            inactiveIcon: Icons.explore_outlined,
+                          ),
+                        ),
+                      ],
                     ),
-                    _buildNavItem(
-                      index: 1,
-                      label: "Explorer",
-                      activeIcon: Icons.explore,
-                      inactiveIcon: Icons.explore_outlined,
-                    ),
-                  ],
-                ),
-              ),
+                  ),
 
-              // Espace pour le FAB central (+)
-              const SizedBox(width: 58),
+                  // Espace pour le FAB central (+)
+                  const SizedBox(width: 52),
 
-              // Côté droit : Commandes + Profil
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavItem(
-                      index: 2,
-                      label: "Commandes",
-                      activeIcon: Icons.shopping_bag,
-                      inactiveIcon: Icons.shopping_bag_outlined,
+                  // Côté droit : Commandes + Profil
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 2,
+                            label: "Commandes",
+                            activeIcon: Icons.shopping_bag,
+                            inactiveIcon: Icons.shopping_bag_outlined,
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 3,
+                            label: "Profil",
+                            activeIcon: Icons.person,
+                            inactiveIcon: Icons.person_outline,
+                          ),
+                        ),
+                      ],
                     ),
-                    _buildNavItem(
-                      index: 3,
-                      label: "Profil",
-                      activeIcon: Icons.person,
-                      inactiveIcon: Icons.person_outline,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
-    );
+    ),
+  );
   }
 
   /// Construit un bouton positionné sur l'arc de cercle avec onde de propagation,
@@ -613,6 +635,9 @@ class _CommercantMainNavState extends State<CommercantMainNav>
             const SizedBox(height: 3),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'campagne_model.dart';
 import '../services/auth_service.dart';
+import '../services/api/api_config.dart';
 import 'favoris_service.dart';
 import 'mes_favoris_screen.dart';
 import 'groupe_selection_service.dart';
@@ -98,9 +99,9 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                     child: Row(
                       children: [
-                        Builder(
-                          builder: (context) {
-                            final user = AuthService.instance.utilisateurCourant;
+                        ValueListenableBuilder<UtilisateurProfil?>(
+                          valueListenable: AuthService.instance.profilNotifier,
+                          builder: (context, user, _) {
                             final String initiales = (user?.nomComplet.isNotEmpty ?? false)
                                 ? user!.nomComplet
                                     .split(' ')
@@ -109,17 +110,24 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                     .join()
                                 : "DG";
 
+                            final bool aPhoto = user?.photoUrl != null && user!.photoUrl!.isNotEmpty;
+
                             return CircleAvatar(
                               radius: 22,
                               backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
-                              child: Text(
-                                initiales,
-                                style: const TextStyle(
-                                  color: AppTheme.primary,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14,
-                                ),
-                              ),
+                              backgroundImage: aPhoto
+                                  ? NetworkImage(ApiConfig.resolutionImageUrl(user.photoUrl))
+                                  : null,
+                              child: !aPhoto
+                                  ? Text(
+                                      initiales,
+                                      style: const TextStyle(
+                                        color: AppTheme.primary,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14,
+                                      ),
+                                    )
+                                  : null,
                             );
                           },
                         ),

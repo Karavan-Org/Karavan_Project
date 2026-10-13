@@ -5,8 +5,8 @@ import 'parametres_grossiste_screen.dart';
 import 'documents_grossiste_screen.dart';
 import 'assistance_grossiste_screen.dart';
 import 'portefeuille_grossiste_screen.dart';
-import '../screens/onboarding_screen.dart';
 import '../services/auth_service.dart';
+import '../widgets/avatar_profil_interactif.dart';
 
 /// Écran du Profil Grossiste fidèle à la maquette Figma Dogo (Frame "profil" Grossiste)
 /// Nom : Aliou Traoré
@@ -38,8 +38,8 @@ class GrossisteProfilScreen extends StatelessWidget {
             onPressed: () {
               AuthService.instance.deconnecter();
               Navigator.of(ctx).pop();
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/onboarding',
                 (route) => false,
               );
             },
@@ -78,88 +78,80 @@ class GrossisteProfilScreen extends StatelessWidget {
                     ),
                   ),
 
-                  Column(
-                    children: [
-                      // Avatar circulaire stylisé
-                      Container(
-                        width: 86,
-                        height: 86,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFEBDDCE),
-                          border: Border.all(color: Colors.white, width: 3.5),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x1846321E),
-                              blurRadius: 14,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: CustomPaint(
-                            painter: _GrossisteAvatarPainter(),
-                            child: const SizedBox.expand(),
+                  ValueListenableBuilder<UtilisateurProfil?>(
+                    valueListenable: AuthService.instance.profilNotifier,
+                    builder: (context, profil, _) {
+                      final String nomAffiche = (profil?.nom.trim().isNotEmpty ?? false)
+                          ? profil!.nom
+                          : "Aliou Traoré";
+
+                      return Column(
+                        children: [
+                          // Avatar circulaire stylisé interactif
+                          AvatarProfilInteractif(
+                            photoUrl: profil?.photoUrl,
+                            taille: 86,
+                            customPainterDefaut: _GrossisteAvatarPainter(),
                           ),
-                        ),
-                      ),
 
-                      const SizedBox(height: 12),
+                          const SizedBox(height: 12),
 
-                      // Nom
-                      const Text(
-                        "Aliou Traoré",
-                        style: TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF2C241E),
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-
-                      const SizedBox(height: 3),
-
-                      // Rôle
-                      const Text(
-                        "Grossiste",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF8C7E74),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Badge doré "Compte vérifié"
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF9E6),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE5A100).withValues(alpha: 0.35)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.verified_rounded,
-                              size: 13,
-                              color: Color(0xFFD48800),
+                          // Nom
+                          Text(
+                            nomAffiche,
+                            style: const TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF2C241E),
+                              letterSpacing: -0.2,
                             ),
-                            SizedBox(width: 5),
-                            Text(
-                              "Compte vérifié",
-                              style: TextStyle(
-                                color: Color(0xFFB57400),
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w800,
-                              ),
+                          ),
+
+                          const SizedBox(height: 3),
+
+                          // Rôle
+                          const Text(
+                            "Grossiste",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF8C7E74),
+                              fontWeight: FontWeight.w500,
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          // Badge doré "Compte vérifié"
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF9E6),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFFE5A100).withValues(alpha: 0.35)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.verified_rounded,
+                                  size: 13,
+                                  color: Color(0xFFD48800),
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  "Compte vérifié",
+                                  style: TextStyle(
+                                    color: Color(0xFFB57400),
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),

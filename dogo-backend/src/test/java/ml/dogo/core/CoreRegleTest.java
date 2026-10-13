@@ -310,7 +310,7 @@ class CoreRegleTest {
     void rg60_motifs_automatiques_et_manuels() {
         assertTrue(MotifRemboursement.ECHEC_GROUPE.automatique());
         assertTrue(MotifRemboursement.ECHEC_FOURNISSEUR.automatique());
-        assertTrue(MotifRemboursement.ANNULATION_CLIENT.automatique());
+        assertFalse(MotifRemboursement.ANNULATION_CLIENT.automatique());
         assertFalse(MotifRemboursement.COLIS_PERDU.automatique());
         assertFalse(MotifRemboursement.LITIGE_RESOLU.automatique());
     }

@@ -9,10 +9,24 @@ class GroupeSelectionService {
   GroupeSelectionService._internal();
   static final GroupeSelectionService instance = GroupeSelectionService._internal();
 
-  /// Le groupe actuellement sélectionné (initialisé avec le 1er groupe par défaut)
+  static const GroupeCampagneModel _repliDefaut = GroupeCampagneModel(
+    id: "1",
+    titre: "Sélectionnez un groupe",
+    sousTitre: "",
+    imagePath: "assets/images/logo_dogo.png",
+    prixGroupe: 0,
+    prixPublic: 0,
+    quantiteActuelle: 0,
+    quantiteObjectif: 1,
+    categorie: "",
+  );
+
+  /// Le groupe actuellement sélectionné (initialisé avec le 1er groupe par défaut ou un repli)
   late final ValueNotifier<GroupeCampagneModel> selectionNotifier =
       ValueNotifier<GroupeCampagneModel>(
-    FavorisService.instance.toutesLesCampagnes.first,
+    FavorisService.instance.toutesLesCampagnes.isNotEmpty
+        ? FavorisService.instance.toutesLesCampagnes.first
+        : _repliDefaut,
   );
 
   GroupeCampagneModel get groupeSelectionne => selectionNotifier.value;

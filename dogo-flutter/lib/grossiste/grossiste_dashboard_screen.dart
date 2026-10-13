@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../services/api/api_config.dart';
 import '../services/api/api_exception.dart';
+import '../services/auth_service.dart';
 import '../services/catalogue_api_service.dart';
 import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
@@ -7,6 +9,7 @@ import '../widgets/image_produit.dart';
 import 'ajouter_produit_screen.dart';
 import 'creer_groupe_grossiste_screen.dart';
 import 'grossiste_drawer.dart';
+import '../widgets/tab_navigation_scope.dart';
 import 'mes_groupes_grossiste_screen.dart';
 import 'selection_produit_grossiste.dart';
 
@@ -68,6 +71,10 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
       }
     } catch (e) {
       if (!mounted) return;
+      if (e is ApiException && (e.statusCode == 401 || e.statusCode == 403) && !AuthService.instance.estConnecte) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/onboarding', (route) => false);
+        return;
+      }
       setState(() {
         _erreur = e is ApiException ? e.messageComplet : '$e';
         _chargement = false;
@@ -145,7 +152,60 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
             tooltip: "Actualiser",
             onPressed: _charger,
           ),
-          const SizedBox(width: 8),
+          ValueListenableBuilder<UtilisateurProfil?>(
+            valueListenable: AuthService.instance.profilNotifier,
+            builder: (context, profil, _) {
+              final photoUrl = profil?.photoUrl;
+              final initiales = (profil != null && profil.nom.trim().isNotEmpty)
+                  ? profil.nom.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                  : 'GR';
+
+              return GestureDetector(
+                onTap: () => TabNavigationScope.switchToTab(context, 3),
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 14.0),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFF5E8D3),
+                      border: Border.all(color: AppTheme.primary, width: 1.8),
+                    ),
+                    child: ClipOval(
+                      child: photoUrl != null && photoUrl.isNotEmpty
+                          ? Image.network(
+                              ApiConfig.resolutionImageUrl(photoUrl),
+                              fit: BoxFit.cover,
+                              width: 36,
+                              height: 36,
+                              errorBuilder: (_, __, ___) => Center(
+                                child: Text(
+                                  initiales,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    color: AppTheme.primary,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                initiales,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
       floatingActionButton: widget.showFab
@@ -169,33 +229,47 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
               const SizedBox(height: 20),
             ],
 
-            // --- CARTES STATISTIQUES ---
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () => _voirGroupes(filtre: "Ouverts"),
-                    child: _buildKpiCard(
-                      title: "Groupes ouverts",
-                      value: "$ouverts",
-                      subtext: "${_groupes.length} groupe${_groupes.length > 1 ? 's' : ''} au total",
-                      icon: Icons.groups_rounded,
-                      iconColor: AppTheme.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
+            // --- CARTES STATISTIQUES (adaptatif) ---
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final bool etroit = constraints.maxWidth < 280;
+                final carte1 = InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => _voirGroupes(filtre: "Ouverts"),
                   child: _buildKpiCard(
-                    title: "Pièces réservées",
-                    value: "$reservees",
-                    subtext: "sur vos groupes en cours",
-                    icon: Icons.shopping_bag_rounded,
-                    iconColor: AppTheme.success,
+                    title: "Groupes ouverts",
+                    value: "$ouverts",
+                    subtext: "${_groupes.length} groupe${_groupes.length > 1 ? 's' : ''} au total",
+                    icon: Icons.groups_rounded,
+                    iconColor: AppTheme.primary,
                   ),
-                ),
-              ],
+                );
+                final carte2 = _buildKpiCard(
+                  title: "Pièces réservées",
+                  value: "$reservees",
+                  subtext: "sur vos groupes en cours",
+                  icon: Icons.shopping_bag_rounded,
+                  iconColor: AppTheme.success,
+                );
+
+                if (etroit) {
+                  return Column(
+                    children: [
+                      carte1,
+                      const SizedBox(height: 10),
+                      carte2,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: carte1),
+                    const SizedBox(width: 12),
+                    Expanded(child: carte2),
+                  ],
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -204,9 +278,11 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "Mon Catalogue Actif",
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.textDark),
+                const Expanded(
+                  child: Text(
+                    "Mon Catalogue Actif",
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.textDark),
+                  ),
                 ),
                 TextButton(
                   onPressed: _ajouterProduit,
@@ -229,9 +305,11 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    "Mes groupes d'achat",
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.textDark),
+                  const Expanded(
+                    child: Text(
+                      "Mes groupes d'achat",
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.textDark),
+                    ),
                   ),
                   TextButton(
                     onPressed: _voirGroupes,
@@ -401,54 +479,107 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
   }
 
   Widget _alerteConfirmation(int nombre) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF8E7), Color(0xFFFFF3D6)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.secondary.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.secondary.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 360;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFF8E7), Color(0xFFFFF3D6)],
             ),
-            child: const Icon(Icons.hourglass_top_rounded, color: AppTheme.secondary, size: 24),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.secondary.withValues(alpha: 0.3)),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Disponibilité à confirmer (RG-18)",
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF6D4C00)),
+          child: compact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.secondary.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.hourglass_top_rounded, color: AppTheme.secondary, size: 24),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Disponibilité à confirmer (RG-18)",
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF6D4C00)),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                "$nombre groupe${nombre > 1 ? 's' : ''} d'un courtier attend${nombre > 1 ? 'ent' : ''} la confirmation de votre stock.",
+                                style: const TextStyle(fontSize: 11.5, color: Color(0xFF8A6516)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () => _voirGroupes(filtre: "À confirmer"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.secondary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        minimumSize: const Size(60, 36),
+                      ),
+                      child: const Text("Voir", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.secondary.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.hourglass_top_rounded, color: AppTheme.secondary, size: 24),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Disponibilité à confirmer (RG-18)",
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF6D4C00)),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "$nombre groupe${nombre > 1 ? 's' : ''} d'un courtier attend${nombre > 1 ? 'ent' : ''} la confirmation de votre stock.",
+                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF8A6516)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () => _voirGroupes(filtre: "À confirmer"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.secondary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        minimumSize: const Size(60, 36),
+                      ),
+                      child: const Text("Voir", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  "$nombre groupe${nombre > 1 ? 's' : ''} d'un courtier attend${nombre > 1 ? 'ent' : ''} la confirmation de votre stock.",
-                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF8A6516)),
-                ),
-              ],
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => _voirGroupes(filtre: "À confirmer"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.secondary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              minimumSize: const Size(60, 36),
-            ),
-            child: const Text("Voir", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

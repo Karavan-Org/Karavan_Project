@@ -2,11 +2,21 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../commercant/commercant_main_nav.dart';
+import '../courtier/courtier_main_nav.dart';
+import '../grossiste/grossiste_main_nav.dart';
+import '../models/role_acteur.dart';
+import '../services/auth_service.dart';
+import '../services/session_storage_service.dart';
+import '../services/tab_storage_helper.dart';
+import '../services/url_route_helper.dart';
 import 'onboarding_screen.dart';
 
 /// Animation officielle de lancement de l'application DoGo
 class SplashLaunchScreen extends StatefulWidget {
-  const SplashLaunchScreen({super.key});
+  final String? routeInitiale;
+
+  const SplashLaunchScreen({super.key, this.routeInitiale});
 
   @override
   State<SplashLaunchScreen> createState() => _SplashLaunchScreenState();
@@ -17,6 +27,7 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
   late AnimationController _controller;
   bool _hasNavigated = false;
   ui.Image? _logoImage;
+  Future<UtilisateurProfil?>? _restaurerSessionFuture;
 
   @override
   void initState() {
@@ -27,7 +38,19 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
       duration: const Duration(milliseconds: 5200),
     );
 
+    _restaurerSessionFuture = AuthService.instance.restaurerSession();
     _controller.forward();
+
+    // Lors d'un rafraîchissement d'un onglet ciblé (commercant, grossiste, courtier),
+    // restaurer immédiatement l'espace dès la réponse de session pour une réactivité instantanée
+    final espaceImmediat = _detecterEspaceDepuisUrl();
+    if (espaceImmediat != null) {
+      _restaurerSessionFuture?.whenComplete(() {
+        if (mounted && !_hasNavigated) {
+          Future.delayed(const Duration(milliseconds: 350), _naviguerVersAccueil);
+        }
+      });
+    }
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -55,12 +78,92 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
     super.dispose();
   }
 
-  void _naviguerVersAccueil() {
+  String? _detecterEspaceDepuisUrl() {
+    try {
+      // 1. Détection prioritaire par l'URL propre à cet onglet (hash #/espace ou pathname /espace)
+      final urlEspace = detecterEspaceUrlOnglet();
+      if (urlEspace != null && urlEspace.isNotEmpty) {
+        return urlEspace.toLowerCase();
+      }
+
+      // 2. Détection par la route initiale transmise par le routeur
+      if (widget.routeInitiale != null && widget.routeInitiale!.isNotEmpty) {
+        final r = widget.routeInitiale!.toLowerCase();
+        if (r.contains('courtier')) return 'courtier';
+        if (r.contains('grossiste')) return 'grossiste';
+        if (r.contains('commercant')) return 'commercant';
+      }
+
+      // 3. Détection par le stockage isolé propre à cet onglet (sessionStorage web)
+      final sessionOnglet = getSessionStorageItem('dogo_tab_espace');
+      if (sessionOnglet != null && sessionOnglet.isNotEmpty) {
+        return sessionOnglet.toLowerCase();
+      }
+
+      // 4. Détection par Uri.base (fallback)
+      final fragment = Uri.base.fragment.toLowerCase();
+      final path = Uri.base.path.toLowerCase();
+      if (fragment.contains('courtier') || path.contains('courtier')) return 'courtier';
+      if (fragment.contains('grossiste') || path.contains('grossiste')) return 'grossiste';
+      if (fragment.contains('commercant') || path.contains('commercant')) return 'commercant';
+    } catch (_) {}
+    return null;
+  }
+
+  Future<void> _naviguerVersAccueil() async {
     if (_hasNavigated) return;
     _hasNavigated = true;
+
+    if (_restaurerSessionFuture != null) {
+      try {
+        await _restaurerSessionFuture;
+      } catch (_) {}
+    }
+
+    if (!mounted) return;
+
+    // 1. Détection prioritaire par l'URL (ex: #/courtier, #/commercant, #/grossiste)
+    String? espaceCible = _detecterEspaceDepuisUrl();
+
+    // 2. Si l'URL n'a pas de fragment explicite, lire l'espace persisté lors de la navigation
+    espaceCible ??= await SessionStorageService.instance.lireDernierEspace();
+
+    if (!mounted) return;
+
+    final profil = AuthService.instance.profilActuel;
+    final bool estConnecte = AuthService.instance.estConnecte && profil != null;
+    Widget destination;
+
+    if (estConnecte) {
+      // Utilisateur authentifié : respecte la session connectée et son rôle
+      switch (profil.roleActeur) {
+        case RoleActeur.grossiste:
+          destination = const GrossisteMainNav();
+          definirRouteWeb('/grossiste');
+          break;
+        case RoleActeur.courtier:
+          destination = const CourtierMainNav();
+          definirRouteWeb('/courtier');
+          break;
+        case RoleActeur.commercant:
+          destination = const CommercantMainNav();
+          definirRouteWeb('/commercant');
+          break;
+      }
+    } else {
+      // Session absente, expirée ou révoquée :
+      // Écran d'accueil/onboarding adapté au rôle cible de l'onglet
+      final roleCible = switch (espaceCible) {
+        'grossiste' => RoleActeur.grossiste,
+        'courtier' => RoleActeur.courtier,
+        _ => RoleActeur.commercant,
+      };
+      destination = OnboardingScreen(initialRole: roleCible);
+    }
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const OnboardingScreen(),
+        pageBuilder: (_, __, ___) => destination,
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(
             opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),

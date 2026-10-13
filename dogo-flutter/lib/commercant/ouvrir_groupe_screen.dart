@@ -91,6 +91,9 @@ class _OuvrirGroupeScreenState extends State<OuvrirGroupeScreen> {
             paysOrigine: g.paysOrigine,
             courtierNom: g.courtierNom,
             tempsRestant: g.tempsRestant,
+            groupe: g,
+            variantes: g.variantes,
+            quantiteMin: g.quantiteMinParCommercant,
           ),
         ),
       );

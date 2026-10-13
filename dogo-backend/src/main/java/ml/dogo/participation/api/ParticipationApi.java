@@ -31,4 +31,7 @@ public interface ParticipationApi {
 
     /** Renvoie les identifiants uniques de groupes auxquels participe un commerçant. */
     List<Long> groupeIdsParCommercant(long commercantId);
+
+    /** Renvoie les identifiants de toutes les participations d'un commerçant. */
+    List<Long> participationIdsParCommercant(long commercantId);
 }

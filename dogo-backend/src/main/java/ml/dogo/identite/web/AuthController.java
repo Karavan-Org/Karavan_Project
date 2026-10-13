@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import ml.dogo.identite.application.AuthService;
 import ml.dogo.identite.application.InscriptionService;
+import ml.dogo.identite.application.RefreshTokenService;
 import ml.dogo.identite.domain.TypeActeur;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,12 +50,19 @@ public class AuthController {
         }
     }
 
+    public record RefreshRequete(String refreshToken, String deviceId) {
+    }
+
+    private static final String COOKIE_NAME = "dogo_refresh_token";
+
     private final InscriptionService inscription;
     private final AuthService auth;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthController(InscriptionService inscription, AuthService auth) {
+    public AuthController(InscriptionService inscription, AuthService auth, RefreshTokenService refreshTokenService) {
         this.inscription = inscription;
         this.auth = auth;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/inscription")
@@ -74,7 +82,82 @@ public class AuthController {
     }
 
     @PostMapping("/connexion")
-    public AuthService.Connexion connecter(@Valid @RequestBody ConnexionRequete r, HttpServletRequest http) {
-        return auth.connecter(r.telephone(), r.motDePasseEffectif(), r.deviceId(), http.getRemoteAddr());
+    public AuthService.Connexion connecter(@Valid @RequestBody ConnexionRequete r,
+                                           HttpServletRequest http,
+                                           jakarta.servlet.http.HttpServletResponse res) {
+        AuthService.Connexion c = auth.connecter(r.telephone(), r.motDePasseEffectif(), r.deviceId(), http.getRemoteAddr());
+        if (c.refreshToken() != null && c.refreshExpiration() != null) {
+            poserCookie(res, c.refreshToken(), http.isSecure(), c.refreshExpiration());
+        }
+        return c;
+    }
+
+    @PostMapping("/refresh")
+    public org.springframework.http.ResponseEntity<RefreshTokenService.TokenPair> rafraichir(
+            @RequestBody(required = false) RefreshRequete r,
+            HttpServletRequest request,
+            jakarta.servlet.http.HttpServletResponse response) {
+        String token = extraireRefreshToken(r != null ? r.refreshToken() : null, request);
+        if (token == null || token.isBlank()) {
+            throw new ml.dogo.shared.errors.ErreurMetier(ml.dogo.shared.errors.CodeErreur.NON_AUTHENTIFIE, "RG-07",
+                    "Jeton de rafraîchissement absent");
+        }
+        String deviceId = (r != null && r.deviceId() != null && !r.deviceId().isBlank())
+                ? r.deviceId()
+                : request.getHeader("X-Device-Id");
+
+        RefreshTokenService.TokenPair pair = refreshTokenService.rafraichir(token, deviceId, request.getRemoteAddr());
+        poserCookie(response, pair.refreshToken(), request.isSecure(), pair.refreshExpiration());
+        return org.springframework.http.ResponseEntity.ok(pair);
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(
+            @RequestBody(required = false) RefreshRequete r,
+            HttpServletRequest request,
+            jakarta.servlet.http.HttpServletResponse response) {
+        String token = extraireRefreshToken(r != null ? r.refreshToken() : null, request);
+        if (token != null && !token.isBlank()) {
+            refreshTokenService.revoquerToken(token);
+        }
+        supprimerCookie(response, request.isSecure());
+    }
+
+    private String extraireRefreshToken(String fromBody, HttpServletRequest request) {
+        if (fromBody != null && !fromBody.isBlank()) {
+            return fromBody.trim();
+        }
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie c : request.getCookies()) {
+                if (COOKIE_NAME.equals(c.getName()) && c.getValue() != null && !c.getValue().isBlank()) {
+                    return c.getValue().trim();
+                }
+            }
+        }
+        return null;
+    }
+
+    private void poserCookie(jakarta.servlet.http.HttpServletResponse response, String token, boolean isSecure, java.time.Instant expiration) {
+        long maxAge = Math.max(0, java.time.Duration.between(java.time.Instant.now(), expiration).toSeconds());
+        org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from(COOKIE_NAME, token)
+                .httpOnly(true)
+                .secure(isSecure)
+                .path("/api")
+                .sameSite("Lax")
+                .maxAge(maxAge)
+                .build();
+        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private void supprimerCookie(jakarta.servlet.http.HttpServletResponse response, boolean isSecure) {
+        org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from(COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(isSecure)
+                .path("/api")
+                .sameSite("Lax")
+                .maxAge(0)
+                .build();
+        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }

@@ -3,11 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
 import '../grossiste/grossiste_acces.dart';
-import '../grossiste/grossiste_connexion_screen.dart';
-import '../courtier/courtier_main_nav.dart';
 import '../services/auth_service.dart';
 import '../services/api/api_exception.dart';
-import 'commercant_main_nav.dart';
 
 /// Écran de Vérification OTP du compte conforme au modèle Figma exact
 class CommercantOtpScreen extends StatefulWidget {
@@ -102,7 +99,6 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
       );
       if (!mounted) return;
 
-      Widget destination;
       switch (widget.role) {
         case RoleActeur.grossiste:
           // Le compte attend son dossier KYC (RG-03) : on ouvre la session pour le déposer
@@ -113,24 +109,23 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
               motDePasse: secret,
               pin: secret,
             );
-            destination = await ecranGrossisteSelonDossier(profil);
+            final destination = await ecranGrossisteSelonDossier(profil);
+            if (!mounted) return;
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => destination),
+              (route) => false,
+            );
           } else {
-            destination = const GrossisteConnexionScreen();
+            Navigator.of(context).pushNamedAndRemoveUntil('/onboarding', (route) => false);
           }
-          if (!mounted) return;
-          break;
+          return;
         case RoleActeur.courtier:
-          destination = const CourtierMainNav();
-          break;
+          Navigator.of(context).pushNamedAndRemoveUntil('/courtier', (route) => false);
+          return;
         case RoleActeur.commercant:
-          destination = const CommercantMainNav();
-          break;
+          Navigator.of(context).pushNamedAndRemoveUntil('/commercant', (route) => false);
+          return;
       }
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => destination),
-        (route) => false,
-      );
     } catch (e) {
       if (!mounted) return;
       final message = e is ApiException ? e.messageComplet : 'Code invalide : ${e.toString()}';

@@ -11,6 +11,9 @@ import 'selection_produit_grossiste.dart';
 import 'validation_stock_grossiste_screen.dart';
 import 'expedier_lot_screen.dart';
 import 'suivi_colis_grossiste_screen.dart';
+import '../services/session_storage_service.dart';
+import '../services/url_route_helper.dart';
+import '../widgets/tab_navigation_scope.dart';
 
 /// Navigation principale Grossiste avec barre d'onglets Figma et FAB central (+)
 /// animé en arc de cercle avec effet de vague aquatique et prévisualisation au survol
@@ -49,6 +52,8 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
   @override
   void initState() {
     super.initState();
+    SessionStorageService.instance.sauvegarderDernierEspace('grossiste');
+    definirRouteWeb('/grossiste');
     _currentIndex = widget.initialIndex.clamp(0, 3);
 
     _fabController = AnimationController(
@@ -119,7 +124,9 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TabNavigationScope(
+      onSwitchTab: setTabIndex,
+      child: Scaffold(
       body: Stack(
         children: [
           // 1. Écrans principaux avec IndexedStack
@@ -334,60 +341,71 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
         elevation: 16,
         color: Colors.white,
         padding: EdgeInsets.zero,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // Côté gauche : Tableau de bord + Catalogue
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavItem(
-                      index: 0,
-                      label: "Accueil",
-                      activeIcon: Icons.dashboard_rounded,
-                      inactiveIcon: Icons.dashboard_outlined,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 100) return const SizedBox(height: 64);
+            return SizedBox(
+              height: 64,
+              child: Row(
+                children: [
+                  // Côté gauche : Tableau de bord + Catalogue
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 0,
+                            label: "Accueil",
+                            activeIcon: Icons.dashboard_rounded,
+                            inactiveIcon: Icons.dashboard_outlined,
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 1,
+                            label: "Catalogue",
+                            activeIcon: Icons.inventory_2_rounded,
+                            inactiveIcon: Icons.inventory_2_outlined,
+                          ),
+                        ),
+                      ],
                     ),
-                    _buildNavItem(
-                      index: 1,
-                      label: "Catalogue",
-                      activeIcon: Icons.inventory_2_rounded,
-                      inactiveIcon: Icons.inventory_2_outlined,
-                    ),
-                  ],
-                ),
-              ),
+                  ),
 
-              // Espace pour le FAB central (+)
-              const SizedBox(width: 58),
+                  // Espace pour le FAB central (+)
+                  const SizedBox(width: 52),
 
-              // Côté droit : Lots/Commandes + Profil
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavItem(
-                      index: 2,
-                      label: "Lots & Ventes",
-                      activeIcon: Icons.local_shipping_rounded,
-                      inactiveIcon: Icons.local_shipping_outlined,
+                  // Côté droit : Lots/Commandes + Profil
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 2,
+                            label: "Ventes",
+                            activeIcon: Icons.local_shipping_rounded,
+                            inactiveIcon: Icons.local_shipping_outlined,
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 3,
+                            label: "Profil",
+                            activeIcon: Icons.storefront_rounded,
+                            inactiveIcon: Icons.storefront_outlined,
+                          ),
+                        ),
+                      ],
                     ),
-                    _buildNavItem(
-                      index: 3,
-                      label: "Profil",
-                      activeIcon: Icons.storefront_rounded,
-                      inactiveIcon: Icons.storefront_outlined,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
-    );
+    ),
+  );
   }
 
   /// Construit un bouton positionné sur l'arc de cercle avec onde de propagation,
@@ -601,6 +619,9 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
             const SizedBox(height: 3),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,

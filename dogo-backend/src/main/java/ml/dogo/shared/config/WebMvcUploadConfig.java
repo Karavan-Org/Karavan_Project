@@ -16,6 +16,9 @@ public class WebMvcUploadConfig implements WebMvcConfigurer {
     @Value("${dogo.stockage.repertoire:uploads/produits}")
     private String cheminUpload;
 
+    @Value("${dogo.stockage.repertoire-avatars:uploads/avatars}")
+    private String cheminAvatars;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         Path uploadPath = Paths.get(cheminUpload).toAbsolutePath().normalize();
@@ -26,6 +29,16 @@ public class WebMvcUploadConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/api/public/images/produits/**")
                 .addResourceLocations(fileUri)
+                .setCacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic());
+
+        Path avatarsPath = Paths.get(cheminAvatars).toAbsolutePath().normalize();
+        String avatarsUri = avatarsPath.toUri().toString();
+        if (!avatarsUri.endsWith("/")) {
+            avatarsUri += "/";
+        }
+
+        registry.addResourceHandler("/api/public/images/avatars/**")
+                .addResourceLocations(avatarsUri)
                 .setCacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic());
     }
 }

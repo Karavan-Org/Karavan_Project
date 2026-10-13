@@ -1,56 +1,16 @@
 import 'package:flutter/foundation.dart';
-import '../models/role_acteur.dart';
+import '../models/utilisateur_profil.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
+import 'session_storage_service.dart';
 
-/// Profil de l'utilisateur connecté selon le contrat Spring Boot (ml.dogo.identite)
-class UtilisateurProfil {
-  final int id;
-  final String type; // COMMERCANT, GROSSISTE, COURTIER, ADMINISTRATEUR
-  final String nom;
-  final String telephone;
-  final String statut;
-  final List<String> permissions;
-
-  const UtilisateurProfil({
-    required this.id,
-    required this.type,
-    required this.nom,
-    required this.telephone,
-    required this.statut,
-    this.permissions = const [],
-  });
-
-  factory UtilisateurProfil.fromJson(Map<String, dynamic> json) {
-    return UtilisateurProfil(
-      id: json['id'] as int? ?? 1,
-      type: json['type'] as String? ?? 'COMMERCANT',
-      nom: json['nom'] as String? ?? '',
-      telephone: json['telephone'] as String? ?? '',
-      statut: json['statut'] as String? ?? 'ACTIF',
-      permissions: (json['permissions'] as List<dynamic>?)?.map((p) => p.toString()).toList() ?? [],
-    );
-  }
-
-  String get nomComplet => nom;
-  String? get structure => null;
-
-  RoleActeur get roleActeur {
-    switch (type.toUpperCase()) {
-      case 'GROSSISTE':
-        return RoleActeur.grossiste;
-      case 'COURTIER':
-        return RoleActeur.courtier;
-      case 'COMMERCANT':
-      default:
-        return RoleActeur.commercant;
-    }
-  }
-}
+export '../models/utilisateur_profil.dart';
 
 /// Service d'Authentification gérant les sessions, JWT et profils
 class AuthService {
-  AuthService._();
+  AuthService._() {
+    ApiClient.instance.onRefreshRequired = rafraichirJeton;
+  }
   static final AuthService instance = AuthService._();
 
   final ValueNotifier<UtilisateurProfil?> profilNotifier = ValueNotifier<UtilisateurProfil?>(null);
@@ -58,6 +18,82 @@ class AuthService {
   UtilisateurProfil? get profilActuel => profilNotifier.value;
   UtilisateurProfil? get utilisateurCourant => profilNotifier.value;
   bool get estConnecte => profilNotifier.value != null && ApiClient.instance.estAuthentifie;
+
+  /// Restaure la session au démarrage à partir de flutter_secure_storage
+  Future<UtilisateurProfil?> restaurerSession() async {
+    final refreshToken = await SessionStorageService.instance.lireRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return null;
+    }
+
+    try {
+      final response = await ApiClient.instance.postSansAuth(
+        ApiConfig.refresh,
+        body: {'refreshToken': refreshToken},
+      );
+
+      if (response is Map<String, dynamic>) {
+        final jeton = response['jeton'] as String?;
+        final nouveauRefreshToken = response['refreshToken'] as String?;
+        final profilJson = response['profil'] as Map<String, dynamic>? ?? {};
+        final profil = UtilisateurProfil.fromJson(profilJson);
+
+        ApiClient.instance.definirJeton(jeton);
+        profilNotifier.value = profil;
+
+        if (nouveauRefreshToken != null && nouveauRefreshToken.isNotEmpty) {
+          await SessionStorageService.instance.sauvegarderSession(
+            refreshToken: nouveauRefreshToken,
+            profil: profil,
+          );
+        }
+        return profil;
+      }
+    } catch (_) {
+      // Session expirée ou révoquée sur le serveur
+      await SessionStorageService.instance.effacerSession();
+      ApiClient.instance.deconnecter();
+      profilNotifier.value = null;
+    }
+    return null;
+  }
+
+  /// Rafraîchissement automatique de l'access token sur interception 401
+  Future<bool> rafraichirJeton() async {
+    final refreshToken = await SessionStorageService.instance.lireRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return false;
+    }
+
+    try {
+      final response = await ApiClient.instance.postSansAuth(
+        ApiConfig.refresh,
+        body: {'refreshToken': refreshToken},
+      );
+
+      if (response is Map<String, dynamic>) {
+        final jeton = response['jeton'] as String?;
+        final nouveauRefreshToken = response['refreshToken'] as String?;
+        final profilJson = response['profil'] as Map<String, dynamic>?;
+
+        ApiClient.instance.definirJeton(jeton);
+        if (profilJson != null) {
+          final profil = UtilisateurProfil.fromJson(profilJson);
+          profilNotifier.value = profil;
+          if (nouveauRefreshToken != null && nouveauRefreshToken.isNotEmpty) {
+            await SessionStorageService.instance.sauvegarderSession(
+              refreshToken: nouveauRefreshToken,
+              profil: profil,
+            );
+          }
+        }
+        return true;
+      }
+    } catch (_) {
+      await deconnecter();
+    }
+    return false;
+  }
 
   /// Connexion par téléphone et mot de passe (RG-07)
   Future<UtilisateurProfil> connecter({
@@ -85,6 +121,15 @@ class AuthService {
         final profilJson = response['profil'] as Map<String, dynamic>? ?? {};
         final profil = UtilisateurProfil.fromJson(profilJson);
         profilNotifier.value = profil;
+
+        final refreshToken = response['refreshToken'] as String?;
+        if (refreshToken != null && refreshToken.isNotEmpty) {
+          await SessionStorageService.instance.sauvegarderSession(
+            refreshToken: refreshToken,
+            profil: profil,
+          );
+        }
+
         return profil;
       }
 
@@ -172,13 +217,116 @@ class AuthService {
     }
   }
 
-  /// Déconnexion avec invalidation de session serveur
-  Future<void> deconnecter() async {
+  /// Upload d'une photo de profil (JPEG, PNG, WEBP) vers le serveur (stockage sécurisé)
+  Future<String> uploaderPhotoProfil(Uint8List octets, {String nom = 'avatar.jpg'}) async {
     try {
+      final response = await ApiClient.instance.postMultipart(
+        ApiConfig.photoProfil,
+        fileBytes: octets,
+        filename: nom,
+        fieldName: 'photo',
+      );
+
+      String photoUrl = '';
+      if (response is Map<String, dynamic>) {
+        photoUrl = response['photoUrl'] as String? ?? '';
+      } else if (response is String) {
+        photoUrl = response;
+      }
+
+      if (photoUrl.isNotEmpty && profilActuel != null) {
+        final maj = profilActuel!.copyWith(photoUrl: photoUrl);
+        profilNotifier.value = maj;
+        await SessionStorageService.instance.sauvegarderProfil(maj);
+      }
+      return photoUrl;
+    } catch (e) {
+      if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
+        // Mode hors-ligne / fallback
+        if (profilActuel != null) {
+          final maj = profilActuel!.copyWith(photoUrl: '/api/public/images/avatars/mock_avatar.jpg');
+          profilNotifier.value = maj;
+          return maj.photoUrl!;
+        }
+      }
+      rethrow;
+    }
+  }
+
+  /// Supprime la photo de profil personnalisée
+  Future<void> supprimerPhotoProfil() async {
+    try {
+      await ApiClient.instance.patch(
+        ApiConfig.moi,
+        body: {'photoUrl': ''},
+      );
+      if (profilActuel != null) {
+        final maj = UtilisateurProfil(
+          id: profilActuel!.id,
+          type: profilActuel!.type,
+          nom: profilActuel!.nom,
+          telephone: profilActuel!.telephone,
+          photoUrl: null,
+          statut: profilActuel!.statut,
+          permissions: profilActuel!.permissions,
+        );
+        profilNotifier.value = maj;
+        await SessionStorageService.instance.sauvegarderProfil(maj);
+      }
+    } catch (e) {
+      if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
+        if (profilActuel != null) {
+          final maj = UtilisateurProfil(
+            id: profilActuel!.id,
+            type: profilActuel!.type,
+            nom: profilActuel!.nom,
+            telephone: profilActuel!.telephone,
+            photoUrl: null,
+            statut: profilActuel!.statut,
+            permissions: profilActuel!.permissions,
+          );
+          profilNotifier.value = maj;
+        }
+        return;
+      }
+      rethrow;
+    }
+  }
+
+  /// Recharge le profil depuis le serveur (synchronise photoUrl et nom)
+  Future<UtilisateurProfil?> rechargerProfil() async {
+    if (!ApiClient.instance.estAuthentifie) return profilActuel;
+    try {
+      final response = await ApiClient.instance.get(ApiConfig.moi);
+      if (response is Map<String, dynamic>) {
+        final photoUrl = response['photoUrl'] as String?;
+        final nom = response['nom'] as String?;
+        if (profilActuel != null) {
+          final maj = profilActuel!.copyWith(
+            nom: nom ?? profilActuel!.nom,
+            photoUrl: photoUrl,
+          );
+          profilNotifier.value = maj;
+          await SessionStorageService.instance.sauvegarderProfil(maj);
+          return maj;
+        }
+      }
+    } catch (_) {}
+    return profilActuel;
+  }
+
+  /// Déconnexion révoquant le refresh token côté serveur et effaçant le stockage sécurisé
+  Future<void> deconnecter() async {
+    final rt = await SessionStorageService.instance.lireRefreshToken();
+    try {
+      if (rt != null && rt.isNotEmpty) {
+        await ApiClient.instance.postSansAuth(ApiConfig.logout, body: {'refreshToken': rt});
+      }
       if (ApiClient.instance.estAuthentifie) {
         await ApiClient.instance.post(ApiConfig.deconnexion, body: {});
       }
     } catch (_) {}
+    await SessionStorageService.instance.effacerSession();
     ApiClient.instance.deconnecter();
     profilNotifier.value = null;
   }

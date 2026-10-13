@@ -39,8 +39,12 @@ class ApiConfig {
   // --- Endpoints Authentification ---
   static const String inscription = '/api/auth/inscription';
   static const String connexion = '/api/auth/connexion';
+  static const String refresh = '/api/auth/refresh';
+  static const String logout = '/api/auth/logout';
   static const String deconnexion = '/api/moi/deconnexion';
   static const String notifications = '/api/moi/notifications';
+  static const String moi = '/api/moi';
+  static const String photoProfil = '/api/moi/photo';
   static const String verifierOtp = '/api/auth/verifier-otp';
   static const String renvoyerOtp = '/api/auth/renvoyer-otp';
 
@@ -59,6 +63,14 @@ class ApiConfig {
   // --- Endpoints Paiements & Séquestre ---
   static String initierPaiement(dynamic participationId) => '/api/participations/$participationId/paiement';
   static String historiquePaiements(dynamic participationId) => '/api/participations/$participationId/paiements';
+  static String simulerSuccesPaiement(dynamic paiementId) => '/api/dev/mobile-money/$paiementId/succes';
+
+  // --- Endpoints Participations (Commerçant, RG-26 à RG-32) ---
+  static const String mesParticipations = '/api/moi/participations';
+  static const String mesRemboursements = '/api/moi/remboursements';
+  static String participationDetail(dynamic id) => '/api/participations/$id';
+  static String participationHistorique(dynamic id) => '/api/participations/$id/historique';
+  static String annulerParticipation(dynamic id) => '/api/participations/$id/annulation';
 
   // --- Endpoints Logistique & Commandes ---
   static const String mesCommandes = '/api/moi/commandes';

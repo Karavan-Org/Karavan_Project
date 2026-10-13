@@ -67,7 +67,7 @@ public class SecurityConfig {
                 "Access-Control-Request-Private-Network"
         ));
         config.setExposedHeaders(List.of("Idempotency-Key", "Authorization", "Access-Control-Allow-Private-Network"));
-        config.setAllowCredentials(false);
+        config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -8,6 +8,8 @@ import 'courtier_profil_screen.dart';
 import 'creer_groupe_courtier_screen.dart';
 import 'scanner_retrait_screen.dart';
 import 'etape_transit_screen.dart';
+import '../services/session_storage_service.dart';
+import '../services/url_route_helper.dart';
 
 /// Navigation principale Courtier avec barre d'onglets Figma et FAB central (+)
 /// animé en arc de cercle avec effet de vague aquatique et prévisualisation au survol
@@ -46,6 +48,8 @@ class _CourtierMainNavState extends State<CourtierMainNav>
   @override
   void initState() {
     super.initState();
+    SessionStorageService.instance.sauvegarderDernierEspace('courtier');
+    definirRouteWeb('/courtier');
     _currentIndex = widget.initialIndex.clamp(0, 3);
 
     _fabController = AnimationController(
@@ -297,57 +301,67 @@ class _CourtierMainNavState extends State<CourtierMainNav>
         elevation: 16,
         color: Colors.white,
         padding: EdgeInsets.zero,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // Côté gauche : Tableau de bord + Convois
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavItem(
-                      index: 0,
-                      label: "Accueil",
-                      activeIcon: Icons.home_rounded,
-                      inactiveIcon: Icons.home_outlined,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 100) return const SizedBox(height: 64);
+            return SizedBox(
+              height: 64,
+              child: Row(
+                children: [
+                  // Côté gauche : Tableau de bord + Convois
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 0,
+                            label: "Accueil",
+                            activeIcon: Icons.home_rounded,
+                            inactiveIcon: Icons.home_outlined,
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 1,
+                            label: "Convois",
+                            activeIcon: Icons.local_shipping_rounded,
+                            inactiveIcon: Icons.local_shipping_outlined,
+                          ),
+                        ),
+                      ],
                     ),
-                    _buildNavItem(
-                      index: 1,
-                      label: "Convois",
-                      activeIcon: Icons.local_shipping_rounded,
-                      inactiveIcon: Icons.local_shipping_outlined,
-                    ),
-                  ],
-                ),
-              ),
+                  ),
 
-              // Espace pour le FAB central (+)
-              const SizedBox(width: 58),
+                  // Espace pour le FAB central (+)
+                  const SizedBox(width: 52),
 
-              // Côté droit : Portefeuille + Profil
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavItem(
-                      index: 2,
-                      label: "Portefeuille",
-                      activeIcon: Icons.account_balance_wallet_rounded,
-                      inactiveIcon: Icons.account_balance_wallet_outlined,
+                  // Côté droit : Portefeuille + Profil
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 2,
+                            label: "Portefeuille",
+                            activeIcon: Icons.account_balance_wallet_rounded,
+                            inactiveIcon: Icons.account_balance_wallet_outlined,
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildNavItem(
+                            index: 3,
+                            label: "Profil",
+                            activeIcon: Icons.business_center_rounded,
+                            inactiveIcon: Icons.business_center_outlined,
+                          ),
+                        ),
+                      ],
                     ),
-                    _buildNavItem(
-                      index: 3,
-                      label: "Profil",
-                      activeIcon: Icons.business_center_rounded,
-                      inactiveIcon: Icons.business_center_outlined,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -564,6 +578,9 @@ class _CourtierMainNavState extends State<CourtierMainNav>
             const SizedBox(height: 3),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,

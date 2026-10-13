@@ -4,8 +4,6 @@ import '../services/auth_service.dart';
 import '../services/kyc_api_service.dart';
 import '../theme/app_theme.dart';
 import 'assistance_grossiste_screen.dart';
-import 'grossiste_documents_kyc_screen.dart';
-import 'grossiste_main_nav.dart';
 import 'grossiste_onboarding_widgets.dart';
 
 /// Espace vendeur verrouillé pendant l'examen du dossier (maquette Figma « Espace Vendeur dɔgɔ »).
@@ -35,19 +33,15 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
       final dossier = await KycApiService.instance.monDossier();
       if (!mounted || dossier == null) return;
       if (dossier.statut == 'APPROUVE') {
-        _remplacerPar(const GrossisteMainNav());
+        Navigator.of(context).pushNamedAndRemoveUntil('/grossiste', (route) => route.isFirst);
       } else if (dossier.statut == 'REJETE') {
-        _remplacerPar(GrossisteDocumentsKycScreen(motifRejet: dossier.motifRejet));
+        Navigator.of(context).pushNamedAndRemoveUntil('/grossiste/kyc', (route) => route.isFirst, arguments: dossier.motifRejet);
       } else {
         setState(() => _dossier = dossier);
       }
     } catch (e) {
       if (mounted) afficherErreur(context, e is ApiException ? e.messageComplet : "Actualisation impossible : $e");
     }
-  }
-
-  void _remplacerPar(Widget ecran) {
-    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => ecran), (route) => route.isFirst);
   }
 
   void _verrouille() {

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * le signe avec le secret partagé et le fait passer par le même chemin que celui d'un opérateur réel.
  */
 @Profile("demo")
-@PreAuthorize("hasAuthority('ADMIN_CREER')")
+@PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'PAIEMENT_EFFECTUER')")
 @RestController
 @RequestMapping("/api/dev/mobile-money")
 public class SimulateurOperateur {

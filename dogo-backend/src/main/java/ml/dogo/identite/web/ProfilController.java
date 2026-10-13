@@ -27,7 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/moi")
 public class ProfilController {
 
-    public record ProfilRequete(String nom, String langue) {
+    public record ProfilRequete(String nom, String langue, String photoUrl) {
+    }
+
+    public record PhotoReponse(String photoUrl) {
     }
 
     public record MoyenRequete(@NotBlank String numero, @NotNull OperateurMobileMoney operateur, boolean parDefaut) {
@@ -51,7 +54,32 @@ public class ProfilController {
     @PreAuthorize("hasAuthority('PROFIL_GERER')")
     public CompteService.ProfilComplet modifier(@AuthenticationPrincipal UtilisateurCourant moi,
                                                 @RequestBody ProfilRequete r) {
-        return comptes.modifierProfil(moi.id(), r.nom(), r.langue());
+        return comptes.modifierProfil(moi.id(), r.nom(), r.langue(), r.photoUrl());
+    }
+
+    @PostMapping(value = "/photo", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('PROFIL_GERER')")
+    public PhotoReponse uploaderPhoto(@AuthenticationPrincipal UtilisateurCourant moi,
+                                      @org.springframework.web.bind.annotation.RequestParam(value = "photo", required = false) org.springframework.web.multipart.MultipartFile photo,
+                                      @org.springframework.web.bind.annotation.RequestParam(value = "fichier", required = false) org.springframework.web.multipart.MultipartFile fichier,
+                                      @org.springframework.web.bind.annotation.RequestParam(value = "file", required = false) org.springframework.web.multipart.MultipartFile file) {
+        org.springframework.web.multipart.MultipartFile effectif = photo != null ? photo : (fichier != null ? fichier : file);
+        if (effectif == null || effectif.isEmpty()) {
+            throw new ml.dogo.shared.errors.ErreurMetier(ml.dogo.shared.errors.CodeErreur.DONNEES_INVALIDES, null, "Aucun fichier fourni");
+        }
+        String url = comptes.enregistrerPhotoProfil(moi.id(), effectif);
+        return new PhotoReponse(url);
+    }
+
+    public record ChangerMdpRequete(@NotBlank String ancienMotDePasse, @NotBlank String nouveauMotDePasse) {
+    }
+
+    @PostMapping("/mot-de-passe")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('PROFIL_GERER')")
+    public void changerMotDePasse(@AuthenticationPrincipal UtilisateurCourant moi,
+                                 @Valid @RequestBody ChangerMdpRequete r) {
+        comptes.changerMotDePasse(moi.id(), r.ancienMotDePasse(), r.nouveauMotDePasse());
     }
 
     @PostMapping("/deconnexion")

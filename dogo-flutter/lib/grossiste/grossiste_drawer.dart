@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'ajouter_produit_screen.dart';
-import 'grossiste_dashboard_screen.dart';
 import 'mes_groupes_grossiste_screen.dart';
+import '../widgets/tab_navigation_scope.dart';
+import '../services/api/api_config.dart';
 import '../services/auth_service.dart';
-import '../screens/onboarding_screen.dart';
 
 /// Menu Burger latéral du Grossiste (Drawer)
 class GrossisteDrawer extends StatelessWidget {
@@ -34,46 +34,84 @@ class GrossisteDrawer extends StatelessWidget {
                   ),
                 ),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primary.withValues(alpha: 0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.storefront_rounded,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Zhejiang Footwear Co.",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textDark,
+              child: ValueListenableBuilder<UtilisateurProfil?>(
+                valueListenable: AuthService.instance.profilNotifier,
+                builder: (context, profil, _) {
+                  final photoUrl = profil?.photoUrl;
+                  final nomAffiche = (profil != null && profil.nom.trim().isNotEmpty) ? profil.nom : "Grossiste Partenaire";
+                  final initiales = (profil != null && profil.nom.trim().isNotEmpty)
+                      ? profil.nom.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                      : 'GR';
+
+                  return Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          TabNavigationScope.switchToTab(context, 3);
+                        },
+                        child: Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary.withValues(alpha: 0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: photoUrl != null && photoUrl.isNotEmpty
+                                ? Image.network(
+                                    ApiConfig.resolutionImageUrl(photoUrl),
+                                    fit: BoxFit.cover,
+                                    width: 52,
+                                    height: 52,
+                                    errorBuilder: (_, __, ___) => Center(
+                                      child: Text(
+                                        initiales,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Center(
+                                    child: Text(
+                                      initiales,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                          ),
                         ),
-                        const SizedBox(height: 3),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              nomAffiche,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textDark,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 3),
                         Row(
                           children: [
                             Container(
@@ -119,8 +157,10 @@ class GrossisteDrawer extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-            ),
+              );
+            },
+          ),
+        ),
 
             const SizedBox(height: 8),
 
@@ -137,12 +177,7 @@ class GrossisteDrawer extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
                       if (activeRoute != 'dashboard') {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const GrossisteDashboardScreen(),
-                          ),
-                        );
+                        TabNavigationScope.switchToTab(context, 0);
                       }
                     },
                   ),
@@ -238,8 +273,8 @@ class GrossisteDrawer extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () {
                   AuthService.instance.deconnecter();
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/onboarding',
                     (route) => false,
                   );
                 },

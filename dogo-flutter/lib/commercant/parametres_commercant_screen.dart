@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'code_retrait_commercant_screen.dart';
-import '../grossiste/grossiste_main_nav.dart';
-import '../courtier/courtier_main_nav.dart';
 
 /// Écran des Paramètres du Commerçant (Langues, PIN, Notifications, Sécurité)
 class ParametresCommercantScreen extends StatefulWidget {
@@ -136,11 +134,7 @@ class _ParametresCommercantScreenState extends State<ParametresCommercantScreen>
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const GrossisteMainNav()),
-                          );
-                        },
+                        onPressed: () => Navigator.of(context).pushNamed('/grossiste'),
                         icon: const Icon(Icons.storefront_rounded, size: 16),
                         label: const Text("Grossiste", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                         style: OutlinedButton.styleFrom(
@@ -153,11 +147,7 @@ class _ParametresCommercantScreenState extends State<ParametresCommercantScreen>
                     const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const CourtierMainNav()),
-                          );
-                        },
+                        onPressed: () => Navigator.of(context).pushNamed('/courtier'),
                         icon: const Icon(Icons.local_shipping_rounded, size: 16),
                         label: const Text("Courtier", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                         style: OutlinedButton.styleFrom(
