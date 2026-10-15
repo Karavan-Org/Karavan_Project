@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
 import '../services/groupe_api_service.dart';
@@ -19,11 +20,32 @@ class _MesGroupesCourtierScreenState extends State<MesGroupesCourtierScreen> {
   bool _chargement = true;
   String? _erreur;
   int? _envoi;
+  Timer? _timerActualisation;
 
   @override
   void initState() {
     super.initState();
     _charger();
+    _timerActualisation = Timer.periodic(const Duration(seconds: 4), (_) {
+      _actualiserSilencieux();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timerActualisation?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _actualiserSilencieux() async {
+    if (!mounted || _chargement) return;
+    try {
+      final groupes = await GroupeApiService.instance.mesGroupesCourtier();
+      if (!mounted) return;
+      setState(() {
+        _groupes = groupes;
+      });
+    } catch (_) {}
   }
 
   Future<void> _charger() async {

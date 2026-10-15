@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/api/api_config.dart';
+import '../widgets/zone_portefeuille_neumorphic.dart';
 import 'gestion_convoi_screen.dart';
 import 'creer_groupe_courtier_screen.dart';
 import 'portefeuille_courtier_screen.dart';
@@ -124,82 +125,31 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- CARTE DU PORTEFEUILLE COMMISSIONS SÉQUESTRÉES ---
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2C241E), Color(0xFF45362C)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 15,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Portefeuille Commissions Séquestrées",
-                        style: TextStyle(color: Color(0xFFD4C5B9), fontSize: 12, fontWeight: FontWeight.w500),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppTheme.secondary.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Text(
-                          "Garantie Séquestre",
-                          style: TextStyle(color: AppTheme.secondary, fontSize: 11.5, fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "0 FCFA",
-                    style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Versements directs : Orange Money • Moov",
-                        style: TextStyle(color: Color(0xFFA8988B), fontSize: 11.5),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const PortefeuilleCourtierScreen()),
-                          );
-                        },
-                        child: const Row(
-                          children: [
-                            Text(
-                              "Retirer",
-                              style: TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w700, fontSize: 12),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(Icons.arrow_forward_ios, size: 10, color: AppTheme.secondary),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            // --- ZONE PORTEFEUILLE NEUMORPHIQUE SOFT 3D (Style Maquette) ---
+            ZonePortefeuilleNeumorphic(
+              compact: true,
+              titre: "Portefeuille Commissions",
+              sousTitre: "Commissions de transit & convois",
+              montantSolde: "0 FCFA",
+              infoSequestre: "Garantie Séquestre DoGo • Versements Orange / Moov",
+              iconeInfo: Icons.security_rounded,
+              texteBoutonAction: "Gérer & Retirer mes Fonds",
+              onTapAction: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PortefeuilleCourtierScreen()),
+                );
+              },
+              couleurBouton: const [
+                Color(0xFFC07A3E),
+                Color(0xFF9E5C23),
+                Color(0xFF7A4012),
+              ],
+              couleurEmbleme: const [
+                Color(0xFFFFFFFF),
+                Color(0xFFE5A100),
+                Color(0xFF9E5C23),
+              ],
             ),
 
             const SizedBox(height: 20),

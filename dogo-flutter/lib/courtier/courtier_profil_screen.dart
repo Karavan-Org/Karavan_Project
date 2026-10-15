@@ -12,8 +12,19 @@ import '../widgets/avatar_profil_interactif.dart';
 /// Rôle : Courtier
 /// Badge : Compte vérifié
 /// Liste des 6 fonctionnalités associées à leurs écrans respectifs sans toucher aux TABS.
-class CourtierProfilScreen extends StatelessWidget {
+class CourtierProfilScreen extends StatefulWidget {
   const CourtierProfilScreen({super.key});
+
+  @override
+  State<CourtierProfilScreen> createState() => _CourtierProfilScreenState();
+}
+
+class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.rechargerProfil();
+  }
 
   void _confirmerDeconnexion(BuildContext context) {
     showDialog(
@@ -82,7 +93,11 @@ class CourtierProfilScreen extends StatelessWidget {
                     builder: (context, profil, _) {
                       final String nomAffiche = (profil?.nom.trim().isNotEmpty ?? false)
                           ? profil!.nom
-                          : "Amadou Touré";
+                          : "Courtier Partenaire";
+                      final String structureAffiche = profil?.structure ?? "";
+                      final String telephoneAffiche = (profil?.telephone.isNotEmpty ?? false)
+                          ? profil!.telephone
+                          : "";
 
                       return Column(
                         children: [
@@ -106,47 +121,82 @@ class CourtierProfilScreen extends StatelessWidget {
                             ),
                           ),
 
-                          const SizedBox(height: 3),
-
-                          // Rôle
-                          const Text(
-                            "Courtier",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF8C7E74),
-                              fontWeight: FontWeight.w500,
+                          if (structureAffiche.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              structureAffiche,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF8C7E74),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
+                          ],
+
+                          if (telephoneAffiche.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              telephoneAffiche,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF8C7E74),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(height: 10),
 
-                          // Badge doré "Compte vérifié"
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF9E6),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFFE5A100).withValues(alpha: 0.35)),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.verified_rounded,
-                                  size: 13,
-                                  color: Color(0xFFD48800),
+                          // Badges Rôle & Vérification
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E2832),
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
-                                SizedBox(width: 5),
-                                Text(
-                                  "Compte vérifié",
+                                child: const Text(
+                                  "Courtier",
                                   style: TextStyle(
-                                    color: Color(0xFFB57400),
+                                    color: Colors.white,
                                     fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // Badge doré "Compte vérifié"
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF9E6),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFFE5A100).withValues(alpha: 0.35)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.verified_rounded,
+                                      size: 13,
+                                      color: Color(0xFFD48800),
+                                    ),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      "Compte vérifié",
+                                      style: TextStyle(
+                                        color: Color(0xFFB37400),
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       );

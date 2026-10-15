@@ -73,6 +73,7 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
             numeroTelephone: telephone,
             role: RoleActeur.grossiste,
             codeSimulation: res['codeOtp']?.toString(),
+            nom: entreprise,
             motDePasse: pin,
             pin: pin,
           ),

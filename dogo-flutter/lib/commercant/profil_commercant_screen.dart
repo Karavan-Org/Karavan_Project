@@ -31,6 +31,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
   void initState() {
     super.initState();
     AuthService.instance.profilNotifier.addListener(_surProfilChange);
+    AuthService.instance.rechargerProfil();
     _chargerCommandes();
   }
 
@@ -115,14 +116,6 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profil = AuthService.instance.profilActuel;
-    final String nomAffiche = (profil != null && profil.nom.trim().isNotEmpty)
-        ? profil.nom
-        : "Hawa Dagno";
-    final String telephoneAffiche = (profil != null && profil.telephone.trim().isNotEmpty)
-        ? profil.telephone
-        : "+223 76 12 34 56";
-
     final niveauInfo = NiveauCommercant.calculer(_nbCommandes);
 
     return Scaffold(
@@ -167,122 +160,157 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                     ),
                   ),
 
-                  Column(
-                    children: [
-                      const SizedBox(height: 6),
-                      // Avatar interactif (caméra en direct ou galerie avec repli CustomPainter)
-                      AvatarProfilInteractif(
-                        photoUrl: profil?.photoUrl,
-                        taille: 86,
-                        customPainterDefaut: _MerchantAvatarPainter(),
-                        onPhotoChangee: () {
-                          if (mounted) setState(() {});
-                        },
-                      ),
+                  ValueListenableBuilder<UtilisateurProfil?>(
+                    valueListenable: AuthService.instance.profilNotifier,
+                    builder: (context, profil, _) {
+                      final String nomAffiche = (profil != null && profil.nom.trim().isNotEmpty)
+                          ? profil.nom
+                          : "Mon Compte Commerçant";
+                      final String telephoneAffiche = (profil != null && profil.telephone.trim().isNotEmpty)
+                          ? profil.telephone
+                          : "";
+                      final String? boutique = profil?.structure;
 
-                      const SizedBox(height: 12),
-
-                      // Nom
-                      Text(
-                        nomAffiche,
-                        style: const TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF2C241E),
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-
-                      const SizedBox(height: 3),
-
-                      // Téléphone
-                      Text(
-                        telephoneAffiche,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          color: Color(0xFF8C7E74),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Badges de rôle et de niveau
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      return Column(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E2832),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Text(
-                              "Commerçant",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          const SizedBox(height: 6),
+                          // Avatar interactif (caméra en direct ou galerie avec repli CustomPainter)
+                          AvatarProfilInteractif(
+                            photoUrl: profil?.photoUrl,
+                            taille: 86,
+                            customPainterDefaut: _MerchantAvatarPainter(),
+                            onPhotoChangee: () {
+                              if (mounted) setState(() {});
+                            },
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Nom
+                          Text(
+                            nomAffiche,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF2C241E),
+                              letterSpacing: -0.2,
                             ),
                           ),
-                          const SizedBox(width: 8),
 
-                          // Badge interactif de Niveau
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                DetailsNiveauCommercantSheet.afficher(
-                                  context,
-                                  nbCommandes: _nbCommandes,
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(16),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: niveauInfo.couleurBadge,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: niveauInfo.couleurBadge.withValues(alpha: 0.35),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
+                          // Boutique / Structure
+                          if (boutique != null && boutique.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.storefront_outlined, size: 14, color: Color(0xFF9E6738)),
+                                const SizedBox(width: 5),
+                                Text(
+                                  boutique,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF9E6738),
+                                  ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      niveauInfo.icone,
-                                      size: 13,
-                                      color: Colors.white,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      niveauInfo.titre,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    const Icon(
-                                      Icons.info_outline_rounded,
-                                      size: 12,
-                                      color: Colors.white70,
-                                    ),
-                                  ],
-                                ),
+                              ],
+                            ),
+                          ],
+
+                          // Téléphone
+                          if (telephoneAffiche.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              telephoneAffiche,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: Color(0xFF8C7E74),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
+                          ],
+
+                          const SizedBox(height: 10),
+
+                          // Badges de rôle et de niveau
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E2832),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Text(
+                                  "Commerçant",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // Badge interactif de Niveau
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    DetailsNiveauCommercantSheet.afficher(
+                                      context,
+                                      nbCommandes: _nbCommandes,
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: niveauInfo.couleurBadge,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: niveauInfo.couleurBadge.withValues(alpha: 0.35),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          niveauInfo.icone,
+                                          size: 13,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          niveauInfo.titre,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.info_outline_rounded,
+                                          size: 12,
+                                          color: Colors.white70,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ],
               ),

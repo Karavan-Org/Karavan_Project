@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
 import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_popups.dart';
 import '../widgets/image_produit.dart';
 
 /// Suivi du colis des groupes que le grossiste achemine lui-même : il valide chaque étape dans l'ordre,
@@ -31,11 +33,47 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
   bool _chargement = true;
   String? _erreur;
   int? _envoi;
+  Timer? _timerActualisation;
 
   @override
   void initState() {
     super.initState();
     _charger();
+    // Actualisation automatique en temps réel
+    _timerActualisation = Timer.periodic(const Duration(seconds: 4), (_) {
+      _actualiserSilencieux();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timerActualisation?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _actualiserSilencieux() async {
+    if (!mounted || _chargement) return;
+    try {
+      final service = GroupeApiService.instance;
+      final groupes = (await service.groupesDuGrossiste())
+          .where((g) => g.porteParGrossiste && !['BROUILLON', 'ANNULE', 'ECHOUE'].contains(g.statut))
+          .toList();
+      final convois = await service.convois();
+      final etapes = <int, List<Map<String, dynamic>>>{};
+      for (final g in groupes.where((g) => g.acheminementAuGrossiste || g.statut == 'TERMINE')) {
+        etapes[g.id] = await service.etapes(g.id);
+      }
+      if (!mounted) return;
+      setState(() {
+        _groupes = groupes;
+        _etapes
+          ..clear()
+          ..addAll(etapes);
+        _convois
+          ..clear()
+          ..addEntries(convois.map((c) => MapEntry(((c['groupeId'] as num?) ?? 0).toInt(), c)));
+      });
+    } catch (_) {}
   }
 
   Future<void> _charger() async {
@@ -76,7 +114,30 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
   /// Étapes déjà validées (par libellé) pour un groupe
   Set<String> _faites(int groupeId) => (_etapes[groupeId] ?? []).map((e) => e['etape']?.toString() ?? '').toSet();
 
+  void _bloquerSuiviNonOuvert(GroupeResume g) {
+    AppPopups.afficherActionImpossible(
+      context: context,
+      titre: "Suivi non encore ouvert par l'administrateur",
+      message: "Vous ne pouvez pas valider d'étape de suivi tant que l'administrateur n'a pas accepté et officiellement ouvert le suivi de ce colis.",
+      detail: "L'Admin Logistique (+22370000005) ou l'Admin Technique doit d'abord ouvrir le suivi du colis depuis la console Admin.",
+    );
+  }
+
   Future<void> _valider(GroupeResume g, String etape) async {
+    if (!g.aAtteint100) {
+      AppPopups.afficherActionImpossible(
+        context: context,
+        titre: "Objectif non atteint (100% requis)",
+        message: "Vous ne pouvez pas lancer ou valider le suivi d'un colis tant que le groupe n'a pas atteint 100% de son objectif.",
+        detail: "Progression actuelle : ${g.quantiteProgression} / ${g.quantiteCible} pièces (${g.pourcentageProgression}%).",
+      );
+      return;
+    }
+    final convoi = _convois[g.id];
+    if (convoi == null) {
+      _bloquerSuiviNonOuvert(g);
+      return;
+    }
     final commentaire = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -172,6 +233,7 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
     final faites = _faites(g.id);
     final prochaine = SuiviColisGrossisteScreen.etapesColis.where((e) => !faites.contains(e)).firstOrNull;
     final convoi = _convois[g.id];
+    final bool suiviOuvert = convoi != null;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -214,27 +276,81 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.tertiary.withValues(alpha: 0.35),
+              color: suiviOuvert ? AppTheme.tertiary.withValues(alpha: 0.35) : const Color(0xFFFFF3E0),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: suiviOuvert ? Colors.transparent : const Color(0xFFFFB74D)),
             ),
-            child: Text(
-              convoi == null
-                  ? "Suivi officiel dɔgɔ : pas encore ouvert par l'administrateur"
-                  : "Suivi officiel dɔgɔ : ${convoi['statut']}",
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textDark),
+            child: Row(
+              children: [
+                Icon(
+                  suiviOuvert ? Icons.local_shipping_outlined : Icons.hourglass_top_rounded,
+                  size: 16,
+                  color: suiviOuvert ? AppTheme.textDark : const Color(0xFFE65100),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    convoi != null
+                        ? "Suivi officiel dɔgɔ : ${convoi['statut']}"
+                        : "Suivi officiel dɔgɔ : pas encore ouvert par l'administrateur",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: suiviOuvert ? AppTheme.textDark : const Color(0xFFB71C1C),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
-          if (!g.acheminementAuGrossiste && g.statut != 'TERMINE')
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: Text(
-                "Les étapes du colis se valident une fois l'objectif du groupe atteint.",
-                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+          if (!g.aAtteint100)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3E0),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFFB74D)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.lock_outline_rounded, color: Color(0xFFE65100), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "Suivi verrouillé (${g.pourcentageProgression}%) : Ce groupe doit atteindre 100% de ses réservations (${g.quantiteProgression}/${g.quantiteCible}) avant que les étapes d'acheminement ne puissent être initiées.",
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFB71C1C)),
+                    ),
+                  ),
+                ],
               ),
             )
           else ...[
-            for (final e in SuiviColisGrossisteScreen.etapesColis) _ligneEtape(g, e, faites, e == prochaine),
+            if (!suiviOuvert)
+              Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFFD54F)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.lock_clock_outlined, color: Color(0xFFE65100), size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        "L'objectif de 100% est atteint. Les étapes d'acheminement ne peuvent pas être validées tant que l'administrateur n'a pas accepté et ouvert le suivi du colis.",
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF5D4037)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            for (final e in SuiviColisGrossisteScreen.etapesColis)
+              _ligneEtape(g, e, faites, e == prochaine, suiviOuvert),
             if (prochaine == null)
               const Padding(
                 padding: EdgeInsets.only(top: 6),
@@ -247,7 +363,7 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
     );
   }
 
-  Widget _ligneEtape(GroupeResume g, String etape, Set<String> faites, bool estProchaine) {
+  Widget _ligneEtape(GroupeResume g, String etape, Set<String> faites, bool estProchaine, bool suiviOuvert) {
     final faite = faites.contains(etape);
     final infos = (_etapes[g.id] ?? []).where((x) => x['etape'] == etape).firstOrNull;
     final date = DateTime.tryParse(infos?['date']?.toString() ?? '')?.toLocal();
@@ -282,20 +398,35 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
             ),
           ),
           if (estProchaine)
-            ElevatedButton(
-              onPressed: _envoi == null ? () => _valider(g, etape) : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(0, 34),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            if (!suiviOuvert)
+              OutlinedButton.icon(
+                onPressed: () => _bloquerSuiviNonOuvert(g),
+                icon: const Icon(Icons.lock_outline_rounded, size: 14, color: Color(0xFFE65100)),
+                label: const Text(
+                  "En attente admin",
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFE65100)),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFFFB74D)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                ),
+              )
+            else
+              ElevatedButton(
+                onPressed: _envoi == null ? () => _valider(g, etape) : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 34),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                ),
+                child: _envoi == g.id
+                    ? const SizedBox(
+                        width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text("Valider", style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
               ),
-              child: _envoi == g.id
-                  ? const SizedBox(
-                      width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text("Valider", style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
-            ),
         ],
       ),
     );

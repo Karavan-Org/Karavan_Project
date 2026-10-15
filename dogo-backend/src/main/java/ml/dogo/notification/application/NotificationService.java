@@ -76,14 +76,20 @@ public class NotificationService implements NotificationApi {
     private void envoyerEtEnregistrer(long utilisateurId, String contenu) {
         try {
             transactionIndependante.executeWithoutResult(statut -> {
-                String telephone = annuaire.telephoneDe(utilisateurId).orElse(null);
-                if (telephone == null) {
-                    LOG.warn("Notification ignorée : utilisateur {} introuvable", utilisateurId);
+                String contenuFinal = tronquer(contenu);
+                Instant limiteRecente = horloge.instant().minusSeconds(5);
+                boolean doublon = notifications.findByUtilisateurIdOrderByDateCreationDesc(utilisateurId, PageRequest.of(0, 5)).stream()
+                        .anyMatch(n -> n.getContenu().equals(contenuFinal) && n.getDateCreation().isAfter(limiteRecente));
+                if (doublon) {
+                    LOG.info("Notification en doublon ignorée pour l'utilisateur {} (même contenu)", utilisateurId);
                     return;
                 }
-                boolean envoye = tenterEnvoi(telephone, contenu);
-                notifications.save(new Notification(utilisateurId, tronquer(contenu), Notification.Canal.SMS,
-                        envoye ? StatutNotification.ENVOYEE : StatutNotification.ECHOUEE, 1, horloge.instant()));
+                String telephone = annuaire.telephoneDe(utilisateurId).orElse(null);
+                boolean envoye = telephone != null && tenterEnvoi(telephone, contenu);
+                notifications.save(new Notification(utilisateurId, contenuFinal,
+                        telephone != null ? Notification.Canal.SMS : Notification.Canal.PUSH,
+                        (telephone == null || envoye) ? StatutNotification.ENVOYEE : StatutNotification.ECHOUEE,
+                        1, horloge.instant()));
             });
         } catch (RuntimeException e) {
             LOG.warn("Notification non enregistrée pour l'utilisateur {}", utilisateurId, e);

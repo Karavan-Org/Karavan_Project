@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../services/api/api_exception.dart';
 import '../services/logistique_api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/itineraire_depot.dart';
 
 /// Écran du Code de Retrait sécurisé pour le Commerçant (RG-53, RG-71)
 /// Affiche le vrai QR code de la commande (jeton généré par le backend) à présenter au point de retrait ;
@@ -404,6 +405,31 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
               ),
             ],
           ),
+          if (_commande?['pointRetrait'] is Map) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  final point = _commande!['pointRetrait'] as Map;
+                  afficherItineraireDepot(
+                    context,
+                    nomDepot: point['nom']?.toString() ?? widget.pointRetrait,
+                    adresse: point['adresse']?.toString(),
+                    lienGoogleMaps: point['lienGoogleMap']?.toString(),
+                  );
+                },
+                icon: const Icon(Icons.directions_rounded, size: 18),
+                label: const Text("Voir l'itinéraire vers le dépôt"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1A73E8),
+                  side: const BorderSide(color: Color(0x4D1A73E8)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           const Divider(color: Color(0xFFF3ECE5)),
           const SizedBox(height: 12),

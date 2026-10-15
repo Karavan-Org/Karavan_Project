@@ -44,7 +44,7 @@ dogo:
   jwt:
     secret: ${DOGO_JWT_SECRET:changez-moi-changez-moi-changez-moi-32-octets-minimum}
   otp:
-    validite: PT5M                 # RG-02
+    validite: PT2M                 # RG-02 (2 minutes, standard sécurité bancaire/fintech)
     max-tentatives: 3              # RG-02
     afficher-dans-reponse: false  # activé uniquement dans application-demo.yml
   pin:

@@ -104,6 +104,7 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
             numeroTelephone: phone,
             role: widget.role,
             codeSimulation: codeSimule,
+            nom: nom,
             motDePasse: pin,
             pin: pin,
           ),

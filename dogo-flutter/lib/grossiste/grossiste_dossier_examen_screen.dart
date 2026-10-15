@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
@@ -19,6 +20,9 @@ class GrossisteDossierExamenScreen extends StatefulWidget {
 
 class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScreen> {
   late DossierKyc _dossier = widget.dossier;
+  bool _estValide = false;
+  Timer? _timerVerif;
+  bool _dialogAffiche = false;
 
   static const _libellesTypes = {
     'PIECE_IDENTITE': "Pièce d'identité",
@@ -28,16 +32,155 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
     'AUTRE': "Document complémentaire",
   };
 
+  @override
+  void initState() {
+    super.initState();
+    _estValide = _dossier.statut == 'APPROUVE';
+    if (_estValide) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _afficherNotificationValidation());
+    } else {
+      // Polling en temps réel toutes les 4 secondes pour détecter la validation de l'administrateur
+      _timerVerif = Timer.periodic(const Duration(seconds: 4), (_) => _verifierStatutAutomatique());
+    }
+  }
+
+  @override
+  void dispose() {
+    _timerVerif?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _verifierStatutAutomatique() async {
+    try {
+      final dossier = await KycApiService.instance.monDossier();
+      if (!mounted || dossier == null) return;
+      if (dossier.statut == 'APPROUVE' && !_estValide) {
+        _timerVerif?.cancel();
+        setState(() {
+          _dossier = dossier;
+          _estValide = true;
+        });
+        _afficherNotificationValidation();
+      } else if (dossier.statut == 'REJETE') {
+        _timerVerif?.cancel();
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/grossiste/kyc',
+          (route) => route.isFirst,
+          arguments: dossier.motifRejet,
+        );
+      }
+    } catch (_) {}
+  }
+
+  void _afficherNotificationValidation() {
+    if (_dialogAffiche || !mounted) return;
+    _dialogAffiche = true;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD1FAE5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.verified_rounded, color: CouleursArrivee.vert, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                "Compte Grossiste Validé !",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: CouleursArrivee.titre),
+              ),
+            ),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Félicitations ! Votre dossier vendeur a été examiné et approuvé par l'équipe de conformité DoGo.",
+              style: TextStyle(fontSize: 13.5, color: CouleursArrivee.titre, height: 1.4, fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: 10),
+            Text(
+              "Toutes vos pièces légales (RCCM, NIF) sont désormais certifiées. Vous pouvez dès à présent vous connecter pour accéder à votre espace vendeur et commencer vos ventes.",
+              style: TextStyle(fontSize: 12.5, color: CouleursArrivee.texteDoux, height: 1.4),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () {
+                _dialogAffiche = false;
+                _redirigerVersConnexion();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: CouleursArrivee.vert,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                elevation: 2,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Continuer",
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward_rounded, size: 18),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).then((_) {
+      _dialogAffiche = false;
+    });
+  }
+
+  void _redirigerVersConnexion() {
+    _timerVerif?.cancel();
+    AuthService.instance.deconnecter();
+    Navigator.of(context).pushNamedAndRemoveUntil('/grossiste/connexion', (route) => route.isFirst);
+  }
+
   Future<void> _actualiser() async {
     try {
       final dossier = await KycApiService.instance.monDossier();
       if (!mounted || dossier == null) return;
       if (dossier.statut == 'APPROUVE') {
-        Navigator.of(context).pushNamedAndRemoveUntil('/grossiste', (route) => route.isFirst);
+        _timerVerif?.cancel();
+        setState(() {
+          _dossier = dossier;
+          _estValide = true;
+        });
+        _afficherNotificationValidation();
       } else if (dossier.statut == 'REJETE') {
-        Navigator.of(context).pushNamedAndRemoveUntil('/grossiste/kyc', (route) => route.isFirst, arguments: dossier.motifRejet);
+        _timerVerif?.cancel();
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/grossiste/kyc',
+          (route) => route.isFirst,
+          arguments: dossier.motifRejet,
+        );
       } else {
-        setState(() => _dossier = dossier);
+        setState(() {
+          _dossier = dossier;
+          _estValide = false;
+        });
       }
     } catch (e) {
       if (mounted) afficherErreur(context, e is ApiException ? e.messageComplet : "Actualisation impossible : $e");
@@ -143,11 +286,15 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                           width: 16,
                           height: 16,
                           decoration: BoxDecoration(
-                            color: CouleursArrivee.ambre,
+                            color: _estValide ? CouleursArrivee.vert : CouleursArrivee.ambre,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 1.5),
                           ),
-                          child: const Icon(Icons.hourglass_bottom, size: 9, color: Colors.white),
+                          child: Icon(
+                            _estValide ? Icons.check : Icons.hourglass_bottom,
+                            size: 9,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
@@ -188,7 +335,10 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                           child: Container(
                             width: 7,
                             height: 7,
-                            decoration: const BoxDecoration(color: CouleursArrivee.ambre, shape: BoxShape.circle),
+                            decoration: BoxDecoration(
+                              color: _estValide ? CouleursArrivee.vert : CouleursArrivee.ambre,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
                       ],
@@ -202,10 +352,16 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFFCF5),
+                  color: _estValide ? const Color(0xFFF0FDF4) : const Color(0xFFFFFCF5),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: CouleursArrivee.ambre, width: 1.5),
-                  boxShadow: const [BoxShadow(color: Color(0x14EEA823), blurRadius: 14, offset: Offset(0, 4))],
+                  border: Border.all(color: _estValide ? CouleursArrivee.vert : CouleursArrivee.ambre, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _estValide ? const Color(0x1410B981) : const Color(0x14EEA823),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +371,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFDEFC7),
+                            color: _estValide ? const Color(0xFFDCFCE7) : const Color(0xFFFDEFC7),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
@@ -223,66 +379,100 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                               Container(
                                 width: 7,
                                 height: 7,
-                                decoration: const BoxDecoration(color: CouleursArrivee.ambre, shape: BoxShape.circle),
+                                decoration: BoxDecoration(
+                                  color: _estValide ? CouleursArrivee.vert : CouleursArrivee.ambre,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                               const SizedBox(width: 6),
-                              const Text(
-                                "DOSSIER EN EXAMEN",
+                              Text(
+                                _estValide ? "DOSSIER APPROUVÉ & VALIDÉ" : "DOSSIER EN EXAMEN",
                                 style: TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
-                                  color: CouleursArrivee.ambreFonce,
+                                  color: _estValide ? const Color(0xFF166534) : CouleursArrivee.ambreFonce,
                                 ),
                               ),
                             ],
                           ),
                         ),
                         const Spacer(),
-                        const Text(
-                          "Délai : ~6 heures",
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                        Text(
+                          _estValide ? "Statut : Actif ✓" : "Délai : ~6 heures",
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: _estValide ? CouleursArrivee.vert : AppTheme.primary,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      "Vérification de vos pièces légales",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: CouleursArrivee.titre),
+                    Text(
+                      _estValide ? "Félicitations ! Dossier validé" : "Vérification de vos pièces légales",
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: CouleursArrivee.titre),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      "Votre RCCM et NIF sont en cours d'audit par l'équipe conformité dɔgɔ pour protéger "
-                      "les transactions du réseau.",
-                      style: TextStyle(fontSize: 10.5, color: CouleursArrivee.texteDoux, height: 1.3),
+                    Text(
+                      _estValide
+                          ? "Votre compte vendeur est activé avec succès. Vous pouvez désormais publier vos produits, créer des groupes d'achat et encaisser vos paiements en toute sécurité."
+                          : "Votre RCCM et NIF sont en cours d'audit par l'équipe conformité dɔgɔ pour protéger les transactions du réseau.",
+                      style: const TextStyle(fontSize: 10.5, color: CouleursArrivee.texteDoux, height: 1.3),
                     ),
                     const SizedBox(height: 10),
-                    const Divider(height: 1, color: Color(0xFFF1E4CF)),
+                    Divider(height: 1, color: _estValide ? const Color(0xFFBBF7D0) : const Color(0xFFF1E4CF)),
                     const SizedBox(height: 10),
-                    const Row(
+                    Row(
                       children: [
-                        _Etape(numero: "1. Dépôt", etat: "Complet", couleur: CouleursArrivee.vert, icone: Icons.check),
-                        Expanded(child: _Liaison(couleur: CouleursArrivee.vert)),
+                        const _Etape(numero: "1. Dépôt", etat: "Complet", couleur: CouleursArrivee.vert, icone: Icons.check),
+                        const Expanded(child: _Liaison(couleur: CouleursArrivee.vert)),
                         _Etape(
                           numero: "2. Audit",
-                          etat: "En cours...",
-                          couleur: CouleursArrivee.ambre,
-                          icone: Icons.circle,
+                          etat: _estValide ? "Validé" : "En cours...",
+                          couleur: _estValide ? CouleursArrivee.vert : CouleursArrivee.ambre,
+                          icone: _estValide ? Icons.check : Icons.circle,
                         ),
-                        Expanded(child: _Liaison(couleur: Color(0xFFE5DED7), pointille: true)),
+                        Expanded(
+                          child: _Liaison(
+                            couleur: _estValide ? CouleursArrivee.vert : const Color(0xFFE5DED7),
+                            pointille: !_estValide,
+                          ),
+                        ),
                         _Etape(
                           numero: "3. Ventes",
-                          etat: "Verrouillé",
-                          couleur: CouleursArrivee.indice,
-                          icone: Icons.circle,
-                          estompe: true,
+                          etat: _estValide ? "Validé & Actif" : "Verrouillé",
+                          couleur: _estValide ? CouleursArrivee.vert : CouleursArrivee.indice,
+                          icone: _estValide ? Icons.check_circle_rounded : Icons.circle,
+                          estompe: !_estValide,
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      "🔔 Vous recevrez une notification et un SMS dès validation définitive.",
-                      style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppTheme.primary),
-                    ),
+                    if (_estValide) ...[
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 46,
+                        child: ElevatedButton.icon(
+                          onPressed: _redirigerVersConnexion,
+                          icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                          label: const Text(
+                            "Continuer vers la connexion",
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: CouleursArrivee.vert,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 1,
+                          ),
+                        ),
+                      ),
+                    ] else
+                      const Text(
+                        "🔔 Vous recevrez une notification et un SMS dès validation définitive.",
+                        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                      ),
                   ],
                 ),
               ),
@@ -401,7 +591,7 @@ class _Etape extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: couleur.withValues(alpha: estompe ? 0.4 : 1), width: 1.2),
           ),
-          child: Icon(icone, size: icone == Icons.check ? 12 : 7, color: couleur.withValues(alpha: estompe ? 0.5 : 1)),
+          child: Icon(icone, size: icone == Icons.circle ? 7 : 12, color: couleur.withValues(alpha: estompe ? 0.5 : 1)),
         ),
         const SizedBox(width: 6),
         Column(

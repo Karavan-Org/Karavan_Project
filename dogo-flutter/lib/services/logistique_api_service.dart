@@ -50,6 +50,20 @@ class LogistiqueApiService {
     }
   }
 
+  /// Récupère la liste des participations de l'utilisateur (GET /api/moi/participations)
+  Future<List<Map<String, dynamic>>> mesParticipations() async {
+    try {
+      final response = await ApiClient.instance.get(ApiConfig.mesParticipations);
+      if (response is List) {
+        return response.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('LogistiqueApiService.mesParticipations - Repli local : $e');
+      return [];
+    }
+  }
+
   /// Commandes prêtes à être retirées (statut EN_ATTENTE_RETRAIT) : ce sont les seules qui ont un code
   Future<List<Map<String, dynamic>>> commandesARetirer() async {
     final commandes = await mesCommandes();

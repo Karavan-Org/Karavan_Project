@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PointRetraitService {
 
-    public record PointVue(long id, String nom, String adresse, String quartier) {
-        static PointVue de(PointRetrait p) {
-            return new PointVue(p.getId(), p.getNom(), p.getAdresse(), p.getQuartier());
+    public record PointVue(long id, String nom, String adresse, String quartier, String lienGoogleMap) {
+        public static PointVue de(PointRetrait p) {
+            return new PointVue(p.getId(), p.getNom(), p.getAdresse(), p.getQuartier(), p.getLienGoogleMap());
         }
     }
 
@@ -34,12 +34,32 @@ public class PointRetraitService {
 
     @Transactional
     public PointVue creer(long administrateurId, String nom, String adresse, String quartier) {
+        return creer(administrateurId, nom, adresse, quartier, null);
+    }
+
+    @Transactional
+    public PointVue creer(long administrateurId, String nom, String adresse, String quartier, String lienGoogleMap) {
         if (nom == null || nom.isBlank() || adresse == null || adresse.isBlank()) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, null, "Le nom et l'adresse sont obligatoires");
         }
         PointRetrait p = points.save(new PointRetrait(nom.strip(), adresse.strip(),
-                quartier == null || quartier.isBlank() ? null : quartier.strip()));
+                quartier == null || quartier.isBlank() ? null : quartier.strip(),
+                lienGoogleMap == null || lienGoogleMap.isBlank() ? null : lienGoogleMap.strip()));
         audit.tracer(administrateurId, "POINT_RETRAIT_CREE", null, "point=" + p.getId() + " " + p.getNom());
         return PointVue.de(p);
     }
+
+    @Transactional
+    public PointVue modifier(long administrateurId, long id, String nom, String adresse, String quartier, String lienGoogleMap) {
+        if (nom == null || nom.isBlank() || adresse == null || adresse.isBlank()) {
+            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, null, "Le nom et l'adresse sont obligatoires");
+        }
+        PointRetrait p = points.findById(id).orElseThrow(() -> ErreurMetier.nonTrouve("Point de retrait", id));
+        p.modifier(nom.strip(), adresse.strip(),
+                quartier == null || quartier.isBlank() ? null : quartier.strip(),
+                lienGoogleMap == null || lienGoogleMap.isBlank() ? null : lienGoogleMap.strip());
+        audit.tracer(administrateurId, "POINT_RETRAIT_MODIFIE", null, "point=" + p.getId() + " " + p.getNom());
+        return PointVue.de(p);
+    }
+
 }

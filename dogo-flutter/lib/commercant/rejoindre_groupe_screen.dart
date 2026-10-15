@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/paiement_api_service.dart';
 import '../services/groupe_api_service.dart';
+import '../services/profil_api_service.dart';
+import '../services/portefeuille_api_service.dart';
+import '../services/auth_service.dart';
 import '../services/api/api_client.dart';
 import '../services/api/api_exception.dart';
 import 'campagne_model.dart';
 import 'reussite_paiement_screen.dart';
+import '../widgets/app_popups.dart';
 
 /// Écran de confirmation de participation, choix des variantes/quantités et paiement Mobile Money pour le Commerçant
 class RejoindreGroupeScreen extends StatefulWidget {
@@ -43,11 +47,13 @@ class RejoindreGroupeScreen extends StatefulWidget {
 }
 
 class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
-  String _operateurSelectionne = "Orange Money";
+  String _operateurSelectionne = "Portefeuille Achats";
   final TextEditingController _telephoneController =
       TextEditingController(text: "+223 76 45 88 12");
   bool _enCoursDeTraitement = false;
   String? _erreurTelephone;
+  int _soldePortefeuille = 0;
+  bool _portefeuilleCharge = false;
 
   late int _quantite;
   late int _quantiteMin;
@@ -56,22 +62,32 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
 
   final List<Map<String, dynamic>> _operateurs = [
     {
+      "nom": "Portefeuille Achats",
+      "couleur": const Color(0xFF1B5E20),
+      "sigle": "💼",
+      "delai": "Instantané • Direct",
+      "isPortefeuille": true,
+    },
+    {
       "nom": "Orange Money",
       "couleur": const Color(0xFFFF7900),
       "sigle": "OM",
       "delai": "Instantané",
+      "isPortefeuille": false,
     },
     {
       "nom": "Moov Money",
       "couleur": const Color(0xFF005DAA),
       "sigle": "MM",
       "delai": "Instantané",
+      "isPortefeuille": false,
     },
     {
       "nom": "Wave",
       "couleur": const Color(0xFF1DC7EA),
       "sigle": "W",
       "delai": "Sans frais",
+      "isPortefeuille": false,
     },
   ];
 
@@ -82,6 +98,12 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
     _quantite = widget.quantite >= _quantiteMin ? widget.quantite : _quantiteMin;
     _variantes = List.from(widget.variantesDisponibles);
     _varianteSelectionnee = widget.variante;
+
+    // Pré-remplir le numéro de téléphone avec celui de l'utilisateur connecté
+    final telUser = AuthService.instance.profilActuel?.telephone;
+    if (telUser != null && telUser.isNotEmpty) {
+      _telephoneController.text = telUser;
+    }
 
     if (_varianteSelectionnee == null && _variantes.isNotEmpty) {
       if (widget.varianteId != null) {
@@ -95,6 +117,45 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
     }
 
     _chargerVariantesSiBesoin();
+    _chargerMoyenPaiementDefaut();
+    _chargerSoldePortefeuille();
+  }
+
+  Future<void> _chargerSoldePortefeuille() async {
+    try {
+      final p = await PortefeuilleApiService.instance.voirPortefeuille();
+      if (p != null && mounted) {
+        setState(() {
+          _soldePortefeuille = p.soldeDisponible.toInt();
+          _portefeuilleCharge = true;
+          // Si le solde est insuffisant pour la commande actuelle, basculer vers Orange Money par défaut
+          if (_soldePortefeuille < _total) {
+            _operateurSelectionne = "Orange Money";
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Chargement portefeuille indisponible : $e");
+    }
+  }
+
+  Future<void> _chargerMoyenPaiementDefaut() async {
+    try {
+      final moyens = await ProfilApiService.instance.mesMoyensPaiement();
+      if (moyens.isNotEmpty && mounted) {
+        final defaut = moyens.firstWhere((m) => m.parDefaut, orElse: () => moyens.first);
+        setState(() {
+          _telephoneController.text = defaut.numero;
+          if (defaut.operateur == 'ORANGE_MONEY') {
+            _operateurSelectionne = "Orange Money";
+          } else if (defaut.operateur == 'MOOV_MONEY') {
+            _operateurSelectionne = "Moov Money";
+          } else if (defaut.operateur == 'WAVE') {
+            _operateurSelectionne = "Wave";
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _chargerVariantesSiBesoin() async {
@@ -155,14 +216,30 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
   }
 
   void _validerPaiement() async {
-    final phone = _telephoneController.text.trim().replaceAll(' ', '').replaceAll('-', '');
-    final digits = phone.replaceAll(RegExp(r'^\+223|^00223'), '');
+    final bool estPortefeuille = _operateurSelectionne == "Portefeuille Achats";
+    String digits = "";
 
-    if (digits.length != 8 || !RegExp(r'^[5-9][0-9]{7}$').hasMatch(digits)) {
-      setState(() {
-        _erreurTelephone = "Numéro Mobile Money invalide (8 chiffres, ex: 76 45 88 12)";
-      });
-      return;
+    if (estPortefeuille) {
+      if (_soldePortefeuille < _total) {
+        AppPopups.afficherActionImpossible(
+          context: context,
+          titre: "Solde portefeuille insuffisant",
+          message:
+              "Votre solde disponible (${_formatMontant(_soldePortefeuille)}) est inférieur au montant requis (${_formatMontant(_total)}).",
+          detail: "Veuillez recharger votre portefeuille d'achats ou choisir un paiement direct Mobile Money.",
+        );
+        return;
+      }
+    } else {
+      final phone = _telephoneController.text.trim().replaceAll(' ', '').replaceAll('-', '');
+      digits = phone.replaceAll(RegExp(r'^\+223|^00223'), '');
+
+      if (digits.length != 8 || !RegExp(r'^[5-9][0-9]{7}$').hasMatch(digits)) {
+        setState(() {
+          _erreurTelephone = "Numéro Mobile Money invalide (8 chiffres, ex: 76 45 88 12)";
+        });
+        return;
+      }
     }
 
     final vId = _varianteSelectionnee?.id ?? widget.varianteId;
@@ -216,10 +293,58 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
         throw Exception("Impossible d'initialiser la réservation de participation.");
       }
 
-      // Étape 2 : Paiement Mobile Money avec l'ID réel de la participation (RG-34)
-      await PaiementApiService.instance.initierPaiement(
-        participationId: participationId,
-      );
+      if (estPortefeuille) {
+        // Étape 2 : Règlement direct via le portefeuille DoGo
+        await PaiementApiService.instance.initierPaiement(
+          participationId: participationId,
+          utiliserPortefeuille: true,
+        );
+      } else {
+        // Étape 2 : S'assurer que le moyen de paiement Mobile Money est enregistré (RG-10)
+        int? moyenPaiementId;
+        try {
+          final codeOp = switch (_operateurSelectionne.toLowerCase()) {
+            final s when s.contains('moov') => 'MOOV_MONEY',
+            final s when s.contains('wave') => 'WAVE',
+            _ => 'ORANGE_MONEY',
+          };
+
+          final normalise = "+223$digits";
+          final moyens = await ProfilApiService.instance.mesMoyensPaiement();
+          final existant = moyens.where(
+            (m) =>
+                m.numero.replaceAll(RegExp(r'[\s\-]'), '') == normalise ||
+                m.numero.replaceAll(RegExp(r'[\s\-]'), '').endsWith(digits),
+          ).toList();
+
+          if (existant.isNotEmpty) {
+            moyenPaiementId = existant.first.id;
+          } else {
+            try {
+              final nouveau = await ProfilApiService.instance.ajouterMoyenPaiement(
+                numero: normalise,
+                operateur: codeOp,
+                parDefaut: true,
+              );
+              moyenPaiementId = nouveau.id;
+            } catch (_) {
+              final rafraichis = await ProfilApiService.instance.mesMoyensPaiement();
+              if (rafraichis.isNotEmpty) {
+                moyenPaiementId = rafraichis.first.id;
+              }
+            }
+          }
+        } catch (errMoyen) {
+          debugPrint("Information enregistrement moyen de paiement : $errMoyen");
+        }
+
+        // Étape 3 : Paiement Mobile Money avec l'ID réel de la participation (RG-34)
+        await PaiementApiService.instance.initierPaiement(
+          participationId: participationId,
+          moyenPaiementId: moyenPaiementId,
+          utiliserPortefeuille: false,
+        );
+      }
 
       if (!mounted) return;
 
@@ -241,13 +366,12 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      final message = e is ApiException ? e.messageComplet : 'Erreur de paiement : ${e.toString()}';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: const Color(0xFFC0392B),
-          duration: const Duration(seconds: 4),
-        ),
+      await AppPopups.traiterErreurOuConflit(
+        context,
+        e,
+        onAllerAuxCommandes: () {
+          Navigator.of(context).pop();
+        },
       );
     } finally {
       if (mounted) setState(() => _enCoursDeTraitement = false);
@@ -296,10 +420,13 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          "Variantes du Grossiste :",
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                        const Expanded(
+                          child: Text(
+                            "Variantes du Grossiste :",
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
@@ -351,12 +478,14 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                                   color: isSelected ? Colors.white : AppTheme.textMuted,
                                 ),
                                 const SizedBox(width: 8),
-                                Text(
-                                  v.libelleComplet,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                    color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                Flexible(
+                                  child: Text(
+                                    v.libelleComplet,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -416,20 +545,24 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Quantité réservée :",
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                            ),
-                            Text(
-                              "Minimum exigé : $_quantiteMin lot${_quantiteMin > 1 ? 's' : ''}",
-                              style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
-                            ),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Quantité réservée :",
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                              ),
+                              Text(
+                                "Minimum exigé : $_quantiteMin lot${_quantiteMin > 1 ? 's' : ''}",
+                                style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               icon: const Icon(Icons.remove_circle_outline, color: AppTheme.primary),
@@ -439,7 +572,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                                   : null,
                             ),
                             Container(
-                              constraints: const BoxConstraints(minWidth: 36),
+                              constraints: const BoxConstraints(minWidth: 32),
                               alignment: Alignment.center,
                               child: Text(
                                 "$_quantite",
@@ -474,10 +607,13 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        "Total à payer :",
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                      const Expanded(
+                        child: Text(
+                          "Total à payer :",
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         _formatMontant(_total),
                         style: const TextStyle(
@@ -494,15 +630,16 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
 
             const SizedBox(height: 24),
 
-            // Mode de paiement Mobile Money
+            // Mode de paiement
             const Text(
-              "Choisir votre moyen de paiement Mobile Money :",
+              "Choisir votre moyen de paiement :",
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
             const SizedBox(height: 12),
 
             ..._operateurs.map((op) {
               final isSelected = op["nom"] == _operateurSelectionne;
+              final isPortefeuille = op["isPortefeuille"] == true;
               return GestureDetector(
                 onTap: () => setState(() => _operateurSelectionne = op["nom"]),
                 child: Container(
@@ -541,13 +678,47 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              op["nom"] as String,
-                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                            Row(
+                              children: [
+                                Text(
+                                  op["nom"] as String,
+                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                                ),
+                                if (isPortefeuille && _portefeuilleCharge) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE8F5E9),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      _formatMontant(_soldePortefeuille),
+                                      style: const TextStyle(
+                                        color: Color(0xFF1B5E20),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                             Text(
-                              op["delai"] as String,
-                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                              isPortefeuille
+                                  ? (_soldePortefeuille >= _total
+                                      ? "Solde suffisant • Débit immédiat"
+                                      : "Solde insuffisant (manque ${_formatMontant(_total - _soldePortefeuille)})")
+                                  : (op["delai"] as String),
+                              style: TextStyle(
+                                color: isPortefeuille && _soldePortefeuille < _total
+                                    ? const Color(0xFFC0392B)
+                                    : AppTheme.textMuted,
+                                fontSize: 12,
+                                fontWeight: isPortefeuille && _soldePortefeuille < _total
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
                             ),
                           ],
                         ),
@@ -564,36 +735,98 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
 
             const SizedBox(height: 16),
 
-            // Saisie du numéro de téléphone
-            const Text(
-              "Numéro de téléphone de facturation :",
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _telephoneController,
-              keyboardType: TextInputType.phone,
-              onChanged: (_) {
-                if (_erreurTelephone != null) {
-                  setState(() => _erreurTelephone = null);
-                }
-              },
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                prefixIcon: const Icon(Icons.phone_iphone, color: AppTheme.primary),
-                errorText: _erreurTelephone,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                border: OutlineInputBorder(
+            // Saisie du numéro de téléphone OU Informations portefeuille
+            if (_operateurSelectionne == "Portefeuille Achats") ...[
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: _soldePortefeuille >= _total
+                      ? const Color(0xFFE8F5E9)
+                      : const Color(0xFFFBE9E7),
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFFE2D9D0)),
+                  border: Border.all(
+                    color: _soldePortefeuille >= _total
+                        ? const Color(0xFF81C784)
+                        : const Color(0xFFFFAB91),
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFFE2D9D0)),
+                child: Row(
+                  children: [
+                    Icon(
+                      _soldePortefeuille >= _total
+                          ? Icons.account_balance_wallet
+                          : Icons.warning_amber_rounded,
+                      color: _soldePortefeuille >= _total
+                          ? const Color(0xFF1B5E20)
+                          : const Color(0xFFD84315),
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _soldePortefeuille >= _total
+                                ? "Règlement direct par portefeuille"
+                                : "Solde insuffisant pour cet achat",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: _soldePortefeuille >= _total
+                                  ? const Color(0xFF1B5E20)
+                                  : const Color(0xFFD84315),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _soldePortefeuille >= _total
+                                ? "Le montant de ${_formatMontant(_total)} sera prélevé de votre solde (${_formatMontant(_soldePortefeuille)}). Vous conserverez ${_formatMontant(_soldePortefeuille - _total)}."
+                                : "Votre solde est de ${_formatMontant(_soldePortefeuille)}. Veuillez recharger votre portefeuille ou opter pour un paiement Mobile Money.",
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: _soldePortefeuille >= _total
+                                  ? const Color(0xFF2E7D32)
+                                  : const Color(0xFFBF360C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+            ] else ...[
+              const Text(
+                "Numéro de téléphone de facturation :",
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _telephoneController,
+                keyboardType: TextInputType.phone,
+                onChanged: (_) {
+                  if (_erreurTelephone != null) {
+                    setState(() => _erreurTelephone = null);
+                  }
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: const Icon(Icons.phone_iphone, color: AppTheme.primary),
+                  errorText: _erreurTelephone,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFFE2D9D0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFFE2D9D0)),
+                  ),
+                ),
+              ),
+            ],
 
             const SizedBox(height: 24),
 

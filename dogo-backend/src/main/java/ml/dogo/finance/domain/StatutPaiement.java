@@ -11,7 +11,7 @@ public enum StatutPaiement implements MachineEtats<StatutPaiement> {
     @Override
     public Set<StatutPaiement> suivants() {
         return switch (this) {
-            case INITIE -> EnumSet.of(EN_ATTENTE, ECHOUE, EXPIRE);
+            case INITIE -> EnumSet.of(EN_ATTENTE, PAYE, ECHOUE, EXPIRE);
             case EN_ATTENTE -> EnumSet.of(PAYE, ECHOUE, EXPIRE);
             case PAYE -> EnumSet.of(REMBOURSE);
             case ECHOUE, EXPIRE, REMBOURSE -> EnumSet.noneOf(StatutPaiement.class);

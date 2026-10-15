@@ -5,6 +5,7 @@ import 'parametres_grossiste_screen.dart';
 import 'documents_grossiste_screen.dart';
 import 'assistance_grossiste_screen.dart';
 import 'portefeuille_grossiste_screen.dart';
+import 'grossiste_main_nav.dart';
 import '../services/auth_service.dart';
 import '../widgets/avatar_profil_interactif.dart';
 
@@ -13,8 +14,20 @@ import '../widgets/avatar_profil_interactif.dart';
 /// Rôle : Grossiste
 /// Badge : Compte vérifié
 /// Liste des 7 fonctionnalités associées à leurs écrans respectifs.
-class GrossisteProfilScreen extends StatelessWidget {
+/// Liste des 7 fonctionnalités associées à leurs écrans respectifs.
+class GrossisteProfilScreen extends StatefulWidget {
   const GrossisteProfilScreen({super.key});
+
+  @override
+  State<GrossisteProfilScreen> createState() => _GrossisteProfilScreenState();
+}
+
+class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.rechargerProfil();
+  }
 
   void _confirmerDeconnexion(BuildContext context) {
     showDialog(
@@ -83,7 +96,11 @@ class GrossisteProfilScreen extends StatelessWidget {
                     builder: (context, profil, _) {
                       final String nomAffiche = (profil?.nom.trim().isNotEmpty ?? false)
                           ? profil!.nom
-                          : "Aliou Traoré";
+                          : "Mon Compte Grossiste";
+                      final String telephoneAffiche = (profil?.telephone.trim().isNotEmpty ?? false)
+                          ? profil!.telephone
+                          : "";
+                      final String? entreprise = profil?.structure;
 
                       return Column(
                         children: [
@@ -99,6 +116,7 @@ class GrossisteProfilScreen extends StatelessWidget {
                           // Nom
                           Text(
                             nomAffiche,
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 19,
                               fontWeight: FontWeight.w800,
@@ -107,47 +125,91 @@ class GrossisteProfilScreen extends StatelessWidget {
                             ),
                           ),
 
-                          const SizedBox(height: 3),
-
-                          // Rôle
-                          const Text(
-                            "Grossiste",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF8C7E74),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          // Badge doré "Compte vérifié"
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF9E6),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFFE5A100).withValues(alpha: 0.35)),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
+                          // Entreprise / Boutique
+                          if (entreprise != null && entreprise.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.verified_rounded,
-                                  size: 13,
-                                  color: Color(0xFFD48800),
-                                ),
-                                SizedBox(width: 5),
+                                const Icon(Icons.business_outlined, size: 14, color: Color(0xFF9E6738)),
+                                const SizedBox(width: 5),
                                 Text(
-                                  "Compte vérifié",
-                                  style: TextStyle(
-                                    color: Color(0xFFB57400),
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
+                                  entreprise,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF9E6738),
                                   ),
                                 ),
                               ],
                             ),
+                          ],
+
+                          // Téléphone
+                          if (telephoneAffiche.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              telephoneAffiche,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: Color(0xFF8C7E74),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 10),
+
+                          // Badges Rôle & Vérification
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E2832),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Text(
+                                  "Grossiste",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // Badge doré "Compte vérifié"
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF9E6),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFFE5A100).withValues(alpha: 0.35)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.verified_rounded,
+                                      size: 13,
+                                      color: Color(0xFFD48800),
+                                    ),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      "Compte vérifié",
+                                      style: TextStyle(
+                                        color: Color(0xFFB37400),
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       );
@@ -235,6 +297,16 @@ class GrossisteProfilScreen extends StatelessWidget {
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const AssistanceGrossisteScreen()),
                           );
+                        },
+                      ),
+
+                      // Item : Didacticiel guidé
+                      _buildFigmaMenuItem(
+                        context: context,
+                        icon: Icons.school_outlined,
+                        label: "Guide de l'application",
+                        onTap: () {
+                          GrossisteMainNav.lancerGuide(context);
                         },
                       ),
 

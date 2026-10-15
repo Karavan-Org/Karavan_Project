@@ -13,8 +13,11 @@ import 'groupe_selection_service.dart';
 import 'ouvrir_groupe_screen.dart';
 import '../services/lien_groupe.dart';
 import '../services/session_storage_service.dart';
+import '../services/auth_service.dart';
 import '../services/url_route_helper.dart';
+import '../models/role_acteur.dart';
 import '../widgets/tab_navigation_scope.dart';
+import '../widgets/didacticiel_guide_overlay.dart';
 
 /// Navigation principale Commerçant reproduisant fidèlement la maquette Figma Dogo
 /// avec animation FLUTTER FAB en ARC DE CERCLE (Radial / Semicircular Speed Dial)
@@ -48,6 +51,7 @@ class _CommercantMainNavState extends State<CommercantMainNav>
   late AnimationController _waveLoopController;
   late Animation<double> _rotateAnimation;
   int? _hoveredArcIndex;
+  bool _afficherGuide = false;
 
   final List<Widget> _screens = const [
     CommercantHomeScreen(),
@@ -62,6 +66,20 @@ class _CommercantMainNavState extends State<CommercantMainNav>
     SessionStorageService.instance.sauvegarderDernierEspace('commercant');
     definirRouteWeb('/commercant');
     _currentIndex = widget.initialIndex.clamp(0, 3);
+
+    // Vérification de la première connexion pour afficher le didacticiel interactif guidé
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      var tel = AuthService.instance.profilActuel?.telephone;
+      if (tel == null || tel.isEmpty) {
+        final profil = await SessionStorageService.instance.lireProfil();
+        tel = profil?.telephone;
+      }
+      tel ??= "defaut";
+      final vu = await SessionStorageService.instance.aDejaVuGuide('commercant', tel);
+      if (!vu && mounted) {
+        setState(() => _afficherGuide = true);
+      }
+    });
 
     // Lien d'invitation reçu avant la connexion : on ouvre le groupe dès l'arrivée dans l'espace commerçant
     final enAttente = LienGroupe.enAttente;
@@ -134,7 +152,9 @@ class _CommercantMainNavState extends State<CommercantMainNav>
   Widget build(BuildContext context) {
     return TabNavigationScope(
       onSwitchTab: setTabIndex,
-      child: Scaffold(
+      child: Stack(
+        children: [
+          Scaffold(
       body: Stack(
         children: [
           // 1. Écrans principaux avec IndexedStack
@@ -410,8 +430,19 @@ class _CommercantMainNavState extends State<CommercantMainNav>
         ),
       ),
     ),
-  );
-  }
+    if (_afficherGuide)
+      Positioned.fill(
+        child: DidacticielGuideOverlay(
+          role: RoleActeur.commercant,
+          onTermine: () {
+            if (mounted) setState(() => _afficherGuide = false);
+          },
+        ),
+      ),
+  ],
+),
+);
+}
 
   /// Construit un bouton positionné sur l'arc de cercle avec onde de propagation,
   /// effet de vague aquatique continue et prévisualisation interactive au survol

@@ -200,4 +200,36 @@ class SessionStorageService {
       await _storage.delete(key: _cleDernierEspace);
     } catch (_) {}
   }
+
+  /// Vérifie si le didacticiel d'accueil a déjà été visualisé pour un rôle et un identifiant
+  Future<bool> aDejaVuGuide(String role, String identifiant) async {
+    try {
+      final key = 'dogo_guide_${role.toLowerCase()}_vu_$identifiant';
+      final val = await _storage.read(key: key);
+      return val == 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Marque le didacticiel d'accueil comme lu pour un rôle et un utilisateur
+  Future<void> marquerGuideVu(String role, String identifiant) async {
+    try {
+      final key = 'dogo_guide_${role.toLowerCase()}_vu_$identifiant';
+      await _storage.write(key: key, value: 'true');
+    } catch (_) {}
+  }
+
+  /// Réinitialise l'état du guide pour permettre de le revoir
+  Future<void> reinitialiserGuide(String role, String identifiant) async {
+    try {
+      final key = 'dogo_guide_${role.toLowerCase()}_vu_$identifiant';
+      await _storage.delete(key: key);
+    } catch (_) {}
+  }
+
+  /// Rétro-compatibilité pour le rôle Grossiste
+  Future<bool> aDejaVuGuideGrossiste(String identifiant) => aDejaVuGuide('grossiste', identifiant);
+  Future<void> marquerGuideGrossisteVu(String identifiant) => marquerGuideVu('grossiste', identifiant);
+  Future<void> reinitialiserGuideGrossiste(String identifiant) => reinitialiserGuide('grossiste', identifiant);
 }

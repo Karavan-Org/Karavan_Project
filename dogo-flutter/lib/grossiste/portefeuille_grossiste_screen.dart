@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/zone_portefeuille_neumorphic.dart';
 
 /// Écran Portefeuille du Grossiste (Ventes encaissées, Séquestres déblocables et Retraits bancaires)
 class PortefeuilleGrossisteScreen extends StatefulWidget {
@@ -87,74 +88,71 @@ class _PortefeuilleGrossisteScreenState extends State<PortefeuilleGrossisteScree
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Carte Solde
-            Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2C241E), Color(0xFF4A382A)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            // --- ZONE PORTEFEUILLE NEUMORPHIQUE SOFT 3D (Style Maquette) ---
+            ZonePortefeuilleNeumorphic(
+              titre: "Portefeuille Grossiste",
+              sousTitre: "Ventes encaissées & séquestres sécurisés",
+              montantSolde: "$_soldeDisponible FCFA",
+              infoSequestre: "Séquestre en cours : $_soldeEnCoursSequestre F (Lots en transit)",
+              iconeInfo: Icons.lock_clock_rounded,
+              texteBoutonAction: "Demander un Virement SWIFT",
+              onTapAction: _demanderVirement,
+              couleurBouton: const [
+                Color(0xFF3E2B1F),
+                Color(0xFF2A1C14),
+                Color(0xFF1B110B),
+              ],
+              couleurEmbleme: const [
+                Color(0xFFFFFFFF),
+                Color(0xFFE5A100),
+                Color(0xFF7D4F27),
+              ],
+              titreSquirclesRapides: "GESTION BANCAIRE",
+              squirclesRapides: [
+                ZonePortefeuilleNeumorphic.buildSquircleRapide(
+                  label: "Virement",
+                  onTap: _demanderVirement,
+                  child: const Icon(
+                    Icons.account_balance_rounded,
+                    color: Color(0xFF9E6738),
+                    size: 22,
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
-                  BoxShadow(color: Color(0x20000000), blurRadius: 16, offset: Offset(0, 6)),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Fonds disponibles au virement",
-                        style: TextStyle(fontSize: 12, color: Color(0xFFD4C5B9), fontWeight: FontWeight.w600),
+                const SizedBox(width: 24),
+                ZonePortefeuilleNeumorphic.buildSquircleRapide(
+                  label: "Relevé",
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Téléchargement du relevé de compte en cours..."),
+                        duration: Duration(seconds: 2),
                       ),
-                      ElevatedButton(
-                        onPressed: _demanderVirement,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF9E6738),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          minimumSize: Size.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        child: const Text("Virement SWIFT", style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                    );
+                  },
+                  child: const Icon(
+                    Icons.receipt_long_rounded,
+                    color: Color(0xFF9E6738),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 24),
+                ZonePortefeuilleNeumorphic.buildSquircleRapide(
+                  label: "Comptes",
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Comptes bancaires internationaux configurés"),
+                        duration: Duration(seconds: 2),
                       ),
-                    ],
+                    );
+                  },
+                  child: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    color: Color(0xFF9E6738),
+                    size: 22,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    "$_soldeDisponible FCFA",
-                    style: const TextStyle(
-                      fontSize: 27,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.lock_clock_rounded, size: 16, color: Color(0xFFD4A373)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            "Séquestre en cours : $_soldeEnCoursSequestre F (Lots en transit)",
-                            style: const TextStyle(fontSize: 11.5, color: Colors.white, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 24),

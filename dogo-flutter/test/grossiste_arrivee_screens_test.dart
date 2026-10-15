@@ -27,7 +27,13 @@ void main() {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(MaterialApp(theme: ThemeData(fontFamily: 'Roboto'), home: ecran));
+    await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(fontFamily: 'Roboto'),
+      routes: {
+        '/grossiste/connexion': (_) => const Scaffold(body: Text("Écran Connexion")),
+      },
+      home: ecran,
+    ));
     await tester.pumpAndSettle();
   }
 
@@ -60,5 +66,28 @@ void main() {
     );
     expect(find.text('DOSSIER EN EXAMEN'), findsOneWidget);
     expect(find.text('RCCM & NIF & pièce d\'identité enregistrés'), findsOneWidget);
+  });
+
+  testWidgets('Dossier approuvé remplit la 3eme jauge et affiche la notification', (tester) async {
+    await afficher(
+      tester,
+      const GrossisteDossierExamenScreen(
+        dossier: DossierKyc(id: 7, statut: 'APPROUVE', typesDocuments: ['PIECE_IDENTITE', 'REGISTRE_COMMERCE', 'NIF']),
+      ),
+    );
+    // Le dialogue de notification de validation s'affiche
+    expect(find.text('Compte Grossiste Validé !'), findsOneWidget);
+    expect(find.text('Continuer'), findsOneWidget);
+
+    // La jauge 3 est validée et le badge indique le succès sur l'écran
+    expect(find.text('DOSSIER APPROUVÉ & VALIDÉ'), findsOneWidget);
+    expect(find.text('3. Ventes'), findsOneWidget);
+    expect(find.text('Validé & Actif'), findsOneWidget);
+
+    // Au clic sur "Continuer", le grossiste est redirigé vers l'écran de connexion
+    await tester.tap(find.text('Continuer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Écran Connexion'), findsOneWidget);
   });
 }

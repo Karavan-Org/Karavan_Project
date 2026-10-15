@@ -1,3 +1,3 @@
 package ml.dogo.identite.domain;
 
-public enum RoleAdministratif { VALIDATION, FINANCE, SUPPORT, TECHNIQUE }
+public enum RoleAdministratif { VALIDATION, FINANCE, SUPPORT, LOGISTIQUE, TECHNIQUE }

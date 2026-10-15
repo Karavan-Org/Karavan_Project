@@ -39,7 +39,15 @@ public class IdentiteApiImpl implements IdentiteApi {
 
     @Override
     public Optional<MoyenPaiementInfo> moyenParDefaut(long utilisateurId) {
-        return moyens.findFirstByUtilisateurIdAndParDefautTrue(utilisateurId).map(IdentiteApiImpl::info);
+        var opt = moyens.findFirstByUtilisateurIdAndParDefautTrue(utilisateurId);
+        if (opt.isPresent()) {
+            return opt.map(IdentiteApiImpl::info);
+        }
+        var tous = moyens.findByUtilisateurIdOrderByIdAsc(utilisateurId);
+        if (!tous.isEmpty()) {
+            return Optional.of(info(tous.get(0)));
+        }
+        return Optional.empty();
     }
 
     @Override

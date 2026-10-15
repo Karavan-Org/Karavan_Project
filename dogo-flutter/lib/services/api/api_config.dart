@@ -56,14 +56,30 @@ class ApiConfig {
   static const String groupes = '/api/groupes';
   static const String mesGroupes = '/api/groupes/mes-groupes';
   static const String groupesAValider = '/api/groupes/a-valider';
+  static const String groupesDuGrossiste = '/api/groupes/du-grossiste';
 
   static String groupeDetail(dynamic id) => '/api/groupes/$id';
   static String rejoindreGroupe(dynamic groupeId) => '/api/groupes/$groupeId/participations';
+  static String soumettreGroupe(dynamic id) => '/api/groupes/$id/soumission';
+  static String annulerGroupe(dynamic id) => '/api/groupes/$id/annulation';
+  static String disponibiliteGroupe(dynamic id) => '/api/groupes/$id/disponibilite';
+  static String commandesDuGroupe(dynamic id) => '/api/groupes/$id/commandes';
+  static String preparerGroupe(dynamic id) => '/api/groupes/$id/preparation';
+  static String expedierGroupe(dynamic id) => '/api/groupes/$id/expedition';
+  static String arriveePointRetrait(dynamic id) => '/api/groupes/$id/reception-point-retrait';
+
+  // --- Endpoints Convois Logistique ---
+  static const String convois = '/api/convois';
+  static String convoiAction(dynamic id, String action) => '/api/convois/$id/$action';
 
   // --- Endpoints Paiements & Séquestre ---
   static String initierPaiement(dynamic participationId) => '/api/participations/$participationId/paiement';
   static String historiquePaiements(dynamic participationId) => '/api/participations/$participationId/paiements';
   static String simulerSuccesPaiement(dynamic paiementId) => '/api/dev/mobile-money/$paiementId/succes';
+  static const String portefeuille = '/api/moi/portefeuille';
+  static const String portefeuilleMouvements = '/api/moi/portefeuille/mouvements';
+  static const String portefeuilleRecharge = '/api/moi/portefeuille/recharge';
+  static const String portefeuilleRetraits = '/api/moi/portefeuille/retraits';
 
   // --- Endpoints Participations (Commerçant, RG-26 à RG-32) ---
   static const String mesParticipations = '/api/moi/participations';
@@ -81,6 +97,7 @@ class ApiConfig {
 
   // --- Endpoints Catalogue Grossiste & Upload Photos ---
   static const String catalogueProduits = '/api/catalogue/produits';
+  static const String produitsDisponibles = '/api/catalogue/produits/disponibles';
   static const String catalogueCategories = '/api/catalogue/categories';
   static const String catalogueUploadPhoto = '/api/catalogue/upload-photo';
 

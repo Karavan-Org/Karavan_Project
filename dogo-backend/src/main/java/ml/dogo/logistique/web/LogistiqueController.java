@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import ml.dogo.logistique.application.CommandeService;
+import ml.dogo.logistique.application.LocalisationService;
 import ml.dogo.logistique.application.PointRetraitService;
 import ml.dogo.logistique.application.RetraitService;
 import ml.dogo.shared.security.UtilisateurCourant;
@@ -14,8 +15,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class LogistiqueController {
 
-    public record PointRequete(@NotBlank String nom, @NotBlank String adresse, String quartier) {
+    public record PointRequete(@NotBlank String nom, @NotBlank String adresse, String quartier, String lienGoogleMap) {
     }
 
     public record ArriveeRequete(@NotNull Long pointRetraitId) {
@@ -37,11 +40,14 @@ public class LogistiqueController {
     private final PointRetraitService points;
     private final CommandeService commandes;
     private final RetraitService retraits;
+    private final LocalisationService localisation;
 
-    public LogistiqueController(PointRetraitService points, CommandeService commandes, RetraitService retraits) {
+    public LogistiqueController(PointRetraitService points, CommandeService commandes, RetraitService retraits,
+                                LocalisationService localisation) {
         this.points = points;
         this.commandes = commandes;
         this.retraits = retraits;
+        this.localisation = localisation;
     }
 
     // ---- points de retrait
@@ -56,7 +62,22 @@ public class LogistiqueController {
     @PreAuthorize("hasAuthority('POINT_RETRAIT_GERER')")
     public PointRetraitService.PointVue creerPoint(@AuthenticationPrincipal UtilisateurCourant moi,
                                                    @Valid @RequestBody PointRequete r) {
-        return points.creer(moi.id(), r.nom(), r.adresse(), r.quartier());
+        return points.creer(moi.id(), r.nom(), r.adresse(), r.quartier(), r.lienGoogleMap());
+    }
+
+    @PutMapping("/admin/points-retrait/{id}")
+    @PreAuthorize("hasAuthority('POINT_RETRAIT_GERER')")
+    public PointRetraitService.PointVue modifierPoint(@AuthenticationPrincipal UtilisateurCourant moi,
+                                                      @PathVariable long id,
+                                                      @Valid @RequestBody PointRequete r) {
+        return points.modifier(moi.id(), id, r.nom(), r.adresse(), r.quartier(), r.lienGoogleMap());
+    }
+
+    /** Coordonnées d'un dépôt (lien Google Maps ou adresse) pour l'itinéraire affiché dans l'application. */
+    @GetMapping("/localisation")
+    public LocalisationService.Coordonnees localiser(@RequestParam(required = false) String lien,
+                                                     @RequestParam(required = false) String adresse) {
+        return localisation.localiser(lien, adresse);
     }
 
     // ---- consultation
@@ -109,6 +130,14 @@ public class LogistiqueController {
                                                             @PathVariable long groupeId,
                                                             @Valid @RequestBody ArriveeRequete r) {
         return commandes.confirmerArriveeAuPoint(moi, groupeId, r.pointRetraitId());
+    }
+
+    @PostMapping("/admin/groupes/{groupeId}/notifier-depot")
+    @PreAuthorize("hasAuthority('RECEPTION_VALIDER')")
+    public List<CommandeService.CommandeVue> notifierArriveeDepot(@AuthenticationPrincipal UtilisateurCourant moi,
+                                                                 @PathVariable long groupeId,
+                                                                 @Valid @RequestBody ArriveeRequete r) {
+        return commandes.notifierArriveeDepot(moi, groupeId, r.pointRetraitId());
     }
 
     // ---- retrait

@@ -217,6 +217,26 @@ class AuthService {
     }
   }
 
+  /// Demande le renvoi d'un nouveau code OTP par SMS (RG-02)
+  Future<Map<String, dynamic>> renvoyerOtp({
+    required String telephone,
+  }) async {
+    try {
+      final response = await ApiClient.instance.post(
+        ApiConfig.renvoyerOtp,
+        body: {
+          'telephone': telephone,
+        },
+      );
+      return response is Map<String, dynamic> ? response : {};
+    } catch (e) {
+      if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
+        return {'statut': 'EN_ATTENTE_VERIFICATION', 'codeOtp': '1234'};
+      }
+      rethrow;
+    }
+  }
+
   /// Upload d'une photo de profil (JPEG, PNG, WEBP) vers le serveur (stockage sécurisé)
   Future<String> uploaderPhotoProfil(Uint8List octets, {String nom = 'avatar.jpg'}) async {
     try {
@@ -293,23 +313,28 @@ class AuthService {
     }
   }
 
-  /// Recharge le profil depuis le serveur (synchronise photoUrl et nom)
+  /// Recharge le profil depuis le serveur (synchronise toutes les informations fraîches)
   Future<UtilisateurProfil?> rechargerProfil() async {
     if (!ApiClient.instance.estAuthentifie) return profilActuel;
     try {
       final response = await ApiClient.instance.get(ApiConfig.moi);
       if (response is Map<String, dynamic>) {
-        final photoUrl = response['photoUrl'] as String?;
-        final nom = response['nom'] as String?;
-        if (profilActuel != null) {
-          final maj = profilActuel!.copyWith(
-            nom: nom ?? profilActuel!.nom,
-            photoUrl: photoUrl,
-          );
-          profilNotifier.value = maj;
-          await SessionStorageService.instance.sauvegarderProfil(maj);
-          return maj;
-        }
+        final nouveau = UtilisateurProfil.fromJson(response);
+        final maj = (profilActuel != null)
+            ? profilActuel!.copyWith(
+                id: nouveau.id,
+                nom: nouveau.nom.isNotEmpty ? nouveau.nom : profilActuel!.nom,
+                telephone: nouveau.telephone.isNotEmpty ? nouveau.telephone : profilActuel!.telephone,
+                photoUrl: nouveau.photoUrl,
+                statut: nouveau.statut,
+                nomStructure: nouveau.nomStructure ?? profilActuel!.nomStructure,
+                quartier: nouveau.quartier ?? profilActuel!.quartier,
+              )
+            : nouveau;
+
+        profilNotifier.value = maj;
+        await SessionStorageService.instance.sauvegarderProfil(maj);
+        return maj;
       }
     } catch (_) {}
     return profilActuel;

@@ -47,16 +47,21 @@ class PaiementApiService {
     required dynamic participationId,
     String? cleIdempotence,
     int? moyenPaiementId,
+    bool utiliserPortefeuille = false,
   }) async {
     final cle = cleIdempotence ?? genererCleIdempotence();
 
     try {
+      final Map<String, dynamic> corps = {};
+      if (moyenPaiementId != null) corps['moyenPaiementId'] = moyenPaiementId;
+      if (utiliserPortefeuille) corps['utiliserPortefeuille'] = true;
+
       final response = await ApiClient.instance.post(
         ApiConfig.initierPaiement(participationId),
         headers: {
           'Idempotency-Key': cle,
         },
-        body: moyenPaiementId != null ? {'moyenPaiementId': moyenPaiementId} : null,
+        body: corps.isNotEmpty ? corps : null,
       );
 
       if (response is Map<String, dynamic>) {
@@ -92,5 +97,30 @@ class PaiementApiService {
       }
       rethrow;
     }
+  }
+
+  /// Assure qu'un moyen de paiement existe pour l'utilisateur connecté (ou le crée)
+  Future<int> assurerMoyen({required String numero, required String operateur}) async {
+    try {
+      final res = await ApiClient.instance.get('/api/moi/moyens-paiement');
+      if (res is List && res.isNotEmpty) {
+        final premier = res.first;
+        if (premier is Map && premier['id'] != null) {
+          return (premier['id'] as num).toInt();
+        }
+      }
+      final cree = await ApiClient.instance.post(
+        '/api/moi/moyens-paiement',
+        body: {
+          'numero': numero,
+          'operateur': operateur,
+          'parDefaut': true,
+        },
+      );
+      if (cree is Map && cree['id'] != null) {
+        return (cree['id'] as num).toInt();
+      }
+    } catch (_) {}
+    return 1;
   }
 }

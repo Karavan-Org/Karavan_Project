@@ -4,6 +4,7 @@ import '../models/remboursement_model.dart';
 import '../services/groupe_api_service.dart';
 import '../services/logistique_api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_popups.dart';
 import 'code_retrait_commercant_screen.dart';
 
 /// Modèle unifié pour l'affichage d'une commande ou participation de commerçant
@@ -58,14 +59,16 @@ class ElementCommande {
 
   static String _imagePourProduit(String nom) {
     final lower = nom.toLowerCase();
-    if (lower.contains('sac')) return 'assets/images/sac.png';
+    if (lower.contains('sac') || lower.contains('maroquinerie') || lower.contains('portefeuille')) {
+      return 'assets/images/wallet.jpg';
+    }
     if (lower.contains('chaussure') || lower.contains('basket') || lower.contains('sneaker')) {
-      return 'assets/images/chaussure.png';
+      return 'assets/images/Nike_Joyride-removebg-preview.png';
     }
     if (lower.contains('montre') || lower.contains('accessoire')) {
-      return 'assets/images/montre.png';
+      return 'assets/images/logo_dogo.png';
     }
-    return 'assets/images/chaussure.png';
+    return 'assets/images/Nike_Joyride-removebg-preview.png';
   }
 
   factory ElementCommande.fromParticipation(ParticipationModel p, {RemboursementModel? remboursement}) {
@@ -215,6 +218,7 @@ class MesCommandesScreen extends StatefulWidget {
 class _MesCommandesScreenState extends State<MesCommandesScreen> {
   int _selectedOrderIndex = 0;
   bool _isLoading = true;
+  bool _annulationEnCours = false;
   String? _errorMessage;
   final List<ElementCommande> _commandes = [];
 
@@ -299,6 +303,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
   }
 
   Future<void> _annulerCommande(ElementCommande item) async {
+    if (_annulationEnCours) return;
     final bool estPaye = item.payee;
     final String montantTexte = '${item.montant.toStringAsFixed(0)} FCFA';
 
@@ -425,41 +430,42 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
 
     if (confirmer != true) return;
 
+    setState(() => _annulationEnCours = true);
+
     try {
       if (item.estParticipation && item.participationId != null) {
         await GroupeApiService.instance.annulerParticipation(item.participationId);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    estPaye
-                        ? "Demande enregistrée ! Votre remboursement de $montantTexte est en cours de traitement par l'administrateur."
-                        : "Réservation annulée avec succès.",
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF2E7D32),
-            duration: const Duration(seconds: 5),
-          ),
+        await AppPopups.afficher(
+          context: context,
+          titre: estPaye ? "Demande de remboursement transmise" : "Réservation annulée",
+          message: estPaye
+              ? "Votre demande d'annulation et de remboursement de $montantTexte a été enregistrée avec succès."
+              : "Votre réservation a été annulée. Votre quota a été libéré pour les autres commerçants.",
+          detailSupplementaire: estPaye
+              ? "Dès validation par l'administration DoGo, les fonds seront automatiquement recrédités sur votre Portefeuille Achats."
+              : null,
+          icone: Icons.check_circle_outline_rounded,
+          couleurIcone: const Color(0xFF2E7D32),
+          couleurFondIcone: const Color(0xFFE8F5E9),
+          boutonTexte: "Fermer et continuer",
+          onFermer: () => _chargerDonnees(),
         );
-        _chargerDonnees();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Échec de l'annulation : $e"),
-            backgroundColor: const Color(0xFFE53935),
-          ),
+        await AppPopups.traiterErreurOuConflit(
+          context,
+          e,
+          onFermer: () {
+            if (mounted) _chargerDonnees();
+          },
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _annulationEnCours = false);
       }
     }
   }
@@ -471,12 +477,18 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1E1E1E), size: 22),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Color(0xFF1E1E1E), size: 22),
+                onPressed: () => Navigator.of(context).maybePop(),
+              )
+            : null,
+        titleSpacing: Navigator.of(context).canPop() ? 0 : 20,
         title: const Text(
           "Mes commandes",
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w900,
@@ -487,7 +499,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Color(0xFF1E1E1E), size: 22),
-            onPressed: _chargerDonnees,
+            onPressed: _isLoading ? null : _chargerDonnees,
             tooltip: "Actualiser",
           ),
         ],
@@ -763,12 +775,17 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                           const Icon(Icons.qr_code, color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                         ],
-                        Text(
-                          activeCmd.statutLibelle,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
+                        Flexible(
+                          child: Text(
+                            activeCmd.statutLibelle,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                       ],
@@ -776,6 +793,9 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                     const SizedBox(height: 3),
                     Text(
                       activeCmd.arriveeEstimee,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: activeCmd.annulee
                             ? (activeCmd.remboursement?.enTraitement == true
@@ -881,7 +901,10 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                     ),
                   ),
                   const SizedBox(height: 3),
-                  Row(
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         cmd.numero,
@@ -891,7 +914,6 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 6),
                       // Badge de statut
                       _buildStatutChip(cmd),
                     ],
@@ -904,48 +926,120 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
 
             // Bouton "Annuler" ou indicateur de retrait
             if (cmd.annulee)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: cmd.remboursement?.enTraitement == true
-                      ? const Color(0xFFFEF3C7)
-                      : (cmd.remboursement?.execute == true
-                          ? const Color(0xFFE8F5E9)
-                          : const Color(0xFFFFEBEE)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  cmd.remboursement?.enTraitement == true
-                      ? "En cours"
-                      : (cmd.remboursement?.execute == true
-                          ? "Remboursé"
-                          : "Annulé"),
-                  style: TextStyle(
+              InkWell(
+                onTap: () {
+                  final String remboursementMsg = cmd.remboursement != null
+                      ? (cmd.remboursement!.execute
+                          ? "Le montant de ${cmd.remboursement!.montant.toStringAsFixed(0)} FCFA a été restitué avec succès sur votre portefeuille d'achats."
+                          : "Votre demande de remboursement de ${cmd.remboursement!.montant.toStringAsFixed(0)} FCFA est actuellement en cours d'examen par l'administration DoGo.")
+                      : "Cette commande ou participation a déjà été annulée et prise en compte dans votre espace.";
+                  AppPopups.afficherActionDejaEffectuee(
+                    context: context,
+                    titre: "Commande déjà annulée",
+                    message: remboursementMsg,
+                    detail: "Aucune action supplémentaire requise de votre part.",
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
                     color: cmd.remboursement?.enTraitement == true
-                        ? const Color(0xFFB45309)
+                        ? const Color(0xFFFEF3C7)
                         : (cmd.remboursement?.execute == true
-                            ? const Color(0xFF2E7D32)
-                            : const Color(0xFFE53935)),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
+                            ? const Color(0xFFE8F5E9)
+                            : const Color(0xFFFFEBEE)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        cmd.remboursement?.enTraitement == true
+                            ? "En cours"
+                            : (cmd.remboursement?.execute == true
+                                ? "Remboursé"
+                                : "Annulé"),
+                        style: TextStyle(
+                          color: cmd.remboursement?.enTraitement == true
+                              ? const Color(0xFFB45309)
+                              : (cmd.remboursement?.execute == true
+                                  ? const Color(0xFF2E7D32)
+                                  : const Color(0xFFE53935)),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.info_outline,
+                        size: 13,
+                        color: cmd.remboursement?.enTraitement == true
+                            ? const Color(0xFFB45309)
+                            : (cmd.remboursement?.execute == true
+                                ? const Color(0xFF2E7D32)
+                                : const Color(0xFFE53935)),
+                      ),
+                    ],
                   ),
                 ),
               )
             else if (cmd.annulable)
               TextButton(
-                onPressed: () => _annulerCommande(cmd),
+                onPressed: _annulationEnCours ? null : () => _annulerCommande(cmd),
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFFE53935),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text(
-                  "Annuler",
-                  style: TextStyle(
-                    color: Color(0xFFE53935),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                child: _annulationEnCours
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE53935)),
+                      )
+                    : const Text(
+                        "Annuler",
+                        style: TextStyle(
+                          color: Color(0xFFE53935),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              )
+            else if (!cmd.annulable && !cmd.annulee && cmd.etapeActive < 4)
+              InkWell(
+                onTap: () {
+                  AppPopups.afficherActionImpossible(
+                    context: context,
+                    titre: "Annulation impossible",
+                    message:
+                        "Cette commande ne peut plus être annulée car le convoi a atteint son quota ou l'acheminement est déjà engagé.",
+                    detail: "Vos articles sont en cours d'expédition et sous garantie séquestre DoGo.",
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "En convoi",
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(width: 3),
+                      Icon(Icons.lock_outline, size: 12, color: AppTheme.textMuted),
+                    ],
                   ),
                 ),
               )

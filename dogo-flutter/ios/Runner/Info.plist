@@ -6,6 +6,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>DoGo a besoin de l'appareil photo pour vous permettre de photographier vos articles de gros pour votre catalogue.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>DoGo utilise votre position pour afficher le chemin jusqu'au dépôt où récupérer votre commande.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>DoGo a besoin d'accéder à votre galerie photo pour sélectionner des images de vos produits de gros.</string>
 	<key>CFBundleDevelopmentRegion</key>

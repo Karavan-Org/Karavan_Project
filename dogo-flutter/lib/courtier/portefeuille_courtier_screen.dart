@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/zone_portefeuille_neumorphic.dart';
 
 /// Écran Portefeuille Courtier (Frame 17 de la planche)
 class PortefeuilleCourtierScreen extends StatelessWidget {
@@ -20,42 +21,91 @@ class PortefeuilleCourtierScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- CARTE PRINCIPALE SOLDE DISPONIBLE ---
-            Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2C241E), Color(0xFF45362C)],
-                ),
-                borderRadius: BorderRadius.circular(26),
-                boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 15, offset: Offset(0, 6))],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Commissions prêtes au retrait", style: TextStyle(color: Color(0xFFD4C5B9), fontSize: 12.5)),
-                  const SizedBox(height: 8),
-                  const Text("0 FCFA", style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Solde insuffisant pour initier un virement."),
-                          backgroundColor: Color(0xFFC0392B),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.secondary,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    ),
-                    child: const Text("Retirer vers Mobile Money", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+            // --- ZONE PORTEFEUILLE NEUMORPHIQUE SOFT 3D (Style Maquette) ---
+            ZonePortefeuilleNeumorphic(
+              titre: "Portefeuille Courtier",
+              sousTitre: "Commissions de transit & convois sécurisées",
+              montantSolde: "0 FCFA",
+              infoSequestre: "Garantie Séquestre DoGo • Commissions débloquées à la livraison",
+              iconeInfo: Icons.security_rounded,
+              texteBoutonAction: "Retirer vers Mobile Money",
+              onTapAction: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Solde insuffisant pour initier un retrait."),
+                    backgroundColor: Color(0xFFC0392B),
                   ),
-                ],
-              ),
+                );
+              },
+              couleurBouton: const [
+                Color(0xFFC07A3E),
+                Color(0xFF9E5C23),
+                Color(0xFF7A4012),
+              ],
+              couleurEmbleme: const [
+                Color(0xFFFFFFFF),
+                Color(0xFFE5A100),
+                Color(0xFF9E5C23),
+              ],
+              titreSquirclesRapides: "COMPTES DE RETRAIT",
+              squirclesRapides: [
+                ZonePortefeuilleNeumorphic.buildSquircleRapide(
+                  label: "Orange",
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Compte de retrait Orange Money sélectionné")),
+                    );
+                  },
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFFF7900),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text("OM", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
+                  ),
+                ),
+                const SizedBox(width: 24),
+                ZonePortefeuilleNeumorphic.buildSquircleRapide(
+                  label: "Moov",
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Compte de retrait Moov Money sélectionné")),
+                    );
+                  },
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF005DAA),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text("MM", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
+                  ),
+                ),
+                const SizedBox(width: 24),
+                ZonePortefeuilleNeumorphic.buildSquircleRapide(
+                  label: "Wave",
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Compte de retrait Wave sélectionné")),
+                    );
+                  },
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF1DC4F2),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.waves_rounded, color: Colors.white, size: 18),
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 24),

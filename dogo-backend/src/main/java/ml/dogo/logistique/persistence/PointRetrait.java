@@ -23,17 +23,34 @@ public class PointRetrait {
 
     private String quartier;
 
+    @Column(name = "lien_google_map", length = 500)
+    private String lienGoogleMap;
+
     protected PointRetrait() {
     }
 
     public PointRetrait(String nom, String adresse, String quartier) {
+        this(nom, adresse, quartier, null);
+    }
+
+    public PointRetrait(String nom, String adresse, String quartier, String lienGoogleMap) {
         this.nom = nom;
         this.adresse = adresse;
         this.quartier = quartier;
+        this.lienGoogleMap = lienGoogleMap;
+    }
+
+    public void modifier(String nom, String adresse, String quartier, String lienGoogleMap) {
+        this.nom = nom;
+        this.adresse = adresse;
+        this.quartier = quartier;
+        this.lienGoogleMap = lienGoogleMap;
     }
 
     public Long getId() { return id; }
     public String getNom() { return nom; }
     public String getAdresse() { return adresse; }
     public String getQuartier() { return quartier; }
+    public String getLienGoogleMap() { return lienGoogleMap; }
 }
+

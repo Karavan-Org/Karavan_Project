@@ -24,8 +24,9 @@ class CarteGroupe extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final couleur = couleurStatut(groupe.statut);
-    final cible = groupe.quantiteCible > 0 ? groupe.quantiteCible : 1;
-    final ratio = (groupe.quantiteReservee / cible).clamp(0.0, 1.0);
+    final ratio = groupe.ratioProgression;
+    final piecesAffichees = groupe.quantiteProgression;
+    final pourcentage = groupe.pourcentageProgression;
     final limite = groupe.dateLimite?.toLocal();
 
     return Container(
@@ -99,7 +100,7 @@ class CarteGroupe extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  "${groupe.quantiteReservee} / ${groupe.quantiteCible} pièces réservées",
+                  "$piecesAffichees / ${groupe.quantiteCible} pièces réservées ($pourcentage%)",
                   style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF2C241E)),
                 ),
               ),
@@ -114,9 +115,11 @@ class CarteGroupe extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: ratio,
-              minHeight: 6,
+              minHeight: 7,
               backgroundColor: const Color(0xFFEFE9E0),
-              valueColor: AlwaysStoppedAnimation<Color>(couleur),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                groupe.aAtteint100 ? const Color(0xFF2E7D32) : couleur,
+              ),
             ),
           ),
           if (limite != null) ...[

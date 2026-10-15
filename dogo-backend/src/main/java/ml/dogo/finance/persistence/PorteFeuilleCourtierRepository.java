@@ -39,4 +39,15 @@ public interface PorteFeuilleCourtierRepository extends JpaRepository<PorteFeuil
     @Query(nativeQuery = true, value = "UPDATE portefeuille SET solde_disponible = solde_disponible - :montant "
             + "WHERE id = :id AND solde_disponible >= :montant")
     int retirer(@Param("id") long id, @Param("montant") BigDecimal montant);
+
+    /** Crédit direct du solde disponible (recharge, remboursement restitué et conservé dans le portefeuille). */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(nativeQuery = true, value = "UPDATE portefeuille SET solde_disponible = solde_disponible + :montant WHERE id = :id")
+    int crediterDisponible(@Param("id") long id, @Param("montant") BigDecimal montant);
+
+    /** Débit du solde disponible lors d'un achat ou d'une dépense par portefeuille. */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(nativeQuery = true, value = "UPDATE portefeuille SET solde_disponible = solde_disponible - :montant "
+            + "WHERE id = :id AND solde_disponible >= :montant")
+    int debiterDisponible(@Param("id") long id, @Param("montant") BigDecimal montant);
 }

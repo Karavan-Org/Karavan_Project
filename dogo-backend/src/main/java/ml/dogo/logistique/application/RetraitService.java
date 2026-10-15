@@ -15,6 +15,7 @@ import ml.dogo.logistique.persistence.CodeRetrait;
 import ml.dogo.logistique.persistence.CodeRetraitRepository;
 import ml.dogo.logistique.persistence.Commande;
 import ml.dogo.logistique.persistence.CommandeRepository;
+import ml.dogo.logistique.persistence.PointRetrait;
 import ml.dogo.logistique.persistence.PointRetraitRepository;
 import ml.dogo.logistique.persistence.PreuveRetrait;
 import ml.dogo.logistique.persistence.PreuveRetraitRepository;
@@ -90,6 +91,15 @@ public class RetraitService {
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public void genererCode(Commande commande, String nomPoint) {
+        String lienMap = commande.getPointRetraitId() == null ? null
+                : points.findById(commande.getPointRetraitId()).map(PointRetrait::getLienGoogleMap).orElse(null);
+        String adresse = commande.getPointRetraitId() == null ? null
+                : points.findById(commande.getPointRetraitId()).map(PointRetrait::getAdresse).orElse(null);
+        genererCode(commande, nomPoint, lienMap, adresse);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void genererCode(Commande commande, String nomPoint, String lienGoogleMap, String adresse) {
         String pin = String.format("%06d", ALEA.nextInt(1_000_000));
         byte[] octets = new byte[32];
         ALEA.nextBytes(octets);
@@ -98,12 +108,24 @@ public class RetraitService {
         codes.save(new CodeRetrait(commande.getId(), encodeur.encode(pin), HexFormat.of().formatHex(octets), expiration,
                 maintenant));
         long commandeId = commande.getId();
-        String telephone = identite.acteur(commande.getCommercantId()).map(IdentiteApi.ActeurInfo::telephone).orElse(null);
+        long commercantId = commande.getCommercantId();
+
+        String mapTexte = (lienGoogleMap != null && !lienGoogleMap.isBlank())
+                ? " Localisation Google Maps : " + lienGoogleMap.strip()
+                : "";
+        String adrTexte = (adresse != null && !adresse.isBlank()) ? " (" + adresse.strip() + ")" : "";
+
+        // Notification in-app affichée en direct pour le commerçant
+        String messageInApp = "Colis arrivé au dépôt ! Votre commande #" + commandeId + " est prête au dépôt " + nomPoint + adrTexte + "."
+                + mapTexte + " Code PIN : " + pin + " (ou présentez le QR code sur l'application).";
+        notifications.notifier(commercantId, messageInApp);
+
+        String telephone = identite.acteur(commercantId).map(IdentiteApi.ActeurInfo::telephone).orElse(null);
         if (telephone != null) {
-            String message = "DoGo : votre commande #" + commandeId + " est disponible au point de retrait " + nomPoint
-                    + ". PIN de retrait : " + pin + " (ou présentez le QR code de l'application). Valable "
-                    + proprietes.retrait().validite().toDays() + " jours. Ne le communiquez qu'au courtier, sur place.";
-            apresValidation(() -> notifications.envoyerSms(telephone, message));
+            String sms = "DoGo : votre commande #" + commandeId + " est disponible au dépôt " + nomPoint + adrTexte + "."
+                    + mapTexte + " PIN de retrait : " + pin + " (ou QR code). Valable "
+                    + proprietes.retrait().validite().toDays() + " jours.";
+            apresValidation(() -> notifications.envoyerSms(telephone, sms));
         }
     }
 

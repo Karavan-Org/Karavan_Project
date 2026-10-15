@@ -126,7 +126,7 @@ public class RemboursementService {
             if (part != null) {
                 notifications.notifier(part.commercantId(),
                         "Votre demande de remboursement de " + montant.toBigInteger()
-                        + " XOF pour « " + (produitNom.isEmpty() ? "votre commande" : produitNom)
+                        + " FCFA pour « " + (produitNom.isEmpty() ? "votre commande" : produitNom)
                         + " » a bien été enregistrée. Elle est actuellement en cours de traitement par l'administration DoGo. Les fonds vous seront restitués après validation.");
             }
         }
@@ -167,9 +167,10 @@ public class RemboursementService {
         Paiement p = verrou.ecriture(Paiement.class, r.getPaiementId()).orElseThrow();
         ParticipationApi.ParticipationInfo part = participations.participation(p.getParticipationId()).orElse(null);
         if (part != null) {
+            String nomProduit = campagne.groupe(part.groupeId()).map(GroupeAchatApi.GroupeInfo::produitNom).orElse("votre commande");
             notifications.notifier(part.commercantId(),
                     "Votre demande de remboursement de " + r.getMontant().toBigInteger()
-                    + " XOF a été rejetée par l'administration DoGo. Motif : " + justification);
+                    + " FCFA pour « " + nomProduit + " » a été rejetée par l'administration DoGo. Motif : " + justification);
         }
         return vue(r);
     }
@@ -214,24 +215,34 @@ public class RemboursementService {
         long paiementId = p.getId();
         ParticipationApi.ParticipationInfo part = participations.participation(p.getParticipationId()).orElseThrow();
         GroupeAchatApi.GroupeInfo g = campagne.groupe(part.groupeId()).orElseThrow();
-        long portefeuilleId = mouvements.portefeuilleDe(g.porteurId()).getId();
-        IdentiteApi.MoyenPaiementInfo moyen = identite.moyenPaiementDe(part.commercantId(), p.getMoyenPaiementId());
+        long portefeuillePorteurId = mouvements.portefeuilleDe(g.porteurId()).getId();
+        long portefeuilleCommercantId = mouvements.portefeuilleDe(part.commercantId()).getId();
+        IdentiteApi.MoyenPaiementInfo moyen = (p.getMoyenPaiementId() != null)
+                ? identite.moyenPaiementDe(part.commercantId(), p.getMoyenPaiementId())
+                : identite.moyenParDefaut(part.commercantId()).orElse(null);
 
         // 1) modifications des entités
         s.restituer(maintenant);
         p.enregistrerRemboursement(montant, maintenant);
         r.marquerExecute(maintenant);
-        // 2) requête atomique sur le portefeuille (enregistre ce qui précède, puis vide le contexte)
-        if (portefeuilles.debloquer(portefeuilleId, montant) != 1) {
+        // 2) déblocage sur le portefeuille du porteur (restitution du séquestre)
+        if (portefeuilles.debloquer(portefeuillePorteurId, montant) != 1) {
             throw new ErreurMetier(CodeErreur.CONFLIT, "RG-41", "Solde bloqué du courtier insuffisant pour ce remboursement");
         }
-        // 3) effets externes et trace
+        // 3) Crédit direct du portefeuille du Commerçant (la somme y retourne et y reste pour ses futurs achats)
+        portefeuilles.crediterDisponible(portefeuilleCommercantId, montant);
+
+        // 4) effets externes, journal et trace
         String reference = "REMB-" + remboursementId;
-        mouvements.enregistrer(paiementId, portefeuilleId, TypeMouvement.REMBOURSEMENT, montant, reference);
+        mouvements.enregistrer(paiementId, portefeuilleCommercantId, TypeMouvement.REMBOURSEMENT, montant, reference);
         audit.tracer(null, "REMBOURSEMENT_EXECUTE", "paiement=" + paiementId, "montant=" + montant);
-        passerelle.rembourser(reference, moyen.numero(), moyen.operateur(), montant);
+        String numero = (moyen != null) ? moyen.numero() : identite.acteur(part.commercantId()).map(IdentiteApi.ActeurInfo::telephone).orElse("N/A");
+        String operateur = (moyen != null) ? moyen.operateur() : "ORANGE_MONEY";
+        passerelle.rembourser(reference, numero, operateur, montant);
+        String nomProduit = (g.produitNom() != null && !g.produitNom().isBlank()) ? g.produitNom() : "votre commande";
         notifications.notifier(part.commercantId(),
-                "Votre remboursement de " + montant.toBigInteger() + " XOF a été validé par l'administration DoGo et transféré sur votre compte Mobile Money.");
+                "Votre remboursement de " + montant.toBigInteger() + " FCFA pour la commande « " + nomProduit
+                + " » a été validé avec succès par l'administration DoGo et crédité sur votre portefeuille d'achats.");
     }
 
     // ------------------------------------------------------------------------------- vérifications

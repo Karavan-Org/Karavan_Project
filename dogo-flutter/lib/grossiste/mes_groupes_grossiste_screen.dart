@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
 import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_popups.dart';
 import '../widgets/carte_groupe.dart';
 import '../widgets/partage_groupe.dart';
 import 'suivi_colis_grossiste_screen.dart';
@@ -27,11 +29,33 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
   bool _chargement = true;
   String? _erreur;
   int? _enConfirmation;
+  Timer? _timerActualisation;
 
   @override
   void initState() {
     super.initState();
     _charger();
+    // Actualisation dynamique en direct de la jauge et des réservations
+    _timerActualisation = Timer.periodic(const Duration(seconds: 3), (_) {
+      _actualiserSilencieux();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timerActualisation?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _actualiserSilencieux() async {
+    if (!mounted || _chargement) return;
+    try {
+      final groupes = await GroupeApiService.instance.groupesDuGrossiste();
+      if (!mounted) return;
+      setState(() {
+        _groupes = groupes;
+      });
+    } catch (_) {}
   }
 
   Future<void> _charger() async {
@@ -129,6 +153,13 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
           widget.titre,
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF2C241E)),
+            tooltip: "Actualiser",
+            onPressed: _charger,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -196,13 +227,27 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
     );
   }
 
-  /// Partage du lien (groupe en attente de publication ou ouvert) et signalement des étapes d'acheminement
+  void _bloquerSuiviIncomplet(GroupeResume g) {
+    AppPopups.afficherActionImpossible(
+      context: context,
+      titre: "Objectif non atteint (100% requis)",
+      message: "Le suivi du colis ne peut pas être lancé tant que le groupe n'a pas atteint 100% de son objectif.",
+      detail: "Progression actuelle : ${g.quantiteProgression} / ${g.quantiteCible} pièces réservées (${g.pourcentageProgression}%).\n\n"
+          "Dès que toutes les pièces auront été réservées par les commerçants, le suivi logistique et les étapes d'acheminement seront automatiquement débloqués.",
+    );
+  }
+
+  /// Partage du lien et accès au suivi du colis (strictement conditionné à 100% de réservations)
   Widget? _actions(GroupeResume g) {
     final partageable = g.statut == 'OUVERT' || (g.porteParGrossiste && g.statut == 'EN_VALIDATION');
-    if (!partageable && !g.acheminementAuGrossiste) return null;
+    final suiviAutorise = g.acheminementAuGrossiste;
+    final doitAfficherBoutonSuivi = g.porteParGrossiste && (g.aAtteint100 || g.statut == 'OUVERT');
+
+    if (!partageable && !doitAfficherBoutonSuivi) return null;
+
     return Row(
       children: [
-        if (partageable)
+        if (partageable) ...[
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () => afficherPartageGroupe(context, g),
@@ -216,22 +261,39 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
               ),
             ),
           ),
-        if (g.acheminementAuGrossiste)
+          if (doitAfficherBoutonSuivi) const SizedBox(width: 8),
+        ],
+        if (doitAfficherBoutonSuivi)
           Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SuiviColisGrossisteScreen()),
-              ).then((_) => _charger()),
-              icon: const Icon(Icons.local_shipping_rounded, size: 18),
-              label: const Text("Suivi du colis"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(0, 42),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-              ),
-            ),
+            child: suiviAutorise
+                ? ElevatedButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SuiviColisGrossisteScreen()),
+                    ).then((_) => _actualiserSilencieux()),
+                    icon: const Icon(Icons.local_shipping_rounded, size: 18),
+                    label: const Text("Suivi du colis"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 42),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    ),
+                  )
+                : OutlinedButton.icon(
+                    onPressed: () => _bloquerSuiviIncomplet(g),
+                    icon: const Icon(Icons.lock_outline_rounded, size: 18, color: Color(0xFF8C7E74)),
+                    label: Text(
+                      "Suivi (${g.pourcentageProgression}%)",
+                      style: const TextStyle(color: Color(0xFF8C7E74), fontWeight: FontWeight.w700, fontSize: 12),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFD7CCC8)),
+                      backgroundColor: const Color(0xFFF5EFEA),
+                      minimumSize: const Size(0, 42),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    ),
+                  ),
           ),
       ],
     );

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+import '../services/session_storage_service.dart';
 
 /// Écran Aide & Support Commerçant (WhatsApp direct, FAQ et assistance Dogo Mali)
 class AideSupportScreen extends StatelessWidget {
@@ -83,7 +85,75 @@ class AideSupportScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
+
+          // Carte Revoir le Didacticiel Guidé
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+              boxShadow: const [
+                BoxShadow(color: Color(0x0AF59E0B), blurRadius: 10, offset: Offset(0, 3)),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFFFEDD5)),
+                  ),
+                  child: const Icon(Icons.touch_app_rounded, color: Color(0xFFD97706), size: 22),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Guide Didacticiel Interactif",
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF2C241E)),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        "Redécouvrez chaque fonctionnalité et bouton pas à pas.",
+                        style: TextStyle(fontSize: 11, color: Color(0xFF8C7E74)),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    var tel = AuthService.instance.profilActuel?.telephone;
+                    if (tel == null || tel.isEmpty) {
+                      final profil = await SessionStorageService.instance.lireProfil();
+                      tel = profil?.telephone;
+                    }
+                    tel ??= "defaut";
+                    await SessionStorageService.instance.reinitialiserGuide('commercant', tel);
+                    if (context.mounted) {
+                      Navigator.of(context).pushNamedAndRemoveUntil('/commercant', (route) => false);
+                    }
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFF7ED),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text(
+                    "Revoir",
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFFD97706)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
 
           // FAQ
           const Text(

@@ -254,9 +254,37 @@ class GroupeResume {
     );
   }
 
-  /// Le grossiste peut signaler les étapes d'acheminement une fois l'objectif atteint
+  /// Total des pièces engagées par les commerçants (réservations en cours + confirmations payées)
+  int get quantiteEngagee => quantiteConfirmee + quantiteReservee;
+
+  /// Quantité effective pour la jauge et l'affichage (si statut terminal/atteint, vaut au moins quantiteCible)
+  int get quantiteProgression {
+    if (const ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE', 'TERMINE'].contains(statut)) {
+      return quantiteCible > 0 ? (quantiteEngagee >= quantiteCible ? quantiteEngagee : quantiteCible) : quantiteEngagee;
+    }
+    return quantiteEngagee;
+  }
+
+  /// Ratio réel de 0.0 à 1.0 pour la barre de progression
+  double get ratioProgression {
+    final cible = quantiteCible > 0 ? quantiteCible : 1;
+    if (const ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE', 'TERMINE'].contains(statut)) {
+      return 1.0;
+    }
+    return (quantiteEngagee / cible).clamp(0.0, 1.0);
+  }
+
+  /// Pourcentage de progression de 0 à 100%
+  int get pourcentageProgression => (ratioProgression * 100).round();
+
+  /// Indique si l'objectif est atteint à 100%
+  bool get aAtteint100 =>
+      ratioProgression >= 1.0 ||
+      const ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE', 'TERMINE'].contains(statut);
+
+  /// Le grossiste peut signaler les étapes d'acheminement une fois l'objectif atteint (100%)
   bool get acheminementAuGrossiste =>
-      porteParGrossiste && const ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE'].contains(statut);
+      porteParGrossiste && aAtteint100 && const ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE', 'TERMINE'].contains(statut);
 
   /// Libellé lisible du statut (StatutGroupe côté backend)
   String get libelleStatut => switch (statut) {

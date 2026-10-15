@@ -113,12 +113,14 @@ public class AuthService {
     public static List<String> codesPermissions(Utilisateur u) {
         if (u instanceof Administrateur admin && admin.getRoleAdministratif() != null) {
             return switch (admin.getRoleAdministratif()) {
-                case TECHNIQUE -> List.of("ADMIN_CREER", "AUDIT_LIRE", "CAMPAGNE_EXPLORER", "COMMANDE_LIRE", "COMPTE_SUSPENDRE",
-                        "GROUPE_ANNULER", "GROUPE_PUBLICATION_VALIDER", "GROUPE_SUIVRE", "KYC_VALIDER", "NOTIFICATION_LIRE",
+                case TECHNIQUE -> List.of("ADMIN_CREER", "AUDIT_LIRE", "CAMPAGNE_EXPLORER", "COMMANDE_AVANCER", "COMMANDE_LIRE", "COMPTE_SUSPENDRE",
+                        "GROUPE_ANNULER", "GROUPE_CREER", "GROUPE_DISPONIBILITE_VALIDER", "GROUPE_PUBLICATION_VALIDER", "GROUPE_SUIVRE", "KYC_VALIDER", "NOTIFICATION_LIRE",
                         "POINT_RETRAIT_GERER", "PORTEFEUILLE_RETIRER", "PROFIL_GERER", "RECEPTION_VALIDER", "REMBOURSEMENT_APPROUVER", "RETRAIT_VALIDER");
                 case VALIDATION -> List.of("CAMPAGNE_EXPLORER", "GROUPE_ANNULER", "GROUPE_PUBLICATION_VALIDER", "GROUPE_SUIVRE", "KYC_VALIDER", "NOTIFICATION_LIRE", "PROFIL_GERER");
                 case FINANCE -> List.of("CAMPAGNE_EXPLORER", "GROUPE_SUIVRE", "NOTIFICATION_LIRE", "PORTEFEUILLE_RETIRER", "PROFIL_GERER", "REMBOURSEMENT_APPROUVER");
-                case SUPPORT -> List.of("CAMPAGNE_EXPLORER", "COMMANDE_LIRE", "GROUPE_SUIVRE", "NOTIFICATION_LIRE", "PROFIL_GERER", "RECEPTION_VALIDER", "RETRAIT_VALIDER");
+                case SUPPORT -> List.of("CAMPAGNE_EXPLORER", "COMMANDE_LIRE", "COMPTE_SUSPENDRE", "GROUPE_SUIVRE", "NOTIFICATION_LIRE", "PROFIL_GERER");
+                case LOGISTIQUE -> List.of("CAMPAGNE_EXPLORER", "COMMANDE_AVANCER", "COMMANDE_LIRE", "GROUPE_SUIVRE", "NOTIFICATION_LIRE",
+                        "POINT_RETRAIT_GERER", "PROFIL_GERER", "RECEPTION_VALIDER", "RETRAIT_VALIDER");
             };
         }
         return u.getRole().getPermissions().stream().map(p -> p.getCode()).sorted().toList();

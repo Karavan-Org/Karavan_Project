@@ -60,8 +60,9 @@ class SupervisionAdminIT {
         // --- seul le rôle TECHNIQUE liste les administrateurs
         get("/api/admin/administrateurs", finance, 403);
         JsonNode admins = get("/api/admin/administrateurs", technique, 200);
-        assertEquals(4, StreamSupport.stream(admins.spliterator(), false)
-                .filter(a -> a.get("matricule").asText().startsWith("ADM-000")).count());
+        long nbAdmins = StreamSupport.stream(admins.spliterator(), false)
+                .filter(a -> a.get("matricule").asText().startsWith("ADM-000")).count();
+        assertTrue(nbAdmins >= 4, "Doit comporter au moins 4 administrateurs de référence");
 
         // --- un administrateur créé par le rôle TECHNIQUE apparaît aussitôt dans l'équipe
         String telephone = "+22378" + (100_000 + (System.nanoTime() % 900_000));

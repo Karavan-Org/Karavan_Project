@@ -17,7 +17,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Portefeuille du Courtier (PorteFeuilleCourtier) : consultation et retrait du solde disponible (RG-41). */
+import ml.dogo.notification.application.NotificationService;
+
+/** Portefeuille du Courtier / Commerçant / Grossiste : consultation, recharge, dépense et retrait (RG-41). */
 @Service
 public class PortefeuilleService {
 
@@ -33,16 +35,18 @@ public class PortefeuilleService {
     private final IdentiteApi identite;
     private final PasserelleMobileMoney passerelle;
     private final AuditApi audit;
+    private final NotificationService notifications;
 
     public PortefeuilleService(PorteFeuilleCourtierRepository portefeuilles, MouvementFinancierRepository journal,
                                MouvementService mouvements, IdentiteApi identite, PasserelleMobileMoney passerelle,
-                               AuditApi audit) {
+                               AuditApi audit, NotificationService notifications) {
         this.portefeuilles = portefeuilles;
         this.journal = journal;
         this.mouvements = mouvements;
         this.identite = identite;
         this.passerelle = passerelle;
         this.audit = audit;
+        this.notifications = notifications;
     }
 
     @Transactional
@@ -91,6 +95,36 @@ public class PortefeuilleService {
         passerelle.verser(reference, moyen.numero(), moyen.operateur(), montant);
         PorteFeuilleCourtier apres = mouvements.portefeuilleDe(courtierId);
         return new PortefeuilleVue(apres.getSoldeBloque(), apres.getSoldeDisponible(), apres.getDevise());
+    }
+
+    /** Recharge dynamique du portefeuille (Commerçant / Courtier) via Mobile Money (Orange, Moov, Wave). */
+    @Transactional
+    public PortefeuilleVue recharger(long utilisateurId, BigDecimal montant, String operateur, String numeroTelephone) {
+        if (montant == null || montant.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-41", "Le montant de recharge doit être positif");
+        }
+        PorteFeuilleCourtier p = mouvements.portefeuilleDe(utilisateurId);
+        long portefeuilleId = p.getId();
+        portefeuilles.crediterDisponible(portefeuilleId, montant);
+        String op = (operateur != null && !operateur.isBlank()) ? operateur : "Mobile Money";
+        String reference = "RECH-" + utilisateurId + "-" + System.currentTimeMillis();
+        mouvements.enregistrer(null, portefeuilleId, TypeMouvement.RECHARGE_PORTEFEUILLE, montant, reference);
+        audit.tracer(utilisateurId, "RECHARGE_PORTEFEUILLE", "portefeuille=" + portefeuilleId, "montant=" + montant);
+        notifications.notifier(utilisateurId, "Votre portefeuille a été rechargé de " + montant.toBigInteger() + " FCFA via " + op + ".");
+        PorteFeuilleCourtier apres = portefeuilles.findById(portefeuilleId).orElseThrow();
+        return new PortefeuilleVue(apres.getSoldeBloque(), apres.getSoldeDisponible(), apres.getDevise());
+    }
+
+    /** Débit direct pour achat ou dépense groupée via le portefeuille d'achats. */
+    @Transactional
+    public void debiterAchat(long commercantId, BigDecimal montant, String reference) {
+        PorteFeuilleCourtier p = mouvements.portefeuilleDe(commercantId);
+        long portefeuilleId = p.getId();
+        if (portefeuilles.debiterDisponible(portefeuilleId, montant) != 1) {
+            throw new ErreurMetier(CodeErreur.CONFLIT, "RG-41", "Solde disponible du portefeuille insuffisant pour effectuer ce paiement");
+        }
+        mouvements.enregistrer(null, portefeuilleId, TypeMouvement.DEBIT_COMMERCANT, montant, reference);
+        audit.tracer(commercantId, "DEBIT_COMMERCANT_PORTEFEUILLE", "portefeuille=" + portefeuilleId, "montant=" + montant);
     }
 
     private static MouvementVue vue(MouvementFinancier m) {

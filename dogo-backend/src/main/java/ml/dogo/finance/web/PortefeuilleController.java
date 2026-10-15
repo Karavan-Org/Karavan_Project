@@ -24,6 +24,9 @@ public class PortefeuilleController {
     public record RetraitRequete(@NotNull @Positive BigDecimal montant, Long moyenPaiementId) {
     }
 
+    public record RechargeRequete(@NotNull @Positive BigDecimal montant, String operateur, String numeroTelephone) {
+    }
+
     private final PortefeuilleService portefeuille;
 
     public PortefeuilleController(PortefeuilleService portefeuille) {
@@ -31,16 +34,23 @@ public class PortefeuilleController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PORTEFEUILLE_RETIRER')")
+    @PreAuthorize("isAuthenticated()")
     public PortefeuilleService.PortefeuilleVue voir(@AuthenticationPrincipal UtilisateurCourant moi) {
         return portefeuille.voir(moi.id());
     }
 
     @GetMapping("/mouvements")
-    @PreAuthorize("hasAuthority('PORTEFEUILLE_RETIRER')")
+    @PreAuthorize("isAuthenticated()")
     public List<PortefeuilleService.MouvementVue> mouvements(@AuthenticationPrincipal UtilisateurCourant moi,
                                                              @RequestParam(defaultValue = "50") int taille) {
         return portefeuille.mouvements(moi.id(), taille);
+    }
+
+    @PostMapping("/recharge")
+    @PreAuthorize("isAuthenticated()")
+    public PortefeuilleService.PortefeuilleVue recharger(@AuthenticationPrincipal UtilisateurCourant moi,
+                                                         @Valid @RequestBody RechargeRequete r) {
+        return portefeuille.recharger(moi.id(), r.montant(), r.operateur(), r.numeroTelephone());
     }
 
     @PostMapping("/retraits")

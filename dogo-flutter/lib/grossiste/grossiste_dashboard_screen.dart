@@ -469,7 +469,7 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
           ),
           subtitle: Text(
-            "${g.libelleStatut} • ${g.quantiteReservee + g.quantiteConfirmee}/${g.quantiteCible} pcs",
+            "${g.libelleStatut} • ${g.quantiteProgression}/${g.quantiteCible} pcs (${g.pourcentageProgression}%)",
             style: const TextStyle(fontSize: 11.5),
           ),
           trailing: const Icon(Icons.chevron_right_rounded),

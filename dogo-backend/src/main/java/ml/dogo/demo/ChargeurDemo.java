@@ -74,6 +74,7 @@ public class ChargeurDemo {
         administrateurs.creerInitial("+22370000002", "Admin Validation", MOT_DE_PASSE, "ADM-0002", RoleAdministratif.VALIDATION);
         administrateurs.creerInitial("+22370000003", "Admin Finance", MOT_DE_PASSE, "ADM-0003", RoleAdministratif.FINANCE);
         administrateurs.creerInitial("+22370000004", "Admin Support", MOT_DE_PASSE, "ADM-0004", RoleAdministratif.SUPPORT);
+        administrateurs.creerInitial("+22370000005", "Admin Logistique & Colis", MOT_DE_PASSE, "ADM-0005", RoleAdministratif.LOGISTIQUE);
 
         long grossisteId = creerCompte(role -> new Grossiste("+22371000001", "Grossiste Demo", encodeur.encode(MOT_DE_PASSE), role,
                 horloge.instant(), "Grand Marché de Guangzhou", "NIF-DEMO-001", "RC-DEMO-001"), "GROSSISTE");
@@ -98,7 +99,8 @@ public class ChargeurDemo {
                 new CatalogueService.VarianteDemande("BASK-42-NOIR", "42", "Noir", 500),
                 new CatalogueService.VarianteDemande("BASK-42-BLANC", "42", "Blanc", 300))));
 
-        points.creer(technique, "Dépôt de Badalabougou", "Rue 120, Badalabougou", "Badalabougou");
+        points.creer(technique, "Dépôt Central Dabanani", "JXJF+76R, Unnamed Road, Bamako", "Dabanani",
+                "https://www.google.com/maps/search/?api=1&query=12.630738,-8.026984");
         points.creer(technique, "Point Marché de Dibida", "Marché de Dibida", "Dibida");
 
         LOG.info("""

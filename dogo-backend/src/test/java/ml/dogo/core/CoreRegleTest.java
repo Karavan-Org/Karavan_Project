@@ -222,7 +222,7 @@ class CoreRegleTest {
     @Test
     void rg35_paye_seulement_depuis_en_attente() {
         assertTrue(StatutPaiement.EN_ATTENTE.peutAllerVers(StatutPaiement.PAYE));
-        assertFalse(StatutPaiement.INITIE.peutAllerVers(StatutPaiement.PAYE));
+        assertTrue(StatutPaiement.INITIE.peutAllerVers(StatutPaiement.PAYE)); // paiement direct portefeuille
         assertFalse(StatutPaiement.ECHOUE.peutAllerVers(StatutPaiement.PAYE));
     }
 

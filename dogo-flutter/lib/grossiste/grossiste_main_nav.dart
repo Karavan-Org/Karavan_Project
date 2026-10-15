@@ -12,8 +12,10 @@ import 'validation_stock_grossiste_screen.dart';
 import 'expedier_lot_screen.dart';
 import 'suivi_colis_grossiste_screen.dart';
 import '../services/session_storage_service.dart';
+import '../services/auth_service.dart';
 import '../services/url_route_helper.dart';
 import '../widgets/tab_navigation_scope.dart';
+import 'didacticiel_grossiste_guide.dart';
 
 /// Navigation principale Grossiste avec barre d'onglets Figma et FAB central (+)
 /// animé en arc de cercle avec effet de vague aquatique et prévisualisation au survol
@@ -30,6 +32,12 @@ class GrossisteMainNav extends StatefulWidget {
     state?.setTabIndex(index);
   }
 
+  /// Permet de lancer ou relancer le didacticiel interactif guidé depuis n'importe quel écran
+  static void lancerGuide(BuildContext context) {
+    final state = context.findAncestorStateOfType<_GrossisteMainNavState>();
+    state?.demarrerGuide();
+  }
+
   @override
   State<GrossisteMainNav> createState() => _GrossisteMainNavState();
 }
@@ -41,6 +49,11 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
   late AnimationController _waveLoopController;
   late Animation<double> _rotateAnimation;
   int? _hoveredArcIndex;
+  bool _afficherGuide = false;
+
+  void demarrerGuide() {
+    if (mounted) setState(() => _afficherGuide = true);
+  }
 
   final List<Widget> _screens = const [
     GrossisteDashboardScreen(showFab: false),
@@ -55,6 +68,20 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
     SessionStorageService.instance.sauvegarderDernierEspace('grossiste');
     definirRouteWeb('/grossiste');
     _currentIndex = widget.initialIndex.clamp(0, 3);
+
+    // Vérification de la première connexion pour afficher le didacticiel guidé interactif
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      var tel = AuthService.instance.profilActuel?.telephone;
+      if (tel == null || tel.isEmpty) {
+        final profil = await SessionStorageService.instance.lireProfil();
+        tel = profil?.telephone;
+      }
+      tel ??= "defaut";
+      final vu = await SessionStorageService.instance.aDejaVuGuide('grossiste', tel);
+      if (!vu && mounted) {
+        setState(() => _afficherGuide = true);
+      }
+    });
 
     _fabController = AnimationController(
       vsync: this,
@@ -126,7 +153,9 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
   Widget build(BuildContext context) {
     return TabNavigationScope(
       onSwitchTab: setTabIndex,
-      child: Scaffold(
+      child: Stack(
+        children: [
+          Scaffold(
       body: Stack(
         children: [
           // 1. Écrans principaux avec IndexedStack
@@ -382,7 +411,7 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                         Expanded(
                           child: _buildNavItem(
                             index: 2,
-                            label: "Ventes",
+                            label: "Lots & Ventes",
                             activeIcon: Icons.local_shipping_rounded,
                             inactiveIcon: Icons.local_shipping_outlined,
                           ),
@@ -405,8 +434,18 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
         ),
       ),
     ),
-  );
-  }
+    if (_afficherGuide)
+      Positioned.fill(
+        child: DidacticielGrossisteGuide(
+          onTermine: () {
+            if (mounted) setState(() => _afficherGuide = false);
+          },
+        ),
+      ),
+  ],
+),
+);
+}
 
   /// Construit un bouton positionné sur l'arc de cercle avec onde de propagation,
   /// effet de vague aquatique continue et prévisualisation interactive au survol

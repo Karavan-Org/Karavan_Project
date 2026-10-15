@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class PaiementController {
 
-    public record PaiementRequete(Long moyenPaiementId) {
+    public record PaiementRequete(Long moyenPaiementId, Boolean utiliserPortefeuille) {
     }
 
     private final PaiementService paiements;
@@ -36,7 +36,8 @@ public class PaiementController {
     public PaiementService.PaiementVue payer(@AuthenticationPrincipal UtilisateurCourant moi, @PathVariable long id,
                                              @RequestHeader("Idempotency-Key") String cle,
                                              @RequestBody(required = false) PaiementRequete r) {
-        return paiements.initier(moi.id(), id, r == null ? null : r.moyenPaiementId(), cle);
+        return paiements.initier(moi.id(), id, r == null ? null : r.moyenPaiementId(),
+                r != null && Boolean.TRUE.equals(r.utiliserPortefeuille()), cle);
     }
 
     @GetMapping("/participations/{id}/paiements")

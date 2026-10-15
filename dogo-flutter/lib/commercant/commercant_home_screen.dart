@@ -7,6 +7,8 @@ import '../services/api/api_config.dart';
 import 'favoris_service.dart';
 import 'mes_favoris_screen.dart';
 import 'groupe_selection_service.dart';
+import 'notifications_commercant_screen.dart';
+import '../services/notification_api_service.dart';
 
 /// Écran d'accueil principal du Commerçant
 /// Vitrine d'achats groupés en cours avec mise en favoris, filtres et progression.
@@ -22,6 +24,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
   String _courtierActif = "Tous";
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
+  int _nbNotifsNonLues = 0;
 
   final List<String> _categories = [
     "Tous",
@@ -41,6 +44,14 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
   void initState() {
     super.initState();
     FavorisService.instance.actualiserDepuisBackend();
+    _chargerNotifsNonLues();
+  }
+
+  Future<void> _chargerNotifsNonLues() async {
+    try {
+      final nb = await NotificationApiService.instance.nombreNonLues();
+      if (mounted) setState(() => _nbNotifsNonLues = nb);
+    } catch (_) {}
   }
 
   @override
@@ -87,7 +98,12 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
             }).toList();
 
             return RefreshIndicator(
-              onRefresh: () => FavorisService.instance.actualiserDepuisBackend(),
+              onRefresh: () async {
+                await Future.wait([
+                  FavorisService.instance.actualiserDepuisBackend(),
+                  _chargerNotifsNonLues(),
+                ]);
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.only(bottom: 24),
@@ -111,68 +127,74 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                 : "DG";
 
                             final bool aPhoto = user?.photoUrl != null && user!.photoUrl!.isNotEmpty;
+                            final String prenom = (user?.nomComplet.isNotEmpty ?? false)
+                                ? user!.nomComplet.split(' ').first
+                                : "Commerçant";
+                            final String quartier = (user?.quartier?.isNotEmpty ?? false)
+                                ? user!.quartier!
+                                : ((user?.structure?.isNotEmpty ?? false)
+                                    ? user!.structure!
+                                    : "Bamako, Mali");
 
-                            return CircleAvatar(
-                              radius: 22,
-                              backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
-                              backgroundImage: aPhoto
-                                  ? NetworkImage(ApiConfig.resolutionImageUrl(user.photoUrl))
-                                  : null,
-                              child: !aPhoto
-                                  ? Text(
-                                      initiales,
-                                      style: const TextStyle(
-                                        color: AppTheme.primary,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 14,
-                                      ),
-                                    )
-                                  : null,
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Builder(
-                            builder: (context) {
-                              final user = AuthService.instance.utilisateurCourant;
-                              final String prenom = (user?.nomComplet.isNotEmpty ?? false)
-                                  ? user!.nomComplet.split(' ').first
-                                  : "Commerçant";
-                              final String quartier = (user?.structure?.isNotEmpty ?? false)
-                                  ? user!.structure!
-                                  : "Grand Marché, Bamako";
-
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            return Expanded(
+                              child: Row(
                                 children: [
-                                  Text(
-                                    "Bonjour $prenom 👋",
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.textPrimary,
+                                  CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+                                    backgroundImage: aPhoto
+                                        ? NetworkImage(ApiConfig.resolutionImageUrl(user.photoUrl))
+                                        : null,
+                                    child: !aPhoto
+                                        ? Text(
+                                            initiales,
+                                            style: const TextStyle(
+                                              color: AppTheme.primary,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 14,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Bonjour $prenom 👋",
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppTheme.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.location_on, size: 13, color: AppTheme.secondary),
+                                            const SizedBox(width: 4),
+                                            Expanded(
+                                              child: Text(
+                                                quartier,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontSize: 11.5,
+                                                  color: AppTheme.textMuted,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, size: 13, color: AppTheme.secondary),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        quartier,
-                                        style: const TextStyle(
-                                          fontSize: 11.5,
-                                          color: AppTheme.textMuted,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 ],
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          },
                         ),
 
                         // Bouton d'accès direct à Mes Favoris avec Badge de compteur
@@ -233,23 +255,65 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                           ),
                         ),
 
-                        // Cloche de notifications
+                        // Cloche de notifications avec Badge dynamique
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE8E0D7)),
+                            border: Border.all(
+                              color: _nbNotifsNonLues > 0
+                                  ? AppTheme.primary.withValues(alpha: 0.3)
+                                  : const Color(0xFFE8E0D7),
+                            ),
                           ),
-                          child: IconButton(
-                            icon: const Icon(Icons.notifications_none, color: AppTheme.textPrimary),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Notifications : Aucune nouvelle alerte pour l'instant."),
-                                  duration: Duration(seconds: 2),
+                          child: Stack(
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  _nbNotifsNonLues > 0
+                                      ? Icons.notifications_active_rounded
+                                      : Icons.notifications_none_rounded,
+                                  color: _nbNotifsNonLues > 0
+                                      ? AppTheme.primary
+                                      : AppTheme.textPrimary,
+                                  size: 22,
                                 ),
-                              );
-                            },
+                                tooltip: "Notifications",
+                                onPressed: () async {
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const NotificationsCommercantScreen(),
+                                    ),
+                                  );
+                                  _chargerNotifsNonLues();
+                                },
+                              ),
+                              if (_nbNotifsNonLues > 0)
+                                Positioned(
+                                  top: 6,
+                                  right: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFE53935),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      "$_nbNotifsNonLues",
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ],

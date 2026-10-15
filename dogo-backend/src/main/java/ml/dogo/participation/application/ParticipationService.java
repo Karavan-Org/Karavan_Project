@@ -136,6 +136,9 @@ public class ParticipationService {
                 evenements.publishEvent(new Evenements.ParticipationAnnulee(p.getId(), p.getGroupeId(),
                         commercantId, p.getQuantite(), true, "ANNULATION_CLIENT"));
             }
+            case ANNULEE -> {
+                // Idempotence : la participation est déjà annulée, on retourne simplement sa vue à jour
+            }
             default -> throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, "RG-31",
                     "Cette participation ne peut plus être annulée (" + avant + ")");
         }

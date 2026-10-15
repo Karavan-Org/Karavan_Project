@@ -11,6 +11,7 @@ class CommercantOtpScreen extends StatefulWidget {
   final String numeroTelephone;
   final RoleActeur role;
   final String? codeSimulation;
+  final String? nom;
 
   /// Mot de passe choisi à l'inscription : permet d'ouvrir la session juste après la vérification
   final String? motDePasse;
@@ -21,6 +22,7 @@ class CommercantOtpScreen extends StatefulWidget {
     this.numeroTelephone = "+223 70 12 34 56",
     this.role = RoleActeur.commercant,
     this.codeSimulation,
+    this.nom,
     this.motDePasse,
     this.pin,
   });
@@ -39,15 +41,17 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
   int _secondesRestantes = 45;
   Timer? _timer;
   bool _isLoading = false;
+  String? _codeSimulationCourant;
 
   @override
   void initState() {
     super.initState();
+    _codeSimulationCourant = widget.codeSimulation;
     _demarrerTimer();
     // Pré-remplir automatiquement le code en mode simulation/test
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Le backend ne renvoie le code qu'en profil demo (dogo.otp.afficher-dans-reponse)
-      final codeToFill = widget.codeSimulation ?? '';
+      final codeToFill = _codeSimulationCourant ?? '';
       if (codeToFill.length >= 4) {
         for (int i = 0; i < 4; i++) {
           _controllers[i].text = codeToFill[i];
@@ -99,25 +103,36 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
       );
       if (!mounted) return;
 
+      final secret = widget.motDePasse ?? widget.pin;
+      if (secret != null && secret.isNotEmpty) {
+        try {
+          await AuthService.instance.connecter(
+            telephone: widget.numeroTelephone,
+            motDePasse: secret,
+            pin: secret,
+          );
+          await AuthService.instance.rechargerProfil();
+        } catch (_) {}
+      }
+
+      if (!mounted) return;
+
       switch (widget.role) {
         case RoleActeur.grossiste:
-          // Le compte attend son dossier KYC (RG-03) : on ouvre la session pour le déposer
-          final secret = widget.motDePasse ?? widget.pin;
-          if (secret != null) {
-            final profil = await AuthService.instance.connecter(
-              telephone: widget.numeroTelephone,
-              motDePasse: secret,
-              pin: secret,
-            );
-            final destination = await ecranGrossisteSelonDossier(profil);
-            if (!mounted) return;
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => destination),
-              (route) => false,
-            );
-          } else {
-            Navigator.of(context).pushNamedAndRemoveUntil('/onboarding', (route) => false);
-          }
+          final profil = AuthService.instance.profilActuel ??
+              UtilisateurProfil(
+                id: 0,
+                type: 'GROSSISTE',
+                nom: widget.nom ?? 'Grossiste Partenaire',
+                telephone: widget.numeroTelephone,
+                statut: 'EN_ATTENTE_VALIDATION',
+              );
+          final destination = await ecranGrossisteSelonDossier(profil);
+          if (!mounted) return;
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => destination),
+            (route) => false,
+          );
           return;
         case RoleActeur.courtier:
           Navigator.of(context).pushNamedAndRemoveUntil('/courtier', (route) => false);
@@ -135,6 +150,43 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
           backgroundColor: const Color(0xFFC0392B),
         ),
       );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _renvoyerCode() async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await AuthService.instance.renvoyerOtp(telephone: widget.numeroTelephone);
+      final nouveauCode = res['codeOtp']?.toString();
+      if (mounted) {
+        setState(() {
+          if (nouveauCode != null && nouveauCode.isNotEmpty) {
+            _codeSimulationCourant = nouveauCode;
+            for (int i = 0; i < 4 && i < nouveauCode.length; i++) {
+              _controllers[i].text = nouveauCode[i];
+            }
+          }
+        });
+        _demarrerTimer();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Un nouveau code SMS (valable 2 min) vous a été envoyé."),
+            backgroundColor: Color(0xFFA67954),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final message = e is ApiException ? e.messageComplet : "Impossible de renvoyer le code : $e";
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: const Color(0xFFC0392B),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -223,14 +275,22 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                         color: Color(0xFF1E1E24),
                       ),
                     ),
+                    const TextSpan(
+                      text: "\n(Code valable 2 minutes)",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFA67954),
+                      ),
+                    ),
                   ],
                 ),
               ),
 
               const SizedBox(height: 18),
 
-              // BANIÈRE MODE DÉMO : seulement si le serveur a renvoyé le code
-              if (widget.codeSimulation != null)
+              // BANNIÈRE MODE DÉMO : seulement si le serveur a renvoyé le code
+              if (_codeSimulationCourant != null)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
@@ -245,7 +305,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        "Code de test (mode démo) : ${widget.codeSimulation}",
+                        "Code de test (valable 2 min) : $_codeSimulationCourant",
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -346,17 +406,9 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
 
               // 5. LIEN "RENVOYER LE CODE (00:45)"
               TextButton(
-                onPressed: _secondesRestantes == 0
-                    ? () {
-                        _demarrerTimer();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Un nouveau code SMS vous a été envoyé."),
-                            backgroundColor: camelColor,
-                          ),
-                        );
-                      }
-                    : null,
+                onPressed: _isLoading
+                    ? null
+                    : (_secondesRestantes == 0 ? _renvoyerCode : null),
                 child: Text(
                   _secondesRestantes > 0
                       ? "Renvoyer le code ($timerText)"

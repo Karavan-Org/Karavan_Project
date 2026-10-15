@@ -9,6 +9,8 @@ class UtilisateurProfil {
   final String? photoUrl;
   final String statut;
   final List<String> permissions;
+  final String? nomStructure;
+  final String? quartier;
 
   const UtilisateurProfil({
     required this.id,
@@ -18,9 +20,30 @@ class UtilisateurProfil {
     this.photoUrl,
     required this.statut,
     this.permissions = const [],
+    this.nomStructure,
+    this.quartier,
   });
 
   factory UtilisateurProfil.fromJson(Map<String, dynamic> json) {
+    String? struct;
+    String? q;
+
+    final details = json['details'];
+    if (details is Map<String, dynamic>) {
+      struct = details['nomBoutique']?.toString() ??
+          details['nomBoutiqueMarche']?.toString() ??
+          details['nomSocieteImport']?.toString();
+      q = details['quartierBamako']?.toString();
+    }
+
+    struct ??= json['nomBoutique']?.toString() ??
+        json['nomBoutiqueMarche']?.toString() ??
+        json['nomSocieteImport']?.toString() ??
+        json['nomStructure']?.toString() ??
+        json['structure']?.toString();
+
+    q ??= json['quartierBamako']?.toString() ?? json['quartier']?.toString();
+
     return UtilisateurProfil(
       id: json['id'] as int? ?? 1,
       type: json['type'] as String? ?? 'COMMERCANT',
@@ -29,6 +52,8 @@ class UtilisateurProfil {
       photoUrl: json['photoUrl'] as String?,
       statut: json['statut'] as String? ?? 'ACTIF',
       permissions: (json['permissions'] as List<dynamic>?)?.map((p) => p.toString()).toList() ?? [],
+      nomStructure: struct,
+      quartier: q,
     );
   }
 
@@ -40,6 +65,8 @@ class UtilisateurProfil {
     'photoUrl': photoUrl,
     'statut': statut,
     'permissions': permissions,
+    'nomStructure': nomStructure,
+    'quartier': quartier,
   };
 
   UtilisateurProfil copyWith({
@@ -50,6 +77,8 @@ class UtilisateurProfil {
     String? photoUrl,
     String? statut,
     List<String>? permissions,
+    String? nomStructure,
+    String? quartier,
   }) {
     return UtilisateurProfil(
       id: id ?? this.id,
@@ -59,11 +88,13 @@ class UtilisateurProfil {
       photoUrl: photoUrl ?? this.photoUrl,
       statut: statut ?? this.statut,
       permissions: permissions ?? this.permissions,
+      nomStructure: nomStructure ?? this.nomStructure,
+      quartier: quartier ?? this.quartier,
     );
   }
 
   String get nomComplet => nom;
-  String? get structure => null;
+  String? get structure => nomStructure;
 
   RoleActeur get roleActeur {
     switch (type.toUpperCase()) {

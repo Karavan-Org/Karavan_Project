@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
 import 'api/api_exception.dart';
+import 'auth_service.dart';
 
 /// Types de pièces acceptés par le backend (ml.dogo.identite.domain.TypeDocument)
 enum TypeDocumentKyc { pieceIdentite, registreCommerce, nif, releveBancaire, autre }
@@ -23,6 +24,35 @@ class PieceKyc {
   final Uint8List octets;
 
   const PieceKyc({required this.type, required this.nomFichier, required this.octets});
+}
+
+/// Modèle alternatif / adaptateur pour l'UI de soumission de documents
+class PieceDocumentKyc {
+  final dynamic type;
+  final String nomFichier;
+  final Uint8List octets;
+
+  const PieceDocumentKyc({
+    required this.type,
+    required this.nomFichier,
+    required this.octets,
+  });
+
+  TypeDocumentKyc get typeKyc {
+    if (type is TypeDocumentKyc) return type as TypeDocumentKyc;
+    final str = type.toString().toUpperCase();
+    if (str.contains('IDENTITE')) return TypeDocumentKyc.pieceIdentite;
+    if (str.contains('COMMERCE')) return TypeDocumentKyc.registreCommerce;
+    if (str.contains('NIF')) return TypeDocumentKyc.nif;
+    if (str.contains('BANCAIRE')) return TypeDocumentKyc.releveBancaire;
+    return TypeDocumentKyc.autre;
+  }
+
+  PieceKyc toPieceKyc() => PieceKyc(
+        type: typeKyc,
+        nomFichier: nomFichier,
+        octets: octets,
+      );
 }
 
 /// Dossier KYC tel que renvoyé par GET /api/kyc/moi
@@ -88,6 +118,26 @@ class KycApiService {
     } on ApiException catch (e) {
       if (e.statusCode == 404) return null;
       rethrow;
+    }
+  }
+
+  /// Dépose le dossier via liste de PieceDocumentKyc (utilisé par le formulaire Grossiste)
+  Future<DossierKyc> soumettreDossier({required List<PieceDocumentKyc> pieces}) async {
+    return soumettre(pieces.map((p) => p.toPieceKyc()).toList());
+  }
+
+  /// Vérifie le statut du compte et du dossier KYC
+  Future<Map<String, dynamic>?> verifierStatutCompte() async {
+    try {
+      final profil = await AuthService.instance.rechargerProfil();
+      final dossier = await monDossier();
+      return {
+        'statut': profil?.statut ?? dossier?.statut ?? 'EN_ATTENTE',
+        'dossierStatut': dossier?.statut,
+        'motifRejet': dossier?.motifRejet,
+      };
+    } catch (_) {
+      return null;
     }
   }
 

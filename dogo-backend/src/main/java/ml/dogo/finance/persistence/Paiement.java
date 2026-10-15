@@ -25,7 +25,7 @@ public class Paiement {
     @Column(name = "participation_id", nullable = false, updatable = false)
     private Long participationId;
 
-    @Column(name = "moyen_paiement_id", nullable = false, updatable = false)
+    @Column(name = "moyen_paiement_id", updatable = false)
     private Long moyenPaiementId;
 
     @Column(nullable = false, updatable = false)

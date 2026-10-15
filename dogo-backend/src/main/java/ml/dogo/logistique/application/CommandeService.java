@@ -33,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CommandeService {
 
-    public record PointVue(long id, String nom, String adresse, String quartier) {
+    public record PointVue(long id, String nom, String adresse, String quartier, String lienGoogleMap) {
     }
 
     /** {@code commercantId} et {@code commercantNom} sont vides pour le Grossiste, qui ne voit jamais l'identité de l'acheteur (RG-71). */
@@ -166,10 +166,81 @@ public class CommandeService {
         for (Commande c : duGroupe) {
             c.changerStatut(StatutCommande.EN_ATTENTE_RETRAIT);
             c.affecterPointRetrait(point.getId());
-            retraits.genererCode(c, point.getNom());
+            retraits.genererCode(c, point.getNom(), point.getLienGoogleMap(), point.getAdresse());
         }
         audit.tracer(acteur.id(), "ARRIVEE_POINT_RETRAIT", "groupe=" + groupeId,
                 "point=" + point.getId() + ", " + duGroupe.size() + " commande(s)");
+        return duGroupe.stream().map(c -> vue(c, g, Vision.COMPLETE)).toList();
+    }
+
+    /**
+     * L'administrateur valide l'arrivée au dépôt et envoie la notification contenant la localisation Google Maps
+     * prélevée directement sur le point de retrait configuré.
+     */
+    @Transactional
+    public List<CommandeVue> notifierArriveeDepot(UtilisateurCourant acteur, long groupeId, long pointRetraitId) {
+        if (!acteur.estAdministrateur()) {
+            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Seul un administrateur peut valider et notifier l'arrivée au dépôt");
+        }
+        GroupeAchatApi.GroupeInfo g = campagne.groupe(groupeId)
+                .orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
+        PointRetrait point = points.findById(pointRetraitId)
+                .orElseThrow(() -> ErreurMetier.nonTrouve("Point de retrait", pointRetraitId));
+
+        if ("OBJECTIF_ATTEINT".equals(g.statut())) {
+            campagne.transitionner(groupeId, "EN_EXPEDITION", "ADMIN");
+            campagne.transitionner(groupeId, "LIVRE", "ADMIN");
+        } else if ("EN_EXPEDITION".equals(g.statut())) {
+            campagne.transitionner(groupeId, "LIVRE", "ADMIN");
+        }
+
+        List<Commande> duGroupe = actives(commandes.verrouillerDuGroupe(groupeId), groupeId);
+        java.util.Set<Long> commercantsNotifies = new java.util.HashSet<>();
+        for (Commande c : duGroupe) {
+            boolean codeGenere = false;
+            if (c.getStatut() == StatutCommande.CREEE) {
+                c.changerStatut(StatutCommande.PREPAREE);
+            }
+            if (c.getStatut() == StatutCommande.PREPAREE) {
+                c.changerStatut(StatutCommande.EXPEDIEE);
+            }
+            if (c.getStatut() == StatutCommande.EXPEDIEE) {
+                c.changerStatut(StatutCommande.ARRIVEE);
+            }
+            if (c.getStatut() == StatutCommande.ARRIVEE) {
+                c.changerStatut(StatutCommande.EN_ATTENTE_RETRAIT);
+                c.affecterPointRetrait(point.getId());
+                retraits.genererCode(c, point.getNom(), point.getLienGoogleMap(), point.getAdresse());
+                codeGenere = true;
+            } else if (c.getStatut() == StatutCommande.EN_ATTENTE_RETRAIT) {
+                c.affecterPointRetrait(point.getId());
+            }
+            if (codeGenere) {
+                commercantsNotifies.add(c.getCommercantId());
+            }
+        }
+
+        String mapTexte = (point.getLienGoogleMap() != null && !point.getLienGoogleMap().isBlank())
+                ? " Localisation Google Maps : " + point.getLienGoogleMap().strip()
+                : "";
+        String adrTexte = (point.getAdresse() != null && !point.getAdresse().isBlank())
+                ? " (" + point.getAdresse().strip() + ")"
+                : "";
+
+        String messageNotif = "Colis arrivé au dépôt ! Votre colis pour le groupe #" + groupeId + " (« " + g.produitNom() + " ») est disponible au dépôt "
+                + point.getNom() + adrTexte + " !" + mapTexte + " Vous pouvez venir récupérer votre commande avec votre code de retrait.";
+
+        // Notifier uniquement les commerçants qui n'ont pas déjà reçu de notification lors de cette étape
+        for (Commande c : duGroupe) {
+            if (!commercantsNotifies.contains(c.getCommercantId())) {
+                notifications.notifier(c.getCommercantId(), messageNotif);
+                commercantsNotifies.add(c.getCommercantId());
+            }
+        }
+
+        audit.tracer(acteur.id(), "NOTIFICATION_DEPOT_ENVOYEE", "groupe=" + groupeId,
+                "point=" + point.getId() + " (" + point.getNom() + "), " + duGroupe.size() + " commande(s)");
+
         return duGroupe.stream().map(c -> vue(c, g, Vision.COMPLETE)).toList();
     }
 
@@ -245,7 +316,7 @@ public class CommandeService {
         Optional<ParticipationApi.ParticipationInfo> p = participations.participation(c.getParticipationId());
         Optional<CatalogueApi.VarianteInfo> v = p.flatMap(pi -> catalogue.variante(pi.varianteId()));
         PointVue point = c.getPointRetraitId() == null ? null
-                : points.findById(c.getPointRetraitId()).map(x -> new PointVue(x.getId(), x.getNom(), x.getAdresse(), x.getQuartier())).orElse(null);
+                : points.findById(c.getPointRetraitId()).map(x -> new PointVue(x.getId(), x.getNom(), x.getAdresse(), x.getQuartier(), x.getLienGoogleMap())).orElse(null);
         boolean avecAcheteur = vision == Vision.COMPLETE;
         String nom = avecAcheteur ? identite.acteur(c.getCommercantId()).map(IdentiteApi.ActeurInfo::nom).orElse(null) : null;
         return new CommandeVue(c.getId(), c.getParticipationId(), c.getGroupeId(), g.produitNom(),
