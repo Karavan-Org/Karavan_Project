@@ -45,6 +45,7 @@ class ApiConfig {
   static const String notifications = '/api/moi/notifications';
   static const String moi = '/api/moi';
   static const String photoProfil = '/api/moi/photo';
+  static const String changerMotDePasse = '/api/moi/mot-de-passe';
   static const String verifierOtp = '/api/auth/verifier-otp';
   static const String renvoyerOtp = '/api/auth/renvoyer-otp';
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
+import '../services/validateur_mot_de_passe.dart';
 import '../theme/app_theme.dart';
 import 'grossiste_acces.dart';
 import 'grossiste_inscription_screen.dart';
@@ -13,7 +14,8 @@ class GrossisteConnexionScreen extends StatefulWidget {
   const GrossisteConnexionScreen({super.key});
 
   @override
-  State<GrossisteConnexionScreen> createState() => _GrossisteConnexionScreenState();
+  State<GrossisteConnexionScreen> createState() =>
+      _GrossisteConnexionScreenState();
 }
 
 class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
@@ -34,11 +36,13 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
     final telephone = _telephoneController.text.trim();
     final motDePasse = _pinController.text.trim();
     if (telephone.length < 8) {
-      afficherErreur(context, "Veuillez renseigner un numéro de téléphone valide");
+      afficherErreur(
+          context, "Veuillez renseigner un numéro de téléphone valide");
       return;
     }
-    if (motDePasse.length < 8) {
-      afficherErreur(context, "Le mot de passe doit comporter au moins 8 caractères");
+    final erreurMdp = ValidateurMotDePasse.validerConnexion(motDePasse);
+    if (erreurMdp != null) {
+      afficherErreur(context, erreurMdp);
       return;
     }
 
@@ -51,7 +55,9 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
       );
       if (profil.type != 'GROSSISTE') {
         AuthService.instance.deconnecter();
-        throw const ApiException(statusCode: 403, message: "Ce numéro n'est pas celui d'un compte Grossiste");
+        throw const ApiException(
+            statusCode: 403,
+            message: "Ce numéro n'est pas celui d'un compte Grossiste");
       }
       final destination = await ecranGrossisteSelonDossier(profil);
       if (!mounted) return;
@@ -61,7 +67,8 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      afficherErreur(context, e is ApiException ? e.messageComplet : 'Erreur de connexion : $e');
+      afficherErreur(context,
+          e is ApiException ? e.messageComplet : 'Erreur de connexion : $e');
     } finally {
       if (mounted) setState(() => _chargement = false);
     }
@@ -77,7 +84,10 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
           "Pour des raisons de sécurité, la réinitialisation du mot de passe se fait avec l'équipe d'intégration dɔgɔ. "
           "Contactez le support depuis votre agence ou par WhatsApp à Bamako.",
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Compris"))],
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text("Compris"))
+        ],
       ),
     );
   }
@@ -94,7 +104,10 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
             left: 12,
             right: 8,
             child: IgnorePointer(
-              child: SvgPicture.asset('assets/images/grossiste/connexion_watermark.svg', fit: BoxFit.fill, height: 266),
+              child: SvgPicture.asset(
+                  'assets/images/grossiste/connexion_watermark.svg',
+                  fit: BoxFit.fill,
+                  height: 266),
             ),
           ),
           SafeArea(
@@ -106,16 +119,21 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                     alignment: Alignment.centerLeft,
                     child: IconButton(
                       padding: const EdgeInsets.only(top: 12),
-                      icon: const Icon(Icons.arrow_back, color: AppTheme.primary, size: 30),
+                      icon: const Icon(Icons.arrow_back,
+                          color: AppTheme.primary, size: 30),
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
                   ),
-                  Image.asset('assets/images/logo_dogo.png', height: 72, fit: BoxFit.contain),
+                  Image.asset('assets/images/logo_dogo.png',
+                      height: 72, fit: BoxFit.contain),
                   const SizedBox(height: 18),
                   const Text(
                     "Bienvenue Grossiste !",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: CouleursArrivee.titreConnexion),
+                    style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: CouleursArrivee.titreConnexion),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -145,7 +163,9 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                     hauteur: 56,
                     suffixe: IconButton(
                       icon: Icon(
-                        _pinMasque ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        _pinMasque
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                         color: AppTheme.primary,
                         size: 20,
                       ),
@@ -162,44 +182,64 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                           width: 20,
                           height: 20,
                           decoration: BoxDecoration(
-                            color: _seSouvenir ? AppTheme.primary : Colors.white,
+                            color:
+                                _seSouvenir ? AppTheme.primary : Colors.white,
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: AppTheme.primary, width: 1.4),
+                            border:
+                                Border.all(color: AppTheme.primary, width: 1.4),
                           ),
-                          child: _seSouvenir ? const Icon(Icons.check, size: 15, color: Colors.white) : null,
+                          child: _seSouvenir
+                              ? const Icon(Icons.check,
+                                  size: 15, color: Colors.white)
+                              : null,
                         ),
                         const SizedBox(width: 10),
                         const Text(
                           "Se souvenir de moi",
-                          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                          style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primary),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 26),
-                  BoutonArrivee(libelle: "Se connecter", chargement: _chargement, onPressed: _seConnecter),
+                  BoutonArrivee(
+                      libelle: "Se connecter",
+                      chargement: _chargement,
+                      onPressed: _seConnecter),
                   const SizedBox(height: 22),
                   GestureDetector(
                     onTap: _pinOublie,
                     child: const Text(
                       "Mot de passe oublié ?",
-                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                      style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primary),
                     ),
                   ),
                   const SizedBox(height: 84),
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const GrossisteInscriptionScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const GrossisteInscriptionScreen()),
                     ),
                     child: const Text.rich(
                       TextSpan(
-                        style: TextStyle(fontSize: 13.5, color: AppTheme.primary),
+                        style:
+                            TextStyle(fontSize: 13.5, color: AppTheme.primary),
                         children: [
                           TextSpan(text: "Pas encore de compte ? "),
-                          TextSpan(text: " | ", style: TextStyle(color: Color(0xFFCBD5E1))),
+                          TextSpan(
+                              text: " | ",
+                              style: TextStyle(color: Color(0xFFCBD5E1))),
                           TextSpan(
                             text: "S'inscrire",
-                            style: TextStyle(fontWeight: FontWeight.w700, decoration: TextDecoration.underline),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                decoration: TextDecoration.underline),
                           ),
                         ],
                       ),

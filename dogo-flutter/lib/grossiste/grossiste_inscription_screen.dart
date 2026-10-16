@@ -5,6 +5,7 @@ import '../commercant/commercant_otp_screen.dart';
 import '../models/role_acteur.dart';
 import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
+import '../services/validateur_mot_de_passe.dart';
 import '../theme/app_theme.dart';
 import 'grossiste_onboarding_widgets.dart';
 
@@ -13,15 +14,19 @@ class GrossisteInscriptionScreen extends StatefulWidget {
   const GrossisteInscriptionScreen({super.key});
 
   @override
-  State<GrossisteInscriptionScreen> createState() => _GrossisteInscriptionScreenState();
+  State<GrossisteInscriptionScreen> createState() =>
+      _GrossisteInscriptionScreenState();
 }
 
-class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen> {
+class _GrossisteInscriptionScreenState
+    extends State<GrossisteInscriptionScreen> {
   final _entrepriseController = TextEditingController();
   final _telephoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _pinController = TextEditingController();
+  final _confirmPinController = TextEditingController();
   bool _pinMasque = true;
+  bool _confirmMasque = true;
   bool _chargement = false;
 
   @override
@@ -30,6 +35,7 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
     _telephoneController.dispose();
     _emailController.dispose();
     _pinController.dispose();
+    _confirmPinController.dispose();
     super.dispose();
   }
 
@@ -38,21 +44,30 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
     final telephone = _telephoneController.text.trim();
     final email = _emailController.text.trim();
     final pin = _pinController.text.trim();
+    final confirm = _confirmPinController.text.trim();
 
     if (entreprise.isEmpty) {
       afficherErreur(context, "Veuillez renseigner le nom de l'entreprise");
       return;
     }
     if (telephone.replaceAll(RegExp(r'\D'), '').length < 8) {
-      afficherErreur(context, "Veuillez renseigner un numéro de téléphone valide");
+      afficherErreur(
+          context, "Veuillez renseigner un numéro de téléphone valide");
       return;
     }
-    if (email.isNotEmpty && !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+    if (email.isNotEmpty &&
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
       afficherErreur(context, "L'adresse email n'est pas valide");
       return;
     }
-    if (pin.length < 8) {
-      afficherErreur(context, "Le mot de passe doit comporter au moins 8 caractères");
+    final erreurMdp = ValidateurMotDePasse.validerCreation(pin);
+    if (erreurMdp != null) {
+      afficherErreur(context, erreurMdp);
+      return;
+    }
+    final erreurConf = ValidateurMotDePasse.validerConfirmation(pin, confirm);
+    if (erreurConf != null) {
+      afficherErreur(context, erreurConf);
       return;
     }
 
@@ -81,7 +96,8 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
       );
     } catch (e) {
       if (!mounted) return;
-      afficherErreur(context, e is ApiException ? e.messageComplet : "Erreur d'inscription : $e");
+      afficherErreur(context,
+          e is ApiException ? e.messageComplet : "Erreur d'inscription : $e");
     } finally {
       if (mounted) setState(() => _chargement = false);
     }
@@ -97,20 +113,29 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
           child: Column(
             children: [
               const SizedBox(height: 16),
-              Image.asset('assets/images/logo_dogo.png', height: 56, fit: BoxFit.contain),
+              Image.asset('assets/images/logo_dogo.png',
+                  height: 56, fit: BoxFit.contain),
               const SizedBox(height: 14),
-              SvgPicture.asset('assets/images/grossiste/port_scene.svg', width: 346, height: 86),
+              SvgPicture.asset('assets/images/grossiste/port_scene.svg',
+                  width: 346, height: 86),
               const SizedBox(height: 8),
               const Text(
                 "Rejoignez dɔgɔ\nen tant que grossiste",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 20.5, fontWeight: FontWeight.w700, color: CouleursArrivee.titre, height: 1.2),
+                style: TextStyle(
+                    fontSize: 20.5,
+                    fontWeight: FontWeight.w700,
+                    color: CouleursArrivee.titre,
+                    height: 1.2),
               ),
               const SizedBox(height: 10),
               const Text(
                 "Accédez à des milliers de commerçants\net vendez vos produits en toute sécurité.",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: CouleursArrivee.texteDoux, height: 1.4),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: CouleursArrivee.texteDoux,
+                    height: 1.4),
               ),
               const SizedBox(height: 18),
               ChampArrivee(
@@ -137,15 +162,20 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
               const SizedBox(height: 12),
               ChampArrivee(
                 icone: Icons.lock_outline,
-                indice: "Mot de passe (8 caractères minimum)",
+                indice: ValidateurMotDePasse.libelleMotDePasse,
                 obligatoire: true,
                 controller: _pinController,
                 clavier: TextInputType.visiblePassword,
-                formateurs: [LengthLimitingTextInputFormatter(64)],
+                formateurs: [
+                  LengthLimitingTextInputFormatter(
+                      ValidateurMotDePasse.maxLongueur)
+                ],
                 masque: _pinMasque,
                 suffixe: IconButton(
                   icon: Icon(
-                    _pinMasque ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    _pinMasque
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                     color: AppTheme.primary,
                     size: 20,
                   ),
@@ -157,19 +187,48 @@ class _GrossisteInscriptionScreenState extends State<GrossisteInscriptionScreen>
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    "Au moins 8 caractères, utilisé pour vous connecter",
-                    style: TextStyle(fontSize: 11, color: CouleursArrivee.indice),
+                    ValidateurMotDePasse.aideExigences,
+                    style:
+                        TextStyle(fontSize: 11, color: CouleursArrivee.indice),
                   ),
                 ),
               ),
+              const SizedBox(height: 12),
+              ChampArrivee(
+                icone: Icons.lock_outline,
+                indice: ValidateurMotDePasse.libelleConfirmation,
+                obligatoire: true,
+                controller: _confirmPinController,
+                clavier: TextInputType.visiblePassword,
+                formateurs: [
+                  LengthLimitingTextInputFormatter(
+                      ValidateurMotDePasse.maxLongueur)
+                ],
+                masque: _confirmMasque,
+                suffixe: IconButton(
+                  icon: Icon(
+                    _confirmMasque
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: AppTheme.primary,
+                    size: 20,
+                  ),
+                  onPressed: () =>
+                      setState(() => _confirmMasque = !_confirmMasque),
+                ),
+              ),
               const SizedBox(height: 20),
-              BoutonArrivee(libelle: "Créer mon compte", chargement: _chargement, onPressed: _creerCompte),
+              BoutonArrivee(
+                  libelle: "Créer mon compte",
+                  chargement: _chargement,
+                  onPressed: _creerCompte),
               const SizedBox(height: 26),
               GestureDetector(
                 onTap: () => Navigator.of(context).maybePop(),
                 child: const Text.rich(
                   TextSpan(
-                    style: TextStyle(fontSize: 13, color: CouleursArrivee.texteDoux),
+                    style: TextStyle(
+                        fontSize: 13, color: CouleursArrivee.texteDoux),
                     children: [
                       TextSpan(text: "Vous avez déjà un compte ? "),
                       TextSpan(

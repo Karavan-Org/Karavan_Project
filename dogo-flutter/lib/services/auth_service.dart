@@ -340,6 +340,20 @@ class AuthService {
     return profilActuel;
   }
 
+  /// Modification du mot de passe utilisateur (RG-07)
+  Future<void> changerMotDePasse({
+    required String ancienMotDePasse,
+    required String nouveauMotDePasse,
+  }) async {
+    await ApiClient.instance.post(
+      ApiConfig.changerMotDePasse,
+      body: {
+        'ancienMotDePasse': ancienMotDePasse,
+        'nouveauMotDePasse': nouveauMotDePasse,
+      },
+    );
+  }
+
   /// Déconnexion révoquant le refresh token côté serveur et effaçant le stockage sécurisé
   Future<void> deconnecter() async {
     final rt = await SessionStorageService.instance.lireRefreshToken();

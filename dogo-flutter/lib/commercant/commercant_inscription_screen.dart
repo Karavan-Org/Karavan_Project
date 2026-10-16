@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
 import '../services/auth_service.dart';
 import '../services/api/api_exception.dart';
+import '../services/validateur_mot_de_passe.dart';
 import 'commercant_otp_screen.dart';
 
 /// Écran d'Inscription conforme au modèle Figma exact et aux specs backend (mot de passe + infos métier)
@@ -15,10 +16,12 @@ class CommercantInscriptionScreen extends StatefulWidget {
   });
 
   @override
-  State<CommercantInscriptionScreen> createState() => _CommercantInscriptionScreenState();
+  State<CommercantInscriptionScreen> createState() =>
+      _CommercantInscriptionScreenState();
 }
 
-class _CommercantInscriptionScreenState extends State<CommercantInscriptionScreen> {
+class _CommercantInscriptionScreenState
+    extends State<CommercantInscriptionScreen> {
   final _nomController = TextEditingController();
   final _phoneController = TextEditingController();
   final _pinController = TextEditingController();
@@ -48,28 +51,34 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
 
     if (nom.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Veuillez renseigner votre nom complet ou raison sociale")),
+        const SnackBar(
+            content: Text(
+                "Veuillez renseigner votre nom complet ou raison sociale")),
       );
       return;
     }
 
     if (phone.isEmpty || phone.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Veuillez renseigner un numéro de téléphone valide")),
+        const SnackBar(
+            content: Text("Veuillez renseigner un numéro de téléphone valide")),
       );
       return;
     }
 
-    if (pin.length < 8) {
+    final erreurMdp = ValidateurMotDePasse.validerCreation(pin);
+    if (erreurMdp != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Le mot de passe doit comporter au moins 8 caractères")),
+        SnackBar(content: Text(erreurMdp)),
       );
       return;
     }
 
-    if (pin != confirmPin) {
+    final erreurConf =
+        ValidateurMotDePasse.validerConfirmation(pin, confirmPin);
+    if (erreurConf != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Les deux mots de passe saisis ne correspondent pas")),
+        SnackBar(content: Text(erreurConf)),
       );
       return;
     }
@@ -83,15 +92,31 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
         nom: nom,
         motDePasse: pin,
         pin: pin,
-        nomBoutique: widget.role == RoleActeur.commercant ? _extraField1Controller.text.trim() : null,
-        quartierBamako: widget.role == RoleActeur.commercant ? _extraField2Controller.text.trim() : null,
-        numeroNif: widget.role == RoleActeur.grossiste ? _extraField1Controller.text.trim() : null,
-        nomBoutiqueMarche: widget.role == RoleActeur.grossiste ? _extraField2Controller.text.trim() : null,
+        nomBoutique: widget.role == RoleActeur.commercant
+            ? _extraField1Controller.text.trim()
+            : null,
+        quartierBamako: widget.role == RoleActeur.commercant
+            ? _extraField2Controller.text.trim()
+            : null,
+        numeroNif: widget.role == RoleActeur.grossiste
+            ? _extraField1Controller.text.trim()
+            : null,
+        nomBoutiqueMarche: widget.role == RoleActeur.grossiste
+            ? _extraField2Controller.text.trim()
+            : null,
         nomSocieteImport: widget.role == RoleActeur.courtier
-            ? (_extraField2Controller.text.trim().isNotEmpty ? _extraField2Controller.text.trim() : nom)
-            : (widget.role == RoleActeur.grossiste ? _extraField2Controller.text.trim() : null),
-        licenceTransit: widget.role == RoleActeur.courtier ? _extraField1Controller.text.trim() : null,
-        adresseDepot: widget.role == RoleActeur.courtier ? _extraField2Controller.text.trim() : null,
+            ? (_extraField2Controller.text.trim().isNotEmpty
+                ? _extraField2Controller.text.trim()
+                : nom)
+            : (widget.role == RoleActeur.grossiste
+                ? _extraField2Controller.text.trim()
+                : null),
+        licenceTransit: widget.role == RoleActeur.courtier
+            ? _extraField1Controller.text.trim()
+            : null,
+        adresseDepot: widget.role == RoleActeur.courtier
+            ? _extraField2Controller.text.trim()
+            : null,
       );
 
       if (!mounted) return;
@@ -112,7 +137,9 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
       );
     } catch (e) {
       if (!mounted) return;
-      final message = e is ApiException ? e.messageComplet : 'Erreur d\'inscription : ${e.toString()}';
+      final message = e is ApiException
+          ? e.messageComplet
+          : 'Erreur d\'inscription : ${e.toString()}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -202,22 +229,25 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
 
               const SizedBox(height: 14),
 
-              // 4. CHAMP MOT DE PASSE (8 caractères minimum)
+              // 4. CHAMP MOT DE PASSE
               _buildFigmaInputField(
                 icon: Icons.lock_outline,
-                label: "Mot de passe (8 caractères minimum)",
-                hint: "•••••••• (Au moins 8 caractères)",
+                label: ValidateurMotDePasse.libelleMotDePasse,
+                hint: "Au moins 8 car. (1 maj, 1 min, 1 chiffre)",
                 controller: _pinController,
                 obscureText: _obscurePin,
                 keyboardType: TextInputType.visiblePassword,
                 inputFormatters: [
-                  LengthLimitingTextInputFormatter(64),
+                  LengthLimitingTextInputFormatter(
+                      ValidateurMotDePasse.maxLongueur),
                 ],
                 borderColor: borderColor,
                 camelColor: camelColor,
                 trailing: IconButton(
                   icon: Icon(
-                    _obscurePin ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    _obscurePin
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                     color: camelColor,
                     size: 20,
                   ),
@@ -232,19 +262,22 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
               // 5. CHAMP CONFIRMATION DU MOT DE PASSE
               _buildFigmaInputField(
                 icon: Icons.lock_outline,
-                label: "Confirmer le mot de passe",
-                hint: "•••••••• (Répéter le mot de passe)",
+                label: ValidateurMotDePasse.libelleConfirmation,
+                hint: "Répétez votre mot de passe à l'identique",
                 controller: _confirmPinController,
                 obscureText: _obscureConfirmPin,
                 keyboardType: TextInputType.visiblePassword,
                 inputFormatters: [
-                  LengthLimitingTextInputFormatter(64),
+                  LengthLimitingTextInputFormatter(
+                      ValidateurMotDePasse.maxLongueur),
                 ],
                 borderColor: borderColor,
                 camelColor: camelColor,
                 trailing: IconButton(
                   icon: Icon(
-                    _obscureConfirmPin ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    _obscureConfirmPin
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                     color: camelColor,
                     size: 20,
                   ),
@@ -331,7 +364,8 @@ class _CommercantInscriptionScreenState extends State<CommercantInscriptionScree
                     ? const SizedBox(
                         width: 22,
                         height: 22,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.2),
                       )
                     : const Text(
                         "S'inscrire",

@@ -115,12 +115,19 @@ public class ConvoiService {
         if (d.reference() == null || d.reference().isBlank()) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, null, "La référence du convoi est obligatoire");
         }
+        GroupeAchatApi.GroupeInfo g = groupes.groupe(d.groupeId())
+                .orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", d.groupeId()));
+        if (g.quantiteConfirmee() < g.quantiteCible() && !"OBJECTIF_ATTEINT".equals(g.statut()) && !"EN_EXPEDITION".equals(g.statut()) && !"LIVRE".equals(g.statut())) {
+            throw new ErreurMetier(CodeErreur.ACTION_IMPOSSIBLE, null,
+                    "Ce groupe n'a pas atteint l'objectif (progression inférieure à 100%).");
+        }
+        if (expeditions.findByGroupeId(d.groupeId()).isPresent()) {
+            throw new ErreurMetier(CodeErreur.CONFLIT, null, "Un convoi existe déjà pour ce groupe d'achat");
+        }
         if (!moi.estAdministrateur()) {
             if (!"COURTIER".equals(moi.type())) {
                 throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Seul le courtier responsable peut créer un convoi");
             }
-            GroupeAchatApi.GroupeInfo g = groupes.groupe(d.groupeId())
-                    .orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", d.groupeId()));
             if (g.porteParGrossiste() || g.courtierId() != moi.id()) {
                 throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Seul le courtier responsable de ce groupe peut créer son convoi");
             }

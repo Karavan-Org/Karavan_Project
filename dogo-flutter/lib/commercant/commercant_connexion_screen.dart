@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
 import '../services/auth_service.dart';
 import '../services/api/api_exception.dart';
+import '../services/validateur_mot_de_passe.dart';
 import 'commercant_inscription_screen.dart';
 
 /// Écran de Connexion conforme au modèle Figma exact et aux specs backend (PIN)
@@ -15,7 +16,8 @@ class CommercantConnexionScreen extends StatefulWidget {
   });
 
   @override
-  State<CommercantConnexionScreen> createState() => _CommercantConnexionScreenState();
+  State<CommercantConnexionScreen> createState() =>
+      _CommercantConnexionScreenState();
 }
 
 class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
@@ -38,14 +40,16 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
 
     if (phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Veuillez renseigner votre numéro de téléphone")),
+        const SnackBar(
+            content: Text("Veuillez renseigner votre numéro de téléphone")),
       );
       return;
     }
 
-    if (pin.length < 8) {
+    final erreurMdp = ValidateurMotDePasse.validerConnexion(pin);
+    if (erreurMdp != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Le mot de passe doit contenir au moins 8 caractères")),
+        SnackBar(content: Text(erreurMdp)),
       );
       return;
     }
@@ -72,7 +76,9 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
       Navigator.of(context).pushReplacementNamed(route);
     } catch (e) {
       if (!mounted) return;
-      final message = e is ApiException ? e.messageComplet : 'Erreur de connexion : ${e.toString()}';
+      final message = e is ApiException
+          ? e.messageComplet
+          : 'Erreur de connexion : ${e.toString()}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -153,7 +159,9 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
                 camelColor: camelColor,
                 trailing: IconButton(
                   icon: Icon(
-                    _obscurePin ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    _obscurePin
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                     color: camelColor,
                     size: 20,
                   ),
@@ -190,7 +198,8 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
                             ),
                           ),
                           child: _rememberMe
-                              ? const Icon(Icons.check, size: 13, color: Colors.white)
+                              ? const Icon(Icons.check,
+                                  size: 13, color: Colors.white)
                               : null,
                         ),
                         const SizedBox(width: 8),
@@ -212,7 +221,8 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Un SMS de réinitialisation de votre mot de passe vous a été envoyé."),
+                          content: Text(
+                              "Un SMS de réinitialisation de votre mot de passe vous a été envoyé."),
                           backgroundColor: camelColor,
                         ),
                       );
@@ -252,7 +262,8 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
                     ? const SizedBox(
                         width: 22,
                         height: 22,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.2),
                       )
                     : const Text(
                         "Se connecter",
@@ -282,7 +293,8 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => CommercantInscriptionScreen(role: widget.role),
+                          builder: (_) =>
+                              CommercantInscriptionScreen(role: widget.role),
                         ),
                       );
                     },

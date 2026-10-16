@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import 'suivi_colis_service.dart';
+import '../widgets/itineraire_depot.dart';
 import 'code_retrait_commercant_screen.dart';
+import 'suivi_colis_service.dart';
 
 /// Écran complet de Suivi de Colis pour le Commerçant
 /// Affiche la jauge d'avancement calculée strictement sur le nombre d'étapes prescrites
@@ -28,7 +30,8 @@ class SuiviColisScreen extends StatelessWidget {
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text("Aide logistique DoGo : Contactez le hub Dabanani au +223 70 00 00 00."),
+                  content: Text(
+                      "Aide logistique DoGo : Contactez le hub Dabanani au +223 70 00 00 00."),
                   duration: Duration(seconds: 3),
                 ),
               );
@@ -42,7 +45,8 @@ class SuiviColisScreen extends StatelessWidget {
           if (colis == null) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -132,9 +136,11 @@ class SuiviColisScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: AppTheme.secondary.withValues(alpha: 0.15),
+                                color:
+                                    AppTheme.secondary.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -205,9 +211,11 @@ class SuiviColisScreen extends StatelessWidget {
                                 Row(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.25),
+                                        color: Colors.white
+                                            .withValues(alpha: 0.25),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Text(
@@ -237,7 +245,8 @@ class SuiviColisScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20),
@@ -257,7 +266,8 @@ class SuiviColisScreen extends StatelessWidget {
 
                       // Barre de progression animée fluidement selon le ratio prescrit (k / N)
                       TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 0.0, end: colis.pourcentageProgression),
+                        tween: Tween<double>(
+                            begin: 0.0, end: colis.pourcentageProgression),
                         duration: const Duration(milliseconds: 600),
                         curve: Curves.easeInOut,
                         builder: (context, value, _) {
@@ -266,8 +276,10 @@ class SuiviColisScreen extends StatelessWidget {
                             child: LinearProgressIndicator(
                               value: value,
                               minHeight: 12,
-                              backgroundColor: Colors.black.withValues(alpha: 0.25),
-                              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.secondary),
+                              backgroundColor:
+                                  Colors.black.withValues(alpha: 0.25),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                  AppTheme.secondary),
                             ),
                           );
                         },
@@ -288,7 +300,9 @@ class SuiviColisScreen extends StatelessWidget {
                             height: 28,
                             decoration: BoxDecoration(
                               color: estAtteint
-                                  ? (estEnCours ? AppTheme.secondary : Colors.white)
+                                  ? (estEnCours
+                                      ? AppTheme.secondary
+                                      : Colors.white)
                                   : Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                               border: estEnCours
@@ -314,7 +328,8 @@ class SuiviColisScreen extends StatelessWidget {
                                   : Text(
                                       "$stepNum",
                                       style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.6),
+                                        color:
+                                            Colors.white.withValues(alpha: 0.6),
                                         fontWeight: FontWeight.w700,
                                         fontSize: 11.5,
                                       ),
@@ -335,7 +350,8 @@ class SuiviColisScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF9EC),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.secondary.withValues(alpha: 0.3)),
+                    border: Border.all(
+                        color: AppTheme.secondary.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,7 +444,8 @@ class SuiviColisScreen extends StatelessWidget {
                     icon: const Icon(Icons.qr_code, size: 22),
                     label: const Text(
                       "Retirer mon colis (QR Code & PIN)",
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.success,
@@ -440,27 +457,55 @@ class SuiviColisScreen extends StatelessWidget {
                     ),
                   ),
 
-                const SizedBox(height: 12),
-
-                // Bouton de simulation interactive pour tester la validation par le grossiste / admin
-                OutlinedButton.icon(
-                  onPressed: () {
-                    SuiviColisService.instance.avancerEtapeSuivante(context);
-                  },
-                  icon: const Icon(Icons.play_circle_outline, size: 20),
-                  label: Text(
-                    "Simuler validation étape Grossiste → Admin (${colis.etapeActuelle}/$totalPrescrit)",
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primary,
-                    side: const BorderSide(color: AppTheme.primary, width: 1.5),
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                if (colis.pointRetrait.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      afficherItineraireDepot(
+                        context,
+                        nomDepot: colis.pointRetrait,
+                        adresse: colis.pointRetrait,
+                      );
+                    },
+                    icon: const Icon(Icons.location_on_outlined, size: 20),
+                    label: Text(
+                      "Localiser le point relais (${colis.pointRetrait})",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 13.5),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primary,
+                      side:
+                          const BorderSide(color: AppTheme.primary, width: 1.5),
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30)),
                     ),
                   ),
-                ),
+                ],
+
+                // Action de simulation pour tests locaux (masquée en production)
+                if (kDebugMode) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      SuiviColisService.instance.avancerEtapeSuivante(context);
+                    },
+                    icon: const Icon(Icons.play_circle_outline, size: 18),
+                    label: Text(
+                      "Simulation test étape (${colis.etapeActuelle}/$totalPrescrit)",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 12),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF8C7E74),
+                      side: const BorderSide(color: Color(0xFFD6CBC0)),
+                      minimumSize: const Size(double.infinity, 42),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 30),
               ],
@@ -532,14 +577,19 @@ class SuiviColisScreen extends StatelessWidget {
                         etape.titre,
                         style: TextStyle(
                           fontSize: 13.5,
-                          fontWeight: estEnCours || estValidee ? FontWeight.w800 : FontWeight.w600,
-                          color: estFutur ? AppTheme.textMuted : AppTheme.textPrimary,
+                          fontWeight: estEnCours || estValidee
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: estFutur
+                              ? AppTheme.textMuted
+                              : AppTheme.textPrimary,
                         ),
                       ),
                     ),
                     if (estEnCours)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: AppTheme.secondary.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(10),
@@ -567,7 +617,8 @@ class SuiviColisScreen extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(Icons.person_pin_outlined, size: 13, color: pointColor),
+                    Icon(Icons.person_pin_outlined,
+                        size: 13, color: pointColor),
                     const SizedBox(width: 4),
                     Text(
                       etape.acteurResponsable,
@@ -580,7 +631,8 @@ class SuiviColisScreen extends StatelessWidget {
                     const Spacer(),
                     Text(
                       etape.dateHeure,
-                      style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+                      style: const TextStyle(
+                          fontSize: 11.5, color: AppTheme.textMuted),
                     ),
                   ],
                 ),

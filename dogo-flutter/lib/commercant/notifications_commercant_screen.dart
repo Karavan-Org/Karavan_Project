@@ -199,74 +199,89 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuerySize = MediaQuery.sizeOf(context);
+    if (mediaQuerySize.width < 50 || mediaQuerySize.height < 50) {
+      return const SizedBox.shrink();
+    }
+
     final list = _selectedFiltre == "Toutes"
         ? _notifications
         : _notifications.where((n) => n["categorie"] == _selectedFiltre).toList();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Flexible(
-              child: Text(
-                "Notifications",
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 50 || constraints.maxHeight < 50) {
+          return const SizedBox.shrink();
+        }
+
+        final compact = constraints.maxWidth < 360;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFFAF7F2),
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            titleSpacing: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+              onPressed: () => Navigator.of(context).pop(),
             ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.25)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(color: Color(0xFF2E7D32), shape: BoxShape.circle),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Flexible(
+                  child: Text(
+                    "Notifications",
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
                   ),
-                  const SizedBox(width: 4),
-                  const Text(
-                    "En direct",
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF2E7D32)),
+                ),
+                if (!compact) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.25)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(color: Color(0xFF2E7D32), shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          "En direct",
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF2E7D32)),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
+              ],
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded, color: Color(0xFF2C241E)),
+                tooltip: "Actualiser",
+                onPressed: () => _chargerNotifications(silencieux: false),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF2C241E)),
-            tooltip: "Actualiser",
-            onPressed: () => _chargerNotifications(silencieux: false),
+              if (_notifications.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.done_all_rounded, color: Color(0xFF9E6738)),
+                  tooltip: "Tout marquer lu",
+                  onPressed: _marquerToutesLues,
+                ),
+              const SizedBox(width: 8),
+            ],
           ),
-          if (_notifications.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.done_all_rounded, color: Color(0xFF9E6738)),
-              tooltip: "Tout marquer lu",
-              onPressed: _marquerToutesLues,
-            ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _chargerNotifications,
-        color: const Color(0xFF9E6738),
+          body: RefreshIndicator(
+            onRefresh: _chargerNotifications,
+            color: const Color(0xFF9E6738),
         child: Column(
           children: [
             // Filtres pilules avec défilement horizontal
@@ -610,6 +625,8 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
           ],
         ),
       ),
+    );
+      },
     );
   }
 
