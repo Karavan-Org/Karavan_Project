@@ -80,7 +80,7 @@ class InscriptionGrossisteIT {
         appel(produit(null), jeton, 403);
 
         // --- un administrateur VALIDATION approuve le dossier (RG-05)
-        String validation = json(post("/api/auth/connexion", null, Map.of("telephone", "+22370000002", "pin", "2580")), 200)
+        String validation = json(post("/api/auth/connexion", null, Map.of("telephone", "+22370000002", "pin", "Dogo2026!")), 200)
                 .get("jeton").asText();
         json(post("/api/admin/kyc/" + dossier.get("id").asLong() + "/decision", validation,
                 Map.of("decision", "APPROUVE", "commentaire", "Pièces conformes")), 200);

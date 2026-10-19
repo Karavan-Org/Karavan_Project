@@ -252,12 +252,13 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const ScannerRetraitScreen()));
                     },
                     icon: const Icon(Icons.qr_code_scanner, size: 18),
-                    label: const Text("Scanner le QR Code d'un commerçant au retrait"),
+                    label: const Text("Scanner un QR Code au retrait", maxLines: 1, overflow: TextOverflow.ellipsis),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.primary,
                       side: const BorderSide(color: AppTheme.primary),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      minimumSize: const Size(double.infinity, 44),
+                      minimumSize: const Size(double.infinity, 48),
+                      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],

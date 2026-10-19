@@ -10,6 +10,16 @@
 	<string>DoGo utilise votre position pour afficher le chemin jusqu'au dépôt où récupérer votre commande.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>DoGo a besoin d'accéder à votre galerie photo pour sélectionner des images de vos produits de gros.</string>
+	<!-- Backend joint en HTTP sur le réseau local (flutter run --dart-define=ip=...) -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>DoGo se connecte au serveur DoGo de votre réseau local.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

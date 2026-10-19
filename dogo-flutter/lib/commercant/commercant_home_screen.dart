@@ -246,7 +246,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 11.5,
-                                        fontWeight: FontWeight.w900,
+                                        fontWeight: FontWeight.w800,
                                       ),
                                     ),
                                   ),
@@ -308,7 +308,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 10,
-                                        fontWeight: FontWeight.w900,
+                                        fontWeight: FontWeight.w800,
                                       ),
                                     ),
                                   ),
@@ -921,7 +921,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                       "${groupe.prixGroupe} F",
                       style: const TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         color: AppTheme.primary,
                       ),
                     ),
@@ -1109,7 +1109,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                             "${groupe.prixGroupe} FCFA",
                             style: const TextStyle(
                               fontSize: 14,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w800,
                               color: AppTheme.primary,
                             ),
                           ),

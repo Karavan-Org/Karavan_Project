@@ -412,7 +412,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                       alignment: Alignment.center,
                       child: const Text(
                         "OM",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11),
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11),
                       ),
                     ),
                   ),
@@ -430,7 +430,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                       alignment: Alignment.center,
                       child: const Text(
                         "MM",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11),
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11),
                       ),
                     ),
                   ),
@@ -582,7 +582,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                               Text(
                                 m["montant"] as String,
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w800,
                                   fontSize: 14,
                                   color: isCredit
                                       ? AppTheme.success

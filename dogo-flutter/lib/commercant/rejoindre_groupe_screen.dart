@@ -6,6 +6,7 @@ import '../services/profil_api_service.dart';
 import '../services/portefeuille_api_service.dart';
 import '../services/auth_service.dart';
 import '../services/api/api_client.dart';
+import '../services/api/api_config.dart';
 import '../services/api/api_exception.dart';
 import 'campagne_model.dart';
 import 'reussite_paiement_screen.dart';
@@ -13,6 +14,7 @@ import '../widgets/app_popups.dart';
 
 /// Écran de confirmation de participation, choix des variantes/quantités et paiement Mobile Money pour le Commerçant
 class RejoindreGroupeScreen extends StatefulWidget {
+  /// Groupe rejoint : obligatoire, aucun groupe « par défaut » ne doit être débité par erreur.
   final dynamic groupeId;
   final int? varianteId;
   final VarianteGroupeModel? variante;
@@ -28,7 +30,7 @@ class RejoindreGroupeScreen extends StatefulWidget {
 
   const RejoindreGroupeScreen({
     super.key,
-    this.groupeId = 1,
+    required this.groupeId,
     this.varianteId,
     this.variante,
     this.variantesDisponibles = const [],
@@ -48,8 +50,7 @@ class RejoindreGroupeScreen extends StatefulWidget {
 
 class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
   String _operateurSelectionne = "Portefeuille Achats";
-  final TextEditingController _telephoneController =
-      TextEditingController(text: "+223 76 45 88 12");
+  final TextEditingController _telephoneController = TextEditingController();
   bool _enCoursDeTraitement = false;
   String? _erreurTelephone;
   int _soldePortefeuille = 0;
@@ -197,13 +198,9 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
 
   int get _sousTotal => widget.prixUnitaire * _quantite;
 
-  int get _fraisTransport {
-    // Quote-part fret et dédouanement calculée proportionnellement à la commande
-    final base = (_sousTotal * 0.05).round();
-    return base.clamp(1500, 15000);
-  }
-
-  int get _total => _sousTotal + _fraisTransport;
+  /// Montant réellement débité par le backend : prix figé × quantité (RG-29, RG-33).
+  /// Le fret et le dédouanement sont déjà compris dans le prix groupé.
+  int get _total => _sousTotal;
 
   String get _descriptionVariante {
     if (_varianteSelectionnee != null) {
@@ -260,85 +257,31 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
 
     try {
       // Étape 1 : Réservation / Participation au groupe côté backend (RG-26 à RG-29)
-      int? participationId;
+      Map<String, dynamic> participation;
       try {
-        final reponse = await GroupeApiService.instance.rejoindreGroupe(
+        participation = await GroupeApiService.instance.rejoindreGroupe(
           groupeId: widget.groupeId,
           varianteId: vId,
           quantite: _quantite,
         );
-        participationId = reponse['id'] is num
-            ? (reponse['id'] as num).toInt()
-            : int.tryParse(reponse['id']?.toString() ?? '');
-      } catch (err) {
-        // En cas de conflit (déjà réservé), réutiliser la participation active existante
-        if (err is ApiException && err.statusCode == 409) {
-          final mesPart = await ApiClient.instance.get('/api/moi/participations');
-          if (mesPart is List) {
-            final existante = mesPart.firstWhere(
-              (p) =>
-                  p['groupeId'].toString() == widget.groupeId.toString() &&
-                  (p['statut'] == 'DEMANDEE' || p['statut'] == 'RESERVEE'),
-              orElse: () => null,
-            );
-            if (existante != null && existante['id'] != null) {
-              participationId = existante['id'] as int;
-            }
-          }
-        }
-        if (participationId == null) rethrow;
+      } on ApiException catch (err) {
+        // RG-26 : une participation active existe déjà pour cette variante → c'est elle qu'on règle
+        if (err.statusCode != 409) rethrow;
+        final existante = await _participationActiveExistante();
+        if (existante == null) rethrow;
+        participation = existante;
       }
+      final participationId = (participation['id'] as num).toInt();
 
-      if (participationId == null) {
-        throw Exception("Impossible d'initialiser la réservation de participation.");
-      }
-
+      // Étape 2 : Paiement de la participation (RG-33, RG-34)
       if (estPortefeuille) {
-        // Étape 2 : Règlement direct via le portefeuille DoGo
         await PaiementApiService.instance.initierPaiement(
           participationId: participationId,
           utiliserPortefeuille: true,
         );
       } else {
-        // Étape 2 : S'assurer que le moyen de paiement Mobile Money est enregistré (RG-10)
-        int? moyenPaiementId;
-        try {
-          final codeOp = switch (_operateurSelectionne.toLowerCase()) {
-            final s when s.contains('moov') => 'MOOV_MONEY',
-            final s when s.contains('wave') => 'WAVE',
-            _ => 'ORANGE_MONEY',
-          };
-
-          final normalise = "+223$digits";
-          final moyens = await ProfilApiService.instance.mesMoyensPaiement();
-          final existant = moyens.where(
-            (m) =>
-                m.numero.replaceAll(RegExp(r'[\s\-]'), '') == normalise ||
-                m.numero.replaceAll(RegExp(r'[\s\-]'), '').endsWith(digits),
-          ).toList();
-
-          if (existant.isNotEmpty) {
-            moyenPaiementId = existant.first.id;
-          } else {
-            try {
-              final nouveau = await ProfilApiService.instance.ajouterMoyenPaiement(
-                numero: normalise,
-                operateur: codeOp,
-                parDefaut: true,
-              );
-              moyenPaiementId = nouveau.id;
-            } catch (_) {
-              final rafraichis = await ProfilApiService.instance.mesMoyensPaiement();
-              if (rafraichis.isNotEmpty) {
-                moyenPaiementId = rafraichis.first.id;
-              }
-            }
-          }
-        } catch (errMoyen) {
-          debugPrint("Information enregistrement moyen de paiement : $errMoyen");
-        }
-
-        // Étape 3 : Paiement Mobile Money avec l'ID réel de la participation (RG-34)
+        // Le moyen débité est exactement le numéro saisi (RG-10), jamais un autre moyen enregistré
+        final moyenPaiementId = await _moyenPaiementPour(digits);
         await PaiementApiService.instance.initierPaiement(
           participationId: participationId,
           moyenPaiementId: moyenPaiementId,
@@ -346,21 +289,36 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
         );
       }
 
+      // Le reçu reprend ce que le serveur a réellement réservé et débité
+      final quantiteReservee = (participation['quantite'] as num?)?.toInt() ?? _quantite;
+      final prixFige = (participation['prixUnitaire'] as num?)?.round() ?? widget.prixUnitaire;
+      final montantDebite = (participation['montant'] as num?)?.round() ?? _total;
+
+      // Progression réelle du groupe après ce paiement (indicative : absente si le serveur ne répond pas)
+      int piecesActuelles = 0;
+      int piecesObjectif = 0;
+      try {
+        final groupe = await GroupeApiService.instance.detail(widget.groupeId);
+        piecesActuelles = groupe.quantiteActuelle;
+        piecesObjectif = groupe.quantiteObjectif;
+      } catch (_) {}
+
       if (!mounted) return;
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ReussitePaiementScreen(
+            participationId: participationId,
             titreProduit: widget.titre,
             paysOrigine: widget.paysOrigine,
-            prixUnitaire: widget.prixUnitaire,
-            quantite: _quantite,
-            montantTotal: _total,
+            prixUnitaire: prixFige,
+            quantite: quantiteReservee,
+            montantTotal: montantDebite,
             moyenPaiement: _operateurSelectionne,
             dateHeure: "Aujourd'hui - ${TimeOfDay.now().format(context)}",
             imagePath: widget.imagePath,
-            piecesActuelles: 780,
-            piecesObjectif: 1000,
+            piecesActuelles: piecesActuelles,
+            piecesObjectif: piecesObjectif,
           ),
         ),
       );
@@ -376,6 +334,39 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
     } finally {
       if (mounted) setState(() => _enCoursDeTraitement = false);
     }
+  }
+
+  /// Participation encore à payer pour ce groupe et cette variante (le 409 RG-26 porte sur la variante).
+  Future<Map<String, dynamic>?> _participationActiveExistante() async {
+    final sku = _varianteSelectionnee?.sku;
+    final mesParticipations = await ApiClient.instance.get(ApiConfig.mesParticipations);
+    if (mesParticipations is! List) return null;
+    for (final p in mesParticipations.whereType<Map<String, dynamic>>()) {
+      final memeGroupe = p['groupeId'].toString() == widget.groupeId.toString();
+      final memeVariante = sku == null || sku.isEmpty || p['sku'] == sku;
+      final aPayer = p['statut'] == 'RESERVEE' || p['statut'] == 'DEMANDEE';
+      if (memeGroupe && memeVariante && aPayer && p['id'] is num) return p;
+    }
+    return null;
+  }
+
+  /// Identifiant du moyen Mobile Money correspondant au numéro saisi, enregistré au besoin.
+  Future<int> _moyenPaiementPour(String digits) async {
+    final moyens = await ProfilApiService.instance.mesMoyensPaiement();
+    for (final m in moyens) {
+      if (m.numero.replaceAll(RegExp(r'[\s\-]'), '').endsWith(digits)) return m.id;
+    }
+    final codeOperateur = switch (_operateurSelectionne.toLowerCase()) {
+      final s when s.contains('moov') => 'MOOV_MONEY',
+      final s when s.contains('wave') => 'WAVE',
+      _ => 'ORANGE_MONEY',
+    };
+    final nouveau = await ProfilApiService.instance.ajouterMoyenPaiement(
+      numero: "+223$digits",
+      operateur: codeOperateur,
+      parDefaut: true,
+    );
+    return nouveau.id;
   }
 
   @override
@@ -542,29 +533,16 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFFEBE3D9)),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Quantité réservée :",
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                              ),
-                              Text(
-                                "Minimum exigé : $_quantiteMin lot${_quantiteMin > 1 ? 's' : ''}",
-                                style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Row(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final bool isCompact = constraints.maxWidth < 280;
+                        final stepper = Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.all(4),
+                              constraints: const BoxConstraints(),
                               icon: const Icon(Icons.remove_circle_outline, color: AppTheme.primary),
                               iconSize: 24,
                               onPressed: _quantite > _quantiteMin
@@ -573,20 +551,62 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                             ),
                             Container(
                               constraints: const BoxConstraints(minWidth: 32),
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
                               alignment: Alignment.center,
                               child: Text(
                                 "$_quantite",
-                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
                               ),
                             ),
                             IconButton(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.all(4),
+                              constraints: const BoxConstraints(),
                               icon: const Icon(Icons.add_circle, color: AppTheme.primary),
                               iconSize: 24,
                               onPressed: () => setState(() => _quantite++),
                             ),
                           ],
-                        ),
-                      ],
+                        );
+
+                        final labelColumn = Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Quantité réservée :",
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "Minimum exigé : $_quantiteMin lot${_quantiteMin > 1 ? 's' : ''}",
+                              style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                            ),
+                          ],
+                        );
+
+                        if (isCompact) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              labelColumn,
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: stepper,
+                              ),
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(child: labelColumn),
+                            const SizedBox(width: 8),
+                            stepper,
+                          ],
+                        );
+                      },
                     ),
                   ),
 
@@ -598,7 +618,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                     _formatMontant(_sousTotal),
                   ),
                   const SizedBox(height: 6),
-                  _buildLigneMontant("Quote-part fret & dédouanement", _formatMontant(_fraisTransport)),
+                  _buildLigneMontant("Fret & dédouanement", "Inclus dans le prix", isGratuit: true),
                   const SizedBox(height: 6),
                   _buildLigneMontant("Garantie Séquestre DoGo", "0 FCFA (Inclus)", isGratuit: true),
                   const SizedBox(height: 12),
@@ -614,12 +634,17 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        _formatMontant(_total),
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: AppTheme.primary,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            _formatMontant(_total),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primary,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -667,7 +692,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                             op["sigle"] as String,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w800,
                               fontSize: 16,
                             ),
                           ),
@@ -678,14 +703,16 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Text(
                                   op["nom"] as String,
                                   style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                                 ),
-                                if (isPortefeuille && _portefeuilleCharge) ...[
-                                  const SizedBox(width: 8),
+                                if (isPortefeuille && _portefeuilleCharge)
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
@@ -701,7 +728,6 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                                       ),
                                     ),
                                   ),
-                                ],
                               ],
                             ),
                             Text(

@@ -55,7 +55,7 @@ class GroupeGrossisteIT {
         }
     }
 
-    private static final String PIN = "2580";
+    private static final String PIN = "Dogo2026!";
 
     @Autowired
     private MockMvc mvc;

@@ -24,6 +24,10 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     @Query("select count(a) from Administrateur a")
     long nombreAdministrateurs();
 
+    /** V17 insère l'administrateur Logistique : seul un administrateur TECHNIQUE prouve que l'amorçage a eu lieu. */
+    @Query("select count(a) from Administrateur a where a.roleAdministratif = ml.dogo.identite.domain.RoleAdministratif.TECHNIQUE")
+    long nombreAdministrateursTechniques();
+
     // Les compteurs d'échecs sont incrémentés en SQL pour rester exacts même sous requêtes parallèles (RG-07).
 
     @Modifying

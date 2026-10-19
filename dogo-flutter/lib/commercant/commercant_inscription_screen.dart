@@ -186,7 +186,7 @@ class _CommercantInscriptionScreenState
                 "Inscription",
                 style: TextStyle(
                   fontSize: 26,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                   color: Color(0xFF1E1E24),
                   letterSpacing: -0.5,
                 ),

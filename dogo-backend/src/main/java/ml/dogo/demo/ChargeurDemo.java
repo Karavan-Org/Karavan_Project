@@ -66,15 +66,18 @@ public class ChargeurDemo {
 
     @EventListener(ApplicationReadyEvent.class)
     public void charger() {
-        if (utilisateurs.nombreAdministrateurs() > 0) {
-            LOG.info("Données de démo : la base contient déjà des administrateurs, rien à charger");
+        // V17 insère l'administrateur Logistique dans toute base neuve : c'est le compte TECHNIQUE de démo qui fait foi.
+        if (utilisateurs.existsByTelephone("+22370000001")) {
+            LOG.info("Données de démo : déjà chargées, rien à faire");
             return;
         }
         long technique = administrateurs.creerInitial("+22370000001", "Admin Technique", MOT_DE_PASSE, "ADM-0001", RoleAdministratif.TECHNIQUE);
         administrateurs.creerInitial("+22370000002", "Admin Validation", MOT_DE_PASSE, "ADM-0002", RoleAdministratif.VALIDATION);
         administrateurs.creerInitial("+22370000003", "Admin Finance", MOT_DE_PASSE, "ADM-0003", RoleAdministratif.FINANCE);
         administrateurs.creerInitial("+22370000004", "Admin Support", MOT_DE_PASSE, "ADM-0004", RoleAdministratif.SUPPORT);
-        administrateurs.creerInitial("+22370000005", "Admin Logistique & Colis", MOT_DE_PASSE, "ADM-0005", RoleAdministratif.LOGISTIQUE);
+        if (!utilisateurs.existsByTelephone("+22370000005")) {
+            administrateurs.creerInitial("+22370000005", "Admin Logistique & Colis", MOT_DE_PASSE, "ADM-0005", RoleAdministratif.LOGISTIQUE);
+        }
 
         long grossisteId = creerCompte(role -> new Grossiste("+22371000001", "Grossiste Demo", encodeur.encode(MOT_DE_PASSE), role,
                 horloge.instant(), "Grand Marché de Guangzhou", "NIF-DEMO-001", "RC-DEMO-001"), "GROSSISTE");

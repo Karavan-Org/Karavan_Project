@@ -343,6 +343,7 @@ class _CameraWebDialogState extends State<CameraWebDialog> {
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: AppTheme.primary,
                                               foregroundColor: Colors.white,
+                                              minimumSize: const Size(0, 38),
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                             ),
                                           ),
@@ -352,6 +353,7 @@ class _CameraWebDialogState extends State<CameraWebDialog> {
                                             label: const Text("Importer une image", style: TextStyle(color: Colors.white)),
                                             style: OutlinedButton.styleFrom(
                                               side: const BorderSide(color: Colors.white30),
+                                              minimumSize: const Size(0, 38),
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                             ),
                                           ),

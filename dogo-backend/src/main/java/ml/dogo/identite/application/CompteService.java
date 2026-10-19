@@ -194,10 +194,7 @@ public class CompteService {
     @Transactional
     public void changerMotDePasse(long utilisateurId, String ancienMdp, String nouveauMdp) {
         Utilisateur u = charger(utilisateurId);
-        boolean motDePasseValide = ancienMdp != null && (encodeur.matches(ancienMdp, u.getMotDePasseHash())
-                || "Dogo2026!".equals(ancienMdp)
-                || "2580".equals(ancienMdp)
-                || "1234".equals(ancienMdp));
+        boolean motDePasseValide = ancienMdp != null && encodeur.matches(ancienMdp, u.getMotDePasseHash());
         if (!motDePasseValide) {
             throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, "RG-07", "Ancien mot de passe / code PIN incorrect");
         }

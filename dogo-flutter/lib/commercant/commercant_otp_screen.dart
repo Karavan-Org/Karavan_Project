@@ -250,7 +250,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                   color: Color(0xFF1E1E24),
                   letterSpacing: -0.5,
                 ),
@@ -348,7 +348,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                         maxLength: 1,
                         style: const TextStyle(
                           fontSize: 22,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w800,
                           color: Color(0xFF1E1E24),
                         ),
                         inputFormatters: [

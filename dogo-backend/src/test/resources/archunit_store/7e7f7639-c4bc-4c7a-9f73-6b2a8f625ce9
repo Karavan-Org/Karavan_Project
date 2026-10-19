@@ -1,0 +1,10 @@
+ml.dogo.finance.application.PaiementService utilise ml.dogo.notification.application.NotificationService
+ml.dogo.finance.application.PaiementService utilise ml.dogo.notification.application.NotificationService
+ml.dogo.finance.application.PaiementService utilise ml.dogo.notification.application.NotificationService
+ml.dogo.finance.application.PortefeuilleService utilise ml.dogo.notification.application.NotificationService
+ml.dogo.finance.application.PortefeuilleService utilise ml.dogo.notification.application.NotificationService
+ml.dogo.finance.application.PortefeuilleService utilise ml.dogo.notification.application.NotificationService
+ml.dogo.identite.web.SupportAdminController utilise ml.dogo.litige.persistence.Litige
+ml.dogo.identite.web.SupportAdminController utilise ml.dogo.litige.persistence.LitigeRepository
+ml.dogo.identite.web.SupportAdminController utilise ml.dogo.litige.persistence.LitigeRepository
+ml.dogo.identite.web.SupportAdminController utilise ml.dogo.litige.persistence.LitigeRepository

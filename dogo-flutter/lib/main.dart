@@ -7,6 +7,7 @@ import 'grossiste/grossiste_documents_kyc_screen.dart';
 import 'grossiste/grossiste_main_nav.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/splash_launch_screen.dart';
+import 'services/api/api_config.dart';
 import 'services/lien_groupe.dart';
 import 'theme/app_theme.dart';
 
@@ -20,6 +21,9 @@ void main() {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
+
+  // Rappel en console du backend ciblé (--dart-define=ip=... / port=...)
+  debugPrint('DoGo API : ${ApiConfig.baseUrl}');
 
   runApp(const DogoApp());
 }

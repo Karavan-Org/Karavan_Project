@@ -10,6 +10,7 @@ import '../services/auth_service.dart';
 import '../services/logistique_api_service.dart';
 import '../models/niveau_commercant.dart';
 import 'details_niveau_commercant_sheet.dart';
+import 'favoris_service.dart';
 import '../widgets/avatar_profil_interactif.dart';
 
 /// Écran du Profil Commerçant fidèle à la maquette Figma Dogo (Frame "profil")
@@ -234,8 +235,11 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                           const SizedBox(height: 10),
 
                           // Badges de rôle et de niveau
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 6,
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
@@ -252,7 +256,6 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
 
                               // Badge interactif de Niveau
                               Material(
@@ -262,6 +265,10 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                                     DetailsNiveauCommercantSheet.afficher(
                                       context,
                                       nbCommandes: _nbCommandes,
+                                      onExplorer: () {
+                                        FavorisService.instance.actualiserDepuisBackend();
+                                        TabNavigationScope.switchToTab(context, 1);
+                                      },
                                     );
                                   },
                                   borderRadius: BorderRadius.circular(16),
@@ -351,7 +358,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                                 "$_nbCommandes",
                                 style: const TextStyle(
                                   fontSize: 22,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w800,
                                   color: Color(0xFF2C241E),
                                 ),
                               ),
@@ -394,7 +401,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                                 _formaterEconomies(_nbCommandes),
                                 style: const TextStyle(
                                   fontSize: 22,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w800,
                                   color: Color(0xFF2C241E),
                                 ),
                               ),

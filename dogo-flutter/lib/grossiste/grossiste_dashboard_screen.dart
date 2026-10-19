@@ -625,21 +625,40 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFEFE8E0)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0A000000), blurRadius: 10, offset: Offset(0, 4)),
-        ],
+        border: Border.all(color: AppTheme.bordure),
+        boxShadow: AppTheme.ombreDouce,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: iconColor, size: 24),
-          const SizedBox(height: 10),
-          Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppTheme.textDark, letterSpacing: -0.8, height: 1.1),
+          ),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.encre),
+          ),
           const SizedBox(height: 2),
-          Text(subtext, style: const TextStyle(fontSize: 11.5, color: AppTheme.success, fontWeight: FontWeight.w600)),
+          Text(
+            subtext,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );

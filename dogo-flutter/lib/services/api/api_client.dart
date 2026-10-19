@@ -89,35 +89,42 @@ class ApiClient {
     }
   }
 
+  /// Message commun à toutes les coupures réseau (mobile : SocketException, web : ClientException).
+  static const String messageServeurInjoignable =
+      'Impossible de joindre le serveur DoGo. Vérifiez votre connexion internet.';
+
+  /// Exécute [action] (reconstruite à chaque appel, donc rejouable) et traduit les erreurs réseau
+  /// en [ApiException]. Un 401 hors /api/auth/ déclenche un unique rafraîchissement puis un rejeu.
   Future<dynamic> _executerRequete(
     String endpoint,
-    Future<http.Response> Function() action,
-  ) async {
+    Future<http.Response> Function() action, {
+    Duration timeout = ApiConfig.timeout,
+    bool rafraichirSur401 = true,
+  }) async {
     try {
-      http.Response response = await action().timeout(ApiConfig.timeout);
+      http.Response response = await action().timeout(timeout);
 
-      // Si 401 sur un endpoint métier (hors /api/auth/), on tente le rafraîchissement
-      if (response.statusCode == 401 && !endpoint.startsWith('/api/auth/')) {
+      if (rafraichirSur401 && response.statusCode == 401 && !endpoint.startsWith('/api/auth/')) {
         final reussi = await _rafraichirJeton();
         if (reussi) {
           // Rejouer la requête une seule fois avec le nouveau token
-          response = await action().timeout(ApiConfig.timeout);
+          response = await action().timeout(timeout);
         }
       }
 
       return _traiterReponse(response);
+    } on ApiException {
+      rethrow;
     } on SocketException {
-      throw const ApiException(
-        statusCode: 0,
-        message: 'Impossible de joindre le serveur DoGo. Vérifiez votre connexion internet.',
-      );
+      throw const ApiException(statusCode: 0, message: messageServeurInjoignable);
+    } on http.ClientException {
+      throw const ApiException(statusCode: 0, message: messageServeurInjoignable);
     } on TimeoutException {
       throw const ApiException(
         statusCode: 0,
         message: 'Délai d\'attente dépassé lors de la requête au serveur DoGo.',
       );
     } catch (e) {
-      if (e is ApiException) rethrow;
       throw ApiException(
         statusCode: 0,
         message: 'Erreur réseau : ${e.toString()}',
@@ -130,38 +137,18 @@ class ApiClient {
     String endpoint, {
     dynamic body,
     Map<String, String>? headers,
-  }) async {
-    try {
-      final uri = _construireUri(endpoint);
-      final bodyEncode = body != null ? jsonEncode(body) : null;
-      final Map<String, String> entetes = {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-      };
-      if (headers != null) entetes.addAll(headers);
-
-      final response = await _httpClient
-          .post(uri, headers: entetes, body: bodyEncode)
-          .timeout(ApiConfig.timeout);
-
-      return _traiterReponse(response);
-    } on SocketException {
-      throw const ApiException(
-        statusCode: 0,
-        message: 'Impossible de joindre le serveur DoGo. Vérifiez votre connexion internet.',
-      );
-    } on TimeoutException {
-      throw const ApiException(
-        statusCode: 0,
-        message: 'Délai d\'attente dépassé lors de l\'envoi au serveur DoGo.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        statusCode: 0,
-        message: 'Erreur réseau : ${e.toString()}',
-      );
-    }
+  }) {
+    final bodyEncode = body != null ? jsonEncode(body) : null;
+    final Map<String, String> entetes = {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Accept': 'application/json',
+      ...?headers,
+    };
+    return _executerRequete(
+      endpoint,
+      () => _httpClient.post(_construireUri(endpoint), headers: entetes, body: bodyEncode),
+      rafraichirSur401: false,
+    );
   }
 
   // --- REQUÊTE GET ---
@@ -234,48 +221,15 @@ class ApiClient {
     required String fieldName,
     Map<String, String>? fields,
     Map<String, String>? headers,
-  }) async {
-    try {
-      final uri = _construireUri(endpoint);
-      final request = http.MultipartRequest('POST', uri);
-
-      if (_jeton != null && _jeton!.isNotEmpty) {
-        request.headers['Authorization'] = 'Bearer $_jeton';
-      }
-      if (headers != null) {
-        request.headers.addAll(headers);
-      }
-      if (fields != null) {
-        request.fields.addAll(fields);
-      }
-
-      request.files.add(http.MultipartFile.fromBytes(
-        fieldName,
-        fileBytes,
-        filename: filename,
-      ));
-
-      final streamedResponse = await request.send().timeout(ApiConfig.timeout);
-      final response = await http.Response.fromStream(streamedResponse);
-
-      return _traiterReponse(response);
-    } on SocketException {
-      throw const ApiException(
-        statusCode: 0,
-        message: 'Impossible de joindre le serveur DoGo. Vérifiez votre connexion internet.',
-      );
-    } on TimeoutException {
-      throw const ApiException(
-        statusCode: 0,
-        message: 'Délai d\'attente dépassé lors de l\'envoi de la photo.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        statusCode: 0,
-        message: 'Erreur réseau : ${e.toString()}',
-      );
-    }
+  }) {
+    return postMultipartFichiers(
+      endpoint,
+      fieldName: fieldName,
+      fichiers: [(bytes: fileBytes, filename: filename)],
+      fields: fields,
+      headers: headers,
+      timeout: ApiConfig.timeout,
+    );
   }
 
   // --- REQUÊTE MULTIPART À PLUSIEURS FICHIERS (Dossier KYC) ---
@@ -285,40 +239,30 @@ class ApiClient {
     required String fieldName,
     required List<({List<int> bytes, String filename})> fichiers,
     Map<String, String>? fields,
-  }) async {
-    try {
+    Map<String, String>? headers,
+    Duration timeout = const Duration(seconds: 60),
+  }) {
+    // Une MultipartRequest ne s'envoie qu'une fois : elle est reconstruite à chaque tentative
+    // (le rejeu après rafraîchissement du jeton porte ainsi le nouvel en-tête Authorization).
+    Future<http.Response> envoyer() async {
       final request = http.MultipartRequest('POST', _construireUri(endpoint));
+      request.headers['Accept'] = 'application/json';
       if (_jeton != null && _jeton!.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $_jeton';
       }
-      request.headers['Accept'] = 'application/json';
+      if (headers != null) {
+        request.headers.addAll(headers);
+      }
       if (fields != null) {
         request.fields.addAll(fields);
       }
       for (final f in fichiers) {
         request.files.add(http.MultipartFile.fromBytes(fieldName, f.bytes, filename: f.filename));
       }
-
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 60));
-      final response = await http.Response.fromStream(streamedResponse);
-      return _traiterReponse(response);
-    } on SocketException {
-      throw const ApiException(
-        statusCode: 0,
-        message: 'Impossible de joindre le serveur DoGo. Vérifiez votre connexion internet.',
-      );
-    } on TimeoutException {
-      throw const ApiException(
-        statusCode: 0,
-        message: 'Délai d\'attente dépassé lors de l\'envoi des documents.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        statusCode: 0,
-        message: 'Erreur réseau : ${e.toString()}',
-      );
+      return http.Response.fromStream(await _httpClient.send(request));
     }
+
+    return _executerRequete(endpoint, envoyer, timeout: timeout);
   }
 
   /// Analyse la réponse HTTP et extrait le JSON ou déclenche l'exception standardisée

@@ -117,13 +117,7 @@ public class ConvoiService {
         }
         GroupeAchatApi.GroupeInfo g = groupes.groupe(d.groupeId())
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", d.groupeId()));
-        if (g.quantiteConfirmee() < g.quantiteCible() && !"OBJECTIF_ATTEINT".equals(g.statut()) && !"EN_EXPEDITION".equals(g.statut()) && !"LIVRE".equals(g.statut())) {
-            throw new ErreurMetier(CodeErreur.ACTION_IMPOSSIBLE, null,
-                    "Ce groupe n'a pas atteint l'objectif (progression inférieure à 100%).");
-        }
-        if (expeditions.findByGroupeId(d.groupeId()).isPresent()) {
-            throw new ErreurMetier(CodeErreur.CONFLIT, null, "Un convoi existe déjà pour ce groupe d'achat");
-        }
+        // Les droits d'abord : un acteur non habilité n'apprend rien de l'état du groupe ni de ses convois
         if (!moi.estAdministrateur()) {
             if (!"COURTIER".equals(moi.type())) {
                 throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Seul le courtier responsable peut créer un convoi");
@@ -131,6 +125,13 @@ public class ConvoiService {
             if (g.porteParGrossiste() || g.courtierId() != moi.id()) {
                 throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Seul le courtier responsable de ce groupe peut créer son convoi");
             }
+        }
+        if (g.quantiteConfirmee() < g.quantiteCible() && !"OBJECTIF_ATTEINT".equals(g.statut()) && !"EN_EXPEDITION".equals(g.statut()) && !"LIVRE".equals(g.statut())) {
+            throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, null,
+                    "Ce groupe n'a pas atteint l'objectif (progression inférieure à 100%).");
+        }
+        if (expeditions.findByGroupeId(d.groupeId()).isPresent()) {
+            throw new ErreurMetier(CodeErreur.CONFLIT, null, "Un convoi existe déjà pour ce groupe d'achat");
         }
         if (expeditions.findByReference(d.reference()).isPresent()) {
             throw new ErreurMetier(CodeErreur.CONFLIT, null, "Cette référence de convoi existe déjà");

@@ -57,7 +57,7 @@ class FluxPrincipalIT {
         }
     }
 
-    private static final String PIN = "2580";
+    private static final String PIN = "Dogo2026!";
 
     @Autowired
     private MockMvc mvc;
@@ -68,6 +68,11 @@ class FluxPrincipalIT {
 
     @Test
     void parcoursCompletDuGroupeAuRetraitEtAuPortefeuille() throws Exception {
+        // Aucun mot de passe « universel » : seul le secret propre au compte ouvre une session (RG-07)
+        for (String passePartout : new String[] {"1234", "2580"}) {
+            appeler(HttpMethod.POST, "/api/auth/connexion", null,
+                    Map.of("telephone", "+22370000001", "pin", passePartout), 401);
+        }
         String technique = connecter("+22370000001");
         String grossiste = connecter("+22371000001");
         String courtier = connecter("+22372000001");

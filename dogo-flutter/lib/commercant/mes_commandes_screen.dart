@@ -491,7 +491,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
             color: Color(0xFF1A1A1A),
             letterSpacing: -0.4,
           ),

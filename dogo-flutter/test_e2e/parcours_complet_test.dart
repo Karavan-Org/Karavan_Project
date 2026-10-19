@@ -13,6 +13,7 @@ import 'package:dogo_app/services/courtier_api_service.dart';
 import 'package:dogo_app/services/grossiste_api_service.dart';
 import 'package:dogo_app/services/groupe_api_service.dart';
 import 'package:dogo_app/services/paiement_api_service.dart';
+import 'package:dogo_app/services/profil_api_service.dart';
 import 'package:dogo_app/services/logistique_api_service.dart';
 
 const pin = '2580';
@@ -69,7 +70,7 @@ void main() {
       expect(detail.variantes, isNotEmpty);
       final p = await GroupeApiService.instance.rejoindreGroupe(
           groupeId: id, varianteId: detail.variantes.first.id, quantite: qte);
-      final moyen = await PaiementApiService.instance.assurerMoyen(numero: '76${tel.substring(2)}', operateur: 'ORANGE_MONEY');
+      final moyen = (await ProfilApiService.instance.mesMoyensPaiement()).firstWhere((m) => m.parDefaut).id;
       final paiement = await PaiementApiService.instance.initierPaiement(
           participationId: p['id'], moyenPaiementId: moyen);
       participations.add((p['id'] as num).toInt());

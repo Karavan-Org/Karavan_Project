@@ -316,7 +316,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                         "${widget.prixGroupe} FCFA",
                         style: const TextStyle(
                           fontSize: 26,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w800,
                           color: AppTheme.primary,
                         ),
                       ),
@@ -511,19 +511,22 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Quantité à réserver :",
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                          ),
-                          Text(
-                            "Min: $_quantiteMin lot${_quantiteMin > 1 ? 's' : ''} (RG-27)",
-                            style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
-                          ),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Quantité à réserver :",
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                            ),
+                            Text(
+                              "Min: $_quantiteMin lot${_quantiteMin > 1 ? 's' : ''} (RG-27)",
+                              style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -531,6 +534,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                           border: Border.all(color: const Color(0xFFDED6CE)),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               icon: const Icon(Icons.remove, size: 18),
@@ -667,7 +671,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                   "${widget.prixGroupe * _quantite} FCFA",
                   style: const TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w800,
                     color: AppTheme.primary,
                   ),
                 ),
@@ -677,7 +681,13 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  final gid = widget.id.isNotEmpty ? widget.id : (widget.groupe?.id ?? "1");
+                  final gid = widget.id.isNotEmpty ? widget.id : widget.groupe?.id;
+                  if (gid == null || gid.toString().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Groupe d'achat introuvable : rechargez la page.")),
+                    );
+                    return;
+                  }
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => RejoindreGroupeScreen(

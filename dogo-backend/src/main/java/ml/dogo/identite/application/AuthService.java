@@ -73,10 +73,7 @@ public class AuthService {
             throw identifiantsInvalides();
         }
         u.verifierNonVerrouille(maintenant);
-        boolean motDePasseValide = pin != null && (encodeur.matches(pin, u.getMotDePasseHash())
-                || ("Dogo2026!".equals(pin))
-                || ("2580".equals(pin))
-                || ("1234".equals(pin)));
+        boolean motDePasseValide = pin != null && encodeur.matches(pin, u.getMotDePasseHash());
         if (!motDePasseValide) {
             compteurs.enregistrerEchecPin(u.getId(), proprietes.pin().maxEchecs(), proprietes.pin().verrouillage(),
                     maintenant);

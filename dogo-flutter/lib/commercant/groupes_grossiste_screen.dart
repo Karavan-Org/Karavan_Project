@@ -404,7 +404,7 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                                 "${groupe.prixGroupe} FCFA",
                                                 style: const TextStyle(
                                                   fontSize: 16,
-                                                  fontWeight: FontWeight.w900,
+                                                  fontWeight: FontWeight.w800,
                                                   color: AppTheme.primary,
                                                 ),
                                               ),
@@ -538,6 +538,7 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(16),
                                         ),
+                                        minimumSize: const Size(0, 40),
                                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                                       ),
                                       child: const Text("Détails", style: TextStyle(fontWeight: FontWeight.w700)),
@@ -566,11 +567,14 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                           );
                                         },
                                         icon: const Icon(Icons.group_add, size: 18),
-                                        label: const Text("Participer au Groupe"),
+                                        label: const FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text("Participer au Groupe"),
+                                        ),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: AppTheme.primary,
                                           foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(16),
                                           ),

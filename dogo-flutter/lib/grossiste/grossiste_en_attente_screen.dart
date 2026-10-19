@@ -216,7 +216,7 @@ class _GrossisteEnAttenteScreenState extends State<GrossisteEnAttenteScreen> {
                           nomAffiche,
                           style: const TextStyle(
                             fontSize: 16.5,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w800,
                             color: Color(0xFF1E1E24),
                             letterSpacing: -0.3,
                           ),
@@ -313,7 +313,7 @@ class _GrossisteEnAttenteScreenState extends State<GrossisteEnAttenteScreen> {
                                       "DOSSIER EN EXAMEN",
                                       style: TextStyle(
                                         fontSize: 10.5,
-                                        fontWeight: FontWeight.w900,
+                                        fontWeight: FontWeight.w800,
                                         color: Color(0xFFB45309),
                                         letterSpacing: 0.3,
                                       ),
@@ -338,7 +338,7 @@ class _GrossisteEnAttenteScreenState extends State<GrossisteEnAttenteScreen> {
                             "Vérification de vos pièces légales",
                             style: TextStyle(
                               fontSize: 17,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w800,
                               color: Color(0xFF2C241E),
                               letterSpacing: -0.3,
                             ),

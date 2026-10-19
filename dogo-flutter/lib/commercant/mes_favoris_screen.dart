@@ -198,7 +198,7 @@ class MesFavorisScreen extends StatelessWidget {
                           "${groupe.prixGroupe} FCFA",
                           style: const TextStyle(
                             fontSize: 15,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w800,
                             color: AppTheme.primary,
                           ),
                         ),

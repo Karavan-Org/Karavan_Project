@@ -576,7 +576,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
             text: "Do",
             style: TextStyle(
               fontSize: 50,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
               color: Colors.white,
               letterSpacing: -1.2,
             ),
@@ -585,7 +585,7 @@ class _ShearedFluidSpiralsPainter extends CustomPainter {
             text: "Go",
             style: TextStyle(
               fontSize: 50,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
               color: cGold,
               letterSpacing: -1.2,
               shadows: [

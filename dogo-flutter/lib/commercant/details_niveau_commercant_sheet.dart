@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 import '../models/niveau_commercant.dart';
 import '../widgets/tab_navigation_scope.dart';
-
+import 'favoris_service.dart';
 
 /// Modal présentant les détails du niveau du Commerçant, sa progression
 /// et les avantages débloqués / à débloquer selon le volume de commandes.
 class DetailsNiveauCommercantSheet extends StatelessWidget {
   final int nbCommandes;
   final NiveauCommercant niveau;
+  final VoidCallback? onExplorer;
 
   const DetailsNiveauCommercantSheet({
     super.key,
     required this.nbCommandes,
     required this.niveau,
+    this.onExplorer,
   });
 
   /// Méthode d'ouverture conviviale
   static Future<void> afficher(
     BuildContext context, {
     required int nbCommandes,
+    VoidCallback? onExplorer,
   }) {
     final niveau = NiveauCommercant.calculer(nbCommandes);
     return showModalBottomSheet(
@@ -28,6 +31,10 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
       builder: (_) => DetailsNiveauCommercantSheet(
         nbCommandes: nbCommandes,
         niveau: niveau,
+        onExplorer: onExplorer ?? () {
+          FavorisService.instance.actualiserDepuisBackend();
+          TabNavigationScope.switchToTab(context, 1);
+        },
       ),
     );
   }
@@ -199,7 +206,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                               "$pourcentage%",
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w800,
                                 color: niveau.couleurBadge,
                               ),
                             ),
@@ -374,7 +381,12 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop();
-                        TabNavigationScope.switchToTab(context, 0);
+                        FavorisService.instance.actualiserDepuisBackend();
+                        if (onExplorer != null) {
+                          onExplorer!();
+                        } else {
+                          TabNavigationScope.switchToTab(context, 1);
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1E2832),

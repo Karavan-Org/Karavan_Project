@@ -447,7 +447,7 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
                                   etape.titre,
                                   style: const TextStyle(
                                     fontSize: 17,
-                                    fontWeight: FontWeight.w900,
+                                    fontWeight: FontWeight.w800,
                                     color: Color(0xFF2C241E),
                                     letterSpacing: -0.3,
                                   ),
@@ -476,20 +476,25 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               // Points indicateurs
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: List.generate(
-                                  _etapes.length,
-                                  (index) => AnimatedContainer(
-                                    duration: const Duration(milliseconds: 250),
-                                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                                    width: _etapeCourante == index ? 20 : 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: _etapeCourante == index
-                                          ? AppTheme.primary
-                                          : const Color(0xFFE5DDD5),
-                                      borderRadius: BorderRadius.circular(4),
+                              Flexible(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: List.generate(
+                                      _etapes.length,
+                                      (index) => AnimatedContainer(
+                                        duration: const Duration(milliseconds: 250),
+                                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                                        width: _etapeCourante == index ? 20 : 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: _etapeCourante == index
+                                              ? AppTheme.primary
+                                              : const Color(0xFFE5DDD5),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),

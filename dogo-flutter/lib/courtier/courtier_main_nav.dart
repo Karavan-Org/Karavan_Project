@@ -13,6 +13,7 @@ import '../services/auth_service.dart';
 import '../services/url_route_helper.dart';
 import '../models/role_acteur.dart';
 import '../widgets/didacticiel_guide_overlay.dart';
+import '../widgets/onglet_navigation.dart';
 
 /// Navigation principale Courtier avec barre d'onglets Figma et FAB central (+)
 /// animé en arc de cercle avec effet de vague aquatique et prévisualisation au survol
@@ -315,11 +316,12 @@ class _CourtierMainNavState extends State<CourtierMainNav>
 
       // Barre de navigation inférieure conforme au design Figma
       bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
+        shape: formeBarreNavigation,
+        notchMargin: 7.0,
         clipBehavior: Clip.antiAlias,
-        elevation: 16,
+        elevation: 12,
         color: Colors.white,
+        shadowColor: const Color(0x5546321E),
         padding: EdgeInsets.zero,
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -585,42 +587,12 @@ class _CourtierMainNavState extends State<CourtierMainNav>
     required IconData activeIcon,
     required IconData inactiveIcon,
   }) {
-    final bool isSelected = (_currentIndex == index);
-
-    return InkWell(
+    return OngletNavigation(
+      label: label,
+      activeIcon: activeIcon,
+      inactiveIcon: inactiveIcon,
+      selectionne: _currentIndex == index,
       onTap: () => setTabIndex(index),
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedScale(
-              scale: isSelected ? 1.15 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutBack,
-              child: Icon(
-                isSelected ? activeIcon : inactiveIcon,
-                color: isSelected ? AppTheme.primary : const Color(0xFF8C7E74),
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                color: isSelected ? AppTheme.primary : const Color(0xFF8C7E74),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -1496,7 +1496,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                           fontSize: 22,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w800,
                           color: _vert),
                     ),
                   ),
@@ -2193,7 +2193,7 @@ class _BoutonBoussole extends StatelessWidget {
                                 "N",
                                 style: TextStyle(
                                   fontSize: 9,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w800,
                                   color: Color(0xFFD32F2F),
                                 ),
                               ),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/utilisateur_profil.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
+import 'api/api_exception.dart';
 import 'session_storage_service.dart';
 
 export '../models/utilisateur_profil.dart';
@@ -49,13 +50,23 @@ class AuthService {
         }
         return profil;
       }
+    } on ApiException catch (e) {
+      // Session expirée ou révoquée sur le serveur. Sans réseau (statusCode 0), on garde le
+      // refresh token : la session sera restaurée au prochain lancement avec connexion.
+      if (e.statusCode != 0) {
+        await _effacerSessionLocale();
+      }
     } catch (_) {
-      // Session expirée ou révoquée sur le serveur
-      await SessionStorageService.instance.effacerSession();
-      ApiClient.instance.deconnecter();
-      profilNotifier.value = null;
+      await _effacerSessionLocale();
     }
     return null;
+  }
+
+  /// Oublie la session sur cet appareil, sans appel réseau.
+  Future<void> _effacerSessionLocale() async {
+    await SessionStorageService.instance.effacerSession();
+    ApiClient.instance.deconnecter();
+    profilNotifier.value = null;
   }
 
   /// Rafraîchissement automatique de l'access token sur interception 401
@@ -89,8 +100,14 @@ class AuthService {
         }
         return true;
       }
+    } on ApiException catch (e) {
+      // Refresh token refusé : la session est terminée. Surtout pas deconnecter() ici : ses appels
+      // authentifiés recevraient un 401 et attendraient ce même rafraîchissement (interblocage).
+      if (e.statusCode != 0) {
+        await _effacerSessionLocale();
+      }
     } catch (_) {
-      await deconnecter();
+      await _effacerSessionLocale();
     }
     return false;
   }
@@ -103,52 +120,32 @@ class AuthService {
     String? deviceId,
   }) async {
     final secret = (motDePasse != null && motDePasse.isNotEmpty) ? motDePasse : (pin ?? '');
-    try {
-      final response = await ApiClient.instance.post(
-        ApiConfig.connexion,
-        body: {
-          'telephone': telephone,
-          'motDePasse': secret,
-          'pin': secret,
-          'deviceId': deviceId ?? 'flutter-device-client',
-        },
-      );
+    final response = await ApiClient.instance.post(
+      ApiConfig.connexion,
+      body: {
+        'telephone': telephone,
+        'motDePasse': secret,
+        'pin': secret,
+        'deviceId': deviceId ?? 'flutter-device-client',
+      },
+    );
 
-      if (response is Map<String, dynamic>) {
-        final jeton = response['jeton'] as String?;
-        ApiClient.instance.definirJeton(jeton);
-
-        final profilJson = response['profil'] as Map<String, dynamic>? ?? {};
-        final profil = UtilisateurProfil.fromJson(profilJson);
-        profilNotifier.value = profil;
-
-        final refreshToken = response['refreshToken'] as String?;
-        if (refreshToken != null && refreshToken.isNotEmpty) {
-          await SessionStorageService.instance.sauvegarderSession(
-            refreshToken: refreshToken,
-            profil: profil,
-          );
-        }
-
-        return profil;
-      }
-
-      throw Exception('Format de réponse serveur inattendu');
-    } catch (e) {
-      if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
-        final profilFactice = UtilisateurProfil(
-          id: 1,
-          type: 'COMMERCANT',
-          nom: 'Commerçant Démo Bamako',
-          telephone: telephone,
-          statut: 'ACTIF',
-        );
-        profilNotifier.value = profilFactice;
-        ApiClient.instance.definirJeton('demo-mock-jwt-token');
-        return profilFactice;
-      }
-      rethrow;
+    if (response is! Map<String, dynamic> || response['jeton'] is! String) {
+      throw const ApiException(statusCode: 0, message: 'Réponse inattendue du serveur DoGo lors de la connexion.');
     }
+
+    ApiClient.instance.definirJeton(response['jeton'] as String);
+    final profil = UtilisateurProfil.fromJson(response['profil'] as Map<String, dynamic>? ?? {});
+    profilNotifier.value = profil;
+
+    final refreshToken = response['refreshToken'] as String?;
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await SessionStorageService.instance.sauvegarderSession(
+        refreshToken: refreshToken,
+        profil: profil,
+      );
+    }
+    return profil;
   }
 
   /// Inscription d'un nouvel utilisateur selon son rôle (RG-01 à RG-03)
@@ -184,15 +181,8 @@ class AuthService {
       if (adresseDepot != null) 'adresseDepot': adresseDepot,
     };
 
-    try {
-      final response = await ApiClient.instance.post(ApiConfig.inscription, body: body);
-      return response is Map<String, dynamic> ? response : {};
-    } catch (e) {
-      if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
-        return {'statut': 'ATTENTE_OTP', 'telephone': telephone};
-      }
-      rethrow;
-    }
+    final response = await ApiClient.instance.post(ApiConfig.inscription, body: body);
+    return response is Map<String, dynamic> ? response : {};
   }
 
   /// Vérification de l'OTP reçu par SMS (RG-02)
@@ -200,116 +190,63 @@ class AuthService {
     required String telephone,
     required String code,
   }) async {
-    try {
-      final response = await ApiClient.instance.post(
-        ApiConfig.verifierOtp,
-        body: {
-          'telephone': telephone,
-          'code': code,
-        },
-      );
-      return response is Map<String, dynamic> ? response : {};
-    } catch (e) {
-      if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
-        return {'statut': 'ACTIF'};
-      }
-      rethrow;
-    }
+    final response = await ApiClient.instance.post(
+      ApiConfig.verifierOtp,
+      body: {
+        'telephone': telephone,
+        'code': code,
+      },
+    );
+    return response is Map<String, dynamic> ? response : {};
   }
 
   /// Demande le renvoi d'un nouveau code OTP par SMS (RG-02)
   Future<Map<String, dynamic>> renvoyerOtp({
     required String telephone,
   }) async {
-    try {
-      final response = await ApiClient.instance.post(
-        ApiConfig.renvoyerOtp,
-        body: {
-          'telephone': telephone,
-        },
-      );
-      return response is Map<String, dynamic> ? response : {};
-    } catch (e) {
-      if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
-        return {'statut': 'EN_ATTENTE_VERIFICATION', 'codeOtp': '1234'};
-      }
-      rethrow;
-    }
+    final response = await ApiClient.instance.post(
+      ApiConfig.renvoyerOtp,
+      body: {
+        'telephone': telephone,
+      },
+    );
+    return response is Map<String, dynamic> ? response : {};
   }
 
   /// Upload d'une photo de profil (JPEG, PNG, WEBP) vers le serveur (stockage sécurisé)
   Future<String> uploaderPhotoProfil(Uint8List octets, {String nom = 'avatar.jpg'}) async {
-    try {
-      final response = await ApiClient.instance.postMultipart(
-        ApiConfig.photoProfil,
-        fileBytes: octets,
-        filename: nom,
-        fieldName: 'photo',
-      );
+    final response = await ApiClient.instance.postMultipart(
+      ApiConfig.photoProfil,
+      fileBytes: octets,
+      filename: nom,
+      fieldName: 'photo',
+    );
 
-      String photoUrl = '';
-      if (response is Map<String, dynamic>) {
-        photoUrl = response['photoUrl'] as String? ?? '';
-      } else if (response is String) {
-        photoUrl = response;
-      }
-
-      if (photoUrl.isNotEmpty && profilActuel != null) {
-        final maj = profilActuel!.copyWith(photoUrl: photoUrl);
-        profilNotifier.value = maj;
-        await SessionStorageService.instance.sauvegarderProfil(maj);
-      }
-      return photoUrl;
-    } catch (e) {
-      if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
-        // Mode hors-ligne / fallback
-        if (profilActuel != null) {
-          final maj = profilActuel!.copyWith(photoUrl: '/api/public/images/avatars/mock_avatar.jpg');
-          profilNotifier.value = maj;
-          return maj.photoUrl!;
-        }
-      }
-      rethrow;
+    String photoUrl = '';
+    if (response is Map<String, dynamic>) {
+      photoUrl = response['photoUrl'] as String? ?? '';
+    } else if (response is String) {
+      photoUrl = response;
     }
+
+    if (photoUrl.isNotEmpty && profilActuel != null) {
+      final maj = profilActuel!.copyWith(photoUrl: photoUrl);
+      profilNotifier.value = maj;
+      await SessionStorageService.instance.sauvegarderProfil(maj);
+    }
+    return photoUrl;
   }
 
   /// Supprime la photo de profil personnalisée
   Future<void> supprimerPhotoProfil() async {
-    try {
-      await ApiClient.instance.patch(
-        ApiConfig.moi,
-        body: {'photoUrl': ''},
-      );
-      if (profilActuel != null) {
-        final maj = UtilisateurProfil(
-          id: profilActuel!.id,
-          type: profilActuel!.type,
-          nom: profilActuel!.nom,
-          telephone: profilActuel!.telephone,
-          photoUrl: null,
-          statut: profilActuel!.statut,
-          permissions: profilActuel!.permissions,
-        );
-        profilNotifier.value = maj;
-        await SessionStorageService.instance.sauvegarderProfil(maj);
-      }
-    } catch (e) {
-      if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
-        if (profilActuel != null) {
-          final maj = UtilisateurProfil(
-            id: profilActuel!.id,
-            type: profilActuel!.type,
-            nom: profilActuel!.nom,
-            telephone: profilActuel!.telephone,
-            photoUrl: null,
-            statut: profilActuel!.statut,
-            permissions: profilActuel!.permissions,
-          );
-          profilNotifier.value = maj;
-        }
-        return;
-      }
-      rethrow;
+    await ApiClient.instance.patch(
+      ApiConfig.moi,
+      body: {'photoUrl': ''},
+    );
+    if (profilActuel != null) {
+      final maj = profilActuel!.sansPhoto();
+      profilNotifier.value = maj;
+      await SessionStorageService.instance.sauvegarderProfil(maj);
     }
   }
 

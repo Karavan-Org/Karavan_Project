@@ -12,12 +12,19 @@ class ApiConfig {
   /// Priorité :
   /// 1. Paramètre --dart-define=ip=... (ex: --dart-define=ip=10.13.11.11)
   /// 2. Détection automatique selon la plateforme (Web: localhost, Android: 10.0.2.2, iOS: localhost)
+  /// Surcharge de l'URL de base, réservée aux tests (serveur HTTP local).
+  @visibleForTesting
+  static String? baseUrlTest;
+
   static String get baseUrl {
+    if (baseUrlTest != null) return baseUrlTest!;
     if (_ipParam.isNotEmpty) {
       final ip = _ipParam.trim();
       final scheme = (ip.startsWith('http://') || ip.startsWith('https://')) ? '' : 'http://';
       final sansScheme = ip.replaceFirst(RegExp(r'^https?://'), '');
-      final portSuffix = sansScheme.contains(':') ? '' : ':$_portParam';
+      // Une URL https (https://api.dogo.ml) garde son port implicite 443, sauf --dart-define=port explicite.
+      final portImplicite = ip.startsWith('https://') && !const bool.hasEnvironment('port');
+      final portSuffix = (sansScheme.contains(':') || portImplicite) ? '' : ':$_portParam';
       final completeUrl = '$scheme$ip$portSuffix';
       return completeUrl.endsWith('/') ? completeUrl.substring(0, completeUrl.length - 1) : completeUrl;
     }
@@ -98,7 +105,7 @@ class ApiConfig {
 
   // --- Endpoints Catalogue Grossiste & Upload Photos ---
   static const String catalogueProduits = '/api/catalogue/produits';
-  static const String produitsDisponibles = '/api/catalogue/produits/disponibles';
+  static const String produitsDisponibles = '/api/catalogue/produits-disponibles';
   static const String catalogueCategories = '/api/catalogue/categories';
   static const String catalogueUploadPhoto = '/api/catalogue/upload-photo';
 

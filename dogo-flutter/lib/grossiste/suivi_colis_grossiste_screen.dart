@@ -397,19 +397,24 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
               ],
             ),
           ),
-          if (estProchaine)
+          if (estProchaine) ...[
+            const SizedBox(width: 8),
             if (!suiviOuvert)
               OutlinedButton.icon(
                 onPressed: () => _bloquerSuiviNonOuvert(g),
                 icon: const Icon(Icons.lock_outline_rounded, size: 14, color: Color(0xFFE65100)),
-                label: const Text(
-                  "En attente admin",
-                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFE65100)),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "En attente admin",
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFE65100)),
+                  ),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFFFFB74D)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                   padding: const EdgeInsets.symmetric(horizontal: 10),
+                  minimumSize: const Size(0, 34),
                 ),
               )
             else
@@ -427,6 +432,7 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
                         width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Text("Valider", style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
               ),
+          ],
         ],
       ),
     );

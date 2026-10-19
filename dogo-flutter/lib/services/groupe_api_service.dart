@@ -4,6 +4,7 @@ import '../models/participation_model.dart';
 import '../models/remboursement_model.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
+import 'api/api_exception.dart';
 
 /// Service gérant les Groupes d'achat / Campagnes via l'API Backend DoGo
 class GroupeApiService {
@@ -68,7 +69,10 @@ class GroupeApiService {
       },
     );
 
-    return response is Map<String, dynamic> ? response : {'participationId': 1};
+    if (response is! Map<String, dynamic> || response['id'] is! num) {
+      throw const ApiException(statusCode: 0, message: 'Réservation non confirmée par le serveur DoGo.');
+    }
+    return response;
   }
 
   /// Récupère la liste des participations du commerçant connecté (GET /api/moi/participations)

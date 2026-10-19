@@ -93,6 +93,18 @@ class UtilisateurProfil {
     );
   }
 
+  /// Même profil sans photo personnalisée ([copyWith] ne sait pas remettre un champ à null).
+  UtilisateurProfil sansPhoto() => UtilisateurProfil(
+        id: id,
+        type: type,
+        nom: nom,
+        telephone: telephone,
+        statut: statut,
+        permissions: permissions,
+        nomStructure: nomStructure,
+        quartier: quartier,
+      );
+
   String get nomComplet => nom;
   String? get structure => nomStructure;
 

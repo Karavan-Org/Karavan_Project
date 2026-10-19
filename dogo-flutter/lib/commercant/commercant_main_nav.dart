@@ -16,6 +16,7 @@ import '../services/session_storage_service.dart';
 import '../services/auth_service.dart';
 import '../services/url_route_helper.dart';
 import '../models/role_acteur.dart';
+import '../widgets/onglet_navigation.dart';
 import '../widgets/tab_navigation_scope.dart';
 import '../widgets/didacticiel_guide_overlay.dart';
 
@@ -360,11 +361,12 @@ class _CommercantMainNavState extends State<CommercantMainNav>
 
       // Barre de navigation inférieure conforme au design Figma
       bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
+        shape: formeBarreNavigation,
+        notchMargin: 7.0,
         clipBehavior: Clip.antiAlias,
-        elevation: 16,
+        elevation: 12,
         color: Colors.white,
+        shadowColor: const Color(0x5546321E),
         padding: EdgeInsets.zero,
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -641,43 +643,17 @@ class _CommercantMainNavState extends State<CommercantMainNav>
     required IconData activeIcon,
     required IconData inactiveIcon,
   }) {
-    final bool isSelected = _currentIndex == index;
-    final color = isSelected ? AppTheme.primary : AppTheme.textMuted;
-
-    return InkWell(
+    return OngletNavigation(
+      label: label,
+      activeIcon: activeIcon,
+      inactiveIcon: inactiveIcon,
+      selectionne: _currentIndex == index,
       onTap: () {
         if (_fabController.isCompleted) {
           _fabController.reverse();
         }
         setState(() => _currentIndex = index);
       },
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isSelected ? activeIcon : inactiveIcon,
-              color: color,
-              size: 24,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

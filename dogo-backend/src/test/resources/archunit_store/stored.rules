@@ -1,0 +1,10 @@
+#
+#Mon Oct 19 12:16:22 UTC 2026
+classes\ that\ reside\ outside\ of\ packages\ ['..shared..',\ '..demo..']\ should\ n'utiliser\ d'un\ autre\ module\ que\ son\ paquet\ api=7e7f7639-c4bc-4c7a-9f73-6b2a8f625ce9
+no\ classes\ that\ have\ simple\ name\ ending\ with\ 'Controller'\ should\ depend\ on\ classes\ that\ have\ simple\ name\ ending\ with\ 'Repository'=ad011639-365d-4db6-8645-e7f5fc0a19ae
+no\ classes\ that\ reside\ in\ a\ package\ '..application..'\ should\ depend\ on\ classes\ that\ reside\ in\ a\ package\ '..web..'=61c52d56-719a-4952-8bf3-ee6e070cae82
+no\ classes\ that\ reside\ in\ a\ package\ '..domain..'\ should\ depend\ on\ classes\ that\ reside\ in\ any\ package\ ['org.springframework..',\ 'jakarta..',\ '..persistence..',\ '..application..',\ '..web..',\ '..api..']=1de2e76a-645f-4dba-9dee-1d42fb1f1676
+no\ classes\ that\ reside\ in\ a\ package\ '..persistence..'\ should\ depend\ on\ classes\ that\ reside\ in\ any\ package\ ['..application..',\ '..web..']=be5b7169-a71b-4e4b-adc4-8b5b1d503673
+no\ classes\ that\ reside\ in\ a\ package\ '..web..'\ and\ reside\ outside\ of\ package\ '..shared..'\ should\ depend\ on\ classes\ that\ reside\ in\ a\ package\ '..persistence..'=4fea348d-ce39-484b-b7b0-2da7e1008187
+no\ classes\ that\ reside\ outside\ of\ package\ '..demo..'\ should\ depend\ on\ classes\ that\ reside\ in\ a\ package\ '..demo..'=f1598b34-7e08-4f39-8164-64a081ebdbef
+slices\ matching\ 'ml.dogo.(identite|catalogue|groupeachat|participation|finance|logistique|notification|audit|litige)..'\ should\ be\ free\ of\ cycles=5bd896fb-2d47-4ac1-98d7-fd5f7d6d411a

@@ -166,7 +166,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: compact ? 17 : 20,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                   color: const Color(0xFF2C241E),
                   letterSpacing: -0.3,
                 ),
@@ -193,7 +193,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: compact ? 26 : 32,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                   color: const Color(0xFF2C241E),
                   letterSpacing: -0.6,
                 ),

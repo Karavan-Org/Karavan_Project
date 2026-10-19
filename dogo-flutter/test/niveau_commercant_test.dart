@@ -92,6 +92,34 @@ void main() {
       expect(find.text("Niveau Commerçant"), findsOneWidget);
       expect(find.text("Paliers de fidélité DoGo"), findsOneWidget);
     });
+
+    testWidgets("Taper sur Explorer les groupes d'achat déclenche onExplorer", (tester) async {
+      bool onExplorerAppele = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DetailsNiveauCommercantSheet(
+              nbCommandes: 10,
+              niveau: NiveauCommercant.niveau2,
+              onExplorer: () {
+                onExplorerAppele = true;
+              },
+            ),
+          ),
+        ),
+      );
+
+      final boutonExplorer = find.text("Explorer les groupes d'achat");
+      expect(boutonExplorer, findsOneWidget);
+
+      await tester.ensureVisible(boutonExplorer);
+      await tester.pumpAndSettle();
+
+      await tester.tap(boutonExplorer);
+      await tester.pumpAndSettle();
+
+      expect(onExplorerAppele, isTrue);
+    });
   });
 }
 

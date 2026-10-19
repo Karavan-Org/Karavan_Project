@@ -104,9 +104,15 @@ class CarteGroupe extends StatelessWidget {
                   style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF2C241E)),
                 ),
               ),
-              Text(
-                "${groupe.prixUnitaire} FCFA / pce",
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF9E6738)),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "${groupe.prixUnitaire} FCFA / pce",
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF9E6738)),
+                  ),
+                ),
               ),
             ],
           ),

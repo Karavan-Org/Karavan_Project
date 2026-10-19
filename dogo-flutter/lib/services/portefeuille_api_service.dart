@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
+import 'api/api_exception.dart';
 
 class PortefeuilleInfo {
   final double soldeBloque;
@@ -81,6 +82,24 @@ class PortefeuilleApiService {
       debugPrint('PortefeuilleApiService.mesMouvements - Erreur : $e');
       return [];
     }
+  }
+
+  /// Retrait du solde disponible vers un moyen Mobile Money (courtier et grossiste, RG-41).
+  /// [cleIdempotence] doit rester la même si l'utilisateur relance le même retrait : jamais deux versements.
+  Future<PortefeuilleInfo> retirer({
+    required double montant,
+    required int moyenPaiementId,
+    required String cleIdempotence,
+  }) async {
+    final rep = await ApiClient.instance.post(
+      ApiConfig.portefeuilleRetraits,
+      headers: {'Idempotency-Key': cleIdempotence},
+      body: {'montant': montant, 'moyenPaiementId': moyenPaiementId},
+    );
+    if (rep is! Map<String, dynamic>) {
+      throw const ApiException(statusCode: 0, message: 'Réponse de retrait inattendue du serveur DoGo.');
+    }
+    return PortefeuilleInfo.fromJson(rep);
   }
 
   /// Recharge dynamique du portefeuille (Orange Money, Moov, Wave)

@@ -43,3 +43,18 @@ flutter:
     - assets/logo/
     - assets/html/
     - assets/three.min.js
+
+  # Inter embarquée (licence OFL, assets/fonts/Inter-OFL.txt) : chaque graisse a son fichier,
+  # donc les TextStyle(fontWeight: …) des écrans sont rendus fidèlement, même hors ligne.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Inter-ExtraBold.ttf
+          weight: 800

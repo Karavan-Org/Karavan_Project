@@ -127,7 +127,7 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
                 "Connexion",
                 style: TextStyle(
                   fontSize: 26,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                   color: Color(0xFF1E1E24),
                   letterSpacing: -0.5,
                 ),
@@ -302,7 +302,7 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
                       "Inscription",
                       style: TextStyle(
                         fontSize: 13.5,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         color: camelColor,
                         decoration: TextDecoration.underline,
                         decorationColor: camelColor,

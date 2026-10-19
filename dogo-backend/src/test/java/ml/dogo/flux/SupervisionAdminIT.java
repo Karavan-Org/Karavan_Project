@@ -34,7 +34,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @Import(FluxPrincipalIT.BaseVierge.class)
 class SupervisionAdminIT {
 
-    private static final String PIN = "2580";
+    private static final String PIN = "Dogo2026!";
 
     @Autowired
     private MockMvc mvc;

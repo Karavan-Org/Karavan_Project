@@ -38,7 +38,7 @@ public class AmorcageAdministrateur {
             LOG.info("Amorçage administrateur : aucune variable (DOGO_ADMIN_TELEPHONE / DOGO_ADMIN_MOT_DE_PASSE) renseignée.");
             return;
         }
-        if (utilisateurs.nombreAdministrateurs() > 0) {
+        if (utilisateurs.nombreAdministrateursTechniques() > 0 || utilisateurs.existsByTelephone(telephone)) {
             return;
         }
         administrateurs.creerInitial(telephone, "Administrateur technique", motDePasse, "ADM-0001", RoleAdministratif.TECHNIQUE);

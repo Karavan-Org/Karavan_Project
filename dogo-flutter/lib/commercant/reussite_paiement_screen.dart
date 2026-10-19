@@ -2,9 +2,13 @@ import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'mes_commandes_screen.dart';
+import '../services/groupe_api_service.dart';
+import '../widgets/app_popups.dart';
 
 /// Écran de confirmation de Paiement Réussi conforme au design Figma (# reussite paiement)
 class ReussitePaiementScreen extends StatelessWidget {
+  /// Participation payée : c'est elle qu'annule le bouton « Annuler la commande » (RG-31).
+  final int participationId;
   final String titreProduit;
   final String paysOrigine;
   final int prixUnitaire;
@@ -18,16 +22,17 @@ class ReussitePaiementScreen extends StatelessWidget {
 
   const ReussitePaiementScreen({
     super.key,
+    required this.participationId,
+    required this.prixUnitaire,
+    required this.quantite,
+    required this.montantTotal,
+    required this.moyenPaiement,
+    required this.dateHeure,
     this.titreProduit = "",
     this.paysOrigine = "",
-    this.prixUnitaire = 8500,
-    this.quantite = 25,
-    this.montantTotal = 212500,
-    this.moyenPaiement = "Orange Money",
-    this.dateHeure = "12 sept. 2026 - 10:24",
     this.imagePath = "",
-    this.piecesActuelles = 780,
-    this.piecesObjectif = 1000,
+    this.piecesActuelles = 0,
+    this.piecesObjectif = 0,
   });
 
   String _formatMontant(int montant) {
@@ -47,7 +52,7 @@ class ReussitePaiementScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         content: const Text(
-          "Vos fonds seront immédiatement recrédités sur votre solde AchatGroup sans aucuns frais d'annulation.",
+          "Votre participation sera annulée et le remboursement de votre paiement lancé, sans frais d'annulation.",
           style: TextStyle(fontSize: 13, color: AppTheme.textMuted, height: 1.4),
         ),
         actions: [
@@ -56,11 +61,18 @@ class ReussitePaiementScreen extends StatelessWidget {
             child: const Text("Garder ma commande", style: TextStyle(color: AppTheme.textMuted)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
+              try {
+                await GroupeApiService.instance.annulerParticipation(participationId);
+              } catch (e) {
+                if (context.mounted) await AppPopups.traiterErreurOuConflit(context, e);
+                return;
+              }
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text("Commande annulée. Vos fonds sont de retour sur votre compte."),
+                  content: Text("Participation annulée. Votre remboursement est en cours de traitement."),
                   backgroundColor: Color(0xFFE53935),
                 ),
               );
@@ -80,7 +92,8 @@ class ReussitePaiementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double pct = (piecesActuelles / piecesObjectif).clamp(0.0, 1.0);
+    final bool progressionConnue = piecesObjectif > 0;
+    final double pct = progressionConnue ? (piecesActuelles / piecesObjectif).clamp(0.0, 1.0) : 0.0;
     final int pctInt = (pct * 100).toInt();
 
     return Scaffold(
@@ -144,7 +157,7 @@ class ReussitePaiementScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 22,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w800,
                 color: Color(0xFF1A1A1A),
                 height: 1.25,
                 letterSpacing: -0.5,
@@ -308,13 +321,14 @@ class ReussitePaiementScreen extends StatelessWidget {
                           "${_formatMontant(prixUnitaire)} / unité",
                           style: const TextStyle(
                             fontSize: 13.5,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w800,
                             color: Color(0xFF1E1E1E),
                           ),
                         ),
                         const SizedBox(height: 8),
 
-                        // Barre de progression orange/dorée
+                        // Barre de progression orange/dorée (masquée si la progression n'a pas pu être lue)
+                        if (progressionConnue) ...[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
@@ -340,12 +354,13 @@ class ReussitePaiementScreen extends StatelessWidget {
                               "$pctInt%",
                               style: const TextStyle(
                                 fontSize: 10.5,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w800,
                                 color: Color(0xFFEEA823),
                               ),
                             ),
                           ],
                         ),
+                        ],
                       ],
                     ),
                   ),
@@ -484,7 +499,7 @@ class ReussitePaiementScreen extends StatelessWidget {
             value,
             style: TextStyle(
               fontSize: 13.5,
-              fontWeight: isBoldValue ? FontWeight.w900 : FontWeight.w700,
+              fontWeight: isBoldValue ? FontWeight.w800 : FontWeight.w700,
               color: const Color(0xFF1E1E1E),
             ),
           ),

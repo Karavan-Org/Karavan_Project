@@ -20,12 +20,21 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
 
-  final List<String> _pays = ["Tous", "Chine 🇨🇳", "Turquie 🇹🇷", "Dubaï 🇦🇪"];
+  final List<String> _pays = [
+    "Tous",
+    "Chine 🇨🇳",
+    "Turquie 🇹🇷",
+    "Dubaï 🇦🇪",
+    "Mali 🇲🇱",
+    "France 🇫🇷",
+  ];
   final List<String> _categories = [
     "Tous",
+    "Chaussures",
+    "Électronique",
+    "Vêtements",
     "Sneakers",
     "Mode Féminine",
-    "Chaussures",
     "Montres & Bijoux",
   ];
 
@@ -71,16 +80,35 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
           final toutesCampagnes = FavorisService.instance.toutesLesCampagnes;
 
           final filtrees = toutesCampagnes.where((c) {
-            if (_categorieActive != "Tous" && c.categorie != _categorieActive) {
+            if (_categorieActive != "Tous" &&
+                !c.categorie.toLowerCase().contains(_categorieActive.toLowerCase())) {
               return false;
             }
-            if (_paysActif == "Chine 🇨🇳" && !c.paysOrigine.toLowerCase().contains("chine")) {
+            final pays = c.paysOrigine.toLowerCase();
+            if (_paysActif == "Chine 🇨🇳" &&
+                !pays.contains("chine") &&
+                !pays.contains("china")) {
               return false;
             }
-            if (_paysActif == "Turquie 🇹🇷" && !c.paysOrigine.toLowerCase().contains("turquie")) {
+            if (_paysActif == "Turquie 🇹🇷" &&
+                !pays.contains("turquie") &&
+                !pays.contains("turkey") &&
+                !pays.contains("turk")) {
               return false;
             }
-            if (_paysActif == "Dubaï 🇦🇪" && !c.paysOrigine.toLowerCase().contains("dubaï")) {
+            if (_paysActif == "Dubaï 🇦🇪" &&
+                !pays.contains("dubaï") &&
+                !pays.contains("dubai") &&
+                !pays.contains("uae") &&
+                !pays.contains("émirats")) {
+              return false;
+            }
+            if (_paysActif == "Mali 🇲🇱" && !pays.contains("mali")) {
+              return false;
+            }
+            if (_paysActif == "France 🇫🇷" &&
+                !pays.contains("france") &&
+                !pays.contains("paris")) {
               return false;
             }
             if (_searchQuery.isNotEmpty) {
@@ -362,7 +390,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                     children: [
                       Text(
                         "${g.prixGroupe} FCFA",
-                        style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.primary, fontSize: 13.5),
+                        style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.primary, fontSize: 13.5),
                       ),
                       Text(
                         "${(g.ratio * 100).toInt()}% réservé",

@@ -251,11 +251,15 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () => afficherPartageGroupe(context, g),
-              icon: const Icon(Icons.share_rounded, size: 18),
-              label: const Text("Partager le lien"),
+              icon: const Icon(Icons.share_rounded, size: 16),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text("Partager"),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.primary,
                 side: const BorderSide(color: AppTheme.primary),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 minimumSize: const Size(0, 42),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
               ),
@@ -271,25 +275,33 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
                       context,
                       MaterialPageRoute(builder: (_) => const SuiviColisGrossisteScreen()),
                     ).then((_) => _actualiserSilencieux()),
-                    icon: const Icon(Icons.local_shipping_rounded, size: 18),
-                    label: const Text("Suivi du colis"),
+                    icon: const Icon(Icons.local_shipping_rounded, size: 16),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text("Suivi du colis"),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
                       minimumSize: const Size(0, 42),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                     ),
                   )
                 : OutlinedButton.icon(
                     onPressed: () => _bloquerSuiviIncomplet(g),
-                    icon: const Icon(Icons.lock_outline_rounded, size: 18, color: Color(0xFF8C7E74)),
-                    label: Text(
-                      "Suivi (${g.pourcentageProgression}%)",
-                      style: const TextStyle(color: Color(0xFF8C7E74), fontWeight: FontWeight.w700, fontSize: 12),
+                    icon: const Icon(Icons.lock_outline_rounded, size: 16, color: Color(0xFF8C7E74)),
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        "Suivi (${g.pourcentageProgression}%)",
+                        style: const TextStyle(color: Color(0xFF8C7E74), fontWeight: FontWeight.w700, fontSize: 12),
+                      ),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFFD7CCC8)),
                       backgroundColor: const Color(0xFFF5EFEA),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
                       minimumSize: const Size(0, 42),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                     ),

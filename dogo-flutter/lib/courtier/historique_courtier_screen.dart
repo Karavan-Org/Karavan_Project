@@ -126,7 +126,7 @@ class HistoriqueCourtierScreen extends StatelessWidget {
                     ),
                     Text(
                       item["commission"] as String,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.success),
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.success),
                     ),
                   ],
                 ),

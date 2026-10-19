@@ -368,7 +368,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                           Text(
                                             item["prixGros"] as String,
                                             style: const TextStyle(
-                                              fontWeight: FontWeight.w900,
+                                              fontWeight: FontWeight.w800,
                                               fontSize: 14.5,
                                               color: AppTheme.primary,
                                             ),

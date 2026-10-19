@@ -256,7 +256,7 @@ class SuiviColisScreen extends StatelessWidget {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
@@ -316,7 +316,7 @@ class SuiviColisScreen extends StatelessWidget {
                                           "$stepNum",
                                           style: const TextStyle(
                                             color: Colors.white,
-                                            fontWeight: FontWeight.w900,
+                                            fontWeight: FontWeight.w800,
                                             fontSize: 12,
                                           ),
                                         )

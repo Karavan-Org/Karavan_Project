@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
+import 'api/api_exception.dart';
 
 /// Résultat d'un paiement selon le contrat Backend DoGo (PaiementVue)
 class PaiementResultat {
@@ -20,11 +21,16 @@ class PaiementResultat {
   });
 
   factory PaiementResultat.fromJson(Map<String, dynamic> json) {
+    final id = json['id'];
+    if (id is! num) {
+      throw const ApiException(statusCode: 0, message: 'Réponse de paiement invalide : identifiant absent.');
+    }
     return PaiementResultat(
-      id: json['id'] as int? ?? 1,
-      participationId: json['participationId'] as int? ?? 1,
+      id: id.toInt(),
+      participationId: (json['participationId'] as num?)?.toInt() ?? 0,
       montant: (json['montant'] as num?)?.toDouble() ?? 0.0,
-      statut: json['statut'] as String? ?? 'VALIDE',
+      // Jamais « VALIDE » par défaut : un statut absent ne prouve pas que l'argent a été encaissé
+      statut: json['statut'] as String? ?? 'INCONNU',
       dateInitiation: json['dateInitiation']?.toString() ?? DateTime.now().toIso8601String(),
     );
   }
@@ -51,76 +57,30 @@ class PaiementApiService {
   }) async {
     final cle = cleIdempotence ?? genererCleIdempotence();
 
-    try {
-      final Map<String, dynamic> corps = {};
-      if (moyenPaiementId != null) corps['moyenPaiementId'] = moyenPaiementId;
-      if (utiliserPortefeuille) corps['utiliserPortefeuille'] = true;
+    final Map<String, dynamic> corps = {};
+    if (moyenPaiementId != null) corps['moyenPaiementId'] = moyenPaiementId;
+    if (utiliserPortefeuille) corps['utiliserPortefeuille'] = true;
 
-      final response = await ApiClient.instance.post(
-        ApiConfig.initierPaiement(participationId),
-        headers: {
-          'Idempotency-Key': cle,
-        },
-        body: corps.isNotEmpty ? corps : null,
-      );
+    final response = await ApiClient.instance.post(
+      ApiConfig.initierPaiement(participationId),
+      headers: {
+        'Idempotency-Key': cle,
+      },
+      body: corps.isNotEmpty ? corps : null,
+    );
 
-      if (response is Map<String, dynamic>) {
-        final resultat = PaiementResultat.fromJson(response);
-        // En environnement démo, déclencher le callback de succès de l'opérateur Mobile Money (RG-34)
-        if (resultat.statut == 'EN_ATTENTE') {
-          try {
-            await ApiClient.instance.post(ApiConfig.simulerSuccesPaiement(resultat.id));
-          } catch (callbackErr) {
-            debugPrint('Simulation callback opérateur démo (ignoré si hors démo) : $callbackErr');
-          }
-        }
-        return resultat;
-      }
-
-      return PaiementResultat(
-        id: 1,
-        participationId: int.tryParse(participationId.toString()) ?? 1,
-        montant: 0.0,
-        statut: 'VALIDE',
-        dateInitiation: DateTime.now().toIso8601String(),
-      );
-    } catch (e) {
-      debugPrint('PaiementApiService.initierPaiement - Mode repli : $e');
-      if (kDebugMode && e.toString().contains('Impossible de joindre le serveur')) {
-        return PaiementResultat(
-          id: 1,
-          participationId: int.tryParse(participationId.toString()) ?? 1,
-          montant: 0.0,
-          statut: 'VALIDE',
-          dateInitiation: DateTime.now().toIso8601String(),
-        );
-      }
-      rethrow;
+    if (response is! Map<String, dynamic>) {
+      throw const ApiException(statusCode: 0, message: 'Réponse de paiement inattendue du serveur DoGo.');
     }
-  }
-
-  /// Assure qu'un moyen de paiement existe pour l'utilisateur connecté (ou le crée)
-  Future<int> assurerMoyen({required String numero, required String operateur}) async {
-    try {
-      final res = await ApiClient.instance.get('/api/moi/moyens-paiement');
-      if (res is List && res.isNotEmpty) {
-        final premier = res.first;
-        if (premier is Map && premier['id'] != null) {
-          return (premier['id'] as num).toInt();
-        }
+    final resultat = PaiementResultat.fromJson(response);
+    // En environnement démo, déclencher le callback de succès de l'opérateur Mobile Money (RG-34)
+    if (resultat.statut == 'EN_ATTENTE') {
+      try {
+        await ApiClient.instance.post(ApiConfig.simulerSuccesPaiement(resultat.id));
+      } catch (callbackErr) {
+        debugPrint('Simulation callback opérateur démo (ignoré si hors démo) : $callbackErr');
       }
-      final cree = await ApiClient.instance.post(
-        '/api/moi/moyens-paiement',
-        body: {
-          'numero': numero,
-          'operateur': operateur,
-          'parDefaut': true,
-        },
-      );
-      if (cree is Map && cree['id'] != null) {
-        return (cree['id'] as num).toInt();
-      }
-    } catch (_) {}
-    return 1;
+    }
+    return resultat;
   }
 }

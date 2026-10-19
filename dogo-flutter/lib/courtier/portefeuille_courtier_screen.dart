@@ -1,13 +1,53 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/portefeuille_professionnel.dart';
 import '../widgets/zone_portefeuille_neumorphic.dart';
 
-/// Écran Portefeuille Courtier (Frame 17 de la planche)
-class PortefeuilleCourtierScreen extends StatelessWidget {
+/// Écran Portefeuille Courtier (Frame 17 de la planche) : solde réel, séquestre, comptes et retraits (RG-38, RG-41)
+class PortefeuilleCourtierScreen extends StatefulWidget {
   const PortefeuilleCourtierScreen({super.key});
 
   @override
+  State<PortefeuilleCourtierScreen> createState() => _PortefeuilleCourtierScreenState();
+}
+
+class _PortefeuilleCourtierScreenState extends State<PortefeuilleCourtierScreen> {
+  static const Color _accent = Color(0xFF9E5C23);
+
+  DonneesPortefeuillePro _donnees = const DonneesPortefeuillePro();
+  bool _chargement = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _charger();
+  }
+
+  Future<void> _charger() async {
+    setState(() => _chargement = true);
+    final donnees = await DonneesPortefeuillePro.charger();
+    if (!mounted) return;
+    setState(() {
+      _donnees = donnees;
+      _chargement = false;
+    });
+  }
+
+  Future<void> _retirer() async {
+    final info = _donnees.info;
+    if (info == null) return;
+    final ok = await demanderRetraitPortefeuille(
+      context,
+      soldeDisponible: info.soldeDisponible,
+      moyens: _donnees.moyens,
+      accent: _accent,
+    );
+    if (ok) await _charger();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final info = _donnees.info;
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -15,197 +55,65 @@ class PortefeuilleCourtierScreen extends StatelessWidget {
         backgroundColor: AppTheme.surface,
         foregroundColor: AppTheme.textDark,
         elevation: 0,
+        actions: [IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _chargement ? null : _charger)],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- ZONE PORTEFEUILLE NEUMORPHIQUE SOFT 3D (Style Maquette) ---
-            ZonePortefeuilleNeumorphic(
-              titre: "Portefeuille Courtier",
-              sousTitre: "Commissions de transit & convois sécurisées",
-              montantSolde: "0 FCFA",
-              infoSequestre: "Garantie Séquestre DoGo • Commissions débloquées à la livraison",
-              iconeInfo: Icons.security_rounded,
-              texteBoutonAction: "Retirer vers Mobile Money",
-              onTapAction: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Solde insuffisant pour initier un retrait."),
-                    backgroundColor: Color(0xFFC0392B),
-                  ),
-                );
-              },
-              couleurBouton: const [
-                Color(0xFFC07A3E),
-                Color(0xFF9E5C23),
-                Color(0xFF7A4012),
-              ],
-              couleurEmbleme: const [
-                Color(0xFFFFFFFF),
-                Color(0xFFE5A100),
-                Color(0xFF9E5C23),
-              ],
-              titreSquirclesRapides: "COMPTES DE RETRAIT",
-              squirclesRapides: [
-                ZonePortefeuilleNeumorphic.buildSquircleRapide(
-                  label: "Orange",
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Compte de retrait Orange Money sélectionné")),
-                    );
-                  },
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFFFF7900),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text("OM", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
-                  ),
-                ),
-                const SizedBox(width: 24),
-                ZonePortefeuilleNeumorphic.buildSquircleRapide(
-                  label: "Moov",
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Compte de retrait Moov Money sélectionné")),
-                    );
-                  },
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFF005DAA),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text("MM", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
-                  ),
-                ),
-                const SizedBox(width: 24),
-                ZonePortefeuilleNeumorphic.buildSquircleRapide(
-                  label: "Wave",
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Compte de retrait Wave sélectionné")),
-                    );
-                  },
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFF1DC4F2),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.waves_rounded, color: Colors.white, size: 18),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // --- COMPTES DE VERSEMENT ENREGISTRÉS ---
-            const Text("Comptes de Versement Associés", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-            const SizedBox(height: 10),
-
-            _buildMoyenCard("Orange Money", "Compte Principal (Par défaut)", true, Icons.phone_android_rounded),
-            const SizedBox(height: 10),
-            _buildMoyenCard("Moov Money", "Compte Secondaire", false, Icons.phone_android_rounded),
-
-            const SizedBox(height: 24),
-
-            // --- HISTORIQUE DES MOUVEMENTS DE COMMISSIONS ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Historique des Mouvements", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                TextButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Filtres : Toutes vos commissions et retraits sont affichés."),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  child: const Text("Filtrer", style: TextStyle(color: AppTheme.primary)),
-                ),
-              ],
-            ),
-
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
-              ),
-              child: Column(
-                children: [
-                  Icon(Icons.receipt_long_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Aucune commission pour le moment",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textDark),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Vos commissions de transit apparaîtront ici dès l'arrivée des premiers convois.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                  ),
+      body: RefreshIndicator(
+        onRefresh: _charger,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ZonePortefeuilleNeumorphic(
+                titre: "Portefeuille Courtier",
+                sousTitre: "Commissions de transit & convois sécurisées",
+                montantSolde: _chargement
+                    ? "…"
+                    : info == null
+                        ? "Indisponible"
+                        : formatFcfa(info.soldeDisponible),
+                infoSequestre: info == null
+                    ? "Garantie Séquestre DoGo • Commissions débloquées à la livraison"
+                    : "En séquestre : ${formatFcfa(info.soldeBloque)} • débloqué à la livraison",
+                iconeInfo: Icons.security_rounded,
+                texteBoutonAction: "Retirer vers Mobile Money",
+                onTapAction: info == null ? null : _retirer,
+                couleurBouton: const [
+                  Color(0xFFC07A3E),
+                  Color(0xFF9E5C23),
+                  Color(0xFF7A4012),
+                ],
+                couleurEmbleme: const [
+                  Color(0xFFFFFFFF),
+                  Color(0xFFE5A100),
+                  Color(0xFF9E5C23),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMoyenCard(String operateur, String numero, bool isDefault, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFEFE8E0)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: AppTheme.tertiary.withValues(alpha: 0.4),
-            child: Icon(icon, color: AppTheme.primary, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(operateur, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                Text(numero, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+              if (!_chargement && info == null) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  "Portefeuille injoignable : vérifiez votre connexion puis tirez pour actualiser.",
+                  style: TextStyle(fontSize: 12.5, color: Color(0xFFC0392B)),
+                ),
               ],
-            ),
-          ),
-          if (isDefault)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppTheme.success.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
+
+              const SizedBox(height: 24),
+              const Text("Comptes de Versement Associés", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              const SizedBox(height: 10),
+              ComptesVersement(moyens: _donnees.moyens),
+
+              const SizedBox(height: 14),
+              const Text("Historique des Mouvements", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              const SizedBox(height: 10),
+              HistoriqueMouvementsPro(
+                mouvements: _donnees.mouvements,
+                messageVide: "Vos commissions de transit apparaîtront ici dès l'arrivée des premiers convois.",
               ),
-              child: const Text("Par défaut", style: TextStyle(color: AppTheme.success, fontSize: 11.5, fontWeight: FontWeight.bold)),
-            ),
-        ],
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
       ),
     );
   }
