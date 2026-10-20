@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/bouton_bascule_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../commercant/commercant_otp_screen.dart';
@@ -106,35 +107,45 @@ class _GrossisteInscriptionScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CouleursArrivee.fond,
+      backgroundColor: AppTheme.couleurFond(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
-              const SizedBox(height: 16),
-              Image.asset('assets/images/logo_dogo.png',
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: AppTheme.primary, size: 28),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  const BoutonBasculeTheme(compact: true),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Image.asset('assets/images/logo_karavan.png',
                   height: 56, fit: BoxFit.contain),
               const SizedBox(height: 14),
               SvgPicture.asset('assets/images/grossiste/port_scene.svg',
                   width: 346, height: 86),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "Rejoignez dɔgɔ\nen tant que grossiste",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 20.5,
                     fontWeight: FontWeight.w700,
-                    color: CouleursArrivee.titre,
+                    color: AppTheme.couleurTexte(context),
                     height: 1.2),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 "Accédez à des milliers de commerçants\net vendez vos produits en toute sécurité.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 12,
-                    color: CouleursArrivee.texteDoux,
+                    color: AppTheme.couleurTexteAttenue(context),
                     height: 1.4),
               ),
               const SizedBox(height: 18),
@@ -225,10 +236,10 @@ class _GrossisteInscriptionScreenState
               const SizedBox(height: 26),
               GestureDetector(
                 onTap: () => Navigator.of(context).maybePop(),
-                child: const Text.rich(
+                child: Text.rich(
                   TextSpan(
                     style: TextStyle(
-                        fontSize: 13, color: CouleursArrivee.texteDoux),
+                        fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
                     children: [
                       TextSpan(text: "Vous avez déjà un compte ? "),
                       TextSpan(

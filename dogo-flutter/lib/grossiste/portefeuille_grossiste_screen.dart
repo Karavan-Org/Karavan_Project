@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../widgets/portefeuille_professionnel.dart';
 import '../widgets/zone_portefeuille_neumorphic.dart';
 
@@ -11,7 +12,6 @@ class PortefeuilleGrossisteScreen extends StatefulWidget {
 }
 
 class _PortefeuilleGrossisteScreenState extends State<PortefeuilleGrossisteScreen> {
-  static const Color _texte = Color(0xFF2C241E);
   static const Color _accent = Color(0xFF9E6738);
 
   DonneesPortefeuillePro _donnees = const DonneesPortefeuillePro();
@@ -49,21 +49,21 @@ class _PortefeuilleGrossisteScreenState extends State<PortefeuilleGrossisteScree
   Widget build(BuildContext context) {
     final info = _donnees.info;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: _texte),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           "Portefeuille Grossiste",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: _texte),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: _texte),
+            icon: Icon(Icons.refresh_rounded, color: AppTheme.couleurTexte(context)),
             onPressed: _chargement ? null : _charger,
           ),
         ],
@@ -85,7 +85,7 @@ class _PortefeuilleGrossisteScreenState extends State<PortefeuilleGrossisteScree
                         ? "Indisponible"
                         : formatFcfa(info.soldeDisponible),
                 infoSequestre: info == null
-                    ? "Séquestre DoGo des groupes que vous portez"
+                    ? "Séquestre Karavan des groupes que vous portez"
                     : "Séquestre en cours : ${formatFcfa(info.soldeBloque)} (lots en transit)",
                 iconeInfo: Icons.lock_clock_rounded,
                 texteBoutonAction: "Retirer vers Mobile Money",
@@ -110,17 +110,17 @@ class _PortefeuilleGrossisteScreenState extends State<PortefeuilleGrossisteScree
               ],
 
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 "Comptes de versement",
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: _texte),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context)),
               ),
               const SizedBox(height: 10),
               ComptesVersement(moyens: _donnees.moyens),
 
               const SizedBox(height: 14),
-              const Text(
+              Text(
                 "Historique des règlements",
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: _texte),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context)),
               ),
               const SizedBox(height: 12),
               HistoriqueMouvementsPro(

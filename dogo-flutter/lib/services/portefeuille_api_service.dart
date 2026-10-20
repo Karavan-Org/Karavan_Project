@@ -97,7 +97,7 @@ class PortefeuilleApiService {
       body: {'montant': montant, 'moyenPaiementId': moyenPaiementId},
     );
     if (rep is! Map<String, dynamic>) {
-      throw const ApiException(statusCode: 0, message: 'Réponse de retrait inattendue du serveur DoGo.');
+      throw const ApiException(statusCode: 0, message: 'Réponse de retrait inattendue du serveur Karavan.');
     }
     return PortefeuilleInfo.fromJson(rep);
   }

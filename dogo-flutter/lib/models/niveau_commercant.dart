@@ -18,7 +18,7 @@ enum NiveauCommercant {
     nomNiveauSuivant: 'Niveau 2 • Vérifié',
     avantages: [
       'Accès libre à l\'ensemble des groupes d\'achat et arrivages',
-      'Paiements 100% sécurisés sous compte séquestre bancaire DoGo',
+      'Paiements 100% sécurisés sous compte séquestre bancaire Karavan',
       'Retrait sécurisé par QR code et code PIN aux points relais de Bamako',
       'Assistance utilisateur standard et suivi d\'acheminement en temps réel',
     ],

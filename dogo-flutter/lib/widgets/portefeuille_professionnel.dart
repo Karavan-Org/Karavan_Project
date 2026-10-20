@@ -205,9 +205,9 @@ class ComptesVersement extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFEFE8E0)),
+              border: Border.all(color: AppTheme.couleurBordure(context)),
             ),
             child: Row(
               children: [
@@ -221,8 +221,8 @@ class ComptesVersement extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(libelleOperateur(m.operateur),
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                      Text(m.numero, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: AppTheme.couleurTexte(context))),
+                      Text(m.numero, style: TextStyle(color: AppTheme.couleurTexteAttenue(context), fontSize: 12)),
                     ],
                   ),
                 ),
@@ -255,7 +255,7 @@ class HistoriqueMouvementsPro extends StatelessWidget {
         'BLOCAGE_SEQUESTRE' => (titre: 'Paiement reçu en séquestre', entree: true),
         'LIBERATION_SEQUESTRE' => (titre: 'Séquestre débloqué', entree: true),
         'RECHARGE_PORTEFEUILLE' => (titre: 'Recharge', entree: true),
-        'FRAIS_PLATEFORME' => (titre: 'Frais de plateforme DoGo', entree: false),
+        'FRAIS_PLATEFORME' => (titre: 'Frais de plateforme Karavan', entree: false),
         'REMBOURSEMENT' => (titre: 'Remboursement commerçant', entree: false),
         'RETRAIT_COURTIER' => (titre: 'Retrait vers Mobile Money', entree: false),
         'DEBIT_COMMERCANT' => (titre: 'Paiement de commande', entree: false),
@@ -269,19 +269,19 @@ class HistoriqueMouvementsPro extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.couleurCarte(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
+          border: Border.all(color: AppTheme.couleurBordure(context), width: 1.2),
         ),
         child: Column(
           children: [
             Icon(Icons.receipt_long_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
             const SizedBox(height: 12),
-            const Text('Aucun mouvement pour le moment',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textDark)),
+            Text('Aucun mouvement pour le moment',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context))),
             const SizedBox(height: 4),
             Text(messageVide,
-                textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context))),
           ],
         ),
       );
@@ -302,9 +302,9 @@ class HistoriqueMouvementsPro extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.couleurCarte(context),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFEFE9E0)),
+                border: Border.all(color: AppTheme.couleurBordure(context)),
               ),
               child: Row(
                 children: [
@@ -321,12 +321,12 @@ class HistoriqueMouvementsPro extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(sens.titre,
-                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.textDark)),
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context))),
                         const SizedBox(height: 2),
                         Text([date, m.reference].where((s) => s.isNotEmpty).join(' • '),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted)),
+                            style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                       ],
                     ),
                   ),

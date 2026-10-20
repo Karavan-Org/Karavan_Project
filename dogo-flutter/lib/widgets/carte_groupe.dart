@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/groupe_api_service.dart';
+import '../theme/app_theme.dart';
 import 'image_produit.dart';
 
 /// Carte d'un groupe d'achat (listes du courtier et du grossiste) : produit, statut, jauge, action éventuelle.
@@ -32,9 +33,9 @@ class CarteGroupe extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFEFE9E0)),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: const [BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3))],
       ),
       child: Column(
@@ -48,7 +49,7 @@ class CarteGroupe extends StatelessWidget {
                 child: Container(
                   width: 58,
                   height: 58,
-                  color: const Color(0xFFF7F2EB),
+                  color: AppTheme.couleurSurfaceDouce(context),
                   child: imageProduit(groupe.photoUrl ?? '', fit: BoxFit.cover),
                 ),
               ),
@@ -61,7 +62,7 @@ class CarteGroupe extends StatelessWidget {
                       children: [
                         Text(
                           "Groupe n° ${groupe.id}",
-                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF9E6738)),
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.couleurAccent(context)),
                         ),
                         const Spacer(),
                         Flexible(
@@ -86,10 +87,10 @@ class CarteGroupe extends StatelessWidget {
                       groupe.titre.isNotEmpty ? groupe.titre : groupe.produitNom,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Color(0xFF2C241E)),
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: AppTheme.couleurTexte(context)),
                     ),
                     if (partenaire.isNotEmpty)
-                      Text(partenaire, style: const TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74))),
+                      Text(partenaire, style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                   ],
                 ),
               ),
@@ -101,7 +102,7 @@ class CarteGroupe extends StatelessWidget {
               Expanded(
                 child: Text(
                   "$piecesAffichees / ${groupe.quantiteCible} pièces réservées ($pourcentage%)",
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF2C241E)),
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.couleurTexte(context)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -110,7 +111,7 @@ class CarteGroupe extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   child: Text(
                     "${groupe.prixUnitaire} FCFA / pce",
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF9E6738)),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.couleurAccent(context)),
                   ),
                 ),
               ),
@@ -122,7 +123,7 @@ class CarteGroupe extends StatelessWidget {
             child: LinearProgressIndicator(
               value: ratio,
               minHeight: 7,
-              backgroundColor: const Color(0xFFEFE9E0),
+              backgroundColor: AppTheme.couleurBordure(context),
               valueColor: AlwaysStoppedAnimation<Color>(
                 groupe.aAtteint100 ? const Color(0xFF2E7D32) : couleur,
               ),
@@ -132,7 +133,7 @@ class CarteGroupe extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               "Date limite : ${limite.day.toString().padLeft(2, '0')}/${limite.month.toString().padLeft(2, '0')}/${limite.year}",
-              style: const TextStyle(fontSize: 11, color: Color(0xFF8C7E74)),
+              style: TextStyle(fontSize: 11, color: AppTheme.couleurTexteAttenue(context)),
             ),
           ],
           if (action != null) ...[const SizedBox(height: 12), action!],

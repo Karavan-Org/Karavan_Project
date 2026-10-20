@@ -1,3 +1,4 @@
+import '../widgets/tab_navigation_scope.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
@@ -126,9 +127,12 @@ class _CourtierMainNavState extends State<CourtierMainNav>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return TabNavigationScope(
+      onSwitchTab: setTabIndex,
+      child: Stack(
       children: [
         Scaffold(
+      backgroundColor: AppTheme.couleurFond(context),
       body: Stack(
         children: [
           // 1. Écrans principaux avec IndexedStack
@@ -315,15 +319,23 @@ class _CourtierMainNavState extends State<CourtierMainNav>
       ),
 
       // Barre de navigation inférieure conforme au design Figma
-      bottomNavigationBar: BottomAppBar(
-        shape: formeBarreNavigation,
-        notchMargin: 7.0,
-        clipBehavior: Clip.antiAlias,
-        elevation: 12,
-        color: Colors.white,
-        shadowColor: const Color(0x5546321E),
-        padding: EdgeInsets.zero,
-        child: LayoutBuilder(
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.couleurCarte(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.estSombre(context)
+                  ? Colors.black.withValues(alpha: 0.35)
+                  : const Color(0x3346321E),
+              blurRadius: 14,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth < 100) return const SizedBox(height: 64);
             return SizedBox(
@@ -385,6 +397,7 @@ class _CourtierMainNavState extends State<CourtierMainNav>
             );
           },
         ),
+        ),
       ),
     ),
     if (_afficherGuide)
@@ -397,6 +410,7 @@ class _CourtierMainNavState extends State<CourtierMainNav>
         ),
       ),
   ],
+),
 );
 }
 

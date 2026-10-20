@@ -103,7 +103,7 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CouleursArrivee.fond,
+      backgroundColor: AppTheme.couleurFond(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 22, 24, 24),
@@ -115,23 +115,23 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
                   if (Navigator.of(context).canPop())
                     GestureDetector(
                       onTap: () => Navigator.of(context).maybePop(),
-                      child: const Padding(
-                        padding: EdgeInsets.only(right: 16),
-                        child: Icon(Icons.arrow_back, color: CouleursArrivee.titre, size: 24),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Icon(Icons.arrow_back, color: AppTheme.couleurTexte(context), size: 24),
                       ),
                     ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       "Soumettre mes documents",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: CouleursArrivee.titre),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context)),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 "Pour valider votre compte, veuillez fournir\nles documents suivants.",
-                style: TextStyle(fontSize: 13, color: CouleursArrivee.texteDoux, height: 1.35),
+                style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context), height: 1.35),
               ),
               if (widget.motifRejet != null) ...[
                 const SizedBox(height: 14),
@@ -217,7 +217,7 @@ class _CartePiece extends StatelessWidget {
     final f = fichier;
     final ko = f == null ? 0 : (f.octets.lengthInBytes / 1024).ceil();
     return Material(
-      color: Colors.white,
+      color: AppTheme.couleurCarte(context),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -226,14 +226,14 @@ class _CartePiece extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: f != null ? CouleursArrivee.vert : const Color(0xFFEDE7E1), width: 1.2),
+            border: Border.all(color: f != null ? CouleursArrivee.vert : AppTheme.couleurBordure(context), width: 1.2),
           ),
           child: Row(
             children: [
               Container(
                 width: 44,
                 height: 44,
-                decoration: BoxDecoration(color: CouleursArrivee.creme, borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
                 child: Icon(emplacement.icone, color: AppTheme.primary, size: 22),
               ),
               const SizedBox(width: 14),
@@ -249,7 +249,7 @@ class _CartePiece extends StatelessWidget {
                             const TextSpan(text: ' *', style: TextStyle(color: AppTheme.primary)),
                         ],
                       ),
-                      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: CouleursArrivee.titre),
+                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context)),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -258,7 +258,7 @@ class _CartePiece extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11.5,
-                        color: f == null ? CouleursArrivee.indice : CouleursArrivee.vert,
+                        color: f == null ? AppTheme.couleurTexteAttenue(context) : CouleursArrivee.vert,
                         fontWeight: f == null ? FontWeight.w400 : FontWeight.w600,
                       ),
                     ),
@@ -268,11 +268,11 @@ class _CartePiece extends StatelessWidget {
               if (f != null)
                 IconButton(
                   tooltip: "Retirer",
-                  icon: const Icon(Icons.close, size: 18, color: CouleursArrivee.indice),
+                  icon: Icon(Icons.close, size: 18, color: AppTheme.couleurTexteAttenue(context)),
                   onPressed: onRetirer,
                 )
               else
-                const Icon(Icons.add_a_photo_outlined, size: 18, color: CouleursArrivee.indice),
+                Icon(Icons.add_a_photo_outlined, size: 18, color: AppTheme.couleurTexteAttenue(context)),
             ],
           ),
         ),

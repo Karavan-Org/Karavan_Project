@@ -1,4 +1,6 @@
+import '../widgets/tab_navigation_scope.dart';
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'mes_groupes_courtier_screen.dart';
 import 'historique_courtier_screen.dart';
 import 'parametres_courtier_screen.dart';
@@ -6,6 +8,7 @@ import 'notifications_courtier_screen.dart';
 import 'assistance_courtier_screen.dart';
 import '../services/auth_service.dart';
 import '../widgets/avatar_profil_interactif.dart';
+import '../widgets/bouton_bascule_theme.dart';
 
 /// Écran du Profil Courtier fidèle à la maquette Figma Dogo (Frame "profil" Courtier)
 /// Nom : Amadou Touré
@@ -68,12 +71,46 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
           child: Column(
             children: [
+              // Barre d'actions rapides (Mode sombre/clair & Paramètres)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+                    tooltip: "Retour",
+                    onPressed: () {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      } else {
+                        TabNavigationScope.switchToTab(context, 0);
+                      }
+                    },
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const BoutonBasculeTheme(compact: true),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: Icon(Icons.settings_outlined, size: 24, color: AppTheme.couleurTexte(context)),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ParametresCourtierScreen()),
+                      );
+                    },
+                    tooltip: "Paramètres",
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
               // --- EN-TÊTE AVEC AVATAR ET IDENTITÉ COURTIER FIGMA ---
               Stack(
                 alignment: Alignment.center,
@@ -320,13 +357,13 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
           leading: Container(
             width: 36,
             height: 36,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF7EFE7),
+            decoration: BoxDecoration(
+              color: AppTheme.couleurSurfaceDouce(context),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: const Color(0xFF9E6738),
+              color: AppTheme.couleurAccent(context),
               size: 19,
             ),
           ),
@@ -368,11 +405,11 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
           ),
         ),
         if (!isLast)
-          const Divider(
+          Divider(
             height: 1,
             indent: 64,
             endIndent: 16,
-            color: Color(0xFFF5EDE4),
+            color: AppTheme.couleurBordure(context),
           ),
       ],
     );

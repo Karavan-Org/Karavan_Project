@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'ajouter_produit_screen.dart';
 import 'mes_groupes_grossiste_screen.dart';
+import 'portefeuille_grossiste_screen.dart';
+import 'parametres_grossiste_screen.dart';
 import '../widgets/tab_navigation_scope.dart';
 import '../services/api/api_config.dart';
 import '../services/auth_service.dart';
@@ -18,7 +20,7 @@ class GrossisteDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppTheme.couleurCarte(context),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,14 +45,15 @@ class GrossisteDrawer extends StatelessWidget {
                       ? profil.nom.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
                       : 'GR';
 
-                  return Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                          TabNavigationScope.switchToTab(context, 3);
-                        },
-                        child: Container(
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      Navigator.pop(context);
+                      TabNavigationScope.switchToTab(context, 3);
+                    },
+                    child: Row(
+                      children: [
+                        Container(
                           width: 52,
                           height: 52,
                           decoration: BoxDecoration(
@@ -95,72 +98,72 @@ class GrossisteDrawer extends StatelessWidget {
                                   ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              nomAffiche,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textDark,
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nomAffiche,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.couleurTexte(context),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 3),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.success.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
+                              const SizedBox(height: 3),
+                              Row(
                                 children: [
-                                  Icon(
-                                    Icons.verified,
-                                    size: 11,
-                                    color: AppTheme.success,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.success.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.verified,
+                                          size: 11,
+                                          color: AppTheme.success,
+                                        ),
+                                        SizedBox(width: 3),
+                                        Text(
+                                          "KYC Validé",
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.success,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  SizedBox(width: 3),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    "KYC Validé",
+                                    "Chine",
                                     style: TextStyle(
                                       fontSize: 11.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.success,
+                                      color: AppTheme.couleurTexteAttenue(context),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              "Chine",
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                color: AppTheme.textMuted,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
+                  );
+                },
+              ),
+            ),
 
             const SizedBox(height: 8),
 
@@ -189,6 +192,7 @@ class GrossisteDrawer extends StatelessWidget {
                     isActive: activeRoute == 'catalogue',
                     onTap: () {
                       Navigator.pop(context);
+                      TabNavigationScope.switchToTab(context, 1);
                     },
                   ),
                   _buildMenuItem(
@@ -228,6 +232,15 @@ class GrossisteDrawer extends StatelessWidget {
                     isActive: activeRoute == 'disponibilites',
                     onTap: () {
                       Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MesGroupesGrossisteScreen(
+                            titre: "Disponibilités à valider",
+                            filtreInitial: "À confirmer",
+                          ),
+                        ),
+                      );
                     },
                   ),
                   _buildMenuItem(
@@ -239,6 +252,7 @@ class GrossisteDrawer extends StatelessWidget {
                     isActive: activeRoute == 'expeditions',
                     onTap: () {
                       Navigator.pop(context);
+                      TabNavigationScope.switchToTab(context, 2);
                     },
                   ),
                   const Padding(
@@ -252,6 +266,10 @@ class GrossisteDrawer extends StatelessWidget {
                     isActive: activeRoute == 'finances',
                     onTap: () {
                       Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PortefeuilleGrossisteScreen()),
+                      );
                     },
                   ),
                   _buildMenuItem(
@@ -261,6 +279,10 @@ class GrossisteDrawer extends StatelessWidget {
                     isActive: activeRoute == 'settings',
                     onTap: () {
                       Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ParametresGrossisteScreen()),
+                      );
                     },
                   ),
                 ],
@@ -313,14 +335,14 @@ class GrossisteDrawer extends StatelessWidget {
         leading: Icon(
           icon,
           size: 22,
-          color: isActive ? AppTheme.primary : AppTheme.textMuted,
+          color: isActive ? AppTheme.primary : AppTheme.couleurTexteAttenue(context),
         ),
         title: Text(
           title,
           style: TextStyle(
             fontSize: 13.5,
             fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-            color: isActive ? AppTheme.primaryDark : AppTheme.textDark,
+            color: isActive ? AppTheme.primary : AppTheme.couleurTexte(context),
           ),
         ),
         trailing: badge != null

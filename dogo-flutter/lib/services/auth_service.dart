@@ -131,7 +131,7 @@ class AuthService {
     );
 
     if (response is! Map<String, dynamic> || response['jeton'] is! String) {
-      throw const ApiException(statusCode: 0, message: 'Réponse inattendue du serveur DoGo lors de la connexion.');
+      throw const ApiException(statusCode: 0, message: 'Réponse inattendue du serveur Karavan lors de la connexion.');
     }
 
     ApiClient.instance.definirJeton(response['jeton'] as String);

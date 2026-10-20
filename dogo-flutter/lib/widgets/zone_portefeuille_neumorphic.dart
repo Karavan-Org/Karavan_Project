@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Composant Portefeuille Neumorphique / Soft 3D Glass
 /// Reproduit fidèlement le design Soft UI avec relief doux, double ombre lumineuse,
@@ -82,14 +83,20 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(32),
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Color(0xFFFFFFFF),
-                Color(0xFFFAF6F1),
-                Color(0xFFF6EFE6),
-              ],
+              colors: AppTheme.estSombre(context)
+                  ? const [
+                      Color(0xFF26201B),
+                      Color(0xFF201B17),
+                      Color(0xFF1B1714),
+                    ]
+                  : const [
+                      Color(0xFFFFFFFF),
+                      Color(0xFFFAF6F1),
+                      Color(0xFFF6EFE6),
+                    ],
               stops: [0.0, 0.65, 1.0],
             ),
             border: Border.all(
@@ -128,7 +135,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                 height: compact ? 56 : 68,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(compact ? 18 : 22),
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
@@ -167,7 +174,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                 style: TextStyle(
                   fontSize: compact ? 17 : 20,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF2C241E),
+                  color: AppTheme.couleurTexte(context),
                   letterSpacing: -0.3,
                 ),
               ),
@@ -177,9 +184,9 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                 Text(
                   sousTitre!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF8C7E74),
+                    color: AppTheme.couleurTexteAttenue(context),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -194,7 +201,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                 style: TextStyle(
                   fontSize: compact ? 26 : 32,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF2C241E),
+                  color: AppTheme.couleurTexte(context),
                   letterSpacing: -0.6,
                 ),
               ),
@@ -206,7 +213,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7F2EC),
+                    color: AppTheme.couleurSurfaceDouce(context),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.9),
@@ -245,10 +252,10 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                       Expanded(
                         child: Text(
                           infoSequestre!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF5A493B),
+                            color: AppTheme.couleurTexte(context),
                             height: 1.25,
                           ),
                         ),
@@ -332,20 +339,20 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                 const SizedBox(height: 18),
                 Row(
                   children: [
-                    const Expanded(child: Divider(color: Color(0xFFE5DDD3), thickness: 1)),
+                    Expanded(child: Divider(color: AppTheme.couleurBordure(context), thickness: 1)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: Text(
                         titreSquirclesRapides ?? "OPÉRATEURS DISPONIBLES",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.1,
-                          color: Color(0xFFA09285),
+                          color: AppTheme.couleurTexteAttenue(context),
                         ),
                       ),
                     ),
-                    const Expanded(child: Divider(color: Color(0xFFE5DDD3), thickness: 1)),
+                    Expanded(child: Divider(color: AppTheme.couleurBordure(context), thickness: 1)),
                   ],
                 ),
                 const SizedBox(height: 14),

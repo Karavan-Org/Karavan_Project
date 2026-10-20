@@ -50,6 +50,8 @@ class FicheCampagneScreen extends StatefulWidget {
 class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
   late int _quantite;
   late int _quantiteMin;
+  late int _quantiteActuelle;
+  late int _quantiteObjectif;
   List<VarianteGroupeModel> _variantes = [];
   VarianteGroupeModel? _varianteSelectionnee;
 
@@ -63,6 +65,14 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
     _quantiteMin = widget.quantiteMin ?? widget.groupe?.quantiteMinParCommercant ?? 1;
     if (_quantiteMin <= 0) _quantiteMin = 1;
     _quantite = _quantiteMin;
+
+    _quantiteActuelle = widget.quantiteActuelle > 0
+        ? widget.quantiteActuelle
+        : (widget.groupe?.quantiteActuelle ?? 0);
+    _quantiteObjectif = widget.quantiteObjectif > 0
+        ? widget.quantiteObjectif
+        : (widget.groupe?.quantiteObjectif ?? 1);
+    if (_quantiteObjectif <= 0) _quantiteObjectif = 1;
 
     if (widget.variantes != null && widget.variantes!.isNotEmpty) {
       _variantes = List.from(widget.variantes!);
@@ -98,14 +108,18 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
             _quantite = _quantiteMin;
           }
         }
+        if (detail.quantiteObjectif > 0) {
+          _quantiteObjectif = detail.quantiteObjectif;
+        }
+        _quantiteActuelle = detail.quantiteActuelle;
       });
     } catch (_) {}
   }
 
   double get _pourcentage =>
-      (widget.quantiteActuelle / widget.quantiteObjectif).clamp(0.0, 1.0);
+      _quantiteObjectif > 0 ? (_quantiteActuelle / _quantiteObjectif).clamp(0.0, 1.0) : 0.0;
 
-  int get _reste => widget.quantiteObjectif - widget.quantiteActuelle;
+  int get _reste => _quantiteObjectif - _quantiteActuelle;
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +130,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
     final pourcentageEconomie = prixPub > 0 ? ((economie / prixPub) * 100).round() : 0;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       body: Stack(
         children: [
           CustomScrollView(
@@ -144,7 +158,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                       ],
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textDark, size: 22),
+                      icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context), size: 22),
                       tooltip: "Retour aux opportunités",
                       padding: EdgeInsets.zero,
                       onPressed: () => Navigator.of(context).pop(),
@@ -365,7 +379,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Progression du groupe (${widget.quantiteActuelle}/${widget.quantiteObjectif} lots)",
+                              "Progression du groupe ($_quantiteActuelle/$_quantiteObjectif lots)",
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
@@ -584,7 +598,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                         const Divider(height: 20, color: Color(0xFFF1EAE2)),
                         _buildInfoLigne(
                           icon: Icons.verified_user_outlined,
-                          titre: "Garantie DoGo",
+                          titre: "Garantie Karavan",
                           valeur: "Fonds protégés sous séquestre jusqu'au retrait",
                         ),
                       ],
@@ -622,17 +636,17 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.arrow_back_rounded, color: AppTheme.textDark, size: 20),
+                  Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context), size: 20),
                   SizedBox(width: 6),
                   Text(
                     "Retour",
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 13,
-                      color: AppTheme.textDark,
+                      color: AppTheme.couleurTexte(context),
                     ),
                   ),
                 ],
@@ -703,6 +717,8 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> {
                         courtierNom: widget.courtierNom,
                         imagePath: widget.imagePath,
                         paysOrigine: widget.paysOrigine,
+                        quantiteActuelle: _quantiteActuelle,
+                        quantiteObjectif: _quantiteObjectif,
                       ),
                     ),
                   );

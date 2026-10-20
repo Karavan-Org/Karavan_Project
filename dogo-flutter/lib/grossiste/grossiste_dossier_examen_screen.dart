@@ -81,7 +81,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.couleurCarte(context),
         title: Row(
           children: [
             Container(
@@ -93,21 +93,21 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
               child: const Icon(Icons.verified_rounded, color: CouleursArrivee.vert, size: 28),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
                 "Compte Grossiste Validé !",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: CouleursArrivee.titre),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context)),
               ),
             ),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Félicitations ! Votre dossier vendeur a été examiné et approuvé par l'équipe de conformité DoGo.",
-              style: TextStyle(fontSize: 13.5, color: CouleursArrivee.titre, height: 1.4, fontWeight: FontWeight.w600),
+              "Félicitations ! Votre dossier vendeur a été examiné et approuvé par l'équipe de conformité Karavan.",
+              style: TextStyle(fontSize: 13.5, color: AppTheme.couleurTexte(context), height: 1.4, fontWeight: FontWeight.w600),
             ),
             SizedBox(height: 10),
             Text(
@@ -199,7 +199,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
   void _voirDocuments() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.couleurCarte(context),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -210,7 +210,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
             children: [
               Text(
                 "Dossier n° ${_dossier.id}",
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: CouleursArrivee.titre),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context)),
               ),
               const SizedBox(height: 10),
               for (final t in _dossier.typesDocuments)
@@ -230,7 +230,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
   void _profil() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.couleurCarte(context),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(
         child: ListTile(
@@ -257,7 +257,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
     ].join(' & ');
 
     return Scaffold(
-      backgroundColor: CouleursArrivee.fond,
+      backgroundColor: AppTheme.couleurFond(context),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -293,7 +293,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                           child: Icon(
                             _estValide ? Icons.check : Icons.hourglass_bottom,
                             size: 9,
-                            color: Colors.white,
+                            color: AppTheme.couleurCarte(context),
                           ),
                         ),
                       ),
@@ -304,15 +304,15 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           "Espace Vendeur dɔgɔ",
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: CouleursArrivee.texteDoux),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.couleurTexteAttenue(context)),
                         ),
                         Text(
                           nom,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: CouleursArrivee.titre),
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context)),
                         ),
                       ],
                     ),
@@ -321,9 +321,9 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.couleurCarte(context),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFEDE7E1)),
+                      border: Border.all(color: AppTheme.couleurBordure(context)),
                     ),
                     child: Stack(
                       alignment: Alignment.center,
@@ -410,14 +410,14 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                     const SizedBox(height: 10),
                     Text(
                       _estValide ? "Félicitations ! Dossier validé" : "Vérification de vos pièces légales",
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: CouleursArrivee.titre),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context)),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _estValide
                           ? "Votre compte vendeur est activé avec succès. Vous pouvez désormais publier vos produits, créer des groupes d'achat et encaisser vos paiements en toute sécurité."
                           : "Votre RCCM et NIF sont en cours d'audit par l'équipe conformité dɔgɔ pour protéger les transactions du réseau.",
-                      style: const TextStyle(fontSize: 10.5, color: CouleursArrivee.texteDoux, height: 1.3),
+                      style: TextStyle(fontSize: 10.5, color: AppTheme.couleurTexteAttenue(context), height: 1.3),
                     ),
                     const SizedBox(height: 10),
                     Divider(height: 1, color: _estValide ? const Color(0xFFBBF7D0) : const Color(0xFFF1E4CF)),
@@ -478,9 +478,9 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
               ),
               const SizedBox(height: 44),
 
-              const Text(
+              Text(
                 "Votre dossier & Assistance",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: CouleursArrivee.titre),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context)),
               ),
               const SizedBox(height: 12),
               _CarteAction(
@@ -493,7 +493,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                   child: const Icon(Icons.article_outlined, color: AppTheme.primary),
                 ),
                 titre: "Documents légaux soumis",
-                couleurTitre: CouleursArrivee.titre,
+                couleurTitre: AppTheme.couleurTexte(context),
                 ligne1: resume.isEmpty ? "${documents.length} pièce(s) enregistrée(s)" : "$resume enregistrés",
                 couleurLigne1: CouleursArrivee.texteDoux,
                 ligne2: "✓ Aucune action requise",
@@ -530,21 +530,21 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFF1E4D8)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 10,
                       backgroundColor: Color(0xFFD1FAE5),
                       child: Icon(Icons.check, size: 12, color: CouleursArrivee.vert),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text.rich(
                         TextSpan(
                           children: [
                             TextSpan(
                               text: "Engagement dɔgɔ :\n",
-                              style: TextStyle(fontWeight: FontWeight.w700, color: CouleursArrivee.titre, fontSize: 11),
+                              style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context), fontSize: 11),
                             ),
                             TextSpan(text: "Votre catalogue sera immédiatement débloqué après validation."),
                           ],
@@ -602,7 +602,7 @@ class _Etape extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.w700,
-                color: estompe ? CouleursArrivee.indice : CouleursArrivee.titre,
+                color: estompe ? CouleursArrivee.indice : AppTheme.couleurTexte(context),
               ),
             ),
             Text(
@@ -695,7 +695,7 @@ class _CarteAction extends StatelessWidget {
                   ],
                 ),
               ),
-              if (fleche) const Icon(Icons.chevron_right, color: CouleursArrivee.titre),
+              if (fleche) Icon(Icons.chevron_right, color: AppTheme.couleurTexte(context)),
             ],
           ),
         ),

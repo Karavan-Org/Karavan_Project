@@ -1,3 +1,4 @@
+import '../widgets/tab_navigation_scope.dart';
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
 import '../services/groupe_api_service.dart';
@@ -67,19 +68,30 @@ class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> wit
     final aPreparer = _groupes.where((g) => _aPreparer.contains(g.statut)).toList();
     final expedies = _groupes.where((g) => _expedies.contains(g.statut)).toList();
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          tooltip: "Retour",
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              TabNavigationScope.switchToTab(context, 0);
+            }
+          },
+        ),
+        backgroundColor: AppTheme.couleurCarte(context),
         elevation: 0,
         centerTitle: false,
-        title: const Text(
+        title: Text(
           "Lots & commandes",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.textDark),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         bottom: TabBar(
           controller: _onglets,
           labelColor: AppTheme.primary,
-          unselectedLabelColor: AppTheme.textMuted,
+          unselectedLabelColor: AppTheme.couleurTexteAttenue(context),
           indicatorColor: AppTheme.primary,
           indicatorWeight: 3,
           tabs: [
@@ -144,18 +156,18 @@ class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> wit
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFFAF7F2), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: AppTheme.couleurSurfaceDouce(context), borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "${commandes.length} commande${commandes.length > 1 ? 's' : ''} • $pieces pièce${pieces > 1 ? 's' : ''}",
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.textDark),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.couleurTexte(context)),
           ),
           for (final e in parVariante.entries)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text("${e.key} : ${e.value} pcs", style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+              child: Text("${e.key} : ${e.value} pcs", style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context))),
             ),
         ],
       ),

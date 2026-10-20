@@ -22,7 +22,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     // Étape 1 : But application Commerçant
-    expect(find.text('Bienvenue sur DoGo Commerçant !'), findsOneWidget);
+    expect(find.text('Bienvenue sur Karavan Commerçant !'), findsOneWidget);
     expect(find.text("LE BUT DE L'APPLICATION"), findsOneWidget);
     expect(find.text('ÉTAPE 1 / 5'), findsOneWidget);
 
@@ -74,7 +74,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     // Étape 1
-    expect(find.text('Bienvenue sur DoGo Courtier !'), findsOneWidget);
+    expect(find.text('Bienvenue sur Karavan Courtier !'), findsOneWidget);
     expect(find.text('ÉTAPE 1 / 5'), findsOneWidget);
 
     // Passer le guide

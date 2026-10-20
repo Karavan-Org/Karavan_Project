@@ -1,4 +1,6 @@
+import '../widgets/tab_navigation_scope.dart';
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'mes_groupes_grossiste_screen.dart';
 import 'historique_grossiste_screen.dart';
 import 'parametres_grossiste_screen.dart';
@@ -8,6 +10,7 @@ import 'portefeuille_grossiste_screen.dart';
 import 'grossiste_main_nav.dart';
 import '../services/auth_service.dart';
 import '../widgets/avatar_profil_interactif.dart';
+import '../widgets/bouton_bascule_theme.dart';
 
 /// Écran du Profil Grossiste fidèle à la maquette Figma Dogo (Frame "profil" Grossiste)
 /// Nom : Aliou Traoré
@@ -34,18 +37,18 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: const Text(
+        title: Text(
           "Déconnexion",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
-        content: const Text(
+        content: Text(
           "Êtes-vous sûr de vouloir vous déconnecter de votre espace Grossiste ?",
-          style: TextStyle(fontSize: 13, color: Color(0xFF5A493B)),
+          style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text("Annuler", style: TextStyle(color: Color(0xFF8C7E74), fontWeight: FontWeight.w600)),
+            child: Text("Annuler", style: TextStyle(color: AppTheme.couleurTexteAttenue(context), fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -71,12 +74,46 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
           child: Column(
             children: [
+              // Barre d'actions rapides (Mode sombre/clair & Paramètres)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+                    tooltip: "Retour",
+                    onPressed: () {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      } else {
+                        TabNavigationScope.switchToTab(context, 0);
+                      }
+                    },
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const BoutonBasculeTheme(compact: true),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: Icon(Icons.settings_outlined, size: 24, color: AppTheme.couleurTexte(context)),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ParametresGrossisteScreen()),
+                      );
+                    },
+                    tooltip: "Paramètres",
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
               // --- EN-TÊTE AVEC AVATAR ET IDENTITÉ GROSSISTE FIGMA ---
               Stack(
                 alignment: Alignment.center,
@@ -117,10 +154,10 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
                           Text(
                             nomAffiche,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 19,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF2C241E),
+                              color: AppTheme.couleurTexte(context),
                               letterSpacing: -0.2,
                             ),
                           ),
@@ -131,14 +168,14 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.business_outlined, size: 14, color: Color(0xFF9E6738)),
+                                Icon(Icons.business_outlined, size: 14, color: AppTheme.couleurAccent(context)),
                                 const SizedBox(width: 5),
                                 Text(
                                   entreprise,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF9E6738),
+                                    color: AppTheme.couleurAccent(context),
                                   ),
                                 ),
                               ],
@@ -150,9 +187,9 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
                             const SizedBox(height: 3),
                             Text(
                               telephoneAffiche,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12.5,
-                                color: Color(0xFF8C7E74),
+                                color: AppTheme.couleurTexteAttenue(context),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -235,7 +272,7 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
                   ],
                 ),
                 child: Material(
-                  color: Colors.white,
+                  color: AppTheme.couleurCarte(context),
                   borderRadius: BorderRadius.circular(22),
                   clipBehavior: Clip.antiAlias,
                   child: Column(
@@ -358,36 +395,36 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
           leading: Container(
             width: 36,
             height: 36,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF7EFE7),
+            decoration: BoxDecoration(
+              color: AppTheme.couleurSurfaceDouce(context),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: const Color(0xFF9E6738),
+              color: AppTheme.couleurAccent(context),
               size: 19,
             ),
           ),
           title: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF2C241E),
+              color: AppTheme.couleurTexte(context),
             ),
           ),
-          trailing: const Icon(
+          trailing: Icon(
             Icons.chevron_right_rounded,
-            color: Color(0xFFC7B8AA),
+            color: AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.6),
             size: 20,
           ),
         ),
         if (!isLast)
-          const Divider(
+          Divider(
             height: 1,
             indent: 64,
             endIndent: 16,
-            color: Color(0xFFF5EDE4),
+            color: AppTheme.couleurBordure(context),
           ),
       ],
     );

@@ -1,6 +1,8 @@
+import '../widgets/tab_navigation_scope.dart';
 import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/bouton_bascule_theme.dart';
 import 'campagne_model.dart';
 import 'favoris_service.dart';
 import 'fiche_campagne_screen.dart';
@@ -53,16 +55,28 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          tooltip: "Retour",
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              TabNavigationScope.switchToTab(context, 0);
+            }
+          },
+        ),
         title: const Text(
           "Explorer les Arrivages",
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.textPrimary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         actions: [
+          const BoutonBasculeTheme(compact: true),
           IconButton(
             icon: const Icon(Icons.link_rounded),
             tooltip: "Rejoindre via un lien",
@@ -135,17 +149,17 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE2D9D0)),
+                      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                     ),
                     child: TextField(
                       controller: _searchController,
                       onChanged: (val) => setState(() => _searchQuery = val),
                       decoration: InputDecoration(
-                        icon: const Icon(Icons.search, color: AppTheme.textMuted),
+                        icon: Icon(Icons.search, color: AppTheme.couleurTexteAttenue(context)),
                         hintText: "Rechercher par article, fournisseur ou pays...",
-                        hintStyle: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                        hintStyle: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
                         border: InputBorder.none,
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
@@ -162,11 +176,15 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                 ),
 
                 // Filtres par Pays
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   child: Text(
                     "Hubs d'approvisionnement direct :",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: AppTheme.couleurTexte(context),
+                    ),
                   ),
                 ),
                 SingleChildScrollView(
@@ -181,10 +199,10 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                           margin: const EdgeInsets.only(right: 8),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.primary : Colors.white,
+                            color: isSelected ? AppTheme.primary : AppTheme.couleurCarte(context),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: isSelected ? AppTheme.primary : const Color(0xFFE2D9D0),
+                              color: isSelected ? AppTheme.primary : AppTheme.couleurBordure(context),
                             ),
                           ),
                           child: Text(
@@ -192,7 +210,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                              color: isSelected ? Colors.white : AppTheme.textPrimary,
+                              color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
                             ),
                           ),
                         ),
@@ -216,10 +234,10 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                           margin: const EdgeInsets.only(right: 8),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.secondary : const Color(0xFFF7F2EB),
+                            color: isSelected ? AppTheme.secondary : AppTheme.couleurSurfaceDouce(context),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: isSelected ? AppTheme.secondary : const Color(0xFFE5DDD5),
+                              color: isSelected ? AppTheme.secondary : AppTheme.couleurBordure(context),
                             ),
                           ),
                           child: Text(
@@ -227,7 +245,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? Colors.white : AppTheme.textPrimary,
+                              color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
                             ),
                           ),
                         ),
@@ -243,7 +261,11 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
                     "Résultats (${filtrees.length} opportunités)",
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: AppTheme.couleurTexte(context),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -253,13 +275,13 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                     margin: const EdgeInsets.all(20),
                     padding: const EdgeInsets.all(30),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.couleurCarte(context),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         "Aucun arrivage ne correspond à ces critères.",
-                        style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                        style: TextStyle(color: AppTheme.couleurTexteAttenue(context), fontSize: 13),
                       ),
                     ),
                   )
@@ -315,10 +337,17 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : const Color(0x0646321E),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
           ],
         ),
         child: Row(
@@ -328,7 +357,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
               child: Container(
                 width: 80,
                 height: 80,
-                color: const Color(0xFFF7F2EB),
+                color: AppTheme.couleurSurfaceDouce(context),
                 child: imageProduit(
                   g.imagePath,
                   fit: BoxFit.contain,
@@ -364,7 +393,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                         padding: EdgeInsets.zero,
                         icon: Icon(
                           isFav ? Icons.favorite : Icons.favorite_border,
-                          color: isFav ? Colors.redAccent : AppTheme.textMuted,
+                          color: isFav ? Colors.redAccent : AppTheme.couleurTexteAttenue(context),
                           size: 18,
                         ),
                         onPressed: () => FavorisService.instance.toggleFavori(g, context),
@@ -376,7 +405,11 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                     g.titre,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                      color: AppTheme.couleurTexte(context),
+                    ),
                   ),
                   Text(
                     "Courtier : ${g.courtierNom}",
@@ -394,7 +427,11 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                       ),
                       Text(
                         "${(g.ratio * 100).toInt()}% réservé",
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, color: AppTheme.textMuted),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
+                          color: AppTheme.couleurTexteAttenue(context),
+                        ),
                       ),
                     ],
                   ),

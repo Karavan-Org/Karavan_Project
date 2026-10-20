@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../widgets/changer_mot_de_passe_dialog.dart';
+import '../services/theme_service.dart';
 import 'code_retrait_commercant_screen.dart';
 
 /// Écran des Paramètres du Commerçant (Langues, PIN, Notifications, Sécurité)
@@ -20,36 +22,36 @@ class _ParametresCommercantScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           "Paramètres",
           style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 18,
-              color: Color(0xFF2C241E)),
+              color: AppTheme.couleurTexte(context)),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           // Section Préférences générales
-          const Text("GÉNÉRAL",
+          Text("GÉNÉRAL",
               style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF8C7E74),
+                  color: AppTheme.couleurTexteAttenue(context),
                   letterSpacing: 0.8)),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
                 BoxShadow(
@@ -64,6 +66,41 @@ class _ParametresCommercantScreenState
                 clipBehavior: Clip.antiAlias,
                 child: Column(
                   children: [
+                    ValueListenableBuilder<ThemeMode>(
+                      valueListenable: ThemeService.instance.themeModeNotifier,
+                      builder: (context, themeMode, _) {
+                        return ListTile(
+                          leading: Icon(
+                            themeMode == ThemeMode.dark ? Icons.nightlight_round : Icons.wb_sunny_rounded,
+                            color: const Color(0xFF9E6738),
+                          ),
+                          title: const Text("Thème de l'application",
+                              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                          subtitle: Text(
+                            themeMode == ThemeMode.dark
+                                ? "Mode Sombre actif"
+                                : themeMode == ThemeMode.light
+                                    ? "Mode Clair actif"
+                                    : "Adapté au système",
+                            style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
+                          ),
+                          trailing: DropdownButtonHideUnderline(
+                            child: DropdownButton<ThemeMode>(
+                              value: themeMode,
+                              items: const [
+                                DropdownMenuItem(value: ThemeMode.light, child: Text("Clair ☀️")),
+                                DropdownMenuItem(value: ThemeMode.dark, child: Text("Sombre 🌙")),
+                                DropdownMenuItem(value: ThemeMode.system, child: Text("Système ⚙️")),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) ThemeService.instance.changerMode(val);
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, indent: 56, color: Color(0xFFF3ECE5)),
                     ListTile(
                       leading: const Icon(Icons.language_rounded,
                           color: Color(0xFF9E6738)),
@@ -94,10 +131,10 @@ class _ParametresCommercantScreenState
                       title: const Text("Mot de passe du compte",
                           style: TextStyle(
                               fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      subtitle: const Text(
+                      subtitle: Text(
                           "Modifier le mot de passe de connexion à votre compte",
                           style: TextStyle(
-                              fontSize: 11.5, color: Color(0xFF8C7E74))),
+                              fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                       trailing: const Icon(Icons.chevron_right,
                           color: Color(0xFFC7B8AA)),
                       onTap: () => afficherDialogueChangerMotDePasse(context),
@@ -110,10 +147,10 @@ class _ParametresCommercantScreenState
                       title: const Text("Code PIN de retrait (colis)",
                           style: TextStyle(
                               fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      subtitle: const Text(
+                      subtitle: Text(
                           "Code à 4 chiffres pour retirer vos colis au dépôt relais",
                           style: TextStyle(
-                              fontSize: 11.5, color: Color(0xFF8C7E74))),
+                              fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                       trailing: const Icon(Icons.chevron_right,
                           color: Color(0xFFC7B8AA)),
                       onTap: () {
@@ -131,16 +168,16 @@ class _ParametresCommercantScreenState
           const SizedBox(height: 24),
 
           // Section Notifications
-          const Text("ALERTES & NOTIFICATIONS",
+          Text("ALERTES & NOTIFICATIONS",
               style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF8C7E74),
+                  color: AppTheme.couleurTexteAttenue(context),
                   letterSpacing: 0.8)),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
                 BoxShadow(
@@ -162,10 +199,10 @@ class _ParametresCommercantScreenState
                       title: const Text("Alertes SMS",
                           style: TextStyle(
                               fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      subtitle: const Text(
+                      subtitle: Text(
                           "Réception des alertes convois & dédouanement",
                           style: TextStyle(
-                              fontSize: 11.5, color: Color(0xFF8C7E74))),
+                              fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                       value: _smsNotif,
                       onChanged: (val) => setState(() => _smsNotif = val),
                     ),
@@ -178,10 +215,10 @@ class _ParametresCommercantScreenState
                       title: const Text("Notifications Push",
                           style: TextStyle(
                               fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      subtitle: const Text(
+                      subtitle: Text(
                           "Nouveaux groupes d'achats lancés par les grossistes",
                           style: TextStyle(
-                              fontSize: 11.5, color: Color(0xFF8C7E74))),
+                              fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                       value: _pushNotif,
                       onChanged: (val) => setState(() => _pushNotif = val),
                     ),
@@ -192,17 +229,17 @@ class _ParametresCommercantScreenState
           const SizedBox(height: 24),
 
           // Section Développeur / Commutation de rôle
-          const Text("ESPACE DÉMONSTRATION & RÔLES",
+          Text("ESPACE DÉMONSTRATION & RÔLES",
               style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF8C7E74),
+                  color: AppTheme.couleurTexteAttenue(context),
                   letterSpacing: 0.8)),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
                 BoxShadow(
@@ -214,12 +251,12 @@ class _ParametresCommercantScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   "Tester les autres espaces (Navigation & FAB) :",
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 12.5,
-                      color: Color(0xFF2C241E)),
+                      color: AppTheme.couleurTexte(context)),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -233,8 +270,8 @@ class _ParametresCommercantScreenState
                             style: TextStyle(
                                 fontSize: 12, fontWeight: FontWeight.w700)),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF9E6738),
-                          side: const BorderSide(color: Color(0xFF9E6738)),
+                          foregroundColor: AppTheme.couleurAccent(context),
+                          side: BorderSide(color: AppTheme.couleurAccent(context)),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),

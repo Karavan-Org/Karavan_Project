@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/session_storage_service.dart';
 
@@ -9,17 +10,17 @@ class AideSupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           "Aide & Support",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
       ),
       body: ListView(
@@ -53,7 +54,7 @@ class AideSupportScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        "Support WhatsApp DoGo Mali",
+                        "Support WhatsApp Karavan Mali",
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
                       ),
                       const SizedBox(height: 3),
@@ -65,7 +66,7 @@ class AideSupportScreen extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Ouverture de l'assistance WhatsApp DoGo Mali (+223 70 00 00 00)...")),
+                            const SnackBar(content: Text("Ouverture de l'assistance WhatsApp Karavan Mali (+223 70 00 00 00)...")),
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -91,9 +92,9 @@ class AideSupportScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+              border: Border.all(color: AppTheme.couleurBordure(context)),
               boxShadow: const [
                 BoxShadow(color: Color(0x0AF59E0B), blurRadius: 10, offset: Offset(0, 3)),
               ],
@@ -110,18 +111,18 @@ class AideSupportScreen extends StatelessWidget {
                   child: const Icon(Icons.touch_app_rounded, color: Color(0xFFD97706), size: 22),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "Guide Didacticiel Interactif",
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF2C241E)),
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.couleurTexte(context)),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         "Redécouvrez chaque fonctionnalité et bouton pas à pas.",
-                        style: TextStyle(fontSize: 11, color: Color(0xFF8C7E74)),
+                        style: TextStyle(fontSize: 11, color: AppTheme.couleurTexteAttenue(context)),
                       ),
                     ],
                   ),
@@ -156,25 +157,29 @@ class AideSupportScreen extends StatelessWidget {
           const SizedBox(height: 20),
 
           // FAQ
-          const Text(
+          Text(
             "Questions fréquentes (FAQ)",
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF2C241E)),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context)),
           ),
           const SizedBox(height: 12),
 
           _buildFaqItem(
+            context,
             question: "Comment mon argent est-il protégé ?",
             reponse: "Votre argent reste bloqué en séquestre jusqu'à la remise de votre colis.",
           ),
           _buildFaqItem(
+            context,
             question: "Où puis-je récupérer mes colis ?",
             reponse: "Au point relais du Grand Marché de Bamako. Un SMS vous prévient à l'arrivée.",
           ),
           _buildFaqItem(
+            context,
             question: "Que se passe-t-il si un groupe n'atteint pas son objectif ?",
             reponse: "Objectif non atteint ? Vous êtes remboursé à 100 %, sans frais.",
           ),
           _buildFaqItem(
+            context,
             question: "Comment changer de mode de paiement ?",
             reponse: "Par Orange Money, Moov Africa ou Wave.",
           ),
@@ -185,23 +190,24 @@ class AideSupportScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppTheme.couleurBordure(context)),
               boxShadow: const [
                 BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
               ],
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Bureau DoGo Bamako",
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF2C241E)),
+                  "Bureau Karavan Bamako",
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppTheme.couleurTexte(context)),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   "Dabanani Center, Bamako\ncontact@dogo.ml • +223 76 00 11 22",
-                  style: TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74), height: 1.4),
+                  style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context), height: 1.4),
                 ),
               ],
             ),
@@ -211,12 +217,13 @@ class AideSupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqItem({required String question, required String reponse}) {
+  Widget _buildFaqItem(BuildContext context, {required String question, required String reponse}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.couleurBordure(context)),
         boxShadow: const [
           BoxShadow(color: Color(0x0646321E), blurRadius: 8, offset: Offset(0, 2)),
         ],
@@ -224,14 +231,14 @@ class AideSupportScreen extends StatelessWidget {
       child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(16), clipBehavior: Clip.antiAlias, child: ExpansionTile(
         title: Text(
           question,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context)),
         ),
-        iconColor: const Color(0xFF9E6738),
+        iconColor: AppTheme.primary,
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         children: [
           Text(
             reponse,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF5A493B), height: 1.4),
+            style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context), height: 1.4),
           ),
         ],
       )),

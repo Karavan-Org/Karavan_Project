@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Écran Assistance Courtier (Support Logistique, Agrément Douanes & Litiges)
 class AssistanceCourtierScreen extends StatelessWidget {
@@ -7,17 +8,17 @@ class AssistanceCourtierScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           "Assistance Courtier",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
       ),
       body: ListView(
@@ -63,7 +64,7 @@ class AssistanceCourtierScreen extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Appel du Desk Logistique DoGo (+223 70 12 34 56)...")),
+                            const SnackBar(content: Text("Appel du Desk Logistique Karavan (+223 70 12 34 56)...")),
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -86,21 +87,24 @@ class AssistanceCourtierScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // FAQ Logistique Courtier
-          const Text(
+          Text(
             "Protocoles & Déchargement",
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF2C241E)),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context)),
           ),
           const SizedBox(height: 12),
 
           _buildFaqItem(
+            context: context,
             question: "Comment valider la délivrance d'un colis sans réseau ?",
             reponse: "Saisissez le code PIN dans 'Scanner Retrait'. Il sera synchronisé à la reconnexion.",
           ),
           _buildFaqItem(
+            context: context,
             question: "Que faire en cas d'avarie ou colis endommagé au transit ?",
-            reponse: "Émettez une réserve sur le bordereau. La garantie DoGo rembourse le colis.",
+            reponse: "Émettez une réserve sur le bordereau. La garantie Karavan rembourse le colis.",
           ),
           _buildFaqItem(
+            context: context,
             question: "Quand les commissions de transit sont-elles transférées ?",
             reponse: "Dès le retrait validé par le commerçant, votre commission est libérée.",
           ),
@@ -111,23 +115,23 @@ class AssistanceCourtierScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
                 BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
               ],
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   "Permanence Relais Dabanani",
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF2C241E)),
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppTheme.couleurTexte(context)),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   "Grand Marché, Bamako\ntransit@dogo.ml • +223 70 88 99 00",
-                  style: TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74), height: 1.4),
+                  style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context), height: 1.4),
                 ),
               ],
             ),
@@ -137,11 +141,11 @@ class AssistanceCourtierScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqItem({required String question, required String reponse}) {
+  Widget _buildFaqItem({required BuildContext context, required String question, required String reponse}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(color: Color(0x0646321E), blurRadius: 8, offset: Offset(0, 2)),
@@ -150,14 +154,14 @@ class AssistanceCourtierScreen extends StatelessWidget {
       child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(16), clipBehavior: Clip.antiAlias, child: ExpansionTile(
         title: Text(
           question,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context)),
         ),
         iconColor: const Color(0xFF9E6738),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         children: [
           Text(
             reponse,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF5A493B), height: 1.4),
+            style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context), height: 1.4),
           ),
         ],
       )),

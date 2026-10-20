@@ -20,7 +20,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     // Étape 1 : Le but de l'application
-    expect(find.text('Bienvenue sur DoGo Vendeur !'), findsOneWidget);
+    expect(find.text('Bienvenue sur Karavan Vendeur !'), findsOneWidget);
     expect(find.text("LE BUT DE L'APPLICATION"), findsOneWidget);
     expect(find.text('ÉTAPE 1 / 5'), findsOneWidget);
     expect(find.text('Suivant'), findsOneWidget);

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/paiement_api_service.dart';
 import '../services/groupe_api_service.dart';
@@ -27,6 +27,8 @@ class RejoindreGroupeScreen extends StatefulWidget {
   final String courtierNom;
   final String imagePath;
   final String paysOrigine;
+  final int quantiteActuelle;
+  final int quantiteObjectif;
 
   const RejoindreGroupeScreen({
     super.key,
@@ -42,6 +44,8 @@ class RejoindreGroupeScreen extends StatefulWidget {
     this.courtierNom = "",
     this.imagePath = "",
     this.paysOrigine = "",
+    this.quantiteActuelle = 0,
+    this.quantiteObjectif = 0,
   });
 
   @override
@@ -294,20 +298,27 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
       final prixFige = (participation['prixUnitaire'] as num?)?.round() ?? widget.prixUnitaire;
       final montantDebite = (participation['montant'] as num?)?.round() ?? _total;
 
-      // Progression réelle du groupe après ce paiement (indicative : absente si le serveur ne répond pas)
-      int piecesActuelles = 0;
-      int piecesObjectif = 0;
+      // Progression réelle du groupe après ce paiement
+      int piecesActuelles = widget.quantiteActuelle;
+      int piecesObjectif = widget.quantiteObjectif;
       try {
         final groupe = await GroupeApiService.instance.detail(widget.groupeId);
         piecesActuelles = groupe.quantiteActuelle;
         piecesObjectif = groupe.quantiteObjectif;
       } catch (_) {}
 
+      // Si le backend n'a pas encore actualisé la somme ou en cas de synchronisation,
+      // la jauge intègre au minimum la commande qui vient d'être payée
+      if (piecesObjectif > 0 && piecesActuelles < (widget.quantiteActuelle + quantiteReservee)) {
+        piecesActuelles = (widget.quantiteActuelle + quantiteReservee).clamp(0, piecesObjectif);
+      }
+
       if (!mounted) return;
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ReussitePaiementScreen(
+            groupeId: widget.groupeId,
             participationId: participationId,
             titreProduit: widget.titre,
             paysOrigine: widget.paysOrigine,
@@ -372,7 +383,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         title: const Text(
           "Paiement & Réservation",
@@ -620,7 +631,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                   const SizedBox(height: 6),
                   _buildLigneMontant("Fret & dédouanement", "Inclus dans le prix", isGratuit: true),
                   const SizedBox(height: 6),
-                  _buildLigneMontant("Garantie Séquestre DoGo", "0 FCFA (Inclus)", isGratuit: true),
+                  _buildLigneMontant("Garantie Séquestre Karavan", "0 FCFA (Inclus)", isGratuit: true),
                   const SizedBox(height: 12),
                   const Divider(color: Color(0xFFF1EAE2)),
                   const SizedBox(height: 10),

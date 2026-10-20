@@ -1,3 +1,5 @@
+import '../widgets/bouton_bascule_theme.dart';
+import '../theme/app_theme.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -195,12 +197,11 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
   @override
   Widget build(BuildContext context) {
     const camelColor = Color(0xFFA67954);
-    const borderColor = Color(0xFFDFCABA);
 
     final timerText = "00:${_secondesRestantes.toString().padLeft(2, '0')}";
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5), // Fond crème doux Design System
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -208,6 +209,10 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
           icon: const Icon(Icons.arrow_back, color: camelColor, size: 22),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
+        actions: const [
+          BoutonBasculeTheme(compact: true),
+          SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -245,13 +250,13 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
               const SizedBox(height: 24),
 
               // 2. TITRE & SOUS-TITRE FIGMA
-              const Text(
+              Text(
                 "Vérification du compte",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E1E24),
+                  color: AppTheme.couleurTexte(context),
                   letterSpacing: -0.5,
                 ),
               ),
@@ -260,9 +265,9 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   text: "Nous avons envoyé un code de vérification\n",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF6B6B6B),
+                    color: AppTheme.couleurTexteAttenue(context),
                     height: 1.5,
                     fontWeight: FontWeight.w500,
                   ),
@@ -270,9 +275,9 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                     const TextSpan(text: "au "),
                     TextSpan(
                       text: widget.numeroTelephone,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E1E24),
+                        color: AppTheme.couleurTexte(context),
                       ),
                     ),
                     const TextSpan(
@@ -328,9 +333,9 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                     width: 58,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.couleurCarte(context),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: borderColor, width: 1.4),
+                      border: Border.all(color: AppTheme.couleurBordure(context), width: 1.4),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x0846321E),
@@ -346,17 +351,21 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
                         maxLength: 1,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E1E24),
+                          color: AppTheme.couleurTexte(context),
                         ),
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         decoration: const InputDecoration(
                           counterText: "",
+                          filled: false,
+                          fillColor: Colors.transparent,
                           border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                         ),
                         onChanged: (val) {

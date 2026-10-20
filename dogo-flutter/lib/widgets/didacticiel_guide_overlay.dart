@@ -75,10 +75,10 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
       case RoleActeur.commercant:
         return const [
           _EtapeGuideData(
-            titre: "Bienvenue sur DoGo Commerçant !",
+            titre: "Bienvenue sur Karavan Commerçant !",
             sousTitre: "LE BUT DE L'APPLICATION",
             description:
-                "DoGo est la première plateforme d'achats groupés au Mali. En tant que Commerçant, cet écran d'accueil vous présente les meilleures opportunités d'achats groupés en direct des usines : tarifs dégressifs de gros et sécurité garantie sous séquestre bancaire.",
+                "Karavan est la première plateforme d'achats groupés au Mali. En tant que Commerçant, cet écran d'accueil vous présente les meilleures opportunités d'achats groupés en direct des usines : tarifs dégressifs de gros et sécurité garantie sous séquestre bancaire.",
             cibleTab: 0, // Tab 0: Accueil
             icone: Icons.home_rounded,
           ),
@@ -119,10 +119,10 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
       case RoleActeur.grossiste:
         return const [
           _EtapeGuideData(
-            titre: "Bienvenue sur DoGo Vendeur !",
+            titre: "Bienvenue sur Karavan Vendeur !",
             sousTitre: "LE BUT DE L'APPLICATION",
             description:
-                "DoGo est la première plateforme d'achats groupés au Mali et en Afrique de l'Ouest. En tant que Grossiste certifié, cet onglet Accueil vous donne une vue d'ensemble : chiffres clés, commandes du jour et alertes de stocks en direct.",
+                "Karavan est la première plateforme d'achats groupés au Mali et en Afrique de l'Ouest. En tant que Grossiste certifié, cet onglet Accueil vous donne une vue d'ensemble : chiffres clés, commandes du jour et alertes de stocks en direct.",
             cibleTab: 0, // Tab 0: Accueil
             icone: Icons.dashboard_rounded,
           ),
@@ -146,7 +146,7 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             titre: "Validation & Expédition",
             sousTitre: "FONCTIONNALITÉ 3 : COMMANDES & STOCKS",
             description:
-                "Dès qu'un groupe atteint 100%, vous confirmez la disponibilité de vos stocks. Le transitaire agréé DoGo prend alors en charge le lot et son acheminement sécurisé jusqu'aux commerçants de Bamako.",
+                "Dès qu'un groupe atteint 100%, vous confirmez la disponibilité de vos stocks. Le transitaire agréé Karavan prend alors en charge le lot et son acheminement sécurisé jusqu'aux commerçants de Bamako.",
             cibleTab: 2, // Tab 2: Ventes
             icone: Icons.local_shipping_rounded,
           ),
@@ -163,7 +163,7 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
       case RoleActeur.courtier:
         return const [
           _EtapeGuideData(
-            titre: "Bienvenue sur DoGo Courtier !",
+            titre: "Bienvenue sur Karavan Courtier !",
             sousTitre: "LE BUT DE L'APPLICATION",
             description:
                 "En tant que Courtier & Partenaire Transit, vous coordonnez les convois, regroupez les commandes d'import et facilitez la distribution aux commerçants tout en percevant des commissions transparentes.",

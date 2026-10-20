@@ -13,7 +13,7 @@ class MesFavorisScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         title: const Text(
           "Mes Groupes Favoris",

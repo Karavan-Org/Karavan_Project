@@ -114,8 +114,8 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    const camelColor = Color(0xFFA67954);
-    const borderColor = Color(0xFFDFCABA);
+    final camelColor = AppTheme.estSombre(context) ? AppTheme.darkPrimary : const Color(0xFFA67954);
+    final borderColor = AppTheme.couleurBordure(context);
 
     return Container(
       padding: EdgeInsets.only(
@@ -124,9 +124,9 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
         top: 20,
         bottom: bottomInset > 0 ? bottomInset + 20 : 36,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: AppTheme.couleurSurface(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
               color: Color(0x1F2C241E), blurRadius: 20, offset: Offset(0, -4)),
@@ -164,7 +164,7 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
                       color: AppTheme.primary, size: 24),
                 ),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -173,20 +173,21 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF2C241E)),
+                            color: AppTheme.couleurTexte(context)),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         "Sécurisez l'accès à votre compte",
-                        style:
-                            TextStyle(fontSize: 12.5, color: Color(0xFF8C7E74)),
+                        style: TextStyle(
+                            fontSize: 12.5,
+                            color: AppTheme.couleurTexteAttenue(context)),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon:
-                      const Icon(Icons.close_rounded, color: Color(0xFF8C7E74)),
+                  icon: Icon(Icons.close_rounded,
+                      color: AppTheme.couleurTexteAttenue(context)),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -337,16 +338,16 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF2C241E)),
+              color: AppTheme.couleurTexte(context)),
         ),
         const SizedBox(height: 6),
         Container(
           height: 52,
           decoration: BoxDecoration(
-            color: const Color(0xFFFAF8F5),
+            color: AppTheme.couleurSurfaceDouce(context),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: borderColor, width: 1.2),
           ),
@@ -364,15 +365,16 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
                     LengthLimitingTextInputFormatter(
                         ValidateurMotDePasse.maxLongueur)
                   ],
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E1E24)),
+                      color: AppTheme.couleurTexte(context)),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: hint,
-                    hintStyle:
-                        const TextStyle(color: Color(0xFFAFA79F), fontSize: 13),
+                    hintStyle: TextStyle(
+                        color: AppTheme.couleurTexteAttenue(context),
+                        fontSize: 13),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   ),
@@ -397,12 +399,12 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
 
   Widget _buildChecklistSecurite(String text) {
     if (text.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.only(left: 4, top: 2),
+      return Padding(
+        padding: const EdgeInsets.only(left: 4, top: 2),
         child: Text(
           ValidateurMotDePasse.aideExigences,
           style:
-              TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74), height: 1.3),
+              TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context), height: 1.3),
         ),
       );
     }
@@ -416,7 +418,7 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       margin: const EdgeInsets.only(top: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAF7F2),
+        color: AppTheme.couleurSurfaceDouce(context),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -450,7 +452,7 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: valide ? FontWeight.w700 : FontWeight.w500,
-            color: valide ? const Color(0xFF1E7E34) : const Color(0xFF8C7E74),
+            color: valide ? AppTheme.success : AppTheme.couleurTexteAttenue(context),
           ),
         ),
       ],

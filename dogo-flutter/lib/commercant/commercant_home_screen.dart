@@ -1,6 +1,7 @@
 import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/bouton_bascule_theme.dart';
 import 'campagne_model.dart';
 import '../services/auth_service.dart';
 import '../services/api/api_config.dart';
@@ -63,7 +64,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: AnimatedBuilder(
           animation: Listenable.merge([
@@ -163,10 +164,10 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                       children: [
                                         Text(
                                           "Bonjour $prenom 👋",
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w800,
-                                            color: AppTheme.textPrimary,
+                                            color: AppTheme.couleurTexte(context),
                                           ),
                                         ),
                                         const SizedBox(height: 2),
@@ -179,9 +180,9 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                                 quartier,
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 11.5,
-                                                  color: AppTheme.textMuted,
+                                                  color: AppTheme.couleurTexteAttenue(context),
                                                   fontWeight: FontWeight.w600,
                                                 ),
                                               ),
@@ -197,16 +198,20 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                           },
                         ),
 
+                        // Bascule de thème animée uniforme (comme Grossiste et Courtier)
+                        const BoutonBasculeTheme(compact: true),
+                        const SizedBox(width: 8),
+
                         // Bouton d'accès direct à Mes Favoris avec Badge de compteur
                         Container(
                           margin: const EdgeInsets.only(right: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: favorisIds.isNotEmpty
                                   ? Colors.redAccent.withValues(alpha: 0.3)
-                                  : const Color(0xFFE8E0D7),
+                                  : Theme.of(context).colorScheme.outlineVariant,
                             ),
                           ),
                           child: Stack(
@@ -216,7 +221,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                   favorisIds.isNotEmpty ? Icons.favorite : Icons.favorite_border,
                                   color: favorisIds.isNotEmpty
                                       ? Colors.redAccent
-                                      : AppTheme.textPrimary,
+                                      : AppTheme.couleurTexte(context),
                                   size: 22,
                                 ),
                                 tooltip: "Mes Favoris",
@@ -258,12 +263,12 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                         // Cloche de notifications avec Badge dynamique
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _nbNotifsNonLues > 0
                                   ? AppTheme.primary.withValues(alpha: 0.3)
-                                  : const Color(0xFFE8E0D7),
+                                  : Theme.of(context).colorScheme.outlineVariant,
                             ),
                           ),
                           child: Stack(
@@ -275,7 +280,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                       : Icons.notifications_none_rounded,
                                   color: _nbNotifsNonLues > 0
                                       ? AppTheme.primary
-                                      : AppTheme.textPrimary,
+                                      : AppTheme.couleurTexte(context),
                                   size: 22,
                                 ),
                                 tooltip: "Notifications",
@@ -326,9 +331,9 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE5DDD5)),
+                        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -430,12 +435,12 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                             decoration: BoxDecoration(
                               color: _categorieActive == "Favoris"
                                   ? Colors.redAccent
-                                  : Colors.white,
+                                  : AppTheme.couleurCarte(context),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: _categorieActive == "Favoris"
                                     ? Colors.redAccent
-                                    : const Color(0xFFE2D9D0),
+                                    : AppTheme.couleurBordure(context),
                               ),
                             ),
                             child: Row(
@@ -457,7 +462,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                         : FontWeight.w600,
                                     color: _categorieActive == "Favoris"
                                         ? Colors.white
-                                        : AppTheme.textPrimary,
+                                        : AppTheme.couleurTexte(context),
                                   ),
                                 ),
                               ],
@@ -474,10 +479,10 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                               margin: const EdgeInsets.only(right: 8),
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.primary : Colors.white,
+                                color: isSelected ? AppTheme.primary : AppTheme.couleurCarte(context),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: isSelected ? AppTheme.primary : const Color(0xFFE2D9D0),
+                                  color: isSelected ? AppTheme.primary : AppTheme.couleurBordure(context),
                                 ),
                               ),
                               child: Text(
@@ -485,7 +490,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                  color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                  color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
                                 ),
                               ),
                             ),
@@ -507,7 +512,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary.withValues(alpha: 0.8),
+                            color: AppTheme.couleurTexte(context),
                           ),
                         ),
                       ],
@@ -526,10 +531,10 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                             margin: const EdgeInsets.only(right: 8),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.secondary : const Color(0xFFF7F2EB),
+                              color: isSelected ? AppTheme.secondary : AppTheme.couleurSurfaceDouce(context),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: isSelected ? AppTheme.secondary : const Color(0xFFE5DDD5),
+                                color: isSelected ? AppTheme.secondary : AppTheme.couleurBordure(context),
                               ),
                             ),
                             child: Row(
@@ -547,7 +552,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                    color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                    color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
                                   ),
                                 ),
                               ],
@@ -570,10 +575,10 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                           _categorieActive == "Favoris"
                               ? "Mes Groupes Favoris (${campagnesFiltrees.length})"
                               : "Groupes bientôt clôturés 🔥",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
+                            color: AppTheme.couleurTexte(context),
                           ),
                         ),
                         if (_categorieActive != "Favoris")
@@ -687,14 +692,14 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                     const SizedBox(height: 20),
 
                     // 6. Section "Opportunités d'importation directes"
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
                         "Opportunités d'importation directes",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.couleurTexte(context),
                         ),
                       ),
                     ),
@@ -749,10 +754,14 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
             margin: const EdgeInsets.only(right: 14),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFFDFBF8) : Colors.white,
+              color: isSelected
+                  ? (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF2B231D)
+                      : const Color(0xFFFDFBF8))
+                  : Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? AppTheme.primary : const Color(0xFFEFE8E1),
+                color: isSelected ? AppTheme.primary : Theme.of(context).colorScheme.outlineVariant,
                 width: isSelected ? 2.5 : 1,
               ),
               boxShadow: [
@@ -774,7 +783,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                       child: Container(
                         height: 125,
                         width: double.infinity,
-                        color: const Color(0xFFF7F2EB),
+                        color: AppTheme.couleurSurfaceDouce(context),
                         child: imageProduit(
                           groupe.imagePath,
                           fit: BoxFit.contain,
@@ -872,14 +881,21 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                   groupe.titre,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13.5,
+                    color: AppTheme.couleurTexte(context),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   groupe.sousTitre,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: AppTheme.couleurTexteAttenue(context),
+                  ),
                 ),
                 const SizedBox(height: 5),
 
@@ -887,9 +903,9 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7F2EB),
+                    color: AppTheme.couleurSurfaceDouce(context),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFE5DDD5)),
+                    border: Border.all(color: AppTheme.couleurBordure(context)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1003,10 +1019,14 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFFDFBF8) : Colors.white,
+              color: isSelected
+                  ? (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF2B231D)
+                      : const Color(0xFFFDFBF8))
+                  : Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? AppTheme.primary : const Color(0xFFEFE8E1),
+                color: isSelected ? AppTheme.primary : Theme.of(context).colorScheme.outlineVariant,
                 width: isSelected ? 2.5 : 1,
               ),
               boxShadow: [
@@ -1024,7 +1044,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                   child: Container(
                     width: 75,
                     height: 75,
-                    color: const Color(0xFFF7F2EB),
+                    color: AppTheme.couleurSurfaceDouce(context),
                     child: imageProduit(
                       groupe.imagePath,
                       fit: BoxFit.cover,
@@ -1045,7 +1065,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                               groupe.titre,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context)),
                             ),
                           ),
                           Container(

@@ -23,8 +23,8 @@ class CodeRetraitCommercantScreen extends StatefulWidget {
     this.codePin,
     this.nomProduit = "Commande groupée",
     this.quantite = 1,
-    this.pointRetrait = "Point de retrait DoGo Bamako",
-    this.courtierNom = "Service Transit DoGo",
+    this.pointRetrait = "Point de retrait Karavan Bamako",
+    this.courtierNom = "Service Transit Karavan",
   });
 
   @override
@@ -109,7 +109,7 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         title: const Text(
           "Code de Retrait Sécurisé",
@@ -331,7 +331,7 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
                     "Faites scanner ce QR code au guichet. Sans scanner, donnez le n° de commande "
                     "#${code.commandeId} et le code PIN reçu par SMS "
                     "(${code.tentativesRestantes} essai(s) restant(s)).",
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textDark, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 12, color: AppTheme.couleurTexte(context), fontWeight: FontWeight.w500),
                   ),
                 ),
               ],

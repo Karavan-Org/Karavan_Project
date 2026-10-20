@@ -109,12 +109,16 @@ class _OuvrirGroupeScreenState extends State<OuvrirGroupeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text("Groupe ${LienGroupe.code(widget.groupeId)}",
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
         backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
       ),
       body: Center(

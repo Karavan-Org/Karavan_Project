@@ -27,7 +27,7 @@ class _DocumentsGrossisteScreenState extends State<DocumentsGrossisteScreen> {
       "icon": Icons.business_rounded,
     },
     {
-      "titre": "Contrat Cadre Transitaire DoGo Transit",
+      "titre": "Contrat Cadre Transitaire Karavan Transit",
       "reference": "CTR-DOGO-LOG-2026",
       "date": "Agréé CEMAC/UEMOA",
       "statut": "Signé",
@@ -90,17 +90,17 @@ class _DocumentsGrossisteScreenState extends State<DocumentsGrossisteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           "Mes Documents & Certifications",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.couleurTexte(context)),
         ),
         actions: [
           IconButton(
@@ -128,7 +128,7 @@ class _DocumentsGrossisteScreenState extends State<DocumentsGrossisteScreen> {
                 SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    "Votre compte est vérifié et couvert par la garantie DoGo.",
+                    "Votre compte est vérifié et couvert par la garantie Karavan.",
                     style: TextStyle(fontSize: 11.5, color: Color(0xFF6A4C00), height: 1.35),
                   ),
                 ),
@@ -142,9 +142,9 @@ class _DocumentsGrossisteScreenState extends State<DocumentsGrossisteScreen> {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFEFE9E0)),
+              border: Border.all(color: AppTheme.couleurBordure(context)),
               boxShadow: const [
                 BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
               ],
@@ -154,8 +154,8 @@ class _DocumentsGrossisteScreenState extends State<DocumentsGrossisteScreen> {
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF7EFE7),
+                  decoration: BoxDecoration(
+                    color: AppTheme.couleurSurfaceDouce(context),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(doc["icon"] as IconData, color: const Color(0xFF9E6738), size: 22),
@@ -167,7 +167,7 @@ class _DocumentsGrossisteScreenState extends State<DocumentsGrossisteScreen> {
                     children: [
                       Text(
                         doc["titre"] as String,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF2C241E)),
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.couleurTexte(context)),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -177,7 +177,7 @@ class _DocumentsGrossisteScreenState extends State<DocumentsGrossisteScreen> {
                       const SizedBox(height: 2),
                       Text(
                         doc["date"] as String,
-                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74)),
+                        style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
                       ),
                     ],
                   ),

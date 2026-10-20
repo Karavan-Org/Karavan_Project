@@ -1,3 +1,4 @@
+import '../widgets/tab_navigation_scope.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'scanner_retrait_screen.dart';
@@ -32,11 +33,22 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Gestion du Convoi", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          tooltip: "Retour",
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              TabNavigationScope.switchToTab(context, 0);
+            }
+          },
+        ),
+        title: Text("Gestion du Convoi", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        backgroundColor: AppTheme.couleurCarte(context),
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
         actions: [
           IconButton(
@@ -56,9 +68,9 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.couleurCarte(context),
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFEFE8E0)),
+                border: Border.all(color: AppTheme.couleurBordure(context)),
                 boxShadow: const [
                   BoxShadow(color: Color(0x0A000000), blurRadius: 10, offset: Offset(0, 4)),
                 ],
@@ -69,9 +81,9 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         "Convoi Istanbul ➔ Bamako",
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.couleurTexte(context)),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -87,8 +99,8 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text("Vol Cargo TK-641 • Arrivée estimée dans 48h", style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-                  const Divider(height: 24, color: Color(0xFFF3ECE4)),
+                  Text("Vol Cargo TK-641 • Arrivée estimée dans 48h", style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context))),
+                  Divider(height: 24, color: AppTheme.couleurBordure(context)),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -104,7 +116,7 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
             const SizedBox(height: 20),
 
             // --- ÉTAPES LOGISTIQUES DU CONVOI ---
-            const Text("Progression de l'Acheminement", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            Text("Progression de l'Acheminement", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.couleurTexte(context))),
             const SizedBox(height: 12),
 
             _buildEtapeItem(1, "Enlèvement Istanbul (Laleli)", "Marchandises groupées chez les fournisseurs", true),
@@ -139,8 +151,8 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Colis des Commerçants (${_colis.length})", style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                const Text("Séquestre DoGo Actif", style: TextStyle(fontSize: 11.5, color: AppTheme.success, fontWeight: FontWeight.w700)),
+                Text("Colis des Commerçants (${_colis.length})", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.couleurTexte(context))),
+                const Text("Séquestre Karavan Actif", style: TextStyle(fontSize: 11.5, color: AppTheme.success, fontWeight: FontWeight.w700)),
               ],
             ),
             const SizedBox(height: 10),
@@ -150,23 +162,23 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.couleurCarte(context),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFEFE8E0)),
+                  border: Border.all(color: AppTheme.couleurBordure(context)),
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.inventory_2_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                    Icon(Icons.inventory_2_outlined, size: 40, color: AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.5)),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       "Aucun colis rattaché",
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF2C241E)),
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       "Les colis des commerçants s'afficheront ici lors des réservations de fret.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                      style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
                     ),
                   ],
                 ),
@@ -182,9 +194,9 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
                 return Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.couleurCarte(context),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFEFE8E0)),
+                    border: Border.all(color: AppTheme.couleurBordure(context)),
                   ),
                   child: Row(
                     children: [
@@ -201,9 +213,9 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(c['client'], style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                            Text(c['client'], style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: AppTheme.couleurTexte(context))),
                             const SizedBox(height: 2),
-                            Text("${c['articles']} • ${c['poids']}", style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted)),
+                            Text("${c['articles']} • ${c['poids']}", style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                           ],
                         ),
                       ),
@@ -238,14 +250,14 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted)),
+        Text(label, style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
         const SizedBox(height: 2),
         Text(
           value,
           style: TextStyle(
             fontSize: 13.5,
             fontWeight: FontWeight.w800,
-            color: isHighlight ? AppTheme.primary : AppTheme.textDark,
+            color: isHighlight ? AppTheme.primary : AppTheme.couleurTexte(context),
           ),
         ),
       ],
@@ -262,7 +274,7 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
             radius: 14,
             backgroundColor: isDone
                 ? AppTheme.success
-                : (isCurrent ? AppTheme.secondary : const Color(0xFFE2D8CF)),
+                : (isCurrent ? AppTheme.secondary : AppTheme.couleurBordure(context)),
             child: isDone
                 ? const Icon(Icons.check, size: 16, color: Colors.white)
                 : Text("$numero", style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -272,9 +284,9 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(titre, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: isCurrent ? AppTheme.primaryDark : AppTheme.textDark)),
+                Text(titre, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: isCurrent ? AppTheme.primary : AppTheme.couleurTexte(context))),
                 const SizedBox(height: 2),
-                Text(detail, style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted)),
+                Text(detail, style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
               ],
             ),
           ),

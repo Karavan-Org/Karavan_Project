@@ -9,10 +9,14 @@ import 'screens/onboarding_screen.dart';
 import 'screens/splash_launch_screen.dart';
 import 'services/api/api_config.dart';
 import 'services/lien_groupe.dart';
+import 'services/theme_service.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Chargement de la préférence de thème (clair/sombre)
+  await ThemeService.instance.initialiser();
 
   // Configuration de la barre de statut système
   SystemChrome.setSystemUIOverlayStyle(
@@ -23,7 +27,7 @@ void main() {
   );
 
   // Rappel en console du backend ciblé (--dart-define=ip=... / port=...)
-  debugPrint('DoGo API : ${ApiConfig.baseUrl}');
+  debugPrint('Karavan API : ${ApiConfig.baseUrl}');
 
   runApp(const DogoApp());
 }
@@ -42,15 +46,20 @@ class DogoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'DoGo',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      // Démarrage par un lien ou rafraîchissement d'un espace spécifique
-      onGenerateInitialRoutes: (route) {
-        LienGroupe.enAttente = _groupeDuLien(route) ?? LienGroupe.enAttente;
-        return [MaterialPageRoute(builder: (_) => SplashLaunchScreen(routeInitiale: route))];
-      },
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeService.instance.themeModeNotifier,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          title: 'Karavan',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
+          // Démarrage par un lien ou rafraîchissement d'un espace spécifique
+          onGenerateInitialRoutes: (route) {
+            LienGroupe.enAttente = _groupeDuLien(route) ?? LienGroupe.enAttente;
+            return [MaterialPageRoute(builder: (_) => SplashLaunchScreen(routeInitiale: route))];
+          },
       // Table des routes nommées pour la navigation directe et web
       routes: {
         '/commercant': (_) => const CommercantMainNav(),
@@ -92,5 +101,7 @@ class DogoApp extends StatelessWidget {
         );
       },
     );
+  },
+);
   }
 }

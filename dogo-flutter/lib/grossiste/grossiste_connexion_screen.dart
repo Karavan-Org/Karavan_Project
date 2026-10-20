@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/bouton_bascule_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/api/api_exception.dart';
@@ -95,7 +96,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CouleursArrivee.fond,
+      backgroundColor: AppTheme.couleurFond(context),
       body: Stack(
         children: [
           // Motif de carte du monde en filigrane
@@ -104,10 +105,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
             left: 12,
             right: 8,
             child: IgnorePointer(
-              child: SvgPicture.asset(
-                  'assets/images/grossiste/connexion_watermark.svg',
-                  fit: BoxFit.fill,
-                  height: 266),
+              child: Opacity(opacity: AppTheme.estSombre(context) ? 0.12 : 0.85, child: SvgPicture.asset('assets/images/grossiste/connexion_watermark.svg', fit: BoxFit.fill, height: 266)),
             ),
           ),
           SafeArea(
@@ -115,25 +113,31 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      padding: const EdgeInsets.only(top: 12),
-                      icon: const Icon(Icons.arrow_back,
-                          color: AppTheme.primary, size: 30),
-                      onPressed: () => Navigator.of(context).maybePop(),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        padding: const EdgeInsets.only(top: 12),
+                        icon: const Icon(Icons.arrow_back,
+                            color: AppTheme.primary, size: 30),
+                        onPressed: () => Navigator.of(context).maybePop(),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 12),
+                        child: BoutonBasculeTheme(compact: true),
+                      ),
+                    ],
                   ),
-                  Image.asset('assets/images/logo_dogo.png',
+                  Image.asset('assets/images/logo_karavan.png',
                       height: 72, fit: BoxFit.contain),
                   const SizedBox(height: 18),
-                  const Text(
+                  Text(
                     "Bienvenue Grossiste !",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: CouleursArrivee.titreConnexion),
+                        color: AppTheme.couleurTexte(context)),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -147,7 +151,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                     controller: _telephoneController,
                     clavier: TextInputType.phone,
                     couleurBordure: CouleursArrivee.bordureConnexion,
-                    couleurIndice: const Color(0xFF64748B),
+                    couleurIndice: AppTheme.couleurTexteAttenue(context),
                     hauteur: 56,
                   ),
                   const SizedBox(height: 16),
@@ -159,7 +163,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                     formateurs: [LengthLimitingTextInputFormatter(64)],
                     masque: _pinMasque,
                     couleurBordure: CouleursArrivee.bordureConnexion,
-                    couleurIndice: AppTheme.primary,
+                    couleurIndice: AppTheme.couleurTexteAttenue(context),
                     hauteur: 56,
                     suffixe: IconButton(
                       icon: Icon(
@@ -183,7 +187,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                           height: 20,
                           decoration: BoxDecoration(
                             color:
-                                _seSouvenir ? AppTheme.primary : Colors.white,
+                                _seSouvenir ? AppTheme.primary : AppTheme.couleurCarte(context),
                             borderRadius: BorderRadius.circular(4),
                             border:
                                 Border.all(color: AppTheme.primary, width: 1.4),
@@ -194,12 +198,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                               : null,
                         ),
                         const SizedBox(width: 10),
-                        const Text(
-                          "Se souvenir de moi",
-                          style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primary),
+                        Text("Se souvenir de moi", style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context)),
                         ),
                       ],
                     ),
@@ -226,12 +225,12 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                       MaterialPageRoute(
                           builder: (_) => const GrossisteInscriptionScreen()),
                     ),
-                    child: const Text.rich(
+                    child: Text.rich(
                       TextSpan(
                         style:
                             TextStyle(fontSize: 13.5, color: AppTheme.primary),
                         children: [
-                          TextSpan(text: "Pas encore de compte ? "),
+                          TextSpan(text: "Pas encore de compte ? ", style: TextStyle(color: AppTheme.couleurTexteAttenue(context))),
                           TextSpan(
                               text: " | ",
                               style: TextStyle(color: Color(0xFFCBD5E1))),

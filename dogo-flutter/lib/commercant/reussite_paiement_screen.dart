@@ -6,7 +6,11 @@ import '../services/groupe_api_service.dart';
 import '../widgets/app_popups.dart';
 
 /// Écran de confirmation de Paiement Réussi conforme au design Figma (# reussite paiement)
-class ReussitePaiementScreen extends StatelessWidget {
+/// avec jauge dynamique et réactive liée au groupe d'achat (progression réelle animée).
+class ReussitePaiementScreen extends StatefulWidget {
+  /// Identifiant du groupe d'achat pour actualisation dynamique
+  final dynamic groupeId;
+
   /// Participation payée : c'est elle qu'annule le bouton « Annuler la commande » (RG-31).
   final int participationId;
   final String titreProduit;
@@ -22,6 +26,7 @@ class ReussitePaiementScreen extends StatelessWidget {
 
   const ReussitePaiementScreen({
     super.key,
+    this.groupeId,
     required this.participationId,
     required this.prixUnitaire,
     required this.quantite,
@@ -35,6 +40,96 @@ class ReussitePaiementScreen extends StatelessWidget {
     this.piecesObjectif = 0,
   });
 
+  @override
+  State<ReussitePaiementScreen> createState() => _ReussitePaiementScreenState();
+}
+
+class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
+    with SingleTickerProviderStateMixin {
+  late int _piecesActuelles;
+  late int _piecesObjectif;
+  late int _piecesDepart;
+  late String _titre;
+  late String _pays;
+  late String _image;
+  late AnimationController _animController;
+  late Animation<double> _animation;
+  bool _actualisationEnCours = false;
+
+  bool get _estEnTest =>
+      WidgetsBinding.instance.runtimeType.toString().contains('Test');
+
+  @override
+  void initState() {
+    super.initState();
+    _piecesActuelles = widget.piecesActuelles;
+    _piecesObjectif = widget.piecesObjectif;
+    _titre = widget.titreProduit;
+    _pays = widget.paysOrigine;
+    _image = widget.imagePath;
+
+    // Progression initiale de départ : niveau du groupe avant la commande qui vient d'être payée
+    if (_piecesActuelles > 0 && widget.quantite > 0) {
+      _piecesDepart = (_piecesActuelles - widget.quantite).clamp(0, _piecesObjectif > 0 ? _piecesObjectif : _piecesActuelles);
+    } else {
+      _piecesDepart = 0;
+    }
+
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1300),
+    );
+    _animation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOutCubic,
+    );
+
+    if (_estEnTest) {
+      _animController.value = 1.0;
+    } else {
+      _animController.forward();
+    }
+
+    _chargerProgressionReelle();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  /// Récupère la progression la plus fraîche depuis le serveur pour garantir l'exactitude
+  Future<void> _chargerProgressionReelle() async {
+    final gid = widget.groupeId;
+    if (gid == null || gid.toString().isEmpty) return;
+
+    if (mounted) setState(() => _actualisationEnCours = true);
+    try {
+      final groupe = await GroupeApiService.instance.detail(gid);
+      if (!mounted) return;
+      setState(() {
+        _piecesActuelles = groupe.quantiteActuelle;
+        _piecesObjectif = groupe.quantiteObjectif;
+        if (_titre.isEmpty && groupe.titre.isNotEmpty) _titre = groupe.titre;
+        if (_pays.isEmpty && groupe.paysOrigine.isNotEmpty) _pays = groupe.paysOrigine;
+        if (_image.isEmpty && groupe.imagePath.isNotEmpty) _image = groupe.imagePath;
+
+        if (_piecesDepart > _piecesActuelles) {
+          _piecesDepart = (_piecesActuelles - widget.quantite).clamp(0, _piecesObjectif > 0 ? _piecesObjectif : 0);
+        }
+      });
+
+      if (!_estEnTest && !_animController.isAnimating && _animController.value < 1.0) {
+        _animController.forward(from: 0.0);
+      }
+    } catch (_) {
+      // Les valeurs passées au constructeur restent appliquées en repli
+    } finally {
+      if (mounted) setState(() => _actualisationEnCours = false);
+    }
+  }
+
   String _formatMontant(int montant) {
     final str = montant.toString();
     final reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
@@ -45,11 +140,15 @@ class ReussitePaiementScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
+        title: Text(
           "Annuler la commande ?",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: AppTheme.couleurTexte(context),
+          ),
         ),
         content: const Text(
           "Votre participation sera annulée et le remboursement de votre paiement lancé, sans frais d'annulation.",
@@ -64,7 +163,7 @@ class ReussitePaiementScreen extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               try {
-                await GroupeApiService.instance.annulerParticipation(participationId);
+                await GroupeApiService.instance.annulerParticipation(widget.participationId);
               } catch (e) {
                 if (context.mounted) await AppPopups.traiterErreurOuConflit(context, e);
                 return;
@@ -92,17 +191,21 @@ class ReussitePaiementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool progressionConnue = piecesObjectif > 0;
-    final double pct = progressionConnue ? (piecesActuelles / piecesObjectif).clamp(0.0, 1.0) : 0.0;
-    final int pctInt = (pct * 100).toInt();
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color fondEcran = isDark ? const Color(0xFF141210) : const Color(0xFFFAF8F5);
+    final Color couleurTexte = isDark ? Colors.white : const Color(0xFF1A1A1A);
+    final Color couleurCarte = isDark ? const Color(0xFF221E1B) : Colors.white;
+    final Color couleurBordure = isDark ? const Color(0xFF38322D) : const Color(0xFFEFE8DD);
+
+    final bool progressionConnue = _piecesObjectif > 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5), // Fond crème doux du Design System
+      backgroundColor: fondEcran,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1E1E1E), size: 22),
+          icon: Icon(Icons.arrow_back, color: couleurTexte, size: 22),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -112,24 +215,22 @@ class ReussitePaiementScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 1. GRAND BADGE CIRCULAIRE VERT AVEC CONFETTIS / PARTICULES FIGMA
+            // 1. GRAND BADGE CIRCULAIRE VERT AVEC CONFETTIS FIGMA
             SizedBox(
               height: 94,
               width: 94,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Particules multicolores stylisées autour du badge
                   CustomPaint(
                     size: const Size(94, 94),
                     painter: _ConfettiPainter(),
                   ),
-                  // Cercle vert succès
                   Container(
                     width: 72,
                     height: 72,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF1EB980), // Vert succès vibrant
+                      color: Color(0xFF1EB980),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -152,26 +253,26 @@ class ReussitePaiementScreen extends StatelessWidget {
             const SizedBox(height: 18),
 
             // 2. TITRE & SOUS-TITRE PRINCIPAL
-            const Text(
+            Text(
               "Paiement effectué\navec succès !",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF1A1A1A),
+                color: couleurTexte,
                 height: 1.25,
                 letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 10),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Text(
                 "Votre participation au groupe a bien été prise en compte.\nLes fonds sont sécurisés sur votre compte AchatGroup jusqu'à la validation du groupe.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12.5,
-                  color: Color(0xFF6B6B6B),
+                  color: isDark ? Colors.white70 : const Color(0xFF6B6B6B),
                   height: 1.45,
                 ),
               ),
@@ -183,9 +284,12 @@ class ReussitePaiementScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F7EE),
+                color: isDark ? const Color(0xFF12281E) : const Color(0xFFE8F7EE),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFBFE7CD), width: 1.2),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF1C4531) : const Color(0xFFBFE7CD),
+                  width: 1.2,
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +308,7 @@ class ReussitePaiementScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -213,15 +317,15 @@ class ReussitePaiementScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF136838),
+                            color: isDark ? const Color(0xFF63D9A2) : const Color(0xFF136838),
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           "Nous ne transférons les fonds au courtier que lorsque le groupe atteint 100%.",
                           style: TextStyle(
                             fontSize: 11.5,
-                            color: Color(0xFF267345),
+                            color: isDark ? const Color(0xFFA5E6C5) : const Color(0xFF267345),
                             height: 1.35,
                           ),
                         ),
@@ -234,185 +338,285 @@ class ReussitePaiementScreen extends StatelessWidget {
 
             const SizedBox(height: 18),
 
-            // 4. MINI-CARTE PRODUIT FIGMA
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0A46321E),
-                    blurRadius: 14,
-                    offset: Offset(0, 4),
+            // 4. MINI-CARTE PRODUIT FIGMA AVEC JAUGE ANIMÉE ET DYNAMIQUE
+            AnimatedBuilder(
+              animation: _animation,
+              builder: (context, _) {
+                final double t = _animation.value;
+                final int piecesAffichees = progressionConnue
+                    ? (_piecesDepart + ((_piecesActuelles - _piecesDepart) * t)).round().clamp(0, _piecesObjectif)
+                    : _piecesActuelles;
+                final double pct = progressionConnue
+                    ? (piecesAffichees / _piecesObjectif).clamp(0.0, 1.0)
+                    : 0.0;
+                final int pctInt = (pct * 100).toInt();
+                final bool estObjectifAtteint = progressionConnue && piecesAffichees >= _piecesObjectif;
+
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: couleurCarte,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: couleurBordure, width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark ? Colors.black26 : const Color(0x0A46321E),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // Vignette du produit sur fond beige clair
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      width: 82,
-                      height: 82,
-                      color: const Color(0xFFF6F0E6),
-                      padding: const EdgeInsets.all(6),
-                      child: imageProduit(
-                        imagePath,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.inventory_2_outlined,
-                          size: 38,
-                          color: Color(0xFF9E6E4B),
+                  child: Row(
+                    children: [
+                      // Vignette du produit
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          width: 82,
+                          height: 82,
+                          color: isDark ? const Color(0xFF2C2723) : const Color(0xFFF6F0E6),
+                          padding: const EdgeInsets.all(6),
+                          child: imageProduit(
+                            _image,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.inventory_2_outlined,
+                              size: 38,
+                              color: Color(0xFF9E6E4B),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
+                      const SizedBox(width: 14),
 
-                  // Informations produit & Jauge d'avancement
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                      // Informations produit & Jauge d'avancement dynamique
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                titreProduit,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14.5,
-                                  color: Color(0xFF1E1E1E),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _titre.isNotEmpty ? _titre : widget.titreProduit,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14.5,
+                                      color: couleurTexte,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: estObjectifAtteint
+                                        ? (isDark ? const Color(0xFF143324) : const Color(0xFFE8F7EE))
+                                        : (isDark ? const Color(0xFF332715) : const Color(0xFFFFF2DC)),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (estObjectifAtteint) ...[
+                                        const Icon(Icons.check_circle, size: 11, color: Color(0xFF1EB980)),
+                                        const SizedBox(width: 3),
+                                      ],
+                                      Text(
+                                        estObjectifAtteint ? "Objectif atteint 🎉" : "Groupe en cours",
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: estObjectifAtteint ? const Color(0xFF1EB980) : const Color(0xFFD98200),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _pays.isNotEmpty ? _pays : widget.paysOrigine,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? Colors.white60 : const Color(0xFF888888),
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF2DC),
-                                borderRadius: BorderRadius.circular(8),
+                            const SizedBox(height: 4),
+                            Text(
+                              "${_formatMontant(widget.prixUnitaire)} / unité",
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w800,
+                                color: couleurTexte,
                               ),
-                              child: const Text(
-                                "Groupe en cours",
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Barre de progression dynamique animée
+                            if (progressionConnue) ...[
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(5),
+                                child: LinearProgressIndicator(
+                                  value: pct,
+                                  minHeight: 6,
+                                  backgroundColor: isDark ? const Color(0xFF36302B) : const Color(0xFFF0EBE1),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    estObjectifAtteint ? const Color(0xFF1EB980) : const Color(0xFFEEA823),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "$piecesAffichees / $_piecesObjectif pièces",
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      color: isDark ? Colors.white70 : const Color(0xFF888888),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    "$pctInt%",
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: estObjectifAtteint ? const Color(0xFF1EB980) : const Color(0xFFEEA823),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (estObjectifAtteint)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.verified_rounded, size: 12, color: Color(0xFF1EB980)),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          "Objectif 100% atteint ! Expédition garantie 🚀",
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            color: isDark ? const Color(0xFF63D9A2) : const Color(0xFF136838),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else if (_piecesObjectif - piecesAffichees > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.bolt_rounded, size: 12, color: Color(0xFFEEA823)),
+                                      const SizedBox(width: 3),
+                                      Expanded(
+                                        child: Text(
+                                          "Plus que ${_piecesObjectif - piecesAffichees} pièces pour clôturer le groupe",
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            color: isDark ? const Color(0xFFECC276) : const Color(0xFF9E6E4B),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ] else if (_actualisationEnCours) ...[
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  minHeight: 5,
+                                  backgroundColor: isDark ? const Color(0xFF36302B) : const Color(0xFFF0EBE1),
+                                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFEEA823)),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Actualisation de la jauge...",
                                 style: TextStyle(
                                   fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFFD98200),
+                                  color: isDark ? Colors.white60 : const Color(0xFF888888),
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          paysOrigine,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF888888),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "${_formatMontant(prixUnitaire)} / unité",
-                          style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E1E1E),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Barre de progression orange/dorée (masquée si la progression n'a pas pu être lue)
-                        if (progressionConnue) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: pct,
-                            minHeight: 5,
-                            backgroundColor: const Color(0xFFF0EBE1),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFEEA823)),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "$piecesActuelles / $piecesObjectif pièces",
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                color: Color(0xFF888888),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              "$pctInt%",
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFFEEA823),
-                              ),
-                            ),
-                          ],
-                        ),
-                        ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
 
             const SizedBox(height: 22),
 
             // 5. SECTION DÉTAILS DE VOTRE PAIEMENT
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 "Détails de votre paiement",
                 style: TextStyle(
                   fontSize: 15.5,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E1E1E),
+                  color: couleurTexte,
                 ),
               ),
             ),
             const SizedBox(height: 12),
 
             _buildDetailRow(
+              context: context,
               icon: Icons.inventory_2_outlined,
               label: "Quantité commandée",
-              value: "$quantite pièces",
+              value: "${widget.quantite} pièces",
             ),
             const SizedBox(height: 10),
             _buildDetailRow(
+              context: context,
               icon: Icons.sell_outlined,
-              label: "Prix unitaire",
-              value: _formatMontant(prixUnitaire),
+              label: "Prix unitaire garanti",
+              value: _formatMontant(widget.prixUnitaire),
             ),
             const SizedBox(height: 10),
             _buildDetailRow(
+              context: context,
               icon: Icons.receipt_long_outlined,
-              label: "Montant total",
-              value: _formatMontant(montantTotal),
+              label: "Montant total payé",
+              value: _formatMontant(widget.montantTotal),
               isBoldValue: true,
             ),
             const SizedBox(height: 10),
             _buildDetailRow(
+              context: context,
               icon: Icons.smartphone_outlined,
               label: "Moyen de paiement",
-              value: moyenPaiement,
+              value: widget.moyenPaiement,
             ),
             const SizedBox(height: 10),
             _buildDetailRow(
+              context: context,
               icon: Icons.access_time_outlined,
               label: "Date et heure",
-              value: dateHeure,
+              value: widget.dateHeure,
+            ),
+            const SizedBox(height: 10),
+            _buildDetailRow(
+              context: context,
+              icon: Icons.confirmation_number_outlined,
+              label: "Participation",
+              value: "#${widget.participationId}",
             ),
 
             const SizedBox(height: 32),
@@ -427,7 +631,7 @@ class ReussitePaiementScreen extends StatelessWidget {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9E6E4B), // Brun/Camel officiel Figma
+                backgroundColor: const Color(0xFF9E6E4B),
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 54),
                 shape: RoundedRectangleBorder(
@@ -475,11 +679,13 @@ class ReussitePaiementScreen extends StatelessWidget {
   }
 
   Widget _buildDetailRow({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
     bool isBoldValue = false,
   }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
       child: Row(
@@ -488,9 +694,9 @@ class ReussitePaiementScreen extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF7A7A7A),
+              color: isDark ? Colors.white70 : const Color(0xFF7A7A7A),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -500,7 +706,7 @@ class ReussitePaiementScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.5,
               fontWeight: isBoldValue ? FontWeight.w800 : FontWeight.w700,
-              color: const Color(0xFF1E1E1E),
+              color: isDark ? Colors.white : const Color(0xFF1E1E1E),
             ),
           ),
         ],

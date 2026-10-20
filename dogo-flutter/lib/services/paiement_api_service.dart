@@ -70,7 +70,7 @@ class PaiementApiService {
     );
 
     if (response is! Map<String, dynamic>) {
-      throw const ApiException(statusCode: 0, message: 'Réponse de paiement inattendue du serveur DoGo.');
+      throw const ApiException(statusCode: 0, message: 'Réponse de paiement inattendue du serveur Karavan.');
     }
     final resultat = PaiementResultat.fromJson(response);
     // En environnement démo, déclencher le callback de succès de l'opérateur Mobile Money (RG-34)

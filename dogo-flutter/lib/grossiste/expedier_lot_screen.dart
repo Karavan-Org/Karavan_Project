@@ -31,9 +31,9 @@ class _ExpedierLotScreenState extends State<ExpedierLotScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "Le lot a été pris en charge par le transitaire logistique Touré Transit & Logistique.",
-              style: TextStyle(fontSize: 13, color: AppTheme.textDark),
+              style: TextStyle(fontSize: 13, color: AppTheme.couleurTexte(context)),
             ),
             const SizedBox(height: 12),
             Container(
@@ -77,8 +77,8 @@ class _ExpedierLotScreenState extends State<ExpedierLotScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+          Text(label, style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context))),
+          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context))),
         ],
       ),
     );
@@ -87,11 +87,15 @@ class _ExpedierLotScreenState extends State<ExpedierLotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Remise Lot au Courtier", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text("Remise Lot au Courtier", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        backgroundColor: AppTheme.couleurCarte(context),
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -102,8 +106,9 @@ class _ExpedierLotScreenState extends State<ExpedierLotScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.couleurCarte(context),
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.couleurBordure(context)),
                 boxShadow: [
                   BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
                 ],
@@ -111,12 +116,12 @@ class _ExpedierLotScreenState extends State<ExpedierLotScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Sélectionner le lot prêt :", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  Text("Sélectionner le lot prêt :", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context))),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: AppTheme.background,
+                      color: AppTheme.couleurFond(context),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -146,7 +151,7 @@ class _ExpedierLotScreenState extends State<ExpedierLotScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Poids pesé (kg)", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                            Text("Poids pesé (kg)", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context))),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: _poidsReelController,
@@ -154,8 +159,9 @@ class _ExpedierLotScreenState extends State<ExpedierLotScreen> {
                               decoration: InputDecoration(
                                 suffixText: "kg",
                                 filled: true,
-                                fillColor: AppTheme.background,
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                                fillColor: AppTheme.couleurFond(context),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
+                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
                               ),
                             ),
                           ],
@@ -166,7 +172,7 @@ class _ExpedierLotScreenState extends State<ExpedierLotScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Nombre de colis", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                            Text("Nombre de colis", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context))),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: _cartonsController,
@@ -174,8 +180,9 @@ class _ExpedierLotScreenState extends State<ExpedierLotScreen> {
                               decoration: InputDecoration(
                                 suffixText: "cartons",
                                 filled: true,
-                                fillColor: AppTheme.background,
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                                fillColor: AppTheme.couleurFond(context),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
+                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
                               ),
                             ),
                           ],
@@ -184,14 +191,15 @@ class _ExpedierLotScreenState extends State<ExpedierLotScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text("Code Scellé / Bordereau de remise", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  Text("Code Scellé / Bordereau de remise", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context))),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _bordereauController,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppTheme.background,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      fillColor: AppTheme.couleurFond(context),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
                     ),
                   ),
                 ],

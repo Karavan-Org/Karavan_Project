@@ -85,11 +85,15 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Validation du Retrait", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text("Validation du Retrait", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        backgroundColor: AppTheme.couleurCarte(context),
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -153,9 +157,9 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
               ),
 
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 "— OU NUMÉRO DE COMMANDE + PIN —",
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5, fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppTheme.couleurTexteAttenue(context), fontSize: 11.5, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
 
@@ -163,7 +167,7 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                 controller: _commandeController,
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.couleurTexte(context)),
                 decoration: _decoration("N° de commande (ex. 12)"),
               ),
               const SizedBox(height: 12),
@@ -175,10 +179,10 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                 obscureText: true,
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 28, letterSpacing: 10, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 28, letterSpacing: 10, fontWeight: FontWeight.bold, color: AppTheme.couleurTexte(context)),
                 decoration: _decoration("••••").copyWith(
                   counterText: "",
-                  hintStyle: const TextStyle(letterSpacing: 8, color: Color(0xFFC7BCB2)),
+                  hintStyle: TextStyle(letterSpacing: 8, color: AppTheme.couleurTexteAttenue(context)),
                 ),
               ),
 
@@ -205,7 +209,7 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.couleurCarte(context),
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 20)],
                 ),
@@ -220,25 +224,25 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                       child: const Icon(Icons.check_rounded, color: AppTheme.success, size: 48),
                     ),
                     const SizedBox(height: 16),
-                    const Text("Retrait Confirmé !", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                    Text("Retrait Confirmé !", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context))),
                     const SizedBox(height: 6),
                     Text(
                       "Commande #${_retrait!['commandeId'] ?? ''} remise au commerçant "
                       "(${_retrait!['mode'] == 'QR' ? 'QR code' : 'PIN'}). Les fonds séquestrés sont libérés.",
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                      style: TextStyle(color: AppTheme.couleurTexteAttenue(context), fontSize: 13),
                     ),
-                    const Divider(height: 30),
+                    Divider(height: 30, color: AppTheme.couleurBordure(context)),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF9F6F2),
+                        color: AppTheme.couleurFond(context),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Statut du paiement :", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                          Text("Statut du paiement :", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.couleurTexte(context))),
                           Text(
                             "Fonds libérés",
                             style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w800, fontSize: 15),
@@ -278,12 +282,17 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
 
   InputDecoration _decoration(String indice) => InputDecoration(
         hintText: indice,
+        hintStyle: TextStyle(color: AppTheme.couleurTexteAttenue(context)),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppTheme.couleurCarte(context),
         contentPadding: const EdgeInsets.symmetric(vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+          borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
         ),
       );
 }

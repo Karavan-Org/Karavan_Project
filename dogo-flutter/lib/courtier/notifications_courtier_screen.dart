@@ -100,17 +100,17 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
         : _notifications.where((n) => n["categorie"] == _selectedFiltre).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           "Notifications Courtier",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         actions: [
           if (_notifications.isNotEmpty)
@@ -170,19 +170,19 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-                                  const Text(
+                                  Text(
                                     "Aucune notification",
                                     style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 16,
-                                      color: Color(0xFF2C241E),
+                                      color: AppTheme.couleurTexte(context),
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  const Text(
+                                  Text(
                                     "Les mises à jour logistiques et retraits validés s'afficheront ici.",
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                                    style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
                                   ),
                                 ],
                               ),
@@ -202,7 +202,7 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
                             return Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppTheme.couleurCarte(context),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: estLu ? Colors.transparent : const Color(0xFF9E6738).withValues(alpha: 0.18),
@@ -223,7 +223,7 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
                                     ),
                                     child: Icon(
                                       notif["icon"] as IconData,
-                                      color: Colors.white,
+                                      color: AppTheme.couleurCarte(context),
                                       size: 20,
                                     ),
                                   ),
@@ -234,21 +234,21 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
                                       children: [
                                         Text(
                                           notif["titre"] as String,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.w800,
                                             fontSize: 13.5,
-                                            color: Color(0xFF2C241E),
+                                            color: AppTheme.couleurTexte(context),
                                           ),
                                         ),
                                         const SizedBox(height: 3),
                                         Text(
                                           notif["message"] as String,
-                                          style: const TextStyle(fontSize: 12, color: Color(0xFF5A493B)),
+                                          style: TextStyle(fontSize: 12, color: AppTheme.couleurTexte(context)),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           notif["date"] as String,
-                                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74)),
+                                          style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
                                         ),
                                       ],
                                     ),
@@ -282,10 +282,10 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF9E6738) : Colors.white,
+          color: isSelected ? const Color(0xFF9E6738) : AppTheme.couleurCarte(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF9E6738) : const Color(0xFFE5DDD5),
+            color: isSelected ? const Color(0xFF9E6738) : AppTheme.couleurBordure(context),
           ),
         ),
         child: Text(
@@ -293,7 +293,7 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF5A493B),
+            color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
           ),
         ),
       ),

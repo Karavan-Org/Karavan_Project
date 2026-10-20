@@ -395,7 +395,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
         if (_horsRoute && !_recalcul) {
           _afficherAvis(const _AvisTrajet(
             titre: "Vous quittez l'itinéraire",
-            detail: "Continuez : DoGo recalcule le chemin si vous ne revenez pas.",
+            detail: "Continuez : Karavan recalcule le chemin si vous ne revenez pas.",
             couleur: Color(0xFFE65100),
             icone: Icons.alt_route_rounded,
           ));
@@ -1220,9 +1220,9 @@ class _ItineraireDepotState extends State<ItineraireDepot>
           icone: Icons.location_disabled_rounded,
           texte: _refusDefinitif
               ? (kIsWeb
-                  ? "La localisation est bloquée pour DoGo. Autorisez-la dans les réglages du navigateur (icône à gauche de l'adresse), puis réessayez."
-                  : "La localisation est bloquée pour DoGo. Autorisez-la dans les paramètres de l'application, puis réessayez.")
-              : "Sans votre position, DoGo ne peut pas tracer le chemin jusqu'au dépôt.",
+                  ? "La localisation est bloquée pour Karavan. Autorisez-la dans les réglages du navigateur (icône à gauche de l'adresse), puis réessayez."
+                  : "La localisation est bloquée pour Karavan. Autorisez-la dans les paramètres de l'application, puis réessayez.")
+              : "Sans votre position, Karavan ne peut pas tracer le chemin jusqu'au dépôt.",
           bouton: "Réessayer",
           action: _localiserMoi,
           secondaire: _refusDefinitif && !kIsWeb ? "Paramètres" : null,
@@ -1267,7 +1267,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
         ),
         const SizedBox(height: 6),
         Text(
-          "Pour vous guider jusqu'au ${widget.nomDepot}, DoGo a besoin d'accéder à votre position. "
+          "Pour vous guider jusqu'au ${widget.nomDepot}, Karavan a besoin d'accéder à votre position. "
           "Elle sert uniquement à tracer votre chemin et n'est partagée avec personne.",
           textAlign: TextAlign.center,
           style: const TextStyle(

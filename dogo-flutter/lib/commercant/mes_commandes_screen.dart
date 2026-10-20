@@ -1,3 +1,4 @@
+import '../widgets/tab_navigation_scope.dart';
 import 'package:flutter/material.dart';
 import '../models/participation_model.dart';
 import '../models/remboursement_model.dart';
@@ -66,7 +67,7 @@ class ElementCommande {
       return 'assets/images/Nike_Joyride-removebg-preview.png';
     }
     if (lower.contains('montre') || lower.contains('accessoire')) {
-      return 'assets/images/logo_dogo.png';
+      return 'assets/images/logo_karavan.png';
     }
     return 'assets/images/Nike_Joyride-removebg-preview.png';
   }
@@ -95,7 +96,7 @@ class ElementCommande {
           arrivee = 'Montant de ${remboursement.montant.toStringAsFixed(0)} FCFA restitué';
         } else if (remboursement.statut == 'REJETE') {
           statutLibelle = 'Demande de remboursement rejetée';
-          arrivee = 'Veuillez contacter le support DoGo';
+          arrivee = 'Veuillez contacter le support Karavan';
         }
       } else {
         arrivee = 'Participation annulée • Remboursement';
@@ -358,7 +359,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            "Sécurité & Garantie DoGo (RG-31) :",
+                            "Sécurité & Garantie Karavan (RG-31) :",
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF166534),
@@ -444,7 +445,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
               ? "Votre demande d'annulation et de remboursement de $montantTexte a été enregistrée avec succès."
               : "Votre réservation a été annulée. Votre quota a été libéré pour les autres commerçants.",
           detailSupplementaire: estPaye
-              ? "Dès validation par l'administration DoGo, les fonds seront automatiquement recrédités sur votre Portefeuille Achats."
+              ? "Dès validation par l'administration Karavan, les fonds seront automatiquement recrédités sur votre Portefeuille Achats."
               : null,
           icone: Icons.check_circle_outline_rounded,
           couleurIcone: const Color(0xFF2E7D32),
@@ -478,13 +479,18 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
-        leading: Navigator.of(context).canPop()
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Color(0xFF1E1E1E), size: 22),
-                onPressed: () => Navigator.of(context).maybePop(),
-              )
-            : null,
-        titleSpacing: Navigator.of(context).canPop() ? 0 : 20,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context), size: 22),
+          tooltip: "Retour",
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              TabNavigationScope.switchToTab(context, 0);
+            }
+          },
+        ),
+        titleSpacing: 0,
         title: const Text(
           "Mes commandes",
           maxLines: 1,
@@ -931,7 +937,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                   final String remboursementMsg = cmd.remboursement != null
                       ? (cmd.remboursement!.execute
                           ? "Le montant de ${cmd.remboursement!.montant.toStringAsFixed(0)} FCFA a été restitué avec succès sur votre portefeuille d'achats."
-                          : "Votre demande de remboursement de ${cmd.remboursement!.montant.toStringAsFixed(0)} FCFA est actuellement en cours d'examen par l'administration DoGo.")
+                          : "Votre demande de remboursement de ${cmd.remboursement!.montant.toStringAsFixed(0)} FCFA est actuellement en cours d'examen par l'administration Karavan.")
                       : "Cette commande ou participation a déjà été annulée et prise en compte dans votre espace.";
                   AppPopups.afficherActionDejaEffectuee(
                     context: context,
@@ -1016,7 +1022,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                     titre: "Annulation impossible",
                     message:
                         "Cette commande ne peut plus être annulée car le convoi a atteint son quota ou l'acheminement est déjà engagé.",
-                    detail: "Vos articles sont en cours d'expédition et sous garantie séquestre DoGo.",
+                    detail: "Vos articles sont en cours d'expédition et sous garantie séquestre Karavan.",
                   );
                 },
                 borderRadius: BorderRadius.circular(8),

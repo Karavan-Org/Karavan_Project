@@ -1,3 +1,5 @@
+import '../widgets/bouton_bascule_theme.dart';
+import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
@@ -158,7 +160,7 @@ class _CommercantInscriptionScreenState
     const borderColor = Color(0xFFDFCABA);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5), // Fond crème doux Design System
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -166,6 +168,10 @@ class _CommercantInscriptionScreenState
           icon: const Icon(Icons.arrow_back, color: camelColor, size: 22),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
+        actions: const [
+          BoutonBasculeTheme(compact: true),
+          SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -175,19 +181,19 @@ class _CommercantInscriptionScreenState
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/logo_dogo.png',
+                'assets/images/logo_karavan.png',
                 height: 58,
                 fit: BoxFit.contain,
               ),
               const SizedBox(height: 12),
 
               // 1. TITRE PRINCIPAL FIGMA
-              const Text(
+              Text(
                 "Inscription",
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E1E24),
+                  color: AppTheme.couleurTexte(context),
                   letterSpacing: -0.5,
                 ),
               ),
@@ -383,11 +389,11 @@ class _CommercantInscriptionScreenState
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     "Vous avez déjà un compte ? ",
                     style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF7A7A7A),
+                      color: AppTheme.couleurTexteAttenue(context),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -426,35 +432,31 @@ class _CommercantInscriptionScreenState
     bool obscureText = false,
     Widget? trailing,
   }) {
+    final couleurCarte = AppTheme.couleurCarte(context);
+    final couleurBordure = AppTheme.couleurBordure(context);
+    final couleurTexte = AppTheme.couleurTexte(context);
+    final couleurAttenue = AppTheme.couleurTexteAttenue(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: couleurCarte,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: borderColor, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0646321E),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: couleurBordure, width: 1.2),
+        boxShadow: AppTheme.ombreDouce,
       ),
       child: Row(
         children: [
-          // Cercle autour de l'icône
           Container(
             width: 38,
             height: 38,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: borderColor, width: 1.1),
+              border: Border.all(color: couleurBordure, width: 1.1),
             ),
             child: Icon(icon, color: camelColor, size: 19),
           ),
           const SizedBox(width: 14),
-
-          // Label supérieur + Champ de texte
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -462,10 +464,10 @@ class _CommercantInscriptionScreenState
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF8A7768),
+                    color: couleurAttenue,
                   ),
                 ),
                 TextFormField(
@@ -473,17 +475,19 @@ class _CommercantInscriptionScreenState
                   keyboardType: keyboardType,
                   inputFormatters: inputFormatters,
                   obscureText: obscureText,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E1E24),
+                    color: couleurTexte,
                   ),
                   decoration: InputDecoration(
+                    filled: false,
+                    fillColor: Colors.transparent,
                     hintText: hint,
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFFA59A91),
+                      color: couleurAttenue,
                     ),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 2),
@@ -495,7 +499,6 @@ class _CommercantInscriptionScreenState
               ],
             ),
           ),
-
           if (trailing != null) trailing,
         ],
       ),

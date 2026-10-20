@@ -151,11 +151,15 @@ class _LancerConvoiScreenState extends State<LancerConvoiScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Créer un groupe d'achat", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text("Créer un groupe d'achat", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        backgroundColor: AppTheme.couleurCarte(context),
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
       ),
       body: _chargement
@@ -201,14 +205,14 @@ class _LancerConvoiScreenState extends State<LancerConvoiScreen> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(Icons.info_outline, color: AppTheme.primary, size: 22),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    "Montants par unité, en FCFA. Les frais de plateforme DoGo sont ajoutés automatiquement.",
-                    style: TextStyle(fontSize: 12.5, color: AppTheme.textDark),
+                    "Montants par unité, en FCFA. Les frais de plateforme Karavan sont ajoutés automatiquement.",
+                    style: TextStyle(fontSize: 12.5, color: AppTheme.couleurTexte(context)),
                   ),
                 ),
               ],
@@ -276,15 +280,15 @@ class _LancerConvoiScreenState extends State<LancerConvoiScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2D8CF)),
+              border: Border.all(color: AppTheme.couleurBordure(context)),
             ),
             child: Row(
               children: [
-                const Expanded(
-                  child: Text("Prix unitaire estimé (frais DoGo 5 % inclus)",
-                      style: TextStyle(fontSize: 12.5, color: AppTheme.textMuted)),
+                Expanded(
+                  child: Text("Prix unitaire estimé (frais Karavan 5 % inclus)",
+                      style: TextStyle(fontSize: 12.5, color: AppTheme.couleurTexteAttenue(context))),
                 ),
                 Text(_fcfa(_prixUnitaireEstime),
                     style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.primary, fontSize: 15)),
@@ -330,15 +334,16 @@ class _LancerConvoiScreenState extends State<LancerConvoiScreen> {
 
   Widget _titre(String texte) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
-        child: Text(texte, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: AppTheme.textDark)),
+        child: Text(texte, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: AppTheme.couleurTexte(context))),
       );
 
   InputDecoration _deco(String label, IconData icone) => InputDecoration(
         labelText: label,
         prefixIcon: Icon(icone, color: AppTheme.primary),
         filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+        fillColor: AppTheme.couleurCarte(context),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
       );
 
   Widget _champEntier(TextEditingController c, String label, IconData icone, {int min = 0, bool obligatoire = true}) {

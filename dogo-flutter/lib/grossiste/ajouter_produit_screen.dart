@@ -425,7 +425,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 ),
                 child: const Icon(Icons.camera_alt_rounded, color: AppTheme.primary, size: 26),
               ),
-              title: const Text("Prendre une photo (Caméra)", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+              title: Text("Prendre une photo (Caméra)", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
               subtitle: const Text("Ouvrir l'appareil photo du téléphone ou webcam", style: TextStyle(fontSize: 12)),
               onTap: () {
                 Navigator.pop(ctx);
@@ -442,7 +442,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 ),
                 child: const Icon(Icons.photo_library_rounded, color: AppTheme.secondary, size: 26),
               ),
-              title: const Text("Choisir depuis la galerie", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+              title: Text("Choisir depuis la galerie", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
               subtitle: const Text("Sélectionner une photo déjà enregistrée", style: TextStyle(fontSize: 12)),
               onTap: () {
                 Navigator.pop(ctx);
@@ -537,7 +537,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
           icon: const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 46),
-          title: const Text("Produit ajouté !", style: TextStyle(fontWeight: FontWeight.w800)),
+          title: Text("Produit ajouté !", style: TextStyle(fontWeight: FontWeight.w800)),
           content: Text(
             "« ${produit['nom'] ?? ''} » est dans votre catalogue.\n\n"
             "Lancer maintenant son groupe d'achat ? Votre prix de gros et votre stock ($stock pcs) "
@@ -600,14 +600,18 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text(
-          "Ajouter un Produit",
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        title: Text(
+          "Ajouter un Produit",
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context)),
+        ),
+        backgroundColor: AppTheme.couleurCarte(context),
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
         centerTitle: true,
       ),
@@ -1147,15 +1151,15 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         labelText: label,
         prefixIcon: Icon(icon, color: AppTheme.primary, size: 20),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppTheme.couleurCarte(context),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+          borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+          borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -1346,11 +1350,11 @@ class _VarianteDialogState extends State<_VarianteDialog> {
                     fillColor: const Color(0xFFFAF7F2),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+                      borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+                      borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1424,11 +1428,11 @@ class _VarianteDialogState extends State<_VarianteDialog> {
                     fillColor: const Color(0xFFFAF7F2),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+                      borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+                      borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1529,11 +1533,11 @@ class _VarianteDialogState extends State<_VarianteDialog> {
                           fillColor: const Color(0xFFFAF7F2),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+                            borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+                            borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -1610,11 +1614,11 @@ class _VarianteDialogState extends State<_VarianteDialog> {
                     fillColor: const Color(0xFFFAF7F2),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+                      borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE2D8CF)),
+                      borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),

@@ -29,7 +29,12 @@ class OngletNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final couleur = selectionne ? AppTheme.primaryDark : _inactif;
+    final couleurInactif = Theme.of(context).brightness == Brightness.dark
+        ? AppTheme.darkTextMuted
+        : _inactif;
+    final couleur = selectionne
+        ? (Theme.of(context).brightness == Brightness.dark ? AppTheme.darkPrimary : AppTheme.primaryDark)
+        : couleurInactif;
     return Semantics(
       selected: selectionne,
       button: true,
@@ -50,7 +55,11 @@ class OngletNavigation extends StatelessWidget {
               width: selectionne ? 54 : 40,
               height: 30,
               decoration: BoxDecoration(
-                color: selectionne ? AppTheme.tertiary : Colors.transparent,
+                color: selectionne
+                  ? (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF38291E)
+                      : AppTheme.tertiary)
+                  : Colors.transparent,
                 borderRadius: BorderRadius.circular(15),
               ),
               child: AnimatedSwitcher(

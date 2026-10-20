@@ -10,9 +10,14 @@ import '../services/auth_service.dart';
 import '../services/session_storage_service.dart';
 import '../services/tab_storage_helper.dart';
 import '../services/url_route_helper.dart';
+import '../widgets/karavan_logo.dart';
 import 'onboarding_screen.dart';
 
-/// Animation officielle de lancement de l'application DoGo
+/// Animation officielle de lancement de Karavan.
+///
+/// Trois flux lumineux (le corridor, les commerçants, les grossistes) traversent
+/// une carte logistique, convergent et tracent l'emblème « K » ; le nœud du groupe
+/// s'allume, une onde se propage, puis le nom Karavan se révèle.
 class SplashLaunchScreen extends StatefulWidget {
   final String? routeInitiale;
 
@@ -26,16 +31,14 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   bool _hasNavigated = false;
-  ui.Image? _logoImage;
   Future<UtilisateurProfil?>? _restaurerSessionFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadLogo();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 5200),
+      duration: const Duration(milliseconds: 4200),
     );
 
     _restaurerSessionFuture = AuthService.instance.restaurerSession();
@@ -57,19 +60,6 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
         _naviguerVersAccueil();
       }
     });
-  }
-
-  Future<void> _loadLogo() async {
-    try {
-      final ByteData data = await rootBundle.load('assets/logo/logo.png');
-      final ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-      final ui.FrameInfo fi = await codec.getNextFrame();
-      if (mounted) {
-        setState(() {
-          _logoImage = fi.image;
-        });
-      }
-    } catch (_) {}
   }
 
   @override
@@ -177,489 +167,412 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0D0B),
-      body: Stack(
-        children: [
-          // 1. Halo d'ambiance cosmique / aquatique centré
-          const Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 0.9,
-                  colors: [
-                    Color(0xFF281E15),
-                    Color(0xFF15110E),
-                    Color(0xFF0F0D0B),
-                  ],
-                  stops: [0.0, 0.6, 1.0],
-                ),
-              ),
-            ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+      child: Scaffold(
+        backgroundColor: _KaravanSplashPainter.fond,
+        body: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) => CustomPaint(
+            painter: _KaravanSplashPainter(progress: _controller.value),
+            child: const SizedBox.expand(),
           ),
-
-          // 2. Rendu complet des spirales d'eau cisaillée + logo logoV.png + DoGo (100% Canvas natif)
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) {
-                return CustomPaint(
-                  painter: _ShearedFluidSpiralsPainter(
-                    progress: _controller.value,
-                    logoImage: _logoImage,
-                  ),
-                  child: const SizedBox.expand(),
-                );
-              },
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-/// Peintre de l'animation des spirales fluides cisaillées, logo DoGo et révélation du nom
-class _ShearedFluidSpiralsPainter extends CustomPainter {
+/// Progression locale d'une phase [debut, fin] de la timeline globale.
+double _phase(double p, double debut, double fin) => ((p - debut) / (fin - debut)).clamp(0.0, 1.0);
+
+/// Un flux lumineux : il arrive du bord de l'écran puis trace un trait de l'emblème.
+class _Flux {
+  final Path approche; // coordonnées écran
+  final Path trait; // coordonnées de l'emblème (boîte 100 × 100)
+  final Color couleur;
+  final double debutApproche, finApproche, finTrait;
+
+  const _Flux(this.approche, this.trait, this.couleur, this.debutApproche, this.finApproche, this.finTrait);
+}
+
+class _KaravanSplashPainter extends CustomPainter {
   final double progress; // 0.0 -> 1.0
-  final ui.Image? logoImage;
 
-  _ShearedFluidSpiralsPainter({
-    required this.progress,
-    this.logoImage,
-  });
+  _KaravanSplashPainter({required this.progress});
 
-  // Couleurs officielles du Design System
-  static const Color cGold = Color(0xFFEEA823);       // Jaune or vibrant
-  static const Color cCamel = Color(0xFFAC7F5E);      // Camel de base
-  static const Color cGreen = Color(0xFF34C759);      // Vert succès Design System
-  static const Color cForest = Color(0xFF183630);     // Vert profond Design System
-  static const Color cIvory = Color(0xFFFAF8F5);      // Blanc ivoire pur
+  static const Color fond = Color(0xFF0D0B09);
+  static const Color ivoire = Color(0xFFF7F2ED);
+  static const Color sable = Color(0xFFBFAF9F);
+
+  late double _l, _h, _taille, _cx, _cyDepart, _cyFinal;
+
+  double get _remontee => Curves.easeInOutCubic.transform(_phase(progress, 0.62, 0.80));
+
+  /// Centre courant de l'emblème (il remonte quand le nom apparaît).
+  Offset get _centreEmbleme => Offset(_cx, ui.lerpDouble(_cyDepart, _cyFinal, _remontee)!);
+
+  double get _echelleEmbleme => 1.0 - 0.14 * _remontee;
+
+  Offset _versEcran(Offset pointBoite) =>
+      _centreEmbleme + (pointBoite - const Offset(50, 50)) * (_taille * _echelleEmbleme / 100);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
+    _l = size.width;
+    _h = size.height;
+    _taille = (size.shortestSide * 0.40).clamp(120.0, 170.0);
+    _cx = _l / 2;
+    _cyDepart = _h * 0.47;
+    _cyFinal = _h / 2 - 54;
 
-    final double phaseSpiral = (progress / 0.50).clamp(0.0, 1.0);
-    final double phaseBox = ((progress - 0.44) / 0.22).clamp(0.0, 1.0);
-    final double phaseReveal = ((progress - 0.62) / 0.24).clamp(0.0, 1.0);
-    final double phaseFinal = ((progress - 0.84) / 0.16).clamp(0.0, 1.0);
+    _fond(canvas, size);
+    _grille(canvas, size);
 
-    // 1. DESSIN DES SPIRALES D'EAU CISAILLÉE (Visibles au début jusqu'à la formation du logo)
-    if (progress < 0.60) {
-      _drawShearedWaterSpirals(canvas, cx, cy, phaseSpiral, phaseBox);
+    final flux = _flux();
+    for (final f in flux) {
+      _approche(canvas, f);
     }
-
-    // 2. LOGO DOGO OFFICIEL (Formé par la fusion des spirales à la place de la boîte)
-    if (phaseBox > 0.0) {
-      _drawLogo(canvas, cx, cy, phaseBox, phaseReveal, phaseFinal);
+    _onde(canvas);
+    _embleme(canvas, flux);
+    for (final f in flux) {
+      _teteDeTrait(canvas, f);
     }
+    _marque(canvas);
+  }
 
-    // 3. RÉVÉLATION DU NOM DE L'APPLICATION « DoGo »
-    if (phaseReveal > 0.0) {
-      _drawRevealedBrandName(canvas, cx, cy, phaseReveal, phaseFinal);
+  // ---------------------------------------------------------------- Décor
+
+  void _fond(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          Offset(_cx, _h * 0.42),
+          size.longestSide * 0.75,
+          const [Color(0xFF221C16), Color(0xFF14110E), fond],
+          const [0.0, 0.45, 1.0],
+        ),
+    );
+  }
+
+  /// Carte logistique en pointillés, révélée depuis le centre ; l'onde du nœud l'illumine au passage.
+  void _grille(Canvas canvas, Size size) {
+    final apparition = Curves.easeOut.transform(_phase(progress, 0.0, 0.30));
+    if (apparition <= 0) return;
+
+    const pas = 24.0;
+    const niveaux = 8;
+    final seaux = List.generate(niveaux, (_) => <Offset>[]);
+    final centre = Offset(_cx, _h * 0.44);
+    final portee = size.longestSide * 0.55;
+    final rayonOnde = _rayonOnde(0);
+    final forceOnde = 1.0 - _phase(progress, 0.60, 0.92);
+
+    final decalX = (_l % pas) / 2;
+    final decalY = (_h % pas) / 2;
+    for (double y = decalY; y < _h; y += pas) {
+      for (double x = decalX; x < _l; x += pas) {
+        final p = Offset(x, y);
+        final d = (p - centre).distance;
+        var a = (1.0 - d / portee).clamp(0.0, 1.0);
+        a = a * a * apparition * 0.55;
+        if (rayonOnde != null) {
+          final ecart = (d - rayonOnde).abs();
+          a += math.max(0.0, 1.0 - ecart / 34) * 0.9 * forceOnde;
+        }
+        final niveau = (a.clamp(0.0, 1.0) * (niveaux - 1)).round();
+        if (niveau > 0) seaux[niveau].add(p);
+      }
+    }
+    for (var n = 1; n < niveaux; n++) {
+      if (seaux[n].isEmpty) continue;
+      canvas.drawPoints(
+        ui.PointMode.points,
+        seaux[n],
+        Paint()
+          ..color = ivoire.withValues(alpha: 0.16 * n / (niveaux - 1))
+          ..strokeWidth = 2.0
+          ..strokeCap = StrokeCap.round,
+      );
     }
   }
 
-  /// Dessine les spirales de fluide aquatique cisaillé avec vagues, crêtes et gouttelettes
-  void _drawShearedWaterSpirals(
-    Canvas canvas,
-    double cx,
-    double cy,
-    double phaseSpiral,
-    double phaseBox,
-  ) {
-    // Opacité générale qui s'estompe quand le logo se forme
-    final fadeOut = (1.0 - phaseBox * 1.4).clamp(0.0, 1.0);
-    if (fadeOut <= 0.01) return;
+  /// Rayon de l'onde de convergence (null hors de sa durée de vie).
+  double? _rayonOnde(double retard) {
+    final t = _phase(progress, 0.58 + retard, 0.92);
+    if (t <= 0 || t >= 1) return null;
+    return 12 + Curves.easeOutCubic.transform(t) * math.max(_l, _h) * 0.7;
+  }
 
-    // Définition des 5 bras de fluide avec les couleurs du Design System
-    const List<_SpiralStream> streams = [
-      _SpiralStream(
-        color: cGold,
-        accentColor: Color(0xFFFFD56B),
-        baseAngle: 0.0,
-        curlDirection: 1.0,
-        shearFrequency: 7.0,
-        waveAmplitude: 14.0,
+  // ---------------------------------------------------------------- Flux
+
+  List<_Flux> _flux() {
+    // Les trajectoires visent la position de départ de l'emblème (avant sa remontée).
+    Offset ancre(Offset b) => Offset(_cx, _cyDepart) + (b - const Offset(50, 50)) * (_taille / 100);
+    final basFut = ancre(KaravanEmblemePainter.futBas);
+    final pointeHaut = ancre(KaravanEmblemePainter.pointeHaut);
+    final pointeBas = ancre(KaravanEmblemePainter.pointeBas);
+
+    return [
+      // Corridor doré : monte depuis le bas-gauche
+      _Flux(
+        Path()
+          ..moveTo(-40, _h * 0.92)
+          ..cubicTo(_l * 0.10, _h * 0.80, basFut.dx - 6, basFut.dy + _h * 0.20, basFut.dx, basFut.dy),
+        KaravanEmblemePainter.cheminFut(),
+        KaravanEmblemePainter.or,
+        0.04, 0.34, 0.50,
       ),
-      _SpiralStream(
-        color: cGreen,
-        accentColor: Color(0xFF67E885),
-        baseAngle: (2 * math.pi / 5) * 1,
-        curlDirection: 1.0,
-        shearFrequency: 8.5,
-        waveAmplitude: 16.0,
+      // Flux camel (commerçants) : descend depuis le haut-droit
+      _Flux(
+        Path()
+          ..moveTo(_l + 40, _h * 0.10)
+          ..cubicTo(_l * 0.95, _h * 0.20, pointeHaut.dx + 60, pointeHaut.dy - 70, pointeHaut.dx, pointeHaut.dy),
+        KaravanEmblemePainter.cheminBrasHaut(),
+        KaravanEmblemePainter.camel,
+        0.09, 0.38, 0.54,
       ),
-      _SpiralStream(
-        color: cCamel,
-        accentColor: Color(0xFFD8AA84),
-        baseAngle: (2 * math.pi / 5) * 2,
-        curlDirection: 1.0,
-        shearFrequency: 6.5,
-        waveAmplitude: 12.0,
-      ),
-      _SpiralStream(
-        color: cForest,
-        accentColor: Color(0xFF275C51),
-        baseAngle: (2 * math.pi / 5) * 3,
-        curlDirection: 1.0,
-        shearFrequency: 9.0,
-        waveAmplitude: 15.0,
-      ),
-      _SpiralStream(
-        color: cIvory,
-        accentColor: Colors.white,
-        baseAngle: (2 * math.pi / 5) * 4,
-        curlDirection: 1.0,
-        shearFrequency: 8.0,
-        waveAmplitude: 10.0,
+      // Flux vert (grossistes) : remonte depuis le bas-droit
+      _Flux(
+        Path()
+          ..moveTo(_l + 40, _h * 0.80)
+          ..cubicTo(_l * 0.90, _h * 0.74, pointeBas.dx + 60, pointeBas.dy + 64, pointeBas.dx, pointeBas.dy),
+        KaravanEmblemePainter.cheminBrasBas(),
+        KaravanEmblemePainter.vert,
+        0.14, 0.42, 0.58,
       ),
     ];
+  }
 
-    // Temps fluide pour l'effet de cisaillement vivant
-    final double flowTime = phaseSpiral * 8.5;
-    final double vortexSpeed = 1.0 + phaseSpiral * 2.2;
+  void _approche(Canvas canvas, _Flux f) {
+    final t = _phase(progress, f.debutApproche, f.finApproche);
+    final effacement = 1.0 - _phase(progress, f.finApproche, f.finApproche + 0.20);
+    if (t <= 0 || effacement <= 0) return;
 
-    for (final stream in streams) {
-      _drawSingleShearedStream(
-        canvas,
-        cx,
-        cy,
-        stream,
-        flowTime,
-        vortexSpeed,
-        phaseSpiral,
-        phaseBox,
-        fadeOut,
+    final metrique = f.approche.computeMetrics().first;
+    final longueur = metrique.length;
+
+    // Route en pointillés : l'itinéraire apparaît avant le passage du flux
+    final routeVisible = Curves.easeOut.transform(_phase(progress, f.debutApproche - 0.02, f.debutApproche + 0.10));
+    final pointilles = Path();
+    for (double d = 0; d < longueur; d += 11) {
+      pointilles.addPath(metrique.extractPath(d, math.min(d + 4, longueur)), Offset.zero);
+    }
+    canvas.drawPath(
+      pointilles,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..strokeCap = StrokeCap.round
+        ..color = f.couleur.withValues(alpha: 0.22 * routeVisible * effacement),
+    );
+
+    // Traînée lumineuse effilée
+    final position = longueur * Curves.easeInOutCubic.transform(t);
+    const traine = 150.0;
+    const segments = 14;
+    for (var i = 0; i < segments; i++) {
+      final a = position - traine * (1 - i / segments);
+      final b = position - traine * (1 - (i + 1) / segments);
+      if (b <= 0) continue;
+      final k = (i + 1) / segments;
+      canvas.drawPath(
+        metrique.extractPath(math.max(0, a), b),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 0.8 + 2.6 * k
+          ..color = f.couleur.withValues(alpha: 0.85 * k * k * effacement),
       );
     }
 
-    // Éclaboussures et gouttelettes orbitales
-    _drawFluidDroplets(canvas, cx, cy, flowTime, phaseSpiral, fadeOut);
+    if (t < 1) {
+      _eclat(canvas, metrique.getTangentForOffset(position)!.position, f.couleur, 1.0);
+    }
   }
 
-  /// Dessine un bras de fluide individuel avec vagues de cisaillement transversales
-  void _drawSingleShearedStream(
-    Canvas canvas,
-    double cx,
-    double cy,
-    _SpiralStream stream,
-    double flowTime,
-    double vortexSpeed,
-    double phaseSpiral,
-    double phaseBox,
-    double opacity,
-  ) {
-    final double maxRadius = 240.0 * (1.0 - phaseBox * 0.85);
-    final double minRadius = 14.0 * (1.0 - phaseBox);
-
-    // Trajectoire en spirale logarithmique cisaillée
-    const int sampleCount = 45;
-    final List<Offset> centerPoints = [];
-    final List<double> widths = [];
-
-    for (int i = 0; i <= sampleCount; i++) {
-      final double s = i / sampleCount; // 0 (extérieur) -> 1 (centre)
-
-      // Rayon contractant vers le centre
-      final double r = minRadius + (maxRadius - minRadius) * math.pow(1.0 - s, 1.35);
-
-      // Angle en spirale avec accélération vers le centre (vortex)
-      final double spiralAngle = stream.baseAngle +
-          (vortexSpeed * 2.2 * math.pi * s) +
-          (flowTime * 0.4);
-
-      // Effet d'eau cisaillée (onde hydrodynamique transversale le long du ruban)
-      final double wavePhase = s * stream.shearFrequency - flowTime * 2.2;
-      final double shearDisplacement = math.sin(wavePhase) * stream.waveAmplitude * math.sin(s * math.pi);
-
-      // Formule de la crête d'eau cisaillée (effilement vers le bord extérieur, gonflement au centre)
-      final double px = cx + (r + shearDisplacement) * math.cos(spiralAngle);
-      final double py = cy + (r + shearDisplacement) * math.sin(spiralAngle);
-
-      centerPoints.add(Offset(px, py));
-
-      // Épaisseur du ruban d'eau (forme en gouttelette allongée / jet d'eau effilé)
-      final double ribbonWidth = math.sin(s * math.pi) * (18.0 * (1.0 - phaseBox * 0.5));
-      widths.add(ribbonWidth);
-    }
-
-    if (centerPoints.length < 3) return;
-
-    // Construction du maillage de surface du ruban fluide (bords gauche et droite)
-    final Path ribbonPath = Path();
-    final List<Offset> leftPoints = [];
-    final List<Offset> rightPoints = [];
-
-    for (int i = 0; i < centerPoints.length; i++) {
-      final p = centerPoints[i];
-      final w = widths[i];
-
-      // Vecteur tangent pour déterminer la normale
-      Offset tangent;
-      if (i == 0) {
-        tangent = centerPoints[1] - p;
-      } else if (i == centerPoints.length - 1) {
-        tangent = p - centerPoints[i - 1];
-      } else {
-        tangent = centerPoints[i + 1] - centerPoints[i - 1];
-      }
-
-      final double len = tangent.distance;
-      final normal = (len > 0.001)
-          ? Offset(-tangent.dy / len, tangent.dx / len)
-          : const Offset(0, 1);
-
-      leftPoints.add(p + normal * (w / 2));
-      rightPoints.add(p - normal * (w / 2));
-    }
-
-    ribbonPath.moveTo(leftPoints.first.dx, leftPoints.first.dy);
-    for (int i = 1; i < leftPoints.length; i++) {
-      ribbonPath.lineTo(leftPoints[i].dx, leftPoints[i].dy);
-    }
-    for (int i = rightPoints.length - 1; i >= 0; i--) {
-      ribbonPath.lineTo(rightPoints[i].dx, rightPoints[i].dy);
-    }
-    ribbonPath.close();
-
-    // Rendu avec dégradé liquide chatoyant
-    final gradient = LinearGradient(
-      colors: [
-        stream.accentColor.withValues(alpha: 0.1 * opacity),
-        stream.color.withValues(alpha: 0.85 * opacity),
-        stream.accentColor.withValues(alpha: 0.95 * opacity),
-        stream.color.withValues(alpha: 0.3 * opacity),
-      ],
-      stops: const [0.0, 0.4, 0.75, 1.0],
+  void _eclat(Canvas canvas, Offset p, Color couleur, double force) {
+    canvas.drawCircle(
+      p,
+      14,
+      Paint()
+        ..color = couleur.withValues(alpha: 0.55 * force)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
     );
-
-    final ribbonPaint = Paint()
-      ..shader = gradient.createShader(Rect.fromCircle(center: Offset(cx, cy), radius: maxRadius))
-      ..style = PaintingStyle.fill;
-
-    // Halo lumineux fluide autour du ruban
-    final glowPaint = Paint()
-      ..color = stream.color.withValues(alpha: 0.25 * opacity)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-
-    canvas.drawPath(ribbonPath, glowPaint);
-    canvas.drawPath(ribbonPath, ribbonPaint);
+    canvas.drawCircle(p, 3.2, Paint()..color = Colors.white.withValues(alpha: 0.95 * force));
   }
 
-  /// Dessine les gouttelettes et éclaboussures en orbite hydrodynamique
-  void _drawFluidDroplets(
-    Canvas canvas,
-    double cx,
-    double cy,
-    double flowTime,
-    double phaseSpiral,
-    double opacity,
-  ) {
-    const int count = 24;
-    for (int i = 0; i < count; i++) {
-      final double seed = i * 1.61803398875;
-      final double radiusFactor = ((seed * 17.0) % 1.0);
-      final double r = 35.0 + radiusFactor * 140.0 * (1.0 - phaseSpiral * 0.4);
-      final double speed = 1.2 + ((seed * 23.0) % 1.5);
-      final double angle = seed * math.pi * 2 + flowTime * speed;
+  /// Tête lumineuse qui accompagne le tracé de chaque trait de l'emblème.
+  void _teteDeTrait(Canvas canvas, _Flux f) {
+    final t = _phase(progress, f.finApproche, f.finTrait);
+    if (t <= 0 || t >= 1) return;
+    final tete = _versEcran(KaravanEmblemePainter.tete(f.trait, Curves.easeInOutCubic.transform(t)));
+    _eclat(canvas, tete, f.couleur, 1.0 - t * 0.4);
+  }
 
-      final px = cx + r * math.cos(angle);
-      final py = cy + r * math.sin(angle);
+  // ---------------------------------------------------------------- Emblème
 
-      final Color dropColor = (i % 4 == 0)
-          ? cGold
-          : (i % 4 == 1)
-              ? cGreen
-              : (i % 4 == 2)
-                  ? cCamel
-                  : cIvory;
+  void _onde(Canvas canvas) {
+    final noeud = _versEcran(KaravanEmblemePainter.centreNoeud);
 
-      final double dropSize = 2.0 + (i % 3) * 1.5;
+    // Éclair de convergence
+    final eclair = _phase(progress, 0.56, 0.60) * (1.0 - _phase(progress, 0.60, 0.76));
+    if (eclair > 0) {
+      canvas.drawCircle(
+        noeud,
+        _taille * 0.9,
+        Paint()
+          ..shader = ui.Gradient.radial(noeud, _taille * 0.9, [
+            KaravanEmblemePainter.or.withValues(alpha: 0.38 * eclair),
+            KaravanEmblemePainter.or.withValues(alpha: 0.0),
+          ]),
+      );
+    }
 
-      final dropPaint = Paint()
-        ..color = dropColor.withValues(alpha: (0.75 - radiusFactor * 0.35) * opacity)
-        ..style = PaintingStyle.fill;
-
-      canvas.drawCircle(Offset(px, py), dropSize, dropPaint);
+    for (final retard in const [0.0, 0.08]) {
+      final rayon = _rayonOnde(retard);
+      if (rayon == null) continue;
+      final tr = _phase(progress, 0.58 + retard, 0.92);
+      canvas.drawCircle(
+        noeud,
+        rayon,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = retard == 0 ? 1.6 : 1.0
+          ..color = ivoire.withValues(alpha: 0.30 * (1 - tr)),
+      );
     }
   }
 
-  /// Dessine le logo DoGo officiel formé par la fusion des spirales (à la place de la boîte)
-  void _drawLogo(
-    Canvas canvas,
-    double cx,
-    double cy,
-    double phaseBox,
-    double phaseReveal,
-    double phaseFinal,
-  ) {
-    // Interpolation de la formation du logo (apparition avec rebond amorti identique à la boîte)
-    final double boxBirth = Curves.easeOutBack.transform(phaseBox);
+  void _embleme(Canvas canvas, List<_Flux> flux) {
+    double trace(_Flux f) => Curves.easeInOutCubic.transform(_phase(progress, f.finApproche, f.finTrait));
 
-    // Déplacement vers la gauche pour laisser paraître le nom DoGo (identique à la boîte)
-    final double slideProgress = Curves.easeInOutCubic.transform(phaseReveal);
-    final double boxX = cx - (slideProgress * 88.0);
-    final double boxY = cy;
+    final fut = trace(flux[0]);
+    if (fut <= 0) return;
 
-    // Légère respiration / settling physique
-    final double settleRotate = (phaseFinal > 0.0) ? math.sin(phaseFinal * math.pi) * 0.03 : 0.0;
-    final double boxScale = (0.2 + boxBirth * 0.8) * (1.0 + settleRotate);
+    // Halo : monte pendant le tracé, culmine à la convergence, puis se pose
+    final halo = progress < 0.62
+        ? 0.55 + 0.45 * _phase(progress, 0.50, 0.62)
+        : 1.0 - 0.8 * Curves.easeOut.transform(_phase(progress, 0.62, 0.90));
+
+    final cote = _taille * _echelleEmbleme;
+    final c = _centreEmbleme;
+
+    // Ombre portée discrète
+    canvas.drawOval(
+      Rect.fromCenter(center: c + Offset(0, cote * 0.58), width: cote * 0.7, height: cote * 0.10),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.45 * _phase(progress, 0.50, 0.70))
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    );
 
     canvas.save();
-    canvas.translate(boxX, boxY);
-    canvas.scale(boxScale);
-
-    // 1. Ombre diffuse projetée au sol
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.45 * phaseBox)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
-    canvas.drawOval(
-      Rect.fromCenter(center: const Offset(0, 48), width: 100, height: 32),
-      shadowPaint,
-    );
-
-    // 2. Flash lumineux d'impact lors de la fusion cristalline des spirales
-    if (phaseBox < 0.65) {
-      final flashAlpha = (1.0 - ((phaseBox - 0.2) / 0.45)).clamp(0.0, 1.0);
-      final flashPaint = Paint()
-        ..color = cGold.withValues(alpha: flashAlpha * 0.75)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 32);
-      canvas.drawCircle(Offset.zero, 60, flashPaint);
-    }
-
-    // 3. Dessin du logo DoGo officiel (assets/logo/logo.png)
-    if (logoImage != null) {
-      final double imgW = logoImage!.width.toDouble();
-      final double imgH = logoImage!.height.toDouble();
-      const double targetW = 96.0;
-      final double targetH = targetW * (imgH / imgW);
-      final srcRect = Rect.fromLTWH(0, 0, imgW, imgH);
-      final dstRect = Rect.fromCenter(center: Offset.zero, width: targetW, height: targetH);
-      final paint = Paint()
-        ..filterQuality = FilterQuality.high
-        ..isAntiAlias = true;
-      canvas.drawImageRect(logoImage!, srcRect, dstRect, paint);
-    }
-
+    canvas.translate(c.dx - cote / 2, c.dy - cote / 2);
+    KaravanEmblemePainter(
+      fut: fut,
+      brasHaut: trace(flux[1]),
+      brasBas: trace(flux[2]),
+      noeud: _phase(progress, 0.56, 0.68),
+      halo: halo,
+    ).paint(canvas, Size.square(cote));
     canvas.restore();
   }
 
-  /// Révèle le nom de l'application « DoGo » avec une onde lumineuse élégante
-  void _drawRevealedBrandName(
-    Canvas canvas,
-    double cx,
-    double cy,
-    double phaseReveal,
-    double phaseFinal,
-  ) {
-    // Position du texte à droite du logo
-    final logoX = cx + 20.0;
-    final logoY = cy - 28.0;
+  // ---------------------------------------------------------------- Nom et signature
 
-    // Déroulement progressif de gauche à droite
-    final revealWidth = 220.0 * Curves.easeOutCubic.transform(phaseReveal);
+  void _marque(Canvas canvas) {
+    if (progress < 0.68) return;
 
-    canvas.save();
-    canvas.clipRect(Rect.fromLTWH(logoX - 6, logoY - 20, revealWidth, 85));
+    final cote = _taille * _echelleEmbleme;
+    final taillePolice = (_taille * 0.22).clamp(28.0, 38.0);
+    final espacement = taillePolice * 0.22;
+    final hautMot = _centreEmbleme.dy + cote / 2 + 30;
 
-    // Dessin du texte « DoGo » avec la typographie officielle
-    final textPainter = TextPainter(
-      text: TextSpan(
-        children: [
-          const TextSpan(
-            text: "Do",
-            style: TextStyle(
-              fontSize: 50,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -1.2,
-            ),
+    // Mise en page lettre par lettre (révélation décalée)
+    const mot = 'KARAVAN';
+    final lettres = [
+      for (var i = 0; i < mot.length; i++)
+        TextPainter(
+          text: TextSpan(text: mot[i], style: _style(taillePolice, FontWeight.w800, ivoire)),
+          textDirection: TextDirection.ltr,
+        )..layout(),
+    ];
+    final largeur = lettres.fold<double>(0, (s, tp) => s + tp.width) + espacement * (lettres.length - 1);
+    var x = _cx - largeur / 2;
+
+    // Reflet balayant le mot une fois posé
+    final balayage = _phase(progress, 0.88, 1.0);
+    final xReflet = ui.lerpDouble(_cx - largeur, _cx + largeur, Curves.easeInOut.transform(balayage))!;
+
+    for (var i = 0; i < lettres.length; i++) {
+      final t = Curves.easeOutCubic.transform(_phase(progress, 0.68 + i * 0.016, 0.80 + i * 0.016));
+      if (t > 0) {
+        final peinture = Paint();
+        if (balayage > 0 && balayage < 1) {
+          peinture.shader = ui.Gradient.linear(
+            Offset(xReflet - 40, 0),
+            Offset(xReflet + 40, 0),
+            [ivoire, Colors.white, ivoire],
+            const [0.0, 0.5, 1.0],
+          );
+        } else {
+          peinture.color = ivoire.withValues(alpha: t);
+        }
+        final tp = TextPainter(
+          text: TextSpan(
+            text: mot[i],
+            style: _style(taillePolice, FontWeight.w800, null).copyWith(foreground: peinture),
           ),
-          TextSpan(
-            text: "Go",
-            style: TextStyle(
-              fontSize: 50,
-              fontWeight: FontWeight.w800,
-              color: cGold,
-              letterSpacing: -1.2,
-              shadows: [
-                Shadow(
-                  color: cGold.withValues(alpha: 0.5),
-                  blurRadius: 20,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(canvas, Offset(logoX, logoY));
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, Offset(x, hautMot + (1 - t) * 16));
+      }
+      x += lettres[i].width + espacement;
+    }
 
-    // Sous-titre de marque : "ACHAT GROUPÉ B2B"
-    if (phaseReveal > 0.35) {
-      final subAlpha = ((phaseReveal - 0.35) / 0.45).clamp(0.0, 1.0);
-      final subPainter = TextPainter(
+    // Filet tricolore : le corridor et les deux flux réunis
+    final hautFilet = hautMot + lettres.first.height + 14;
+    final filet = Curves.easeOutCubic.transform(_phase(progress, 0.78, 0.90));
+    if (filet > 0) {
+      final demi = 22 * filet;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTRB(_cx - demi, hautFilet, _cx + demi, hautFilet + 2.5),
+          const Radius.circular(2),
+        ),
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(_cx - demi, 0),
+            Offset(_cx + demi, 0),
+            const [KaravanEmblemePainter.camel, KaravanEmblemePainter.or, KaravanEmblemePainter.vert],
+            const [0.0, 0.5, 1.0],
+          ),
+      );
+    }
+
+    // Signature
+    final signature = Curves.easeOut.transform(_phase(progress, 0.82, 0.96));
+    if (signature > 0) {
+      final tp = TextPainter(
         text: TextSpan(
-          text: "ACHAT GROUPÉ B2B",
-          style: TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFFD4C5B9).withValues(alpha: subAlpha * 0.9),
-            letterSpacing: 2.8,
-          ),
+          text: 'ACHAT GROUPÉ INTERNATIONAL',
+          style: _style(11, FontWeight.w600, sable.withValues(alpha: signature)).copyWith(letterSpacing: 3.2),
         ),
         textDirection: TextDirection.ltr,
-      );
-      subPainter.layout();
-      subPainter.paint(canvas, Offset(logoX + 2, logoY + 54));
+      )..layout();
+      tp.paint(canvas, Offset(_cx - tp.width / 2, hautFilet + 16 + (1 - signature) * 6));
     }
-
-    // Balayage lumineux éclatant une fois stabilisé
-    if (phaseFinal > 0.0) {
-      final shineX = logoX + (phaseFinal * 220);
-      final shinePaint = Paint()
-        ..shader = LinearGradient(
-          colors: [
-            Colors.white.withValues(alpha: 0.0),
-            Colors.white.withValues(alpha: 0.55),
-            Colors.white.withValues(alpha: 0.0),
-          ],
-        ).createShader(Rect.fromLTWH(shineX - 25, logoY, 50, 65));
-      canvas.drawRect(Rect.fromLTWH(logoX, logoY, 180, 65), shinePaint);
-    }
-
-    canvas.restore();
   }
+
+  TextStyle _style(double taille, FontWeight graisse, Color? couleur) => TextStyle(
+        fontFamily: 'Inter',
+        fontSize: taille,
+        fontWeight: graisse,
+        color: couleur,
+        height: 1.0,
+      );
 
   @override
-  bool shouldRepaint(covariant _ShearedFluidSpiralsPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.logoImage != logoImage;
-  }
-}
-
-/// Caractéristiques d'un flux de couleur fluide
-class _SpiralStream {
-  final Color color;
-  final Color accentColor;
-  final double baseAngle;
-  final double curlDirection;
-  final double shearFrequency;
-  final double waveAmplitude;
-
-  const _SpiralStream({
-    required this.color,
-    required this.accentColor,
-    required this.baseAngle,
-    required this.curlDirection,
-    required this.shearFrequency,
-    required this.waveAmplitude,
-  });
+  bool shouldRepaint(covariant _KaravanSplashPainter old) => old.progress != progress;
 }

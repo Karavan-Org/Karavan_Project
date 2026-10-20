@@ -70,7 +70,7 @@ class GroupeApiService {
     );
 
     if (response is! Map<String, dynamic> || response['id'] is! num) {
-      throw const ApiException(statusCode: 0, message: 'Réservation non confirmée par le serveur DoGo.');
+      throw const ApiException(statusCode: 0, message: 'Réservation non confirmée par le serveur Karavan.');
     }
     return response;
   }

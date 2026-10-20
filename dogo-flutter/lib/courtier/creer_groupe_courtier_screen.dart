@@ -151,11 +151,15 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Créer un groupe d'achat", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text("Créer un groupe d'achat", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        backgroundColor: AppTheme.couleurCarte(context),
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
       ),
       body: Form(
@@ -224,7 +228,7 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
               child: Text(
                 "Sous-total saisi : $_coutUnitaireSaisi FCFA / pièce. Les frais de plateforme dɔgɔ sont ajoutés "
                 "automatiquement : le prix final s'affiche après la création.",
-                style: const TextStyle(fontSize: 12, color: AppTheme.textDark),
+                style: TextStyle(fontSize: 12, color: AppTheme.couleurTexte(context)),
               ),
             ),
             const SizedBox(height: 24),
@@ -277,11 +281,15 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
       return [
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-          child: const Text(
+          decoration: BoxDecoration(
+            color: AppTheme.couleurCarte(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.couleurBordure(context)),
+          ),
+          child: Text(
             "Aucun produit disponible pour l'instant. Un grossiste dont le dossier est validé doit d'abord "
             "ajouter un produit à son catalogue.",
-            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+            style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
           ),
         ),
         TextButton(onPressed: _chargerProduits, child: const Text("Actualiser")),
@@ -292,7 +300,7 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Material(
-            color: Colors.white,
+            color: AppTheme.couleurCarte(context),
             borderRadius: BorderRadius.circular(16),
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
@@ -302,7 +310,7 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: identical(_produit, p) ? AppTheme.primary : const Color(0xFFEDE7E1),
+                    color: identical(_produit, p) ? AppTheme.primary : AppTheme.couleurBordure(context),
                     width: identical(_produit, p) ? 2 : 1.2,
                   ),
                 ),
@@ -313,7 +321,7 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
                       child: Container(
                         width: 56,
                         height: 56,
-                        color: const Color(0xFFF7F2EB),
+                        color: AppTheme.couleurFond(context),
                         child: imageProduit(p['photoUrl']?.toString() ?? '', fit: BoxFit.cover),
                       ),
                     ),
@@ -326,21 +334,21 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
                             p['nom']?.toString() ?? '',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.couleurTexte(context)),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             "${p['grossisteNom'] ?? ''} • Stock : ${_stock(p)} pcs",
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                            style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
                           ),
                         ],
                       ),
                     ),
                     Icon(
                       identical(_produit, p) ? Icons.check_circle : Icons.radio_button_unchecked,
-                      color: identical(_produit, p) ? AppTheme.primary : const Color(0xFFC7B8AA),
+                      color: identical(_produit, p) ? AppTheme.primary : AppTheme.couleurBordure(context),
                     ),
                   ],
                 ),
@@ -352,13 +360,15 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
   }
 
   Widget _titre(String texte) =>
-      Text(texte, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textDark));
+      Text(texte, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context)));
 
   InputDecoration _decoration(String label) => InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: AppTheme.couleurTexteAttenue(context)),
         filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        fillColor: AppTheme.couleurCarte(context),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       );
 

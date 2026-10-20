@@ -191,7 +191,7 @@ class GroupeCampagneModel {
     // Photo réelle du produit (servie par le backend) ; à défaut, le logo dɔgɔ
     String resolveImage() {
       final photo = produit?['photoUrl']?.toString() ?? json['imagePath']?.toString() ?? '';
-      return photo.isNotEmpty ? photo : 'assets/images/logo_dogo.png';
+      return photo.isNotEmpty ? photo : 'assets/images/logo_karavan.png';
     }
 
     String resolveTempsRestant() {

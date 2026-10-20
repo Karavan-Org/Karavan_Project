@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../widgets/tab_navigation_scope.dart';
 import 'mes_commandes_screen.dart';
 import 'portefeuille_commercant_screen.dart';
@@ -11,6 +12,7 @@ import '../services/logistique_api_service.dart';
 import '../models/niveau_commercant.dart';
 import 'details_niveau_commercant_sheet.dart';
 import 'favoris_service.dart';
+import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/avatar_profil_interactif.dart';
 
 /// Écran du Profil Commerçant fidèle à la maquette Figma Dogo (Frame "profil")
@@ -81,18 +83,18 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: const Text(
+        title: Text(
           "Déconnexion",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
-        content: const Text(
+        content: Text(
           "Êtes-vous sûr de vouloir vous déconnecter de votre espace Commerçant ?",
-          style: TextStyle(fontSize: 13, color: Color(0xFF5A493B)),
+          style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text("Annuler", style: TextStyle(color: Color(0xFF8C7E74), fontWeight: FontWeight.w600)),
+            child: Text("Annuler", style: TextStyle(color: AppTheme.couleurTexteAttenue(context), fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -120,7 +122,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
     final niveauInfo = NiveauCommercant.calculer(_nbCommandes);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
@@ -131,18 +133,29 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 26, color: Color(0xFF2C241E)),
+                    icon: Icon(
+                      Icons.arrow_back_rounded,
+                      size: 26,
+                      color: AppTheme.couleurTexte(context),
+                    ),
                     onPressed: () => _onClose(context),
-                    tooltip: "Fermer le profil",
+                    tooltip: "Retour",
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.settings_outlined, size: 24, color: Color(0xFF2C241E)),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const ParametresCommercantScreen()),
-                      );
-                    },
-                    tooltip: "Paramètres",
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const BoutonBasculeTheme(compact: true),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: Icon(Icons.settings_outlined, size: 24, color: AppTheme.couleurTexte(context)),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const ParametresCommercantScreen()),
+                          );
+                        },
+                        tooltip: "Paramètres",
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -191,10 +204,10 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                           Text(
                             nomAffiche,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 19,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF2C241E),
+                              color: AppTheme.couleurTexte(context),
                               letterSpacing: -0.2,
                             ),
                           ),
@@ -205,14 +218,14 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.storefront_outlined, size: 14, color: Color(0xFF9E6738)),
+                                Icon(Icons.storefront_outlined, size: 14, color: AppTheme.couleurAccent(context)),
                                 const SizedBox(width: 5),
                                 Text(
                                   boutique,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF9E6738),
+                                    color: AppTheme.couleurAccent(context),
                                   ),
                                 ),
                               ],
@@ -224,9 +237,9 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                             const SizedBox(height: 3),
                             Text(
                               telephoneAffiche,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12.5,
-                                color: Color(0xFF8C7E74),
+                                color: AppTheme.couleurTexteAttenue(context),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -324,13 +337,13 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
 
               const SizedBox(height: 22),
 
-              // --- CARTE STATISTIQUES BLANCHE (commandes | économies) ---
+              // --- CARTE STATISTIQUES (commandes | économies) ---
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.couleurCarte(context),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFEFE9E0)),
+                  border: Border.all(color: AppTheme.couleurBordure(context)),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x0846321E),
@@ -356,18 +369,18 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                             children: [
                               Text(
                                 "$_nbCommandes",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF2C241E),
+                                  color: AppTheme.couleurTexte(context),
                                 ),
                               ),
                               const SizedBox(height: 3),
-                              const Text(
+                              Text(
                                 "commandes",
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF8C7E74),
+                                  color: AppTheme.couleurTexteAttenue(context),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -381,7 +394,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                     Container(
                       height: 36,
                       width: 1,
-                      color: const Color(0xFFE5DDD5),
+                      color: AppTheme.couleurBordure(context),
                     ),
 
                     // Colonne droite : économies estimées
@@ -399,18 +412,18 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                             children: [
                               Text(
                                 _formaterEconomies(_nbCommandes),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF2C241E),
+                                  color: AppTheme.couleurTexte(context),
                                 ),
                               ),
                               const SizedBox(height: 3),
-                              const Text(
+                              Text(
                                 "économisés",
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF8C7E74),
+                                  color: AppTheme.couleurTexteAttenue(context),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -425,12 +438,12 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
 
               const SizedBox(height: 20),
 
-              // --- CARTE MENU BLANCHE COMPRENANT LES 6 ITEMS FIGMA ---
+              // --- CARTE MENU COMPRENANT LES 6 ITEMS FIGMA ---
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.couleurCarte(context),
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFFEFE9E0)),
+                  border: Border.all(color: AppTheme.couleurBordure(context)),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x0846321E),
@@ -526,18 +539,18 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                 child: InkWell(
                   onTap: () => _confirmerDeconnexion(context),
                   borderRadius: BorderRadius.circular(16),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     child: Row(
                       children: [
-                        Icon(Icons.logout_rounded, color: Color(0xFF2C241E), size: 20),
-                        SizedBox(width: 14),
+                        Icon(Icons.logout_rounded, color: AppTheme.couleurTexte(context), size: 20),
+                        const SizedBox(width: 14),
                         Text(
                           "Déconnexion",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF2C241E),
+                            color: AppTheme.couleurTexte(context),
                           ),
                         ),
                       ],
@@ -570,22 +583,22 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
           leading: Container(
             width: 36,
             height: 36,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF7EFE7),
+            decoration: BoxDecoration(
+              color: AppTheme.couleurSurfaceDouce(context),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: const Color(0xFF9E6738),
+              color: AppTheme.couleurAccent(context),
               size: 19,
             ),
           ),
           title: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF2C241E),
+              color: AppTheme.couleurTexte(context),
             ),
           ),
           trailing: Row(
@@ -609,20 +622,20 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                 ),
                 const SizedBox(width: 6),
               ],
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: Color(0xFFC7B8AA),
+                color: AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.6),
                 size: 20,
               ),
             ],
           ),
         ),
         if (!isLast)
-          const Divider(
+          Divider(
             height: 1,
             indent: 64,
             endIndent: 16,
-            color: Color(0xFFF5EDE4),
+            color: AppTheme.couleurBordure(context),
           ),
       ],
     );

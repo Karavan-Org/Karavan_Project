@@ -201,11 +201,15 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Suivi des colis", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text("Suivi des colis", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        backgroundColor: AppTheme.couleurCarte(context),
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
         actions: [IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _charger)],
       ),
@@ -237,9 +241,9 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFEFE9E0)),
+        border: Border.all(color: AppTheme.couleurBordure(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,7 +255,7 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
                 child: Container(
                   width: 48,
                   height: 48,
-                  color: const Color(0xFFF7F2EB),
+                  color: AppTheme.couleurFond(context),
                   child: imageProduit(g.photoUrl ?? '', fit: BoxFit.cover),
                 ),
               ),
@@ -263,9 +267,9 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
                     Text(g.titre.isNotEmpty ? g.titre : g.produitNom,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: AppTheme.couleurTexte(context))),
                     Text("Groupe n° ${g.id} • ${g.libelleStatut}",
-                        style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                        style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context))),
                   ],
                 ),
               ),
@@ -446,9 +450,9 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
         const SizedBox(height: 40),
         Icon(icone, size: 48, color: AppTheme.primary),
         const SizedBox(height: 14),
-        Text(titre, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        Text(titre, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.couleurTexte(context))),
         const SizedBox(height: 6),
-        Text(texte, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        Text(texte, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context))),
       ],
     );
   }

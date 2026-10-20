@@ -1,3 +1,4 @@
+import '../widgets/tab_navigation_scope.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
@@ -101,19 +102,24 @@ class _MesGroupesCourtierScreenState extends State<MesGroupesCourtierScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: Navigator.of(context).canPop()
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
-        title: const Text(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          tooltip: "Retour",
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              TabNavigationScope.switchToTab(context, 0);
+            }
+          },
+        ),
+        title: Text(
           "Mes groupes d'achat",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         actions: [
           IconButton(
@@ -140,7 +146,7 @@ class _MesGroupesCourtierScreenState extends State<MesGroupesCourtierScreen> {
                       Text(
                         _erreur ?? "Aucun groupe pour l'instant",
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF2C241E)),
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context)),
                       ),
                       const SizedBox(height: 16),
                       Center(

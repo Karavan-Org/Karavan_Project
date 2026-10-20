@@ -1,3 +1,4 @@
+import '../widgets/tab_navigation_scope.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/portefeuille_professionnel.dart';
@@ -49,11 +50,22 @@ class _PortefeuilleCourtierScreenState extends State<PortefeuilleCourtierScreen>
   Widget build(BuildContext context) {
     final info = _donnees.info;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Portefeuille Courtier", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          tooltip: "Retour",
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              TabNavigationScope.switchToTab(context, 0);
+            }
+          },
+        ),
+        title: Text("Portefeuille Courtier", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
         actions: [IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _chargement ? null : _charger)],
       ),
@@ -74,7 +86,7 @@ class _PortefeuilleCourtierScreenState extends State<PortefeuilleCourtierScreen>
                         ? "Indisponible"
                         : formatFcfa(info.soldeDisponible),
                 infoSequestre: info == null
-                    ? "Garantie Séquestre DoGo • Commissions débloquées à la livraison"
+                    ? "Garantie Séquestre Karavan • Commissions débloquées à la livraison"
                     : "En séquestre : ${formatFcfa(info.soldeBloque)} • débloqué à la livraison",
                 iconeInfo: Icons.security_rounded,
                 texteBoutonAction: "Retirer vers Mobile Money",
@@ -99,12 +111,12 @@ class _PortefeuilleCourtierScreenState extends State<PortefeuilleCourtierScreen>
               ],
 
               const SizedBox(height: 24),
-              const Text("Comptes de Versement Associés", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              Text("Comptes de Versement Associés", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context))),
               const SizedBox(height: 10),
               ComptesVersement(moyens: _donnees.moyens),
 
               const SizedBox(height: 14),
-              const Text("Historique des Mouvements", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              Text("Historique des Mouvements", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context))),
               const SizedBox(height: 10),
               HistoriqueMouvementsPro(
                 mouvements: _donnees.mouvements,

@@ -205,9 +205,9 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                 ),
               ),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 "Recharger mon Portefeuille",
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.textDark),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
               ),
               const SizedBox(height: 4),
               const Text(
@@ -235,7 +235,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                 decoration: InputDecoration(
                   suffixText: "FCFA",
                   filled: true,
-                  fillColor: AppTheme.background,
+                  fillColor: AppTheme.couleurSurfaceDouce(context),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 ),
               ),
@@ -334,27 +334,27 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
 
   @override
   Widget build(BuildContext context) {
-    final nomCommercant = AuthService.instance.profilActuel?.nom ?? "Espace Commerçant DoGo";
+    final nomCommercant = AuthService.instance.profilActuel?.nom ?? "Espace Commerçant Karavan";
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "Portefeuille Achats",
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Color(0xFF2C241E)),
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.couleurTexte(context)),
             ),
             Text(
               nomCommercant,
-              style: const TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74)),
+              style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -362,7 +362,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF9E6738), size: 22),
+            icon: Icon(Icons.refresh_rounded, color: AppTheme.couleurAccent(context), size: 22),
             tooltip: "Actualiser",
             onPressed: _chargerDonneesPortefeuille,
           ),
@@ -458,16 +458,16 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     "Mouvements & commandes",
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF2C241E)),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context)),
                   ),
                   TextButton.icon(
                     onPressed: _chargerDonneesPortefeuille,
-                    icon: const Icon(Icons.refresh_rounded, size: 14, color: Color(0xFF9E6738)),
-                    label: const Text(
+                    icon: Icon(Icons.refresh_rounded, size: 14, color: AppTheme.couleurAccent(context)),
+                    label: Text(
                       "Actualiser",
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF9E6738)),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.couleurAccent(context)),
                     ),
                   ),
                 ],
@@ -556,12 +556,12 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                               children: [
                                 Text(
                                   m["titre"] as String,
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF2C241E)),
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context)),
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
                                   m["description"] as String,
-                                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74)),
+                                  style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -569,7 +569,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                                   const SizedBox(height: 2),
                                   Text(
                                     m["date"] as String,
-                                    style: const TextStyle(fontSize: 10.5, color: Color(0xFFA09085)),
+                                    style: TextStyle(fontSize: 10.5, color: AppTheme.couleurTexteAttenue(context)),
                                   ),
                                 ],
                               ],
@@ -625,17 +625,17 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF4EDE4),
+                  color: AppTheme.couleurSurfaceDouce(context),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.shield_outlined, size: 18, color: Color(0xFF9E6738)),
-                    SizedBox(width: 8),
+                    Icon(Icons.shield_outlined, size: 18, color: AppTheme.couleurAccent(context)),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         "Votre argent reste protégé sous séquestre jusqu'à la remise et vérification de votre commande.",
-                        style: TextStyle(fontSize: 11.5, color: Color(0xFF5A493B), fontWeight: FontWeight.w500),
+                        style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexte(context), fontWeight: FontWeight.w500),
                       ),
                     ),
                   ],

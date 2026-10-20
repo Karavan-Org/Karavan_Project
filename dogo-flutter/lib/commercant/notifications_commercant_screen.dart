@@ -177,7 +177,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
   (String, String?) _extraireDepot(String message) {
     final m = RegExp(r'dépôt\s+([^(.!]+?)\s*(?:\(([^)]+)\))?\s*[.!]', caseSensitive: false).firstMatch(message);
     final nom = m?.group(1)?.trim();
-    return ((nom == null || nom.isEmpty) ? "Dépôt DoGo" : nom, m?.group(2)?.trim());
+    return ((nom == null || nom.isEmpty) ? "Dépôt Karavan" : nom, m?.group(2)?.trim());
   }
 
   Future<void> _marquerToutesLues() async {
@@ -217,23 +217,23 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
         final compact = constraints.maxWidth < 360;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFFAF7F2),
+          backgroundColor: AppTheme.couleurFond(context),
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
             titleSpacing: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+              icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Flexible(
+                Flexible(
                   child: Text(
                     "Notifications",
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
                   ),
                 ),
                 if (!compact) ...[
@@ -266,13 +266,13 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.refresh_rounded, color: Color(0xFF2C241E)),
+                icon: Icon(Icons.refresh_rounded, color: AppTheme.couleurTexte(context)),
                 tooltip: "Actualiser",
                 onPressed: () => _chargerNotifications(silencieux: false),
               ),
               if (_notifications.isNotEmpty)
                 IconButton(
-                  icon: const Icon(Icons.done_all_rounded, color: Color(0xFF9E6738)),
+                  icon: Icon(Icons.done_all_rounded, color: AppTheme.couleurAccent(context)),
                   tooltip: "Tout marquer lu",
                   onPressed: _marquerToutesLues,
                 ),
@@ -332,19 +332,19 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-                                  const Text(
+                                  Text(
                                     "Aucune notification",
                                     style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 16,
-                                      color: Color(0xFF2C241E),
+                                      color: AppTheme.couleurTexte(context),
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  const Text(
+                                  Text(
                                     "Vous recevrez des alertes en temps réel sur vos remboursements, commandes et groupes.",
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                                    style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
                                   ),
                                 ],
                               ),
@@ -375,7 +375,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppTheme.couleurCarte(context),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: estLu ? Colors.transparent : const Color(0xFF9E6738).withValues(alpha: 0.18),
@@ -397,7 +397,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                       ),
                                       child: Icon(
                                         notif["icon"] as IconData,
-                                        color: Colors.white,
+                                        color: AppTheme.couleurCarte(context),
                                         size: 20,
                                       ),
                                     ),
@@ -409,18 +409,18 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                         children: [
                                           Text(
                                             notif["titre"] as String,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.w800,
                                               fontSize: 13.5,
-                                              color: Color(0xFF2C241E),
+                                              color: AppTheme.couleurTexte(context),
                                             ),
                                           ),
                                           const SizedBox(height: 3),
                                           Text(
                                             notif["message"] as String,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
-                                              color: Color(0xFF5A493B),
+                                              color: AppTheme.couleurTexte(context),
                                               height: 1.3,
                                             ),
                                           ),
@@ -429,9 +429,9 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                             children: [
                                               Text(
                                                 notif["date"] as String,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 11.5,
-                                                  color: Color(0xFF8C7E74),
+                                                  color: AppTheme.couleurTexteAttenue(context),
                                                 ),
                                               ),
                                             ],
@@ -637,10 +637,10 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF9E6738) : Colors.white,
+          color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurCarte(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF9E6738) : const Color(0xFFE5DDD5),
+            color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurBordure(context),
           ),
         ),
         child: Text(
@@ -648,7 +648,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF5A493B),
+            color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
           ),
         ),
       ),

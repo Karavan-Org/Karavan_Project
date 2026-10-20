@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/niveau_commercant.dart';
+import '../theme/app_theme.dart';
 import '../widgets/tab_navigation_scope.dart';
 import 'favoris_service.dart';
 
@@ -48,9 +49,9 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.90,
       ),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFAF7F2),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: AppTheme.couleurSurface(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -61,7 +62,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
             width: 44,
             height: 4.5,
             decoration: BoxDecoration(
-              color: const Color(0xFFD6CBC0),
+              color: AppTheme.couleurBordureForte(context),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -72,17 +73,17 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "Niveau Commerçant",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF2C241E),
+                    color: AppTheme.couleurTexte(context),
                     letterSpacing: -0.2,
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Color(0xFF2C241E), size: 24),
+                  icon: Icon(Icons.close_rounded, color: AppTheme.couleurTexte(context), size: 24),
                   onPressed: () => Navigator.of(context).pop(),
                   tooltip: "Fermer",
                 ),
@@ -90,7 +91,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
             ),
           ),
 
-          const Divider(height: 1, color: Color(0xFFEFE9E0)),
+          Divider(height: 1, color: AppTheme.couleurBordure(context)),
 
           // Contenu défilable
           Expanded(
@@ -104,9 +105,9 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.couleurCarte(context),
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: const Color(0xFFEFE9E0)),
+                      border: Border.all(color: AppTheme.couleurBordure(context)),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x0A46321E),
@@ -160,10 +161,10 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                             const SizedBox(width: 8),
                             Text(
                               niveau.sousTitre,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF2C241E),
+                                color: AppTheme.couleurTexte(context),
                               ),
                             ),
                           ],
@@ -174,15 +175,15 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                         Text(
                           niveau.description,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12.5,
-                            color: Color(0xFF7A6B60),
+                            color: AppTheme.couleurTexteAttenue(context),
                             height: 1.4,
                           ),
                         ),
 
                         const SizedBox(height: 16),
-                        const Divider(height: 1, color: Color(0xFFF2ECE4)),
+                        Divider(height: 1, color: AppTheme.couleurBordure(context)),
                         const SizedBox(height: 16),
 
                         // --- BARRE DE PROGRESSION ---
@@ -194,10 +195,10 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                                 niveau.seuilSuivant != null
                                     ? "Progression vers le ${niveau.nomNiveauSuivant}"
                                     : "Statut VIP maximal atteint",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF2C241E),
+                                  color: AppTheme.couleurTexte(context),
                                 ),
                               ),
                             ),
@@ -220,7 +221,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: niveau.progression(nbCommandes),
                             minHeight: 10,
-                            backgroundColor: const Color(0xFFEFE9E0),
+                            backgroundColor: AppTheme.couleurBordure(context),
                             valueColor: AlwaysStoppedAnimation<Color>(niveau.couleurBadge),
                           ),
                         ),
@@ -233,10 +234,10 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                             Flexible(
                               child: Text(
                                 "$nbCommandes commande(s) réalisée(s)",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF8C7E74),
+                                  color: AppTheme.couleurTexteAttenue(context),
                                 ),
                               ),
                             ),
@@ -246,10 +247,10 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                                 child: Text(
                                   "Objectif : ${niveau.seuilSuivant} commandes",
                                   textAlign: TextAlign.end,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF8C7E74),
+                                    color: AppTheme.couleurTexteAttenue(context),
                                   ),
                                 ),
                               ),
@@ -262,24 +263,24 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFAF2EB),
+                              color: AppTheme.couleurSurfaceDouce(context),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.flag_rounded,
                                   size: 16,
-                                  color: Color(0xFF9E6738),
+                                  color: AppTheme.couleurAccent(context),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     "Plus que $restantes commande(s) pour atteindre le ${niveau.nomNiveauSuivant} !",
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF9E6738),
+                                      color: AppTheme.couleurAccent(context),
                                     ),
                                   ),
                                 ),
@@ -294,18 +295,19 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                   const SizedBox(height: 22),
 
                   // --- RÈGLE DES 3 PALIERS (TRANSPARENCE TOTALE) ---
-                  const Text(
-                    "Paliers de fidélité DoGo",
+                  Text(
+                    "Paliers de fidélité Karavan",
                     style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF2C241E),
+                      color: AppTheme.couleurTexte(context),
                     ),
                   ),
 
                   const SizedBox(height: 10),
 
                   _buildPalierTile(
+                    context: context,
                     niveau: NiveauCommercant.niveau1,
                     estActuel: niveau == NiveauCommercant.niveau1,
                     fourchette: "1 à 4 commandes",
@@ -315,6 +317,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   _buildPalierTile(
+                    context: context,
                     niveau: NiveauCommercant.niveau2,
                     estActuel: niveau == NiveauCommercant.niveau2,
                     fourchette: "5 à 19 commandes",
@@ -324,6 +327,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   _buildPalierTile(
+                    context: context,
                     niveau: NiveauCommercant.niveau3,
                     estActuel: niveau == NiveauCommercant.niveau3,
                     fourchette: "20 commandes et +",
@@ -335,16 +339,17 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                   // --- AVANTAGES ACTUELS (DÉBLOQUÉS) ---
                   Text(
                     "Avantages débloqués (${niveau.titre})",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF2C241E),
+                      color: AppTheme.couleurTexte(context),
                     ),
                   ),
 
                   const SizedBox(height: 10),
 
                   ...niveau.avantages.map((a) => _buildAvantageItem(
+                        context: context,
                         texte: a,
                         debloque: true,
                         couleur: niveau.couleurBadge,
@@ -356,19 +361,20 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                     // --- PROCHAINS AVANTAGES À DÉBLOQUER ---
                     Text(
                       "À débloquer au ${niveau.nomNiveauSuivant}",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF2C241E),
+                        color: AppTheme.couleurTexte(context),
                       ),
                     ),
 
                     const SizedBox(height: 10),
 
                     ...niveau.avantagesSuivants.map((a) => _buildAvantageItem(
+                          context: context,
                           texte: a,
                           debloque: false,
-                          couleur: const Color(0xFF9E6738),
+                          couleur: AppTheme.couleurAccent(context),
                         )),
                   ],
 
@@ -389,7 +395,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E2832),
+                        backgroundColor: AppTheme.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -423,6 +429,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
 
   /// Tuile d'un palier
   Widget _buildPalierTile({
+    required BuildContext context,
     required NiveauCommercant niveau,
     required bool estActuel,
     required String fourchette,
@@ -431,10 +438,12 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: estActuel ? Colors.white : const Color(0xFFF3ECE3).withValues(alpha: 0.6),
+        color: estActuel
+            ? AppTheme.couleurCarte(context)
+            : AppTheme.couleurSurfaceDouce(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: estActuel ? niveau.couleurBadge : const Color(0xFFE8DFD4),
+          color: estActuel ? niveau.couleurBadge : AppTheme.couleurBordure(context),
           width: estActuel ? 1.6 : 1.0,
         ),
       ),
@@ -466,10 +475,10 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                     Flexible(
                       child: Text(
                         fourchette,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF2C241E),
+                          color: AppTheme.couleurTexte(context),
                         ),
                       ),
                     ),
@@ -496,9 +505,9 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   resume,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11.5,
-                    color: Color(0xFF7A6B60),
+                    color: AppTheme.couleurTexteAttenue(context),
                   ),
                 ),
               ],
@@ -511,6 +520,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
 
   /// Élément d'avantage
   Widget _buildAvantageItem({
+    required BuildContext context,
     required String texte,
     required bool debloque,
     required Color couleur,
@@ -523,7 +533,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
           Icon(
             debloque ? Icons.check_circle_rounded : Icons.lock_outline_rounded,
             size: 18,
-            color: debloque ? const Color(0xFF2E7D32) : const Color(0xFFB0A294),
+            color: debloque ? const Color(0xFF2E7D32) : AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.4),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -532,7 +542,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: debloque ? FontWeight.w600 : FontWeight.w500,
-                color: debloque ? const Color(0xFF2C241E) : const Color(0xFF8C7E74),
+                color: debloque ? AppTheme.couleurTexte(context) : AppTheme.couleurTexteAttenue(context),
                 height: 1.35,
               ),
             ),

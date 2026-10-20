@@ -1,3 +1,4 @@
+import '../widgets/tab_navigation_scope.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
@@ -139,23 +140,32 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
   Widget build(BuildContext context) {
     final groupes = _filtres_;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: Navigator.of(context).canPop()
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          tooltip: "Retour",
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              TabNavigationScope.switchToTab(context, 0);
+            }
+          },
+        ),
         title: Text(
           widget.titre,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: AppTheme.couleurTexte(context),
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF2C241E)),
+            icon: Icon(Icons.refresh_rounded, color: AppTheme.couleurTexte(context)),
             tooltip: "Actualiser",
             onPressed: _charger,
           ),
@@ -322,10 +332,10 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
         Text(
           titre,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.couleurTexte(context)),
         ),
         const SizedBox(height: 6),
-        Text(texte, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        Text(texte, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context))),
       ],
     );
   }
@@ -338,16 +348,16 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: actif ? const Color(0xFF9E6738) : Colors.white,
+          color: actif ? const Color(0xFF9E6738) : AppTheme.couleurCarte(context),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: actif ? const Color(0xFF9E6738) : const Color(0xFFE5DDD5)),
+          border: Border.all(color: actif ? const Color(0xFF9E6738) : AppTheme.couleurBordure(context)),
         ),
         child: Text(
           nombre > 0 ? "$label ($nombre)" : label,
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: actif ? FontWeight.w800 : FontWeight.w600,
-            color: actif ? Colors.white : const Color(0xFF5A493B),
+            color: actif ? Colors.white : AppTheme.couleurTexte(context),
           ),
         ),
       ),

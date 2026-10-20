@@ -1,3 +1,4 @@
+import '../widgets/bouton_bascule_theme.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
@@ -27,9 +28,9 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: AppTheme.couleurCarte(context),
         elevation: 0,
         centerTitle: false,
         title: ValueListenableBuilder<UtilisateurProfil?>(
@@ -57,7 +58,7 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                   children: [
                     Text(
                       nom,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textDark),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context)),
                     ),
                     Text(
                       structure,
@@ -70,8 +71,9 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
           },
         ),
         actions: [
+          const BoutonBasculeTheme(compact: true),
           IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, color: AppTheme.textDark),
+            icon: Icon(Icons.notifications_none_rounded, color: AppTheme.couleurTexte(context)),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -131,7 +133,7 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
               titre: "Portefeuille Commissions",
               sousTitre: "Commissions de transit & convois",
               montantSolde: "0 FCFA",
-              infoSequestre: "Garantie Séquestre DoGo • Versements Orange / Moov",
+              infoSequestre: "Garantie Séquestre Karavan • Versements Orange / Moov",
               iconeInfo: Icons.security_rounded,
               texteBoutonAction: "Gérer & Retirer mes Fonds",
               onTapAction: () {
@@ -211,9 +213,9 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "Convois & Expéditions en Transit",
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.textDark),
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.couleurTexte(context)),
                 ),
                 TextButton(
                   onPressed: () {
@@ -228,23 +230,23 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.couleurCarte(context),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFEFE8E0)),
+                border: Border.all(color: AppTheme.couleurBordure(context)),
               ),
               child: Column(
                 children: [
-                  Icon(Icons.local_shipping_outlined, size: 36, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                  Icon(Icons.local_shipping_outlined, size: 36, color: AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.5)),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     "Aucun convoi en cours",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textDark),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     "Créez ou prenez en charge un convoi pour démarrer le groupage.",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                    style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
                   ),
                   const SizedBox(height: 14),
                   OutlinedButton.icon(

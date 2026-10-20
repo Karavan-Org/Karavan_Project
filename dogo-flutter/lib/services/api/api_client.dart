@@ -91,7 +91,7 @@ class ApiClient {
 
   /// Message commun à toutes les coupures réseau (mobile : SocketException, web : ClientException).
   static const String messageServeurInjoignable =
-      'Impossible de joindre le serveur DoGo. Vérifiez votre connexion internet.';
+      'Impossible de joindre le serveur Karavan. Vérifiez votre connexion internet.';
 
   /// Exécute [action] (reconstruite à chaque appel, donc rejouable) et traduit les erreurs réseau
   /// en [ApiException]. Un 401 hors /api/auth/ déclenche un unique rafraîchissement puis un rejeu.
@@ -122,7 +122,7 @@ class ApiClient {
     } on TimeoutException {
       throw const ApiException(
         statusCode: 0,
-        message: 'Délai d\'attente dépassé lors de la requête au serveur DoGo.',
+        message: 'Délai d\'attente dépassé lors de la requête au serveur Karavan.',
       );
     } catch (e) {
       throw ApiException(

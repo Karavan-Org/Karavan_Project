@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../widgets/changer_mot_de_passe_dialog.dart';
+import '../services/theme_service.dart';
 
 /// Écran des Paramètres du Grossiste
 class ParametresGrossisteScreen extends StatefulWidget {
@@ -18,35 +20,35 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           "Paramètres Entreprise",
           style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 18,
-              color: Color(0xFF2C241E)),
+              color: AppTheme.couleurTexte(context)),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text("GÉNÉRAL & FACTURATION",
+          Text("GÉNÉRAL & FACTURATION",
               style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF8C7E74),
+                  color: AppTheme.couleurTexteAttenue(context),
                   letterSpacing: 0.8)),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
                 BoxShadow(
@@ -61,6 +63,41 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
                 clipBehavior: Clip.antiAlias,
                 child: Column(
                   children: [
+                    ValueListenableBuilder<ThemeMode>(
+                      valueListenable: ThemeService.instance.themeModeNotifier,
+                      builder: (context, themeMode, _) {
+                        return ListTile(
+                          leading: Icon(
+                            themeMode == ThemeMode.dark ? Icons.nightlight_round : Icons.wb_sunny_rounded,
+                            color: const Color(0xFF9E6738),
+                          ),
+                          title: const Text("Thème de l'application",
+                              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                          subtitle: Text(
+                            themeMode == ThemeMode.dark
+                                ? "Mode Sombre actif"
+                                : themeMode == ThemeMode.light
+                                    ? "Mode Clair actif"
+                                    : "Adapté au système",
+                            style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
+                          ),
+                          trailing: DropdownButtonHideUnderline(
+                            child: DropdownButton<ThemeMode>(
+                              value: themeMode,
+                              items: const [
+                                DropdownMenuItem(value: ThemeMode.light, child: Text("Clair ☀️")),
+                                DropdownMenuItem(value: ThemeMode.dark, child: Text("Sombre 🌙")),
+                                DropdownMenuItem(value: ThemeMode.system, child: Text("Système ⚙️")),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) ThemeService.instance.changerMode(val);
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, indent: 56, color: Color(0xFFF3ECE5)),
                     ListTile(
                       leading: const Icon(Icons.currency_exchange_rounded,
                           color: Color(0xFF9E6738)),
@@ -92,10 +129,10 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
                       title: const Text("Adresses des Entrepôts Usine",
                           style: TextStyle(
                               fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      subtitle: const Text(
+                      subtitle: Text(
                           "Wenzhou Industrial Park, Block 4B, Chine",
                           style: TextStyle(
-                              fontSize: 11.5, color: Color(0xFF8C7E74))),
+                              fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                       trailing: const Icon(Icons.chevron_right,
                           color: Color(0xFFC7B8AA)),
                       onTap: () {
@@ -114,10 +151,10 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
                       title: const Text("Mot de passe du compte",
                           style: TextStyle(
                               fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      subtitle: const Text(
+                      subtitle: Text(
                           "Modifier le mot de passe d'accès à votre espace Grossiste",
                           style: TextStyle(
-                              fontSize: 11.5, color: Color(0xFF8C7E74))),
+                              fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                       trailing: const Icon(Icons.chevron_right,
                           color: Color(0xFFC7B8AA)),
                       onTap: () => afficherDialogueChangerMotDePasse(context),
@@ -128,16 +165,16 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
 
           const SizedBox(height: 24),
 
-          const Text("ALERTES COMMANDES & GROUPES",
+          Text("ALERTES COMMANDES & GROUPES",
               style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF8C7E74),
+                  color: AppTheme.couleurTexteAttenue(context),
                   letterSpacing: 0.8)),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
                 BoxShadow(
@@ -159,10 +196,10 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
                       title: const Text("Alertes Groupes Atteints (RG-18)",
                           style: TextStyle(
                               fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      subtitle: const Text(
+                      subtitle: Text(
                           "Notification immédiate pour confirmer le stock sous 24h",
                           style: TextStyle(
-                              fontSize: 11.5, color: Color(0xFF8C7E74))),
+                              fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                       value: _notifGroupes,
                       onChanged: (val) => setState(() => _notifGroupes = val),
                     ),
@@ -175,10 +212,10 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
                       title: const Text("Bordereaux Transit & Ramassage",
                           style: TextStyle(
                               fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      subtitle: const Text(
+                      subtitle: Text(
                           "Confirmation de prise en charge par les courtiers",
                           style: TextStyle(
-                              fontSize: 11.5, color: Color(0xFF8C7E74))),
+                              fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                       value: _notifCommandes,
                       onChanged: (val) => setState(() => _notifCommandes = val),
                     ),
@@ -189,17 +226,17 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
           const SizedBox(height: 24),
 
           // Section Développeur / Commutation de rôle
-          const Text("ESPACE DÉMONSTRATION & RÔLES",
+          Text("ESPACE DÉMONSTRATION & RÔLES",
               style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF8C7E74),
+                  color: AppTheme.couleurTexteAttenue(context),
                   letterSpacing: 0.8)),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
                 BoxShadow(
@@ -211,12 +248,12 @@ class _ParametresGrossisteScreenState extends State<ParametresGrossisteScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   "Tester les autres espaces (Navigation & FAB) :",
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 12.5,
-                      color: Color(0xFF2C241E)),
+                      color: AppTheme.couleurTexte(context)),
                 ),
                 const SizedBox(height: 10),
                 Row(

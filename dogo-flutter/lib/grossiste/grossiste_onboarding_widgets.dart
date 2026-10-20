@@ -55,9 +55,9 @@ class ChampArrivee extends StatelessWidget {
       height: hauteur,
       padding: const EdgeInsets.only(left: 16, right: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: couleurBordure, width: 1.2),
+        border: Border.all(color: couleurBordure == CouleursArrivee.bordure ? AppTheme.couleurBordure(context) : couleurBordure, width: 1.2),
       ),
       child: Row(
         children: [
@@ -69,14 +69,18 @@ class ChampArrivee extends StatelessWidget {
               keyboardType: clavier,
               inputFormatters: formateurs,
               obscureText: masque,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: CouleursArrivee.titre),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.couleurTexte(context)),
               decoration: InputDecoration(
                 isDense: true,
+                filled: false,
+                fillColor: Colors.transparent,
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 hint: Text.rich(
                   TextSpan(
                     text: indice,
-                    style: TextStyle(fontSize: 13.5, color: couleurIndice),
+                    style: TextStyle(fontSize: 13.5, color: couleurIndice == CouleursArrivee.indice ? AppTheme.couleurTexteAttenue(context) : couleurIndice),
                     children: [
                       if (obligatoire)
                         const TextSpan(text: ' *', style: TextStyle(color: AppTheme.primary)),

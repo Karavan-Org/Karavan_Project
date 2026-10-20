@@ -1,3 +1,4 @@
+import '../widgets/bouton_bascule_theme.dart';
 import 'package:flutter/material.dart';
 import '../services/api/api_config.dart';
 import '../services/api/api_exception.dart';
@@ -112,15 +113,15 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
         .fold<int>(0, (t, g) => t + g.quantiteReservee + g.quantiteConfirmee);
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       drawer: const GrossisteDrawer(activeRoute: 'dashboard'),
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: AppTheme.couleurCarte(context),
         elevation: 0,
         centerTitle: false,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: AppTheme.textDark, size: 28),
+            icon: Icon(Icons.menu_rounded, color: AppTheme.couleurTexte(context), size: 28),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -129,26 +130,27 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: Image.asset(
-                'assets/images/logo_dogo.png',
+                'assets/images/logo_karavan.png',
                 width: 28,
                 height: 28,
                 errorBuilder: (_, __, ___) => const Icon(Icons.store, color: AppTheme.primary),
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               "Espace Grossiste",
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 18,
-                color: AppTheme.textDark,
+                color: AppTheme.couleurTexte(context),
               ),
             ),
           ],
         ),
         actions: [
+          const BoutonBasculeTheme(compact: true),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppTheme.textDark),
+            icon: Icon(Icons.refresh_rounded, color: AppTheme.couleurTexte(context)),
             tooltip: "Actualiser",
             onPressed: _charger,
           ),
@@ -244,12 +246,16 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
                     iconColor: AppTheme.primary,
                   ),
                 );
-                final carte2 = _buildKpiCard(
-                  title: "Pièces réservées",
-                  value: "$reservees",
-                  subtext: "sur vos groupes en cours",
-                  icon: Icons.shopping_bag_rounded,
-                  iconColor: AppTheme.success,
+                final carte2 = InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => TabNavigationScope.switchToTab(context, 2),
+                  child: _buildKpiCard(
+                    title: "Pièces réservées",
+                    value: "$reservees",
+                    subtext: "sur vos groupes en cours",
+                    icon: Icons.shopping_bag_rounded,
+                    iconColor: AppTheme.success,
+                  ),
                 );
 
                 if (etroit) {
@@ -278,24 +284,55 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Expanded(
-                  child: Text(
-                    "Mon Catalogue Actif",
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.textDark),
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => TabNavigationScope.switchToTab(context, 1),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            "Mon Catalogue Actif",
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.couleurTexte(context)),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.couleurTexteAttenue(context)),
+                      ],
+                    ),
                   ),
                 ),
-                TextButton(
-                  onPressed: _ajouterProduit,
-                  child: const Text("Ajouter", style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: () => TabNavigationScope.switchToTab(context, 1),
+                      child: const Text("Voir tout", style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(width: 4),
+                    ElevatedButton.icon(
+                      onPressed: _ajouterProduit,
+                      icon: const Icon(Icons.add_rounded, size: 16),
+                      label: const Text("Ajouter"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        minimumSize: const Size(0, 34),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
             if (_produits.isNotEmpty)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 10),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
                 child: Text(
                   "Sélectionnez un produit puis appuyez sur + pour lancer son groupe d'achat.",
-                  style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                  style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
                 ),
               ),
             ..._sectionCatalogue(),
@@ -305,10 +342,23 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
-                    child: Text(
-                      "Mes groupes d'achat",
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.textDark),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: _voirGroupes,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              "Mes groupes d'achat",
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.couleurTexte(context)),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.couleurTexteAttenue(context)),
+                        ],
+                      ),
                     ),
                   ),
                   TextButton(
@@ -386,18 +436,18 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
     final prix = p['prixGros'];
     final actifs = _groupesActifs((p['id'] as num).toInt());
     return Material(
-      color: Colors.white,
+      color: AppTheme.couleurCarte(context),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () => SelectionProduitGrossiste.basculer(p),
+        onTap: () => _creerGroupe(p),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: selectionne ? AppTheme.primary : const Color(0xFFEFE9E0),
+              color: selectionne ? AppTheme.primary : AppTheme.couleurBordure(context),
               width: selectionne ? 2 : 1.2,
             ),
           ),
@@ -408,7 +458,7 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
                 child: Container(
                   width: 60,
                   height: 60,
-                  color: const Color(0xFFF7F2EB),
+                  color: AppTheme.couleurFond(context),
                   child: imageProduit(p['photoUrl']?.toString() ?? '', fit: BoxFit.cover),
                 ),
               ),
@@ -421,7 +471,7 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
                       p['nom']?.toString() ?? 'Produit',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.textDark),
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.couleurTexte(context)),
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -431,19 +481,32 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
                       ].join(" • "),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                      style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
                     ),
                     if (actifs > 0)
-                      Text(
-                        "$actifs groupe${actifs > 1 ? 's' : ''} en cours",
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.success),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          "$actifs groupe${actifs > 1 ? 's' : ''} en cours",
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.success),
+                        ),
                       ),
                   ],
                 ),
               ),
-              Icon(
-                selectionne ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                color: selectionne ? AppTheme.primary : const Color(0xFFC7B8AA),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () => _creerGroupe(p),
+                icon: const Icon(Icons.group_add_rounded, size: 14),
+                label: const Text("Créer groupe", style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: const Size(0, 34),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
             ],
           ),
@@ -456,7 +519,7 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(16),
         child: ListTile(
           onTap: _voirGroupes,
@@ -466,30 +529,37 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
             g.titre.isNotEmpty ? g.titre : g.produitNom,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: AppTheme.couleurTexte(context)),
           ),
           subtitle: Text(
             "${g.libelleStatut} • ${g.quantiteProgression}/${g.quantiteCible} pcs (${g.pourcentageProgression}%)",
-            style: const TextStyle(fontSize: 11.5),
+            style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
           ),
-          trailing: const Icon(Icons.chevron_right_rounded),
+          trailing: Icon(Icons.chevron_right_rounded, color: AppTheme.couleurTexteAttenue(context)),
         ),
       ),
     );
   }
 
   Widget _alerteConfirmation(int nombre) {
+    final estSombre = AppTheme.estSombre(context);
+    final couleurTitreAlerte = estSombre ? const Color(0xFFFFD580) : const Color(0xFF6D4C00);
+    final couleurTexteAlerte = estSombre ? const Color(0xFFFFE0A3) : const Color(0xFF8A6516);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 360;
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFFF8E7), Color(0xFFFFF3D6)],
-            ),
+            color: estSombre ? const Color(0xFF2E2211) : null,
+            gradient: estSombre
+                ? null
+                : const LinearGradient(
+                    colors: [Color(0xFFFFF8E7), Color(0xFFFFF3D6)],
+                  ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppTheme.secondary.withValues(alpha: 0.3)),
+            border: Border.all(color: AppTheme.secondary.withValues(alpha: 0.35)),
           ),
           child: compact
               ? Column(
@@ -511,14 +581,14 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 "Disponibilité à confirmer (RG-18)",
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF6D4C00)),
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: couleurTitreAlerte),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 "$nombre groupe${nombre > 1 ? 's' : ''} d'un courtier attend${nombre > 1 ? 'ent' : ''} la confirmation de votre stock.",
-                                style: const TextStyle(fontSize: 11.5, color: Color(0xFF8A6516)),
+                                style: TextStyle(fontSize: 11.5, color: couleurTexteAlerte),
                               ),
                             ],
                           ),
@@ -553,14 +623,14 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             "Disponibilité à confirmer (RG-18)",
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF6D4C00)),
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: couleurTitreAlerte),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             "$nombre groupe${nombre > 1 ? 's' : ''} d'un courtier attend${nombre > 1 ? 'ent' : ''} la confirmation de votre stock.",
-                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF8A6516)),
+                            style: TextStyle(fontSize: 11.5, color: couleurTexteAlerte),
                           ),
                         ],
                       ),
@@ -588,9 +658,9 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFEFE9E0)),
+        border: Border.all(color: AppTheme.couleurBordure(context)),
       ),
       child: Column(
         children: [
@@ -599,13 +669,13 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
           Text(
             titre,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textDark),
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
           ),
           const SizedBox(height: 4),
           Text(
             texte,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+            style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
           ),
           if (action != null) action,
         ],
@@ -623,9 +693,9 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.bordure),
+        border: Border.all(color: AppTheme.couleurBordure(context)),
         boxShadow: AppTheme.ombreDouce,
       ),
       child: Column(
@@ -643,21 +713,21 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> {
           const SizedBox(height: 14),
           Text(
             value,
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppTheme.textDark, letterSpacing: -0.8, height: 1.1),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context), letterSpacing: -0.8, height: 1.1),
           ),
           const SizedBox(height: 4),
           Text(
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.encre),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.couleurTexte(context)),
           ),
           const SizedBox(height: 2),
           Text(
             subtext,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context), fontWeight: FontWeight.w500),
           ),
         ],
       ),

@@ -79,7 +79,7 @@ class FavorisService {
         id: id,
         titre: "Article",
         sousTitre: "",
-        imagePath: "assets/images/logo_dogo.png",
+        imagePath: "assets/images/logo_karavan.png",
         prixGroupe: 0,
         prixPublic: 0,
         quantiteActuelle: 0,

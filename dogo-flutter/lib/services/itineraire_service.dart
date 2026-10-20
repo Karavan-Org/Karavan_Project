@@ -137,7 +137,7 @@ class ItineraireService {
           .get(uri,
               headers: kIsWeb
                   ? null
-                  : const {'User-Agent': 'DoGo/1.0 (achats groupes B2B Mali)'})
+                  : const {'User-Agent': 'Karavan/1.0 (achats groupes B2B Mali)'})
           .timeout(const Duration(seconds: 6));
       if (r.statusCode != 200) return null;
       final a = (jsonDecode(r.body)['address'] as Map?) ?? const {};
@@ -178,7 +178,7 @@ class ItineraireService {
           .get(uri,
               headers: kIsWeb
                   ? null
-                  : const {'User-Agent': 'DoGo/1.0 (achats groupes B2B Mali)'})
+                  : const {'User-Agent': 'Karavan/1.0 (achats groupes B2B Mali)'})
           .timeout(const Duration(seconds: 5));
       if (r.statusCode != 200) return const [];
       final list = jsonDecode(r.body);

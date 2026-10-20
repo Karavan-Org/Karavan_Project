@@ -1,3 +1,4 @@
+import '../widgets/tab_navigation_scope.dart';
 import 'package:flutter/material.dart';
 import '../services/api/api_config.dart';
 import '../services/catalogue_api_service.dart';
@@ -122,27 +123,38 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
         : _articles.where((a) => a["categorie"] == _selectedCategory).toList();
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          tooltip: "Retour",
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              TabNavigationScope.switchToTab(context, 0);
+            }
+          },
+        ),
+        backgroundColor: AppTheme.couleurCarte(context),
         elevation: 0,
         centerTitle: false,
-        title: const Text(
+        title: Text(
           "Mon Catalogue Grossiste",
           style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 18,
-            color: AppTheme.textDark,
+            color: AppTheme.couleurTexte(context),
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppTheme.textDark),
+            icon: Icon(Icons.refresh_rounded, color: AppTheme.couleurTexte(context)),
             tooltip: "Actualiser le catalogue",
             onPressed: _chargerProduits,
           ),
           IconButton(
-            icon: const Icon(Icons.search_rounded, color: AppTheme.textDark),
+            icon: Icon(Icons.search_rounded, color: AppTheme.couleurTexte(context)),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Recherche dans le catalogue grossiste...")),
@@ -191,16 +203,16 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                       if (val) setState(() => _selectedCategory = cat);
                     },
                     selectedColor: AppTheme.primary,
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppTheme.couleurCarte(context),
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : AppTheme.textDark,
+                      color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       fontSize: 12.5,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                        color: isSelected ? AppTheme.primary : const Color(0xFFE5DDD5),
+                        color: isSelected ? AppTheme.primary : AppTheme.couleurBordure(context),
                       ),
                     ),
                   ),
@@ -233,21 +245,21 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                 ),
                               ),
                               const SizedBox(height: 18),
-                              const Text(
+                              Text(
                                 "Aucun article dans le catalogue",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 16.5,
-                                  color: AppTheme.textDark,
+                                  color: AppTheme.couleurTexte(context),
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
+                              Text(
                                 "Ajoutez vos premiers articles avec photo pour créer vos groupes d'approvisionnement.",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: AppTheme.textMuted,
+                                  color: AppTheme.couleurTexteAttenue(context),
                                   height: 1.35,
                                 ),
                               ),
@@ -283,7 +295,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                             margin: const EdgeInsets.only(bottom: 14),
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppTheme.couleurCarte(context),
                               borderRadius: BorderRadius.circular(18),
                               boxShadow: [
                                 BoxShadow(
@@ -326,7 +338,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                             ),
                                             child: Text(
                                               item["origine"] as String,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 11.5,
                                                 fontWeight: FontWeight.w600,
                                                 color: AppTheme.primary,
@@ -354,10 +366,10 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                       const SizedBox(height: 4),
                                       Text(
                                         item["nom"] as String,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 14,
-                                          color: AppTheme.textDark,
+                                          color: AppTheme.couleurTexte(context),
                                         ),
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
@@ -367,7 +379,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                         children: [
                                           Text(
                                             item["prixGros"] as String,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.w800,
                                               fontSize: 14.5,
                                               color: AppTheme.primary,
@@ -376,9 +388,9 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                           const SizedBox(width: 8),
                                           Text(
                                             "Stock : ${item["stock"]} pcs",
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 11.5,
-                                              color: AppTheme.textMuted,
+                                              color: AppTheme.couleurTexteAttenue(context),
                                             ),
                                           ),
                                         ],
@@ -386,7 +398,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                       const SizedBox(height: 4),
                                       Text(
                                         item["resume"] as String,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 11.5,
                                           color: AppTheme.secondary,
                                           fontWeight: FontWeight.w600,

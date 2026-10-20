@@ -90,7 +90,7 @@ void main() {
 
       // La feuille de détails du niveau s'affiche
       expect(find.text("Niveau Commerçant"), findsOneWidget);
-      expect(find.text("Paliers de fidélité DoGo"), findsOneWidget);
+      expect(find.text("Paliers de fidélité Karavan"), findsOneWidget);
     });
 
     testWidgets("Taper sur Explorer les groupes d'achat déclenche onExplorer", (tester) async {

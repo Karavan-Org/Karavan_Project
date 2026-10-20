@@ -10,17 +10,17 @@ class HistoriqueCourtierScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           "Historique des Convois",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
       ),
       body: _historique.isEmpty
@@ -44,19 +44,19 @@ class HistoriqueCourtierScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       "Aucun convoi dans l'historique",
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
-                        color: Color(0xFF2C241E),
+                        color: AppTheme.couleurTexte(context),
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       "Les convois acheminés et clôturés apparaîtront ici.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                      style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
                     ),
                   ],
                 ),
@@ -72,9 +72,9 @@ class HistoriqueCourtierScreen extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFEFE9E0)),
+              border: Border.all(color: AppTheme.couleurBordure(context)),
               boxShadow: const [
                 BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
               ],
@@ -109,20 +109,20 @@ class HistoriqueCourtierScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   item["trajet"] as String,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF2C241E)),
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.couleurTexte(context)),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   "${item["colis"]} • Clôturé le ${item["date"]}",
-                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74)),
+                  style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
                 ),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       "Commission perçue :",
-                      style: TextStyle(fontSize: 12, color: Color(0xFF5A493B), fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 12, color: AppTheme.couleurTexte(context), fontWeight: FontWeight.w600),
                     ),
                     Text(
                       item["commission"] as String,

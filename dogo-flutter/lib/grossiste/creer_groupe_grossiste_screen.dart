@@ -193,11 +193,15 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
     final produit = _produit;
     final stock = produit == null ? 0 : _stock(produit);
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Créer un groupe d'achat", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text("Créer un groupe d'achat", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        backgroundColor: AppTheme.couleurCarte(context),
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
       ),
       body: Form(
@@ -268,10 +272,10 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
                   color: AppTheme.tertiary.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
+                child: Text(
                   "Vous acheminez vous-même la marchandise et signalez ses étapes à dɔgɔ. Les frais de plateforme "
                   "sont ajoutés automatiquement au prix ; le groupe est visible des commerçants après sa publication.",
-                  style: TextStyle(fontSize: 12, color: AppTheme.textDark),
+                  style: TextStyle(fontSize: 12, color: AppTheme.couleurTexte(context)),
                 ),
               ),
               const SizedBox(height: 24),
@@ -310,11 +314,11 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text("Frais et conditions (facultatif)",
-                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context))),
                 ),
-                Icon(_fraisVisibles ? Icons.expand_less_rounded : Icons.expand_more_rounded, color: AppTheme.textDark),
+                Icon(_fraisVisibles ? Icons.expand_less_rounded : Icons.expand_more_rounded, color: AppTheme.couleurTexte(context)),
               ],
             ),
           ),
@@ -369,10 +373,14 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
       return [
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-          child: const Text(
+          decoration: BoxDecoration(
+            color: AppTheme.couleurCarte(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.couleurBordure(context)),
+          ),
+          child: Text(
             "Votre catalogue est vide : ajoutez d'abord un produit, puis créez son groupe d'achat.",
-            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+            style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
           ),
         ),
       ];
@@ -388,7 +396,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
 
   Widget _carteProduit(Map<String, dynamic> p, {required bool selectionne, VoidCallback? onTap}) {
     return Material(
-      color: Colors.white,
+      color: AppTheme.couleurCarte(context),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -398,7 +406,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: selectionne ? AppTheme.primary : const Color(0xFFEDE7E1),
+              color: selectionne ? AppTheme.primary : AppTheme.couleurBordure(context),
               width: selectionne ? 2 : 1.2,
             ),
           ),
@@ -409,7 +417,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
                 child: Container(
                   width: 56,
                   height: 56,
-                  color: const Color(0xFFF7F2EB),
+                  color: AppTheme.couleurFond(context),
                   child: imageProduit(p['photoUrl']?.toString() ?? '', fit: BoxFit.cover),
                 ),
               ),
@@ -422,21 +430,21 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
                       p['nom']?.toString() ?? '',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.couleurTexte(context)),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       "Stock : ${_stock(p)} pcs${p['prixGros'] != null ? ' • ${(p['prixGros'] as num).round()} FCFA / pce' : ''}",
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                      style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
                     ),
                   ],
                 ),
               ),
               Icon(
                 selectionne ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: selectionne ? AppTheme.primary : const Color(0xFFC7B8AA),
+                color: selectionne ? AppTheme.primary : AppTheme.couleurBordure(context),
               ),
             ],
           ),
@@ -446,15 +454,17 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
   }
 
   Widget _titre(String texte) =>
-      Text(texte, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textDark));
+      Text(texte, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context)));
 
   InputDecoration _decoration(String label, {String? aide}) => InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: AppTheme.couleurTexteAttenue(context)),
         helperText: aide,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppTheme.couleurCarte(context),
         counterText: '',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       );
 

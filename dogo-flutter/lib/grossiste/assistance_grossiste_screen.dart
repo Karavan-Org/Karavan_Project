@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Écran Assistance Grossiste (Support B2B International DoGo)
 class AssistanceGrossisteScreen extends StatelessWidget {
@@ -7,17 +8,17 @@ class AssistanceGrossisteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2C241E)),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           "Assistance Fournisseurs",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
       ),
       body: ListView(
@@ -86,21 +87,24 @@ class AssistanceGrossisteScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // FAQ Grossistes
-          const Text(
+          Text(
             "Guides & Engagements Grossistes",
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF2C241E)),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context)),
           ),
           const SizedBox(height: 12),
 
           _buildFaqItem(
+            context: context,
             question: "Quel est le délai d'engagement de stock (RG-18) ?",
             reponse: "Objectif atteint : confirmez votre stock sous 24 h pour lancer l'expédition.",
           ),
           _buildFaqItem(
+            context: context,
             question: "Quand mon paiement est-il débloqué ?",
             reponse: "Acompte à la remise du lot au transitaire, solde à l'arrivée.",
           ),
           _buildFaqItem(
+            context: context,
             question: "Comment organiser le ramassage avec le courtier ?",
             reponse: "Bouton (+) > 'Expédier Lot'. Le transitaire vient récupérer le lot.",
           ),
@@ -111,23 +115,23 @@ class AssistanceGrossisteScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
                 BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
               ],
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "DoGo Global Sourcing Desk",
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF2C241E)),
+                  "Karavan Global Sourcing Desk",
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppTheme.couleurTexte(context)),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   "Bamako • Guangzhou • Istanbul\nsuppliers@dogo.ml • +223 76 55 44 33",
-                  style: TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74), height: 1.4),
+                  style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context), height: 1.4),
                 ),
               ],
             ),
@@ -137,11 +141,11 @@ class AssistanceGrossisteScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqItem({required String question, required String reponse}) {
+  Widget _buildFaqItem({required BuildContext context, required String question, required String reponse}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(color: Color(0x0646321E), blurRadius: 8, offset: Offset(0, 2)),
@@ -150,14 +154,14 @@ class AssistanceGrossisteScreen extends StatelessWidget {
       child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(16), clipBehavior: Clip.antiAlias, child: ExpansionTile(
         title: Text(
           question,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF2C241E)),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context)),
         ),
         iconColor: const Color(0xFF9E6738),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         children: [
           Text(
             reponse,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF5A493B), height: 1.4),
+            style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context), height: 1.4),
           ),
         ],
       )),

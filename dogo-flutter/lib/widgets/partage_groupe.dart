@@ -59,8 +59,8 @@ class _PartageGroupe extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text("Inviter des commerçants",
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+            Text("Inviter des commerçants",
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context))),
             const SizedBox(height: 4),
             Text(
               publie

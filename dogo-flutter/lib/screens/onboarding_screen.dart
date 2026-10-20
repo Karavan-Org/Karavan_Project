@@ -1,7 +1,9 @@
+import '../widgets/bouton_bascule_theme.dart';
 import 'package:flutter/material.dart';
 import '../models/role_acteur.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dogo_planet_3d_widget.dart';
+import '../widgets/karavan_logo.dart';
 import '../commercant/commercant_connexion_screen.dart';
 import '../grossiste/grossiste_connexion_screen.dart';
 
@@ -70,61 +72,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       body: SafeArea(
         child: Column(
           children: [
-            // --- EN-TÊTE AVEC LOGO DOGO (SANS BOUTON PASSER) ---
+            // --- EN-TÊTE AVEC LOGO KARAVAN (SANS BOUTON PASSER) ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      'assets/images/logo_dogo.png',
-                      width: 38,
-                      height: 38,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            "D",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  const KaravanLogo(taille: 34),
                   const SizedBox(width: 10),
-                  RichText(
-                    text: const TextSpan(
-                      text: 'Do',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primary,
-                        letterSpacing: -0.5,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Go',
-                          style: TextStyle(
-                            color: AppTheme.secondary,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    'KARAVAN',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.couleurEncre(context),
+                      letterSpacing: 3,
                     ),
                   ),
+                  const Spacer(),
+                  const BoutonBasculeTheme(compact: true),
                 ],
               ),
             ),
@@ -134,7 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.couleurCarte(context),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: AppTheme.primary.withValues(alpha: 0.15),
@@ -160,7 +129,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                            color: isSelected ? Colors.white : AppTheme.textMuted,
+                            color: isSelected ? Colors.white : AppTheme.couleurTexteAttenue(context),
                           ),
                         ),
                       ),
@@ -199,8 +168,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
-              decoration: const BoxDecoration(
-                color: AppTheme.surface,
+              decoration: BoxDecoration(
+                color: AppTheme.couleurCarte(context),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(36),
                   topRight: Radius.circular(36),
@@ -268,7 +237,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               maxLines: 3,
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     fontSize: 12.5,
-                                    color: AppTheme.textMuted,
+                                    color: AppTheme.couleurTexteAttenue(context),
                                     height: 1.45,
                                   ),
                             ),
@@ -326,7 +295,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
+        color: AppTheme.couleurCarte(context).withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: AppTheme.primary.withValues(alpha: 0.2),

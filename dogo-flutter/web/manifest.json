@@ -1,11 +1,11 @@
 {
-    "name": "dɔgɔ",
-    "short_name": "dɔgɔ",
+    "name": "Karavan",
+    "short_name": "Karavan",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#FAF8F5",
+    "background_color": "#0D0B09",
     "theme_color": "#AC7F5E",
-    "description": "dɔgɔ - Plateforme malienne d'achats groupés internationaux B2B",
+    "description": "Karavan - Plateforme malienne d'achats groupés internationaux B2B",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

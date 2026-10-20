@@ -1,4 +1,4 @@
-import '../widgets/image_produit.dart';
+﻿import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'favoris_service.dart';
@@ -52,7 +52,7 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,7 +71,7 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
         foregroundColor: AppTheme.textPrimary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textDark, size: 24),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context), size: 24),
           tooltip: "Retour",
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -562,6 +562,8 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                                 courtierNom: groupe.courtierNom,
                                                 imagePath: groupe.imagePath,
                                                 paysOrigine: groupe.paysOrigine,
+                                                 quantiteActuelle: groupe.quantiteActuelle,
+                                                 quantiteObjectif: groupe.quantiteObjectif,
                                               ),
                                             ),
                                           );

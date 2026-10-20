@@ -43,11 +43,15 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Mise à Jour Jalon Transit", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text("Mise à Jour Jalon Transit", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.couleurTexte(context))),
+        backgroundColor: AppTheme.couleurCarte(context),
+        foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
       ),
       body: ListView(
@@ -78,29 +82,29 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.couleurCarte(context),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
+                border: Border.all(color: AppTheme.couleurBordure(context), width: 1.2),
               ),
               child: Column(
                 children: [
-                  Icon(Icons.alt_route_rounded, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                  Icon(Icons.alt_route_rounded, size: 40, color: AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.5)),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     "Aucun convoi actif",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF2C241E)),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     "Les convois en cours d'acheminement apparaîtront ici pour le pointage des étapes.",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                    style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
                   ),
                 ],
               ),
             )
           else ...[
-            const Text("Sélectionner le convoi à pointer :", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+            Text("Sélectionner le convoi à pointer :", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.couleurTexte(context))),
             const SizedBox(height: 12),
             ...List.generate(_convois.length, (index) {
             final c = _convois[index];
@@ -111,7 +115,7 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.couleurCarte(context),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
@@ -138,9 +142,9 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(c["trajet"] as String, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.textDark)),
+                  Text(c["trajet"] as String, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.couleurTexte(context))),
                   const SizedBox(height: 4),
-                  Text("${c["colisCount"]} colis groupés • Poids : ${c["poidsTotal"]}", style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                  Text("${c["colisCount"]} colis groupés • Poids : ${c["poidsTotal"]}", style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context))),
                   const SizedBox(height: 14),
                   // Étapes visuelles
                   Column(
@@ -155,7 +159,7 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
                             Icon(
                               isDone ? Icons.check_circle_rounded : (isCurrent ? Icons.radio_button_checked : Icons.radio_button_off),
                               size: 18,
-                              color: isDone ? AppTheme.success : (isCurrent ? AppTheme.primary : const Color(0xFFD4C5B9)),
+                              color: isDone ? AppTheme.success : (isCurrent ? AppTheme.primary : AppTheme.couleurBordure(context)),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -164,7 +168,7 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w500,
-                                  color: isDone || isCurrent ? AppTheme.textDark : AppTheme.textMuted,
+                                  color: isDone || isCurrent ? AppTheme.couleurTexte(context) : AppTheme.couleurTexteAttenue(context),
                                 ),
                               ),
                             ),

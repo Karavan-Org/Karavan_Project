@@ -14,15 +14,19 @@ class SuiviColisScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text(
-          "Suivi de Mon Colis",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        backgroundColor: Colors.white,
+        title: Text(
+          "Suivi de Mon Colis",
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+        ),
+        backgroundColor: AppTheme.couleurCarte(context),
         elevation: 0,
-        foregroundColor: AppTheme.textPrimary,
+        foregroundColor: AppTheme.couleurTexte(context),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline, color: AppTheme.textMuted),
@@ -31,7 +35,7 @@ class SuiviColisScreen extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                      "Aide logistique DoGo : Contactez le hub Dabanani au +223 70 00 00 00."),
+                      "Aide logistique Karavan : Contactez le hub Dabanani au +223 70 00 00 00."),
                   duration: Duration(seconds: 3),
                 ),
               );
