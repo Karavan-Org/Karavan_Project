@@ -17,8 +17,13 @@ public class CodeOtp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "utilisateur_id", nullable = false)
+    /** Nul si le compte a été supprimé (inscription abandonnée remplacée) : le code reste compté par numéro. */
+    @Column(name = "utilisateur_id")
     private Long utilisateurId;
+
+    /** Numéro destinataire : base du plafond d'envoi par téléphone (RG-02). */
+    @Column(length = 20)
+    private String telephone;
 
     @Column(name = "code_hash", nullable = false)
     private String codeHash;
@@ -38,8 +43,9 @@ public class CodeOtp {
     protected CodeOtp() {
     }
 
-    public CodeOtp(Long utilisateurId, String codeHash, Instant expiration, Instant dateCreation) {
+    public CodeOtp(Long utilisateurId, String telephone, String codeHash, Instant expiration, Instant dateCreation) {
         this.utilisateurId = utilisateurId;
+        this.telephone = telephone;
         this.codeHash = codeHash;
         this.expiration = expiration;
         this.dateCreation = dateCreation;
@@ -56,6 +62,7 @@ public class CodeOtp {
 
     public Long getId() { return id; }
     public Long getUtilisateurId() { return utilisateurId; }
+    public String getTelephone() { return telephone; }
     public String getCodeHash() { return codeHash; }
     public Instant getExpiration() { return expiration; }
     public Instant getDateCreation() { return dateCreation; }

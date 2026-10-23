@@ -14,23 +14,30 @@ class AuthService {
   }
   static final AuthService instance = AuthService._();
 
-  final ValueNotifier<UtilisateurProfil?> profilNotifier = ValueNotifier<UtilisateurProfil?>(null);
+  final ValueNotifier<UtilisateurProfil?> profilNotifier =
+      ValueNotifier<UtilisateurProfil?>(null);
 
   UtilisateurProfil? get profilActuel => profilNotifier.value;
   UtilisateurProfil? get utilisateurCourant => profilNotifier.value;
-  bool get estConnecte => profilNotifier.value != null && ApiClient.instance.estAuthentifie;
+  bool get estConnecte =>
+      profilNotifier.value != null && ApiClient.instance.estAuthentifie;
+
+  Map<String, String> get _entetesPlateforme =>
+      kIsWeb ? const {'X-Client-Platform': 'flutter-web'} : const {};
 
   /// Restaure la session au démarrage à partir de flutter_secure_storage
   Future<UtilisateurProfil?> restaurerSession() async {
-    final refreshToken = await SessionStorageService.instance.lireRefreshToken();
-    if (refreshToken == null || refreshToken.isEmpty) {
+    final refreshToken =
+        kIsWeb ? null : await SessionStorageService.instance.lireRefreshToken();
+    if (!kIsWeb && (refreshToken == null || refreshToken.isEmpty)) {
       return null;
     }
 
     try {
       final response = await ApiClient.instance.postSansAuth(
         ApiConfig.refresh,
-        body: {'refreshToken': refreshToken},
+        body: kIsWeb ? null : {'refreshToken': refreshToken},
+        headers: _entetesPlateforme,
       );
 
       if (response is Map<String, dynamic>) {
@@ -42,12 +49,10 @@ class AuthService {
         ApiClient.instance.definirJeton(jeton);
         profilNotifier.value = profil;
 
-        if (nouveauRefreshToken != null && nouveauRefreshToken.isNotEmpty) {
-          await SessionStorageService.instance.sauvegarderSession(
-            refreshToken: nouveauRefreshToken,
-            profil: profil,
-          );
-        }
+        await SessionStorageService.instance.sauvegarderSession(
+          refreshToken: nouveauRefreshToken ?? '',
+          profil: profil,
+        );
         return profil;
       }
     } on ApiException catch (e) {
@@ -71,15 +76,17 @@ class AuthService {
 
   /// Rafraîchissement automatique de l'access token sur interception 401
   Future<bool> rafraichirJeton() async {
-    final refreshToken = await SessionStorageService.instance.lireRefreshToken();
-    if (refreshToken == null || refreshToken.isEmpty) {
+    final refreshToken =
+        kIsWeb ? null : await SessionStorageService.instance.lireRefreshToken();
+    if (!kIsWeb && (refreshToken == null || refreshToken.isEmpty)) {
       return false;
     }
 
     try {
       final response = await ApiClient.instance.postSansAuth(
         ApiConfig.refresh,
-        body: {'refreshToken': refreshToken},
+        body: kIsWeb ? null : {'refreshToken': refreshToken},
+        headers: _entetesPlateforme,
       );
 
       if (response is Map<String, dynamic>) {
@@ -91,12 +98,10 @@ class AuthService {
         if (profilJson != null) {
           final profil = UtilisateurProfil.fromJson(profilJson);
           profilNotifier.value = profil;
-          if (nouveauRefreshToken != null && nouveauRefreshToken.isNotEmpty) {
-            await SessionStorageService.instance.sauvegarderSession(
-              refreshToken: nouveauRefreshToken,
-              profil: profil,
-            );
-          }
+          await SessionStorageService.instance.sauvegarderSession(
+            refreshToken: nouveauRefreshToken ?? '',
+            profil: profil,
+          );
         }
         return true;
       }
@@ -119,7 +124,9 @@ class AuthService {
     String? pin,
     String? deviceId,
   }) async {
-    final secret = (motDePasse != null && motDePasse.isNotEmpty) ? motDePasse : (pin ?? '');
+    final secret = (motDePasse != null && motDePasse.isNotEmpty)
+        ? motDePasse
+        : (pin ?? '');
     final response = await ApiClient.instance.post(
       ApiConfig.connexion,
       body: {
@@ -128,23 +135,26 @@ class AuthService {
         'pin': secret,
         'deviceId': deviceId ?? 'flutter-device-client',
       },
+      headers: _entetesPlateforme,
     );
 
     if (response is! Map<String, dynamic> || response['jeton'] is! String) {
-      throw const ApiException(statusCode: 0, message: 'Réponse inattendue du serveur Karavan lors de la connexion.');
+      throw const ApiException(
+          statusCode: 0,
+          message:
+              'Réponse inattendue du serveur Karavan lors de la connexion.');
     }
 
     ApiClient.instance.definirJeton(response['jeton'] as String);
-    final profil = UtilisateurProfil.fromJson(response['profil'] as Map<String, dynamic>? ?? {});
+    final profil = UtilisateurProfil.fromJson(
+        response['profil'] as Map<String, dynamic>? ?? {});
     profilNotifier.value = profil;
 
     final refreshToken = response['refreshToken'] as String?;
-    if (refreshToken != null && refreshToken.isNotEmpty) {
-      await SessionStorageService.instance.sauvegarderSession(
-        refreshToken: refreshToken,
-        profil: profil,
-      );
-    }
+    await SessionStorageService.instance.sauvegarderSession(
+      refreshToken: refreshToken ?? '',
+      profil: profil,
+    );
     return profil;
   }
 
@@ -164,7 +174,9 @@ class AuthService {
     String? licenceTransit,
     String? adresseDepot,
   }) async {
-    final secret = (motDePasse != null && motDePasse.isNotEmpty) ? motDePasse : (pin ?? '');
+    final secret = (motDePasse != null && motDePasse.isNotEmpty)
+        ? motDePasse
+        : (pin ?? '');
     final body = {
       'type': typeActeur.toUpperCase(),
       'telephone': telephone,
@@ -181,7 +193,8 @@ class AuthService {
       if (adresseDepot != null) 'adresseDepot': adresseDepot,
     };
 
-    final response = await ApiClient.instance.post(ApiConfig.inscription, body: body);
+    final response =
+        await ApiClient.instance.post(ApiConfig.inscription, body: body);
     return response is Map<String, dynamic> ? response : {};
   }
 
@@ -214,7 +227,8 @@ class AuthService {
   }
 
   /// Upload d'une photo de profil (JPEG, PNG, WEBP) vers le serveur (stockage sécurisé)
-  Future<String> uploaderPhotoProfil(Uint8List octets, {String nom = 'avatar.jpg'}) async {
+  Future<String> uploaderPhotoProfil(Uint8List octets,
+      {String nom = 'avatar.jpg'}) async {
     final response = await ApiClient.instance.postMultipart(
       ApiConfig.photoProfil,
       fileBytes: octets,
@@ -261,10 +275,13 @@ class AuthService {
             ? profilActuel!.copyWith(
                 id: nouveau.id,
                 nom: nouveau.nom.isNotEmpty ? nouveau.nom : profilActuel!.nom,
-                telephone: nouveau.telephone.isNotEmpty ? nouveau.telephone : profilActuel!.telephone,
+                telephone: nouveau.telephone.isNotEmpty
+                    ? nouveau.telephone
+                    : profilActuel!.telephone,
                 photoUrl: nouveau.photoUrl,
                 statut: nouveau.statut,
-                nomStructure: nouveau.nomStructure ?? profilActuel!.nomStructure,
+                nomStructure:
+                    nouveau.nomStructure ?? profilActuel!.nomStructure,
                 quartier: nouveau.quartier ?? profilActuel!.quartier,
               )
             : nouveau;
@@ -295,8 +312,12 @@ class AuthService {
   Future<void> deconnecter() async {
     final rt = await SessionStorageService.instance.lireRefreshToken();
     try {
-      if (rt != null && rt.isNotEmpty) {
-        await ApiClient.instance.postSansAuth(ApiConfig.logout, body: {'refreshToken': rt});
+      if (kIsWeb || (rt != null && rt.isNotEmpty)) {
+        await ApiClient.instance.postSansAuth(
+          ApiConfig.logout,
+          body: kIsWeb ? null : {'refreshToken': rt},
+          headers: _entetesPlateforme,
+        );
       }
       if (ApiClient.instance.estAuthentifie) {
         await ApiClient.instance.post(ApiConfig.deconnexion, body: {});

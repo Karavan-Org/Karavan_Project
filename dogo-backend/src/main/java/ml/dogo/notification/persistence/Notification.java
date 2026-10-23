@@ -60,8 +60,12 @@ public class Notification {
         this.statut = succes ? StatutNotification.ENVOYEE : StatutNotification.ECHOUEE;
     }
 
+    /**
+     * Lue dans l'application : vaut aussi pour une notification dont le SMS a échoué (sinon elle resterait
+     * « non lue » pour toujours) ; elle n'est alors plus renvoyée par SMS, son destinataire l'ayant vue.
+     */
     public void marquerLue() {
-        if (statut == StatutNotification.ENVOYEE) {
+        if (statut != StatutNotification.LUE) {
             this.statut = StatutNotification.LUE;
         }
     }

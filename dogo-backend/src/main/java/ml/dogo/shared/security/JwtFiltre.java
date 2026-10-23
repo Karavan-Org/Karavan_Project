@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,10 +35,16 @@ public class JwtFiltre extends OncePerRequestFilter {
         String entete = requete.getHeader("Authorization");
         if (entete != null && entete.startsWith("Bearer ")) {
             Optional<JwtService.JetonInfo> info = jwt.lire(entete.substring(7));
-            if (info.isPresent() && sessions.verifierEtProlonger(info.get().sessionId(), info.get().utilisateurId())) {
+            EtatSession etat = info.isEmpty() ? EtatSession.INVALIDE
+                    : sessions.verifierEtProlonger(info.get().sessionId(), info.get().utilisateurId());
+            if (etat != EtatSession.INVALIDE) {
                 JwtService.JetonInfo j = info.get();
-                List<GrantedAuthority> autorites = j.permissions().stream()
-                        .<GrantedAuthority>map(SimpleGrantedAuthority::new).toList();
+                List<GrantedAuthority> autorites = new ArrayList<>(j.permissions().stream()
+                        .<GrantedAuthority>map(SimpleGrantedAuthority::new).toList());
+                if (etat == EtatSession.EN_ATTENTE) {
+                    // Lu par FiltreCompteEnAttente : seul le parcours de vérification reste ouvert (RG-03)
+                    autorites.add(new SimpleGrantedAuthority(AccesCompteEnAttente.MARQUEUR));
+                }
                 UtilisateurCourant courant = new UtilisateurCourant(j.utilisateurId(), j.type(), j.permissions(), j.sessionId());
                 SecurityContextHolder.getContext()
                         .setAuthentication(new UsernamePasswordAuthenticationToken(courant, null, autorites));

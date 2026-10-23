@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:flutter/services.dart';
 import '../services/paiement_api_service.dart';
 import '../services/groupe_api_service.dart';
 import '../services/profil_api_service.dart';
@@ -29,6 +30,7 @@ class RejoindreGroupeScreen extends StatefulWidget {
   final String paysOrigine;
   final int quantiteActuelle;
   final int quantiteObjectif;
+  final int? quantiteRestante;
 
   const RejoindreGroupeScreen({
     super.key,
@@ -46,6 +48,7 @@ class RejoindreGroupeScreen extends StatefulWidget {
     this.paysOrigine = "",
     this.quantiteActuelle = 0,
     this.quantiteObjectif = 0,
+    this.quantiteRestante,
   });
 
   @override
@@ -55,6 +58,7 @@ class RejoindreGroupeScreen extends StatefulWidget {
 class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
   String _operateurSelectionne = "Portefeuille Achats";
   final TextEditingController _telephoneController = TextEditingController();
+  final TextEditingController _quantiteController = TextEditingController();
   bool _enCoursDeTraitement = false;
   String? _erreurTelephone;
   int _soldePortefeuille = 0;
@@ -62,13 +66,15 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
 
   late int _quantite;
   late int _quantiteMin;
+  late int _quantiteObjectif;
+  late int _quantiteRestante;
   List<VarianteGroupeModel> _variantes = [];
   VarianteGroupeModel? _varianteSelectionnee;
 
   final List<Map<String, dynamic>> _operateurs = [
     {
       "nom": "Portefeuille Achats",
-      "couleur": const Color(0xFF1B5E20),
+      "couleur": AppTheme.oliveProfond,
       "sigle": "💼",
       "delai": "Instantané • Direct",
       "isPortefeuille": true,
@@ -100,7 +106,16 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
   void initState() {
     super.initState();
     _quantiteMin = widget.quantiteMin > 0 ? widget.quantiteMin : 1;
+    _quantiteObjectif = widget.quantiteObjectif;
+    _quantiteRestante = widget.quantiteRestante ??
+        (_quantiteObjectif - widget.quantiteActuelle).clamp(0, _quantiteObjectif).toInt();
     _quantite = widget.quantite >= _quantiteMin ? widget.quantite : _quantiteMin;
+    if (_quantiteMax >= _quantiteMin) {
+      _quantite = _quantite.clamp(_quantiteMin, _quantiteMax).toInt();
+    } else {
+      _quantite = 0;
+    }
+    _quantiteController.text = '$_quantite';
     _variantes = List.from(widget.variantesDisponibles);
     _varianteSelectionnee = widget.variante;
 
@@ -121,7 +136,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
       }
     }
 
-    _chargerVariantesSiBesoin();
+    _chargerDetailsGroupe();
     _chargerMoyenPaiementDefaut();
     _chargerSoldePortefeuille();
   }
@@ -163,17 +178,21 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
     } catch (_) {}
   }
 
-  Future<void> _chargerVariantesSiBesoin() async {
-    if (_variantes.isNotEmpty) return;
+  Future<void> _chargerDetailsGroupe() async {
     try {
       final detail = await GroupeApiService.instance.detail(widget.groupeId);
       if (!mounted) return;
       setState(() {
-        _variantes = detail.variantes;
+        if (detail.variantes.isNotEmpty) _variantes = detail.variantes;
         if (detail.quantiteMinParCommercant > 0) {
           _quantiteMin = detail.quantiteMinParCommercant;
-          if (_quantite < _quantiteMin) _quantite = _quantiteMin;
         }
+        _quantiteObjectif = detail.quantiteObjectif;
+        _quantiteRestante = detail.quantiteRestante;
+        _quantite = _quantiteMax >= _quantiteMin
+            ? _quantite.clamp(_quantiteMin, _quantiteMax).toInt()
+            : 0;
+        _quantiteController.text = '$_quantite';
         if (_variantes.isNotEmpty && _varianteSelectionnee == null) {
           if (widget.varianteId != null) {
             _varianteSelectionnee = _variantes.firstWhere(
@@ -191,6 +210,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
   @override
   void dispose() {
     _telephoneController.dispose();
+    _quantiteController.dispose();
     super.dispose();
   }
 
@@ -201,6 +221,30 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
   }
 
   int get _sousTotal => widget.prixUnitaire * _quantite;
+
+  int get _quantiteMax {
+    return _quantiteRestante.clamp(0, _quantiteObjectif).toInt();
+  }
+
+  void _definirQuantite(int quantite) {
+    final valeur = quantite.clamp(0, _quantiteMax).toInt();
+    setState(() {
+      _quantite = valeur;
+      _quantiteController.value = TextEditingValue(
+        text: '$valeur',
+        selection: TextSelection.collapsed(offset: '$valeur'.length),
+      );
+    });
+  }
+
+  void _terminerSaisieQuantite() {
+    final saisie = int.tryParse(_quantiteController.text) ?? _quantiteMin;
+    final valeur = _quantiteMax >= _quantiteMin
+        ? saisie.clamp(_quantiteMin, _quantiteMax).toInt()
+        : 0;
+    _definirQuantite(valeur);
+    FocusScope.of(context).unfocus();
+  }
 
   /// Montant réellement débité par le backend : prix figé × quantité (RG-29, RG-33).
   /// Le fret et le dédouanement sont déjà compris dans le prix groupé.
@@ -217,6 +261,13 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
   }
 
   void _validerPaiement() async {
+    if (_quantite < _quantiteMin || _quantite > _quantiteMax) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("La quantité doit être comprise entre $_quantiteMin et $_quantiteMax lots.")),
+      );
+      return;
+    }
+
     final bool estPortefeuille = _operateurSelectionne == "Portefeuille Achats";
     String digits = "";
 
@@ -248,7 +299,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Veuillez sélectionner une variante de produit."),
-          backgroundColor: Color(0xFFC0392B),
+          backgroundColor: AppTheme.danger,
         ),
       );
       return;
@@ -387,12 +438,12 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
       appBar: AppBar(
         title: const Text(
           "Paiement & Réservation",
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w700, fontSize: 18),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.couleurCarte(context),
         elevation: 0,
-        foregroundColor: AppTheme.textPrimary,
+        foregroundColor: AppTheme.couleurTexte(context),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.of(context).pop(),
@@ -410,10 +461,10 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                 padding: const EdgeInsets.all(18),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.couleurCarte(context),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: const [
-                    BoxShadow(color: Color(0x0A46321E), blurRadius: 15, offset: Offset(0, 4)),
+                    BoxShadow(color: Color(0x0A2C241E), blurRadius: 15, offset: Offset(0, 4)),
                   ],
                 ),
                 child: Column(
@@ -432,12 +483,12 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.1),
+                            color: AppTheme.couleurAccent(context).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             "${_variantes.length} réf.",
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.couleurAccent(context)),
                           ),
                         ),
                       ],
@@ -455,16 +506,16 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.primary : const Color(0xFFF9F7F5),
+                              color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurCarte(context),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: isSelected ? AppTheme.primary : const Color(0xFFDED6CE),
+                                color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurBordureForte(context),
                                 width: isSelected ? 2 : 1,
                               ),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: AppTheme.primary.withValues(alpha: 0.25),
+                                        color: AppTheme.couleurAccent(context).withValues(alpha: 0.25),
                                         blurRadius: 8,
                                         offset: const Offset(0, 3),
                                       ),
@@ -477,7 +528,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                                 Icon(
                                   isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
                                   size: 16,
-                                  color: isSelected ? Colors.white : AppTheme.textMuted,
+                                  color: isSelected ? AppTheme.texteSur(AppTheme.couleurAccent(context)) : AppTheme.couleurTexteAttenue(context),
                                 ),
                                 const SizedBox(width: 8),
                                 Flexible(
@@ -486,7 +537,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
-                                      color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                      color: isSelected ? AppTheme.texteSur(AppTheme.couleurAccent(context)) : AppTheme.couleurTexte(context),
                                     ),
                                   ),
                                 ),
@@ -505,18 +556,18 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.couleurCarte(context),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
-                  BoxShadow(color: Color(0x0A46321E), blurRadius: 15, offset: Offset(0, 4)),
+                  BoxShadow(color: Color(0x0A2C241E), blurRadius: 15, offset: Offset(0, 4)),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "Récapitulatif de la réservation",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
                   ),
                   const SizedBox(height: 14),
                   Row(
@@ -530,7 +581,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                       ),
                       Text(
                         _formatMontant(widget.prixUnitaire),
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.primary),
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurAccent(context)),
                       ),
                     ],
                   ),
@@ -540,9 +591,9 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF9F7F5),
+                      color: AppTheme.couleurSurfaceDouce(context),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFEBE3D9)),
+                      border: Border.all(color: AppTheme.couleurBordure(context)),
                     ),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -554,28 +605,53 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                               visualDensity: VisualDensity.compact,
                               padding: const EdgeInsets.all(4),
                               constraints: const BoxConstraints(),
-                              icon: const Icon(Icons.remove_circle_outline, color: AppTheme.primary),
+                              icon: Icon(Icons.remove_circle_outline, color: AppTheme.couleurAccent(context)),
                               iconSize: 24,
                               onPressed: _quantite > _quantiteMin
-                                  ? () => setState(() => _quantite--)
+                                  ? () => _definirQuantite(_quantite - 1)
                                   : null,
                             ),
-                            Container(
-                              constraints: const BoxConstraints(minWidth: 32),
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              alignment: Alignment.center,
-                              child: Text(
-                                "$_quantite",
-                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                            SizedBox(
+                              width: 54,
+                              child: TextField(
+                                controller: _quantiteController,
+                                keyboardType: TextInputType.number,
+                                textAlign: TextAlign.center,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  TextInputFormatter.withFunction((ancien, nouveau) {
+                                    final valeur = int.tryParse(nouveau.text);
+                                    if (nouveau.text.isEmpty || valeur == null || valeur <= _quantiteMax) {
+                                      return nouveau;
+                                    }
+                                    final plafond = '$_quantiteMax';
+                                    return TextEditingValue(
+                                      text: plafond,
+                                      selection: TextSelection.collapsed(offset: plafond.length),
+                                    );
+                                  }),
+                                ],
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(vertical: 8),
+                                  border: InputBorder.none,
+                                ),
+                                onChanged: (texte) {
+                                  setState(() => _quantite = int.tryParse(texte) ?? 0);
+                                },
+                                onSubmitted: (_) => _terminerSaisieQuantite(),
+                                onEditingComplete: _terminerSaisieQuantite,
                               ),
                             ),
                             IconButton(
                               visualDensity: VisualDensity.compact,
                               padding: const EdgeInsets.all(4),
                               constraints: const BoxConstraints(),
-                              icon: const Icon(Icons.add_circle, color: AppTheme.primary),
+                              icon: Icon(Icons.add_circle, color: AppTheme.couleurAccent(context)),
                               iconSize: 24,
-                              onPressed: () => setState(() => _quantite++),
+                              onPressed: _quantite < _quantiteMax
+                                  ? () => _definirQuantite(_quantite + 1)
+                                  : null,
                             ),
                           ],
                         );
@@ -583,14 +659,14 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                         final labelColumn = Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               "Quantité réservée :",
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context)),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              "Minimum exigé : $_quantiteMin lot${_quantiteMin > 1 ? 's' : ''}",
-                              style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                              "Min. $_quantiteMin · Max. $_quantiteMax lot${_quantiteMax > 1 ? 's' : ''}",
+                              style: TextStyle(fontSize: 11, color: AppTheme.couleurTexteAttenue(context)),
                             ),
                           ],
                         );
@@ -622,7 +698,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                   ),
 
                   const SizedBox(height: 14),
-                  const Divider(color: Color(0xFFF1EAE2)),
+                  Divider(color: AppTheme.couleurBordure(context)),
                   const SizedBox(height: 8),
                   _buildLigneMontant(
                     "Sous-total marchandise ($_quantite x ${_formatMontant(widget.prixUnitaire)})",
@@ -633,7 +709,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                   const SizedBox(height: 6),
                   _buildLigneMontant("Garantie Séquestre Karavan", "0 FCFA (Inclus)", isGratuit: true),
                   const SizedBox(height: 12),
-                  const Divider(color: Color(0xFFF1EAE2)),
+                  Divider(color: AppTheme.couleurBordure(context)),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -650,10 +726,10 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                           fit: BoxFit.scaleDown,
                           child: Text(
                             _formatMontant(_total),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
-                              color: AppTheme.primary,
+                              color: AppTheme.couleurAccent(context),
                             ),
                           ),
                         ),
@@ -667,9 +743,9 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
             const SizedBox(height: 24),
 
             // Mode de paiement
-            const Text(
+            Text(
               "Choisir votre moyen de paiement :",
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
             ),
             const SizedBox(height: 12),
 
@@ -682,10 +758,10 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.couleurCarte(context),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isSelected ? AppTheme.primary : const Color(0xFFE2D9D0),
+                      color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurBordureForte(context),
                       width: isSelected ? 1.8 : 1,
                     ),
                   ),
@@ -701,7 +777,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                         child: Center(
                           child: Text(
                             op["sigle"] as String,
-                            style: const TextStyle(
+                                  style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
                               fontSize: 16,
@@ -721,19 +797,19 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                               children: [
                                 Text(
                                   op["nom"] as String,
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
                                 ),
                                 if (isPortefeuille && _portefeuilleCharge)
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFE8F5E9),
+                                      color: AppTheme.couleurFondSucces(context),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
                                       _formatMontant(_soldePortefeuille),
-                                      style: const TextStyle(
-                                        color: Color(0xFF1B5E20),
+                                      style: TextStyle(
+                                        color: AppTheme.couleurSucces(context),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 11,
                                       ),
@@ -749,8 +825,8 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                                   : (op["delai"] as String),
                               style: TextStyle(
                                 color: isPortefeuille && _soldePortefeuille < _total
-                                    ? const Color(0xFFC0392B)
-                                    : AppTheme.textMuted,
+                                    ? AppTheme.danger
+                                    : AppTheme.couleurTexteAttenue(context),
                                 fontSize: 12,
                                 fontWeight: isPortefeuille && _soldePortefeuille < _total
                                     ? FontWeight.w600
@@ -762,7 +838,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                       ),
                       Icon(
                         isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                        color: isSelected ? AppTheme.primary : const Color(0xFFC7BCB2),
+                        color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurTexteAttenue(context),
                       ),
                     ],
                   ),
@@ -778,13 +854,13 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: _soldePortefeuille >= _total
-                      ? const Color(0xFFE8F5E9)
-                      : const Color(0xFFFBE9E7),
+                      ? AppTheme.couleurFondSucces(context)
+                      : AppTheme.couleurFondDanger(context),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: _soldePortefeuille >= _total
-                        ? const Color(0xFF81C784)
-                        : const Color(0xFFFFAB91),
+                        ? AppTheme.oliveBordure
+                        : AppTheme.dangerBordure,
                   ),
                 ),
                 child: Row(
@@ -794,8 +870,8 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                           ? Icons.account_balance_wallet
                           : Icons.warning_amber_rounded,
                       color: _soldePortefeuille >= _total
-                          ? const Color(0xFF1B5E20)
-                          : const Color(0xFFD84315),
+                          ? AppTheme.couleurSucces(context)
+                          : AppTheme.couleurAttention(context),
                       size: 28,
                     ),
                     const SizedBox(width: 12),
@@ -811,8 +887,8 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                               color: _soldePortefeuille >= _total
-                                  ? const Color(0xFF1B5E20)
-                                  : const Color(0xFFD84315),
+                                  ? AppTheme.couleurSucces(context)
+                                  : AppTheme.couleurAttention(context),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -823,8 +899,8 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                             style: TextStyle(
                               fontSize: 11.5,
                               color: _soldePortefeuille >= _total
-                                  ? const Color(0xFF2E7D32)
-                                  : const Color(0xFFBF360C),
+                                  ? AppTheme.couleurSucces(context)
+                                  : AppTheme.couleurAttention(context),
                             ),
                           ),
                         ],
@@ -834,9 +910,9 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                 ),
               ),
             ] else ...[
-              const Text(
+              Text(
                 "Numéro de téléphone de facturation :",
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context)),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -849,17 +925,17 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                 },
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(Icons.phone_iphone, color: AppTheme.primary),
+                  fillColor: AppTheme.couleurCarte(context),
+                  prefixIcon: Icon(Icons.phone_iphone, color: AppTheme.couleurAccent(context)),
                   errorText: _erreurTelephone,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFE2D9D0)),
+                    borderSide: BorderSide(color: AppTheme.couleurBordureForte(context)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFE2D9D0)),
+                    borderSide: BorderSide(color: AppTheme.couleurBordureForte(context)),
                   ),
                 ),
               ),
@@ -874,14 +950,14 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                 color: AppTheme.secondary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.lock, color: AppTheme.secondary, size: 20),
-                  SizedBox(width: 10),
+                  Icon(Icons.lock, color: AppTheme.couleurAttention(context), size: 20),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       "Paiement protégé sous séquestre jusqu'à l'arrivée du convoi.",
-                      style: TextStyle(fontSize: 11.5, color: Color(0xFF6B4E00), height: 1.3),
+                      style: TextStyle(fontSize: 11.5, color: AppTheme.couleurAttention(context), height: 1.3),
                     ),
                   ),
                 ],
@@ -892,22 +968,26 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
 
             // Bouton de validation
             ElevatedButton(
-              onPressed: _enCoursDeTraitement ? null : _validerPaiement,
+              onPressed: _enCoursDeTraitement ||
+                      _quantite < _quantiteMin ||
+                      _quantite > _quantiteMax
+                  ? null
+                  : _validerPaiement,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: AppTheme.couleurAccent(context),
+                foregroundColor: AppTheme.texteSur(AppTheme.couleurAccent(context)),
                 minimumSize: const Size(double.infinity, 54),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
               child: _enCoursDeTraitement
-                  ? const SizedBox(
+              ? SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.texteSur(AppTheme.couleurAccent(context))),
                       ),
                     )
                   : Text(
@@ -926,14 +1006,14 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
-          child: Text(libelle, style: const TextStyle(fontSize: 12.5, color: AppTheme.textMuted)),
+          child: Text(libelle, style: TextStyle(fontSize: 12.5, color: AppTheme.couleurTexteAttenue(context))),
         ),
         Text(
           montant,
           style: TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w600,
-            color: isGratuit ? AppTheme.success : AppTheme.textPrimary,
+            color: isGratuit ? AppTheme.couleurSucces(context) : AppTheme.couleurTexte(context),
           ),
         ),
       ],

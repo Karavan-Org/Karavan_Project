@@ -161,7 +161,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        icon: const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 48),
+        icon: const Icon(Icons.check_circle_rounded, color: AppTheme.oliveProfond, size: 48),
         title: const Text("Groupe créé !", style: TextStyle(fontWeight: FontWeight.w800)),
         content: Text(
           "« ${groupe.titre} » (n° ${groupe.id}) attend sa publication par dɔgɔ.\n\n"
@@ -184,7 +184,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
 
   void _erreur(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: const Color(0xFFC0392B), behavior: SnackBarBehavior.floating),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.danger, behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -199,7 +199,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
           icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text("Créer un groupe d'achat", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        title: Text("Créer un groupe d'achat", style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
         backgroundColor: AppTheme.couleurCarte(context),
         foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
@@ -359,13 +359,13 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
       return const [
         Padding(
           padding: EdgeInsets.all(24),
-          child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+          child: Center(child: CircularProgressIndicator(color: AppTheme.olive)),
         ),
       ];
     }
     if (_erreurChargement != null) {
       return [
-        Text("Catalogue indisponible : $_erreurChargement", style: const TextStyle(color: Color(0xFFC0392B))),
+        Text("Catalogue indisponible : $_erreurChargement", style: const TextStyle(color: AppTheme.danger)),
         TextButton(onPressed: _chargerProduits, child: const Text("Réessayer")),
       ];
     }

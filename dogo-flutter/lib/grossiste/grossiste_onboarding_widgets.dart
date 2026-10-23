@@ -7,17 +7,17 @@ import '../theme/app_theme.dart';
 class CouleursArrivee {
   CouleursArrivee._();
 
-  static const Color fond = Color(0xFFF9F7F4);
-  static const Color titre = Color(0xFF2D231C);
-  static const Color titreConnexion = Color(0xFF0A1838);
-  static const Color texteDoux = Color(0xFF7C6E65);
-  static const Color indice = Color(0xFF9C8E84);
-  static const Color bordure = Color(0xFFE8DED5);
-  static const Color bordureConnexion = Color(0xFFB98F72);
-  static const Color creme = Color(0xFFF5E8D3);
-  static const Color vert = Color(0xFF10B981);
-  static const Color ambre = Color(0xFFEEA823);
-  static const Color ambreFonce = Color(0xFFB45309);
+  static const Color fond = AppTheme.creme;
+  static const Color titre = AppTheme.terre;
+  static const Color titreConnexion = AppTheme.terre;
+  static const Color texteDoux = AppTheme.textMuted;
+  static const Color indice = AppTheme.textMuted;
+  static const Color bordure = AppTheme.bordure;
+  static const Color bordureConnexion = AppTheme.bordureForte;
+  static const Color creme = AppTheme.surfaceDouce;
+  static const Color vert = AppTheme.olive;
+  static const Color ambre = AppTheme.ocre;
+  static const Color ambreFonce = AppTheme.ocreProfond;
 }
 
 /// Champ blanc arrondi avec icône à gauche ; un astérisque camel marque les champs obligatoires.
@@ -116,7 +116,7 @@ class BoutonArrivee extends StatelessWidget {
         child: Ink(
           height: 54,
           decoration: const BoxDecoration(
-            gradient: LinearGradient(colors: [Color(0xFFB68A6A), Color(0xFFA67954)]),
+            gradient: LinearGradient(colors: [AppTheme.bissap, AppTheme.bissap]),
           ),
           child: InkWell(
             onTap: actif ? onPressed : null,
@@ -169,7 +169,7 @@ void afficherErreur(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message),
-      backgroundColor: const Color(0xFFC0392B),
+      backgroundColor: AppTheme.danger,
       behavior: SnackBarBehavior.floating,
       duration: const Duration(seconds: 4),
     ),

@@ -83,12 +83,15 @@ public class KycService {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-04", "Aucune pièce jointe");
         }
         Set<TypeDocument> fournis = new HashSet<>();
+        List<String> extensions = new java.util.ArrayList<>();
         for (PieceJointe p : pieces) {
-            if (p.type() == null || p.contenu() == null || p.contenu().length == 0 || !formatAutorise(p.contenu())) {
+            String extension = FormatPiece.extensionValidee(p.nomOriginal(), p.contenu());
+            if (p.type() == null || extension == null) {
                 throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-04",
-                        "Pièce invalide : formats acceptés PDF, JPEG, PNG");
+                        "Pièce invalide : formats acceptés " + FormatPiece.FORMATS_LISIBLES);
             }
             fournis.add(p.type());
+            extensions.add(extension);
         }
         Set<TypeDocument> manquants = EnumSet.noneOf(TypeDocument.class);
         manquants.addAll(TypeDocument.obligatoiresPour(u.typeActeur()));
@@ -97,8 +100,10 @@ public class KycService {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-04", "Pièces manquantes : " + manquants);
         }
         DossierKyc dossier = new DossierKyc(utilisateurId, horloge.instant());
-        for (PieceJointe p : pieces) {
-            String cle = stockage.enregistrer(p.nomOriginal(), p.contenu());
+        for (int i = 0; i < pieces.size(); i++) {
+            PieceJointe p = pieces.get(i);
+            // L'extension stockée est celle du format reconnu, jamais celle annoncée par le client
+            String cle = stockage.enregistrer("piece" + extensions.get(i), p.contenu());
             dossier.ajouter(new DocumentLegal(p.type(), cle, sha256(p.contenu()), null));
         }
         dossier = dossiers.save(dossier);
@@ -220,17 +225,6 @@ public class KycService {
                 d.getStatut().name(), d.getDateSoumission(), d.getMotifRejet(),
                 d.getDocuments().stream()
                         .map(x -> new DocumentVue(x.getId(), x.getType().name(), x.getEmpreinteSha256())).toList());
-    }
-
-    /** Signature des fichiers (et non le type déclaré par le client) : PDF, JPEG ou PNG. */
-    static boolean formatAutorise(byte[] c) {
-        if (c.length < 4) {
-            return false;
-        }
-        boolean pdf = c[0] == '%' && c[1] == 'P' && c[2] == 'D' && c[3] == 'F';
-        boolean jpeg = (c[0] & 0xFF) == 0xFF && (c[1] & 0xFF) == 0xD8 && (c[2] & 0xFF) == 0xFF;
-        boolean png = (c[0] & 0xFF) == 0x89 && c[1] == 'P' && c[2] == 'N' && c[3] == 'G';
-        return pdf || jpeg || png;
     }
 
     static String sha256(byte[] contenu) {

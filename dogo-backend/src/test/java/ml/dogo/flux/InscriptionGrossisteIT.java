@@ -76,8 +76,23 @@ class InscriptionGrossisteIT {
         assertEquals(5, dossier.get("documents").size());
         assertEquals("EN_ATTENTE", json(appel(MockMvcRequestBuilders.get("/api/kyc/moi"), jeton, 200)).get("statut").asText());
 
-        // --- tant que le dossier n'est pas validé, le catalogue reste verrouillé
+        // --- tant que le dossier n'est pas validé, seul le parcours de vérification est ouvert (RG-03),
+        //     y compris sur les routes qui ne vérifiaient pas elles-mêmes le statut du compte
         appel(produit(null), jeton, 403);
+        MockMultipartFile photoAvant = new MockMultipartFile("photo", "produit.png", "application/octet-stream", PNG);
+        MockHttpServletResponse refus = appel(
+                MockMvcRequestBuilders.multipart("/api/catalogue/upload-photo").file(photoAvant), jeton, 403);
+        assertEquals("COMPTE_INACTIF", json(refus).get("code").asText());
+        appel(MockMvcRequestBuilders.get("/api/catalogue/produits"), jeton, 403);
+        appel(post("/api/moi/moyens-paiement", null, Map.of("numero", "+22376000000", "operateur", "ORANGE_MONEY",
+                "parDefaut", true)), jeton, 403);
+        appel(MockMvcRequestBuilders.patch("/api/moi").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nom\":\"Autre nom\"}"), jeton, 403);
+        appel(MockMvcRequestBuilders.get("/api/moi"), jeton, 200);
+        appel(MockMvcRequestBuilders.get("/api/moi/notifications"), jeton, 200);
+        // Coordonnées du support : publiques, et lisibles par un compte en attente (écran d'examen)
+        appel(MockMvcRequestBuilders.get("/api/public/contact"), null, 200);
+        appel(MockMvcRequestBuilders.get("/api/public/contact"), jeton, 200);
 
         // --- un administrateur VALIDATION approuve le dossier (RG-05)
         String validation = json(post("/api/auth/connexion", null, Map.of("telephone", "+22370000002", "pin", "Dogo2026!")), 200)

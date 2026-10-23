@@ -5,13 +5,14 @@ import 'api/api_exception.dart';
 import 'auth_service.dart';
 
 /// Types de pièces acceptés par le backend (ml.dogo.identite.domain.TypeDocument)
-enum TypeDocumentKyc { pieceIdentite, registreCommerce, nif, releveBancaire, autre }
+enum TypeDocumentKyc { pieceIdentite, registreCommerce, nif, licenceTransit, releveBancaire, autre }
 
 extension TypeDocumentKycCode on TypeDocumentKyc {
   String get code => switch (this) {
         TypeDocumentKyc.pieceIdentite => 'PIECE_IDENTITE',
         TypeDocumentKyc.registreCommerce => 'REGISTRE_COMMERCE',
         TypeDocumentKyc.nif => 'NIF',
+        TypeDocumentKyc.licenceTransit => 'LICENCE_TRANSIT',
         TypeDocumentKyc.releveBancaire => 'RELEVE_BANCAIRE',
         TypeDocumentKyc.autre => 'AUTRE',
       };
@@ -44,6 +45,7 @@ class PieceDocumentKyc {
     if (str.contains('IDENTITE')) return TypeDocumentKyc.pieceIdentite;
     if (str.contains('COMMERCE')) return TypeDocumentKyc.registreCommerce;
     if (str.contains('NIF')) return TypeDocumentKyc.nif;
+    if (str.contains('LICENCE')) return TypeDocumentKyc.licenceTransit;
     if (str.contains('BANCAIRE')) return TypeDocumentKyc.releveBancaire;
     return TypeDocumentKyc.autre;
   }
@@ -94,6 +96,12 @@ class KycApiService {
     TypeDocumentKyc.nif,
   };
 
+  /// Pièces exigées pour un Courtier (TypeDocument.obligatoiresPour côté backend)
+  static const Set<TypeDocumentKyc> obligatoiresCourtier = {
+    TypeDocumentKyc.pieceIdentite,
+    TypeDocumentKyc.licenceTransit,
+  };
+
   static const int tailleMaxOctets = 5 * 1024 * 1024;
 
   final ApiClient _api = ApiClient.instance;
@@ -141,12 +149,33 @@ class KycApiService {
     }
   }
 
-  /// Signature binaire acceptée par le backend : PDF, JPEG ou PNG
-  static bool formatAccepte(Uint8List c) {
+  /// Extensions proposées par le sélecteur de fichiers (images, PDF et documents électroniques)
+  static const extensionsAcceptees = [
+    'pdf', 'jpg', 'jpeg', 'png', //
+    'doc', 'docx', 'odt', 'rtf', 'txt', //
+    'xls', 'xlsx', 'ods', 'csv',
+  ];
+
+  /// Même contrôle que le backend (FormatPiece) : le contenu doit correspondre au format annoncé.
+  /// PDF, JPEG et PNG sont reconnus à leur signature ; les autres d'après l'extension + signature.
+  static bool formatAccepte(Uint8List c, String nom) {
     if (c.length < 4) return false;
     final pdf = c[0] == 0x25 && c[1] == 0x50 && c[2] == 0x44 && c[3] == 0x46;
     final jpeg = c[0] == 0xFF && c[1] == 0xD8 && c[2] == 0xFF;
     final png = c[0] == 0x89 && c[1] == 0x50 && c[2] == 0x4E && c[3] == 0x47;
-    return pdf || jpeg || png;
+    if (pdf || jpeg || png) return true;
+
+    final point = nom.lastIndexOf('.');
+    final ext = point < 0 ? '' : nom.substring(point + 1).toLowerCase().trim();
+    final zip = c[0] == 0x50 && c[1] == 0x4B && c[2] == 0x03 && c[3] == 0x04;
+    const ole2 = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+    final estOle2 = c.length >= 8 && List.generate(8, (i) => c[i] == ole2[i]).every((ok) => ok);
+    return switch (ext) {
+      'docx' || 'xlsx' || 'odt' || 'ods' => zip,
+      'doc' || 'xls' => estOle2,
+      'rtf' => c.length >= 5 && String.fromCharCodes(c.sublist(0, 5)) == r'{\rtf',
+      'txt' || 'csv' => c.every((b) => (b >= 0x20 && b != 0x7F) || b == 0x09 || b == 0x0A || b == 0x0D || b == 0x0C),
+      _ => false,
+    };
   }
 }

@@ -38,14 +38,14 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
 
             String cat = "Convois";
             IconData icon = Icons.local_shipping_rounded;
-            Color col = const Color(0xFF1E88E5);
+            Color col = AppTheme.olive;
             if (contenu.toLowerCase().contains("retrait") ||
                 contenu.toLowerCase().contains("colis") ||
                 contenu.toLowerCase().contains("code") ||
                 contenu.toLowerCase().contains("scanner")) {
               cat = "Retraits";
               icon = Icons.qr_code_scanner_rounded;
-              col = const Color(0xFF43A047);
+              col = AppTheme.olive;
             }
 
             String dateAffichee = "Récemment";
@@ -110,7 +110,7 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
         ),
         title: Text(
           "Notifications Courtier",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         actions: [
           if (_notifications.isNotEmpty)
@@ -118,7 +118,7 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
               onPressed: _marquerToutesLues,
               child: const Text(
                 "Tout marquer lu",
-                style: TextStyle(fontSize: 11.5, color: Color(0xFF9E6738), fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 11.5, color: AppTheme.bissap, fontWeight: FontWeight.w700),
               ),
             ),
           const SizedBox(width: 8),
@@ -126,7 +126,7 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
       ),
       body: RefreshIndicator(
         onRefresh: _chargerNotifications,
-        color: const Color(0xFF9E6738),
+        color: AppTheme.bissap,
         child: Column(
           children: [
             Padding(
@@ -145,7 +145,7 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
             Expanded(
               child: _chargement
                   ? const Center(
-                      child: CircularProgressIndicator(color: Color(0xFF9E6738)),
+                      child: CircularProgressIndicator(color: AppTheme.olive),
                     )
                   : list.isEmpty
                       ? ListView(
@@ -172,7 +172,7 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
                                   const SizedBox(height: 16),
                                   Text(
                                     "Aucune notification",
-                                    style: TextStyle(
+                                    style: TextStyle(fontFamily: AppTheme.policeTitre, 
                                       fontWeight: FontWeight.w800,
                                       fontSize: 16,
                                       color: AppTheme.couleurTexte(context),
@@ -205,10 +205,10 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
                                 color: AppTheme.couleurCarte(context),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: estLu ? Colors.transparent : const Color(0xFF9E6738).withValues(alpha: 0.18),
+                                  color: estLu ? Colors.transparent : AppTheme.bissap.withValues(alpha: 0.18),
                                 ),
                                 boxShadow: const [
-                                  BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
+                                  BoxShadow(color: Color(0x062C241E), blurRadius: 10, offset: Offset(0, 3)),
                                 ],
                               ),
                               child: Row(
@@ -259,7 +259,7 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
                                       height: 8,
                                       margin: const EdgeInsets.only(top: 6),
                                       decoration: const BoxDecoration(
-                                        color: Color(0xFFE53935),
+                                        color: AppTheme.danger,
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -282,10 +282,10 @@ class _NotificationsCourtierScreenState extends State<NotificationsCourtierScree
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF9E6738) : AppTheme.couleurCarte(context),
+          color: isSelected ? AppTheme.bissap : AppTheme.couleurCarte(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF9E6738) : AppTheme.couleurBordure(context),
+            color: isSelected ? AppTheme.bissap : AppTheme.couleurBordure(context),
           ),
         ),
         child: Text(

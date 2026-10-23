@@ -4,12 +4,12 @@ import '../theme/app_theme.dart';
 import '../widgets/bouton_bascule_theme.dart';
 import 'campagne_model.dart';
 import '../services/auth_service.dart';
-import '../services/api/api_config.dart';
 import 'favoris_service.dart';
 import 'mes_favoris_screen.dart';
 import 'groupe_selection_service.dart';
 import 'notifications_commercant_screen.dart';
 import '../services/notification_api_service.dart';
+import '../services/visibilite_ecran.dart';
 
 /// Écran d'accueil principal du Commerçant
 /// Vitrine d'achats groupés en cours avec mise en favoris, filtres et progression.
@@ -20,30 +20,41 @@ class CommercantHomeScreen extends StatefulWidget {
   State<CommercantHomeScreen> createState() => _CommercantHomeScreenState();
 }
 
-class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
+class _CommercantHomeScreenState extends State<CommercantHomeScreen> with ActualisationAutomatique<CommercantHomeScreen> {
   String _categorieActive = "Tous";
   String _courtierActif = "Tous";
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
   int _nbNotifsNonLues = 0;
 
-  final List<String> _categories = [
-    "Tous",
-    "Sneakers",
-    "Mode Féminine",
-    "Chaussures",
-    "Montres & Bijoux",
-  ];
+  /// Filtres construits à partir des groupes réellement publiés : uniquement des catégories et des courtiers
+  /// présents, donc jamais un filtre qui mène à une liste vide ; ils suivent chaque actualisation.
+  List<String> get _categories => [
+        "Tous",
+        ...{
+          for (final c in FavorisService.instance.toutesLesCampagnes)
+            if (c.categorie.trim().isNotEmpty) c.categorie,
+        },
+      ];
 
-  final List<String> _courtiers = [
-    "Tous",
-    "Touré Transit & Logistique SARL",
-    "Diarra Logistique Express",
-  ];
+  List<String> get _courtiers => [
+        "Tous",
+        ...{
+          for (final c in FavorisService.instance.toutesLesCampagnes)
+            if (c.courtierNom.trim().isNotEmpty) c.courtierNom,
+        },
+      ];
+
+  /// Données vivantes : relues en arrière-plan tant que l'écran est affiché
+  @override
+  Future<void> actualiserEnSilence() async {
+    await Future.wait([FavorisService.instance.actualiserDepuisBackend(), _chargerNotifsNonLues()]);
+  }
 
   @override
   void initState() {
     super.initState();
+    demarrerActualisation();
     FavorisService.instance.actualiserDepuisBackend();
     _chargerNotifsNonLues();
   }
@@ -74,6 +85,12 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
           builder: (context, _) {
             final favorisIds = FavorisService.instance.favorisNotifier.value;
             final toutesCampagnes = FavorisService.instance.toutesLesCampagnes;
+
+            // Un filtre dont la valeur a disparu après une actualisation retombe sur « Tous »
+            if (_categorieActive != "Favoris" && !_categories.contains(_categorieActive)) {
+              _categorieActive = "Tous";
+            }
+            if (!_courtiers.contains(_courtierActif)) _courtierActif = "Tous";
 
             // Filtrage par catégorie, courtier, favoris et recherche
             final campagnesFiltrees = toutesCampagnes.where((c) {
@@ -142,15 +159,15 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                 children: [
                                   CircleAvatar(
                                     radius: 22,
-                                    backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+                                    backgroundColor: AppTheme.rose,
                                     backgroundImage: aPhoto
-                                        ? NetworkImage(ApiConfig.resolutionImageUrl(user.photoUrl))
+                                        ? imageReseauDimensionnee(context, user.photoUrl!, 44)
                                         : null,
                                     child: !aPhoto
                                         ? Text(
                                             initiales,
                                             style: const TextStyle(
-                                              color: AppTheme.primary,
+                                              color: AppTheme.terre,
                                               fontWeight: FontWeight.w800,
                                               fontSize: 14,
                                             ),
@@ -173,7 +190,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                         const SizedBox(height: 2),
                                         Row(
                                           children: [
-                                            const Icon(Icons.location_on, size: 13, color: AppTheme.secondary),
+                                            const Icon(Icons.location_on, size: 13, color: AppTheme.ocreProfond),
                                             const SizedBox(width: 4),
                                             Expanded(
                                               child: Text(
@@ -220,7 +237,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                 icon: Icon(
                                   favorisIds.isNotEmpty ? Icons.favorite : Icons.favorite_border,
                                   color: favorisIds.isNotEmpty
-                                      ? Colors.redAccent
+                                      ? AppTheme.danger
                                       : AppTheme.couleurTexte(context),
                                   size: 22,
                                 ),
@@ -238,7 +255,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: const BoxDecoration(
-                                      color: Colors.redAccent,
+                                      color: AppTheme.danger,
                                       shape: BoxShape.circle,
                                     ),
                                     constraints: const BoxConstraints(
@@ -267,7 +284,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _nbNotifsNonLues > 0
-                                  ? AppTheme.primary.withValues(alpha: 0.3)
+                                  ? AppTheme.rose
                                   : Theme.of(context).colorScheme.outlineVariant,
                             ),
                           ),
@@ -300,7 +317,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: const BoxDecoration(
-                                      color: Color(0xFFE53935),
+                                      color: AppTheme.danger,
                                       shape: BoxShape.circle,
                                     ),
                                     constraints: const BoxConstraints(
@@ -339,9 +356,9 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                         controller: _searchController,
                         onChanged: (val) => setState(() => _searchQuery = val),
                         decoration: InputDecoration(
-                          icon: const Icon(Icons.search, color: AppTheme.textMuted),
+                          icon: Icon(Icons.search, color: AppTheme.couleurTexteAttenue(context)),
                           hintText: "Rechercher un produit, une marque, un groupe...",
-                          hintStyle: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                          hintStyle: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
                           border: InputBorder.none,
                           suffixIcon: _searchQuery.isNotEmpty
                               ? IconButton(
@@ -364,15 +381,11 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppTheme.primary, Color(0xFF8C5F3F)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        gradient: AppTheme.degradeTerre,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x1A46321E),
+                            color: Color(0x1A2C241E),
                             blurRadius: 20,
                             offset: Offset(0, 8),
                           ),
@@ -390,7 +403,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                             child: const Text(
                               "PRIX USINE DIRECT",
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppTheme.terre,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 11.5,
                                 letterSpacing: 0.5,
@@ -434,12 +447,12 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
                               color: _categorieActive == "Favoris"
-                                  ? Colors.redAccent
+                                  ? AppTheme.danger
                                   : AppTheme.couleurCarte(context),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: _categorieActive == "Favoris"
-                                    ? Colors.redAccent
+                                    ? AppTheme.danger
                                     : AppTheme.couleurBordure(context),
                               ),
                             ),
@@ -450,7 +463,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                   size: 14,
                                   color: _categorieActive == "Favoris"
                                       ? Colors.white
-                                      : Colors.redAccent,
+                                      : AppTheme.danger,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
@@ -479,10 +492,10 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                               margin: const EdgeInsets.only(right: 8),
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.primary : AppTheme.couleurCarte(context),
+                                color: isSelected ? AppTheme.terre : AppTheme.couleurCarte(context),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: isSelected ? AppTheme.primary : AppTheme.couleurBordure(context),
+                                  color: isSelected ? AppTheme.terre : AppTheme.couleurBordure(context),
                                 ),
                               ),
                               child: Text(
@@ -501,11 +514,13 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                   ),
 
                   // 4. bis - Filtre rapide par Courtier Organisateur
+                  // (masqué tant qu'aucun groupe publié n'a de courtier)
+                  if (_courtiers.length > 1) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
                     child: Row(
                       children: [
-                        const Icon(Icons.verified, size: 14, color: AppTheme.primary),
+                        const Icon(Icons.verified, size: 14, color: AppTheme.olive),
                         const SizedBox(width: 6),
                         Text(
                           "Courtiers & Transitaires :",
@@ -543,7 +558,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                   Icon(
                                     Icons.business,
                                     size: 13,
-                                    color: isSelected ? Colors.white : AppTheme.primary,
+                                    color: isSelected ? AppTheme.terre : AppTheme.olive,
                                   ),
                                   const SizedBox(width: 5),
                                 ],
@@ -552,7 +567,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                    color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
+                                    color: isSelected ? AppTheme.terre : AppTheme.couleurTexte(context),
                                   ),
                                 ),
                               ],
@@ -562,6 +577,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                       }).toList(),
                     ),
                   ),
+                  ],
 
                   const SizedBox(height: 14),
 
@@ -591,7 +607,6 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                             child: const Text(
                               "Mes favoris",
                               style: TextStyle(
-                                color: AppTheme.primary,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 12.5,
                               ),
@@ -607,20 +622,20 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                       margin: const EdgeInsets.all(20),
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.couleurCarte(context),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Center(
                         child: Column(
                           children: [
-                            const Icon(Icons.favorite_border, size: 40, color: AppTheme.textMuted),
+                            Icon(Icons.favorite_border, size: 40, color: AppTheme.couleurTexteAttenue(context)),
                             const SizedBox(height: 10),
                             Text(
                               _categorieActive == "Favoris"
                                   ? "Vous n'avez pas encore de groupe en favoris."
                                   : "Aucun groupe d'achat trouvé pour ce critère.",
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                              style: TextStyle(color: AppTheme.couleurTexteAttenue(context), fontSize: 13),
                             ),
                           ],
                         ),
@@ -635,33 +650,33 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                           margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.10),
+                            color: AppTheme.couleurFondSucces(context),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.35)),
+                            border: Border.all(color: AppTheme.couleurBordureForte(context)),
                           ),
                           child: Row(
                             children: [
                               Container(
                                 padding: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: AppTheme.primary,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.couleurSucces(context),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.check, color: Colors.white, size: 14),
+                                child: Icon(Icons.check, color: AppTheme.texteSur(AppTheme.couleurSucces(context)), size: 14),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: RichText(
                                   text: TextSpan(
-                                    style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary),
+                                    style: TextStyle(fontSize: 12, color: AppTheme.couleurTexte(context)),
                                     children: [
                                       const TextSpan(text: "Groupe sélectionné : "),
                                       TextSpan(
                                         text: selection.titre,
-                                        style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.primary),
+                                        style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.couleurSucces(context)),
                                       ),
                                       TextSpan(
-                                        text: " (${selection.prixGroupe} F) • Appuyez sur (+) > Rejoindre pour payer 💳",
+                                        text: " (${selection.prixGroupe} F) • Appuyez sur (+) > Rejoindre pour voir les détails et choisir la quantité",
                                         style: const TextStyle(fontWeight: FontWeight.w600),
                                       ),
                                     ],
@@ -696,7 +711,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
                         "Opportunités d'importation directes",
-                        style: TextStyle(
+                        style: TextStyle(fontFamily: AppTheme.policeTitre, 
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.couleurTexte(context),
@@ -741,7 +756,6 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                backgroundColor: AppTheme.primary,
                 duration: const Duration(seconds: 2),
                 content: Text(
                   "'${groupe.titre}' sélectionné\n(+) > REJOINDRE pour payer",
@@ -756,17 +770,17 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
             decoration: BoxDecoration(
               color: isSelected
                   ? (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF2B231D)
-                      : const Color(0xFFFDFBF8))
+                      ? AppTheme.terre
+                      : AppTheme.creme)
                   : Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? AppTheme.primary : Theme.of(context).colorScheme.outlineVariant,
+                color: isSelected ? AppTheme.olive : Theme.of(context).colorScheme.outlineVariant,
                 width: isSelected ? 2.5 : 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: isSelected ? AppTheme.primary.withValues(alpha: 0.20) : const Color(0x0A46321E),
+                  color: isSelected ? AppTheme.olive.withValues(alpha: 0.20) : const Color(0x0A2C241E),
                   blurRadius: isSelected ? 18 : 14,
                   offset: const Offset(0, 4),
                 ),
@@ -790,7 +804,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                           errorBuilder: (_, __, ___) => const Icon(
                             Icons.shopping_bag_outlined,
                             size: 50,
-                            color: AppTheme.primary,
+                            color: AppTheme.textePale,
                           ),
                         ),
                       ),
@@ -808,7 +822,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                         child: Text(
                           groupe.tempsRestant,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.terre,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
                           ),
@@ -826,7 +840,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: AppTheme.couleurCarte(context),
                             shape: BoxShape.circle,
                             boxShadow: const [
                               BoxShadow(color: Color(0x22000000), blurRadius: 4),
@@ -834,7 +848,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                           ),
                           child: Icon(
                             isFavori ? Icons.favorite : Icons.favorite_border,
-                            color: isFavori ? Colors.redAccent : AppTheme.textMuted,
+                            color: isFavori ? AppTheme.couleurDanger(context) : AppTheme.couleurTexteAttenue(context),
                             size: 16,
                           ),
                         ),
@@ -847,7 +861,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppTheme.primary : Colors.white.withValues(alpha: 0.9),
+                          color: isSelected ? AppTheme.couleurSucces(context) : AppTheme.couleurCarte(context),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 4)],
                         ),
@@ -857,7 +871,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                             Icon(
                               isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
                               size: 12,
-                              color: isSelected ? Colors.white : AppTheme.textMuted,
+                              color: isSelected ? AppTheme.texteSur(AppTheme.couleurSucces(context)) : AppTheme.couleurTexteAttenue(context),
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -865,7 +879,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                               style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w800,
-                                color: isSelected ? Colors.white : AppTheme.textMuted,
+                                color: isSelected ? AppTheme.texteSur(AppTheme.couleurSucces(context)) : AppTheme.couleurTexteAttenue(context),
                               ),
                             ),
                           ],
@@ -910,7 +924,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.verified, size: 11, color: AppTheme.primary),
+                      const Icon(Icons.verified, size: 11, color: AppTheme.olive),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
@@ -920,7 +934,6 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                           style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.primary,
                           ),
                         ),
                       ),
@@ -938,15 +951,14 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.primary,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       "${groupe.prixPublic} F",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11.5,
-                        color: AppTheme.textMuted,
+                        color: AppTheme.couleurTexteAttenue(context),
                         decoration: TextDecoration.lineThrough,
                       ),
                     ),
@@ -965,10 +977,10 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                     ),
                     Text(
                       "${(groupe.ratio * 100).toInt()}%",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.primary,
+                        color: AppTheme.couleurSucces(context),
                       ),
                     ),
                   ],
@@ -979,8 +991,8 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                   child: LinearProgressIndicator(
                     value: groupe.ratio,
                     minHeight: 6,
-                    backgroundColor: const Color(0xFFF1EAE2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                    backgroundColor: AppTheme.couleurBordure(context),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.couleurSucces(context)),
                   ),
                 ),
               ],
@@ -1007,7 +1019,6 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                backgroundColor: AppTheme.primary,
                 duration: const Duration(seconds: 2),
                 content: Text(
                   "'${groupe.titre}' sélectionné\n(+) > REJOINDRE pour payer",
@@ -1021,17 +1032,17 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
             decoration: BoxDecoration(
               color: isSelected
                   ? (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF2B231D)
-                      : const Color(0xFFFDFBF8))
+                      ? AppTheme.terre
+                      : AppTheme.creme)
                   : Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? AppTheme.primary : Theme.of(context).colorScheme.outlineVariant,
+                color: isSelected ? AppTheme.olive : Theme.of(context).colorScheme.outlineVariant,
                 width: isSelected ? 2.5 : 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: isSelected ? AppTheme.primary.withValues(alpha: 0.16) : const Color(0x0846321E),
+                  color: isSelected ? AppTheme.olive.withValues(alpha: 0.16) : const Color(0x082C241E),
                   blurRadius: isSelected ? 16 : 14,
                   offset: const Offset(0, 3),
                 ),
@@ -1071,7 +1082,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.primary : const Color(0xFFF0EAE3),
+                              color: isSelected ? AppTheme.couleurSucces(context) : AppTheme.couleurBordure(context),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -1080,7 +1091,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                 Icon(
                                   isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
                                   size: 11,
-                                  color: isSelected ? Colors.white : AppTheme.textMuted,
+                                  color: isSelected ? AppTheme.texteSur(AppTheme.couleurSucces(context)) : AppTheme.couleurTexteAttenue(context),
                                 ),
                                 const SizedBox(width: 3),
                                 Text(
@@ -1088,7 +1099,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w800,
-                                    color: isSelected ? Colors.white : AppTheme.textMuted,
+                                    color: isSelected ? AppTheme.texteSur(AppTheme.couleurSucces(context)) : AppTheme.couleurTexteAttenue(context),
                                   ),
                                 ),
                               ],
@@ -1101,12 +1112,12 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                         groupe.sousTitre,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+                        style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.verified, size: 12, color: AppTheme.primary),
+                          const Icon(Icons.verified, size: 12, color: AppTheme.olive),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -1116,7 +1127,6 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                               style: const TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
-                                color: AppTheme.primary,
                               ),
                             ),
                           ),
@@ -1130,15 +1140,14 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
-                              color: AppTheme.primary,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             "${groupe.prixPublic} F",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11.5,
-                              color: AppTheme.textMuted,
+                              color: AppTheme.couleurTexteAttenue(context),
                               decoration: TextDecoration.lineThrough,
                             ),
                           ),
@@ -1150,8 +1159,8 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                         child: LinearProgressIndicator(
                           value: groupe.ratio,
                           minHeight: 5,
-                          backgroundColor: const Color(0xFFF1EAE2),
-                          valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                          backgroundColor: AppTheme.couleurBordure(context),
+                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.couleurSucces(context)),
                         ),
                       ),
                     ],
@@ -1160,7 +1169,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> {
                 IconButton(
                   icon: Icon(
                     isFavori ? Icons.favorite : Icons.favorite_border,
-                    color: isFavori ? Colors.redAccent : AppTheme.textMuted,
+                    color: isFavori ? AppTheme.couleurDanger(context) : AppTheme.couleurTexteAttenue(context),
                     size: 20,
                   ),
                   onPressed: () {

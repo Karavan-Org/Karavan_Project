@@ -4,10 +4,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 import ml.dogo.identite.application.AuthService;
 import ml.dogo.identite.application.InscriptionService;
 import ml.dogo.identite.application.RefreshTokenService;
 import ml.dogo.identite.domain.TypeActeur;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +21,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final String CLIENT_HEADER = "X-Client-Platform";
+    private static final String CONSOLE_ADMIN = "admin-console";
+    private static final String FLUTTER_WEB = "flutter-web";
+
+    @Value("${dogo.auth.cookie-secure:false}")
+    private boolean cookiesSecurises;
+
+    public record ReponseSession(String jeton, String refreshToken, Instant expiration,
+                                 Instant refreshExpiration, AuthService.Profil profil) {
+    }
 
     public record InscriptionRequete(
             @NotNull TypeActeur type, @NotBlank String telephone, @NotBlank String nom,
@@ -82,18 +95,18 @@ public class AuthController {
     }
 
     @PostMapping("/connexion")
-    public AuthService.Connexion connecter(@Valid @RequestBody ConnexionRequete r,
-                                           HttpServletRequest http,
-                                           jakarta.servlet.http.HttpServletResponse res) {
+    public ReponseSession connecter(@Valid @RequestBody ConnexionRequete r,
+                                    HttpServletRequest http,
+                                    jakarta.servlet.http.HttpServletResponse res) {
         AuthService.Connexion c = auth.connecter(r.telephone(), r.motDePasseEffectif(), r.deviceId(), http.getRemoteAddr());
         if (c.refreshToken() != null && c.refreshExpiration() != null) {
-            poserCookie(res, c.refreshToken(), http.isSecure(), c.refreshExpiration());
+            poserCookie(res, c.refreshToken(), cookieSecurise(http), c.refreshExpiration());
         }
-        return c;
+        return reponseSession(c.jeton(), c.refreshToken(), c.expiration(), c.refreshExpiration(), c.profil(), http);
     }
 
     @PostMapping("/refresh")
-    public org.springframework.http.ResponseEntity<RefreshTokenService.TokenPair> rafraichir(
+    public org.springframework.http.ResponseEntity<ReponseSession> rafraichir(
             @RequestBody(required = false) RefreshRequete r,
             HttpServletRequest request,
             jakarta.servlet.http.HttpServletResponse response) {
@@ -107,8 +120,22 @@ public class AuthController {
                 : request.getHeader("X-Device-Id");
 
         RefreshTokenService.TokenPair pair = refreshTokenService.rafraichir(token, deviceId, request.getRemoteAddr());
-        poserCookie(response, pair.refreshToken(), request.isSecure(), pair.refreshExpiration());
-        return org.springframework.http.ResponseEntity.ok(pair);
+        poserCookie(response, pair.refreshToken(), cookieSecurise(request), pair.refreshExpiration());
+        return org.springframework.http.ResponseEntity.ok(reponseSession(
+                pair.jeton(), pair.refreshToken(), pair.expiration(), pair.refreshExpiration(), pair.profil(), request));
+    }
+
+    private ReponseSession reponseSession(String jeton, String refreshToken, Instant expiration,
+                                         Instant refreshExpiration, AuthService.Profil profil,
+                                         HttpServletRequest request) {
+        String client = request.getHeader(CLIENT_HEADER);
+        boolean exposeRefreshToken = !CONSOLE_ADMIN.equalsIgnoreCase(client)
+                && !FLUTTER_WEB.equalsIgnoreCase(client);
+        return new ReponseSession(jeton,
+                exposeRefreshToken ? refreshToken : null,
+                expiration,
+                exposeRefreshToken ? refreshExpiration : null,
+                profil);
     }
 
     @PostMapping("/logout")
@@ -121,7 +148,11 @@ public class AuthController {
         if (token != null && !token.isBlank()) {
             refreshTokenService.revoquerToken(token);
         }
-        supprimerCookie(response, request.isSecure());
+        supprimerCookie(response, cookieSecurise(request));
+    }
+
+    private boolean cookieSecurise(HttpServletRequest request) {
+        return request.isSecure() || cookiesSecurises;
     }
 
     private String extraireRefreshToken(String fromBody, HttpServletRequest request) {

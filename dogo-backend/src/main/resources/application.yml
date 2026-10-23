@@ -1,10 +1,14 @@
 spring:
+  profiles:
+    default: prod
+    group:
+      demo: local
   application:
     name: dogo-backend
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/dogo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
-    username: ${DB_USER:root}
-    password: ${DB_PASSWORD:1234}
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     hikari:
       # Chaque lecture voit toujours les données validées les plus récentes, même après une attente de verrou :
       # les décisions reposent sur des verrous et des mises à jour atomiques, pas sur un instantané de la transaction.
@@ -39,10 +43,19 @@ springdoc:
 
 # Paramètres métier (voir « Règles de gestion »). Les valeurs marquées [à confirmer] sont des propositions.
 dogo:
+  # Coordonnées du support affichées dans les applications (vide = canal masqué)
+  support:
+    telephone: ${DOGO_SUPPORT_TELEPHONE:}
+    whatsapp: ${DOGO_SUPPORT_WHATSAPP:}
+    email: ${DOGO_SUPPORT_EMAIL:}
+    adresse: ${DOGO_SUPPORT_ADRESSE:}
+    horaires: ${DOGO_SUPPORT_HORAIRES:}
   cors:
-    origines: ${DOGO_CORS_ORIGINS:http://localhost:[*],http://127.0.0.1:[*],http://10.0.2.2:[*]}
+    origines: ${DOGO_CORS_ORIGINS}
+  auth:
+    cookie-secure: ${DOGO_COOKIE_SECURE}
   jwt:
-    secret: ${DOGO_JWT_SECRET:changez-moi-changez-moi-changez-moi-32-octets-minimum}
+    secret: ${DOGO_JWT_SECRET}
   otp:
     validite: PT2M                 # RG-02 (2 minutes, standard sécurité bancaire/fintech)
     max-tentatives: 3              # RG-02
@@ -60,6 +73,6 @@ dogo:
     validite: P7D                  # RG-54 [à confirmer]
     max-tentatives: 3              # RG-54
   mobile-money:
-    secret-callback: ${DOGO_MM_SECRET:secret-de-demo-a-remplacer}   # signature HMAC des callbacks (RG-35)
+    secret-callback: ${DOGO_MM_SECRET}   # signature HMAC des callbacks (RG-35)
   stockage:
     dossier: ${DOGO_STOCKAGE:./donnees/fichiers}

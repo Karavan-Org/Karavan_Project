@@ -50,6 +50,8 @@ void main() {
             varianteId: 1,
             quantite: 3,
             quantiteMin: 2,
+            quantiteObjectif: 10,
+            quantiteRestante: 10,
             prixUnitaire: 10000,
             titre: 'Chaussures Sport',
           ),
@@ -104,6 +106,7 @@ void main() {
             prixGroupe: 5000,
             variantes: variantes,
             quantiteMin: 2,
+            quantiteObjectif: 10,
           ),
         ),
       );
@@ -113,7 +116,7 @@ void main() {
       expect(find.textContaining('Variantes du grossiste'), findsOneWidget);
       expect(find.text('S • Rouge'), findsOneWidget);
       expect(find.text('L • Noir'), findsOneWidget);
-      expect(find.text('Min: 2 lots (RG-27)'), findsOneWidget);
+      expect(find.text('Min: 2 · Max: 10 lots'), findsOneWidget);
     });
   });
 }

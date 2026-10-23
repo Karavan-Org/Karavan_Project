@@ -10,7 +10,7 @@ Future<void> afficherPartageGroupe(BuildContext context, GroupeResume groupe) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
+    backgroundColor: AppTheme.couleurCarte(context),
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (_) => _PartageGroupe(groupe: groupe),
   );
@@ -55,26 +55,26 @@ class _PartageGroupe extends StatelessWidget {
               child: Container(
                 width: 42,
                 height: 4,
-                decoration: BoxDecoration(color: const Color(0xFFE5DDD5), borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: AppTheme.bordureForte, borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
             Text("Inviter des commerçants",
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context))),
+                style: TextStyle(fontFamily: AppTheme.policeTitre, fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context))),
             const SizedBox(height: 4),
             Text(
               publie
                   ? "Les commerçants qui ouvrent ce lien arrivent directement sur votre groupe."
                   : "Partagez-le dès maintenant : il donnera accès au groupe dès sa publication par dɔgɔ.",
-              style: const TextStyle(fontSize: 12.5, color: AppTheme.textMuted),
+              style: TextStyle(fontSize: 12.5, color: AppTheme.couleurTexteAttenue(context)),
             ),
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F2EB),
+                color: AppTheme.couleurSurfaceDouce(context),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFEFE9E0)),
+                border: Border.all(color: AppTheme.couleurBordure(context)),
               ),
               child: Row(
                 children: [
@@ -87,7 +87,7 @@ class _PartageGroupe extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.primary)),
                         Text("Code : ${LienGroupe.code(groupe.id)}",
-                            style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted)),
+                            style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                       ],
                     ),
                   ),
@@ -115,7 +115,7 @@ class _PartageGroupe extends StatelessWidget {
                   child: _bouton(
                     icone: Icons.sms_rounded,
                     label: "SMS",
-                    couleur: const Color(0xFF1976D2),
+                    couleur: AppTheme.olive,
                     onTap: () => _ouvrir(context, Uri(scheme: 'sms', queryParameters: {'body': _message})),
                   ),
                 ),

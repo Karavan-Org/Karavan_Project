@@ -128,12 +128,12 @@ class _GrossisteInscriptionScreenState
                   height: 56, fit: BoxFit.contain),
               const SizedBox(height: 14),
               SvgPicture.asset('assets/images/grossiste/port_scene.svg',
-                  width: 346, height: 86),
+                  width: double.infinity, height: 86),
               const SizedBox(height: 8),
               Text(
                 "Rejoignez dɔgɔ\nen tant que grossiste",
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: TextStyle(fontFamily: AppTheme.policeTitre, 
                     fontSize: 20.5,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.couleurTexte(context),
@@ -240,7 +240,7 @@ class _GrossisteInscriptionScreenState
                   TextSpan(
                     style: TextStyle(
                         fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
-                    children: [
+                    children: const [
                       TextSpan(text: "Vous avez déjà un compte ? "),
                       TextSpan(
                         text: "Se connecter",

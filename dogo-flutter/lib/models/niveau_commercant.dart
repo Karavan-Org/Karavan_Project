@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Les 3 niveaux de progression d'un Commerçant sur la plateforme DoGo
 /// Basés sur le volume de commandes finalisées :
@@ -11,7 +12,7 @@ enum NiveauCommercant {
     titre: 'Niveau 1',
     sousTitre: 'Nouveau Commerçant',
     description: 'Accédez aux achats groupés sécurisés par séquestre et achetez vos stocks au prix usine.',
-    couleurBadge: Color(0xFF5A6B7C), // Ardoise doux
+    couleurBadge: AppTheme.terreDouce, // Ardoise doux
     icone: Icons.verified_user_outlined,
     seuilMin: 0,
     seuilSuivant: 5,
@@ -33,7 +34,7 @@ enum NiveauCommercant {
     titre: 'Niveau 2',
     sousTitre: 'Commerçant Vérifié',
     description: 'Commerçant actif et fidèle. Vous bénéficiez d\'une priorité sur les arrivages et d\'un badge vérifié.',
-    couleurBadge: Color(0xFF9E6738), // Terre cuite cuivrée originale de la maquette Figma
+    couleurBadge: AppTheme.bissap, // Terre cuite cuivrée originale de la maquette Figma
     icone: Icons.stars_rounded,
     seuilMin: 5,
     seuilSuivant: 20,
@@ -56,7 +57,7 @@ enum NiveauCommercant {
     titre: 'Niveau 3',
     sousTitre: 'Commerçant VIP',
     description: 'Partenaire commercial privilégié d\'élite. Accédez au sourcing direct usine et à un accompagnement d\'exception.',
-    couleurBadge: Color(0xFFD48800), // Doré ambré prestige
+    couleurBadge: AppTheme.ocreProfond, // Doré ambré prestige
     icone: Icons.workspace_premium_rounded,
     seuilMin: 20,
     seuilSuivant: null,

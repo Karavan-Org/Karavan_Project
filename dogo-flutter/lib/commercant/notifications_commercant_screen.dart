@@ -8,6 +8,7 @@ import '../widgets/itineraire_depot.dart';
 
 import 'mes_commandes_screen.dart';
 import 'portefeuille_commercant_screen.dart';
+import '../services/visibilite_ecran.dart';
 
 /// Écran des Notifications Commerçant (Frame Figma "Notifications")
 class NotificationsCommercantScreen extends StatefulWidget {
@@ -29,7 +30,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
     _chargerNotifications();
     // Actualisation Live automatique toutes les 4 secondes
     _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (mounted) _chargerNotifications(silencieux: true);
+      if (mounted && ecranVisible(context)) _chargerNotifications(silencieux: true);
     });
   }
 
@@ -57,7 +58,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
           final cLower = contenu.toLowerCase();
           String cat = "Groupes";
           IconData icon = Icons.groups_rounded;
-          Color col = const Color(0xFF2E7D32);
+          Color col = AppTheme.olive;
           String titre = "Groupe d'achat";
 
           if (cLower.contains("rembours") ||
@@ -65,7 +66,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
               cLower.contains("séquestre")) {
             cat = "Remboursements";
             icon = Icons.account_balance_wallet_rounded;
-            col = const Color(0xFF1B5E20);
+            col = AppTheme.oliveProfond;
             titre = "Remboursement & Portefeuille";
           } else if (cLower.contains("colis") ||
               cLower.contains("commande") ||
@@ -75,7 +76,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
               cLower.contains("depot")) {
             cat = "Commandes";
             icon = Icons.local_shipping_rounded;
-            col = const Color(0xFFE65100);
+            col = AppTheme.ocreProfond;
             titre = (cLower.contains("dépôt") || cLower.contains("depot"))
                 ? "Colis disponible au dépôt"
                 : "Suivi de commande";
@@ -233,7 +234,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                   child: Text(
                     "Notifications",
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+                    style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
                   ),
                 ),
                 if (!compact) ...[
@@ -241,9 +242,9 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
+                      color: AppTheme.olive.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.25)),
+                      border: Border.all(color: AppTheme.olive.withValues(alpha: 0.25)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -251,12 +252,12 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                         Container(
                           width: 6,
                           height: 6,
-                          decoration: const BoxDecoration(color: Color(0xFF2E7D32), shape: BoxShape.circle),
+                          decoration: const BoxDecoration(color: AppTheme.olive, shape: BoxShape.circle),
                         ),
                         const SizedBox(width: 4),
                         const Text(
                           "En direct",
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF2E7D32)),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.oliveProfond),
                         ),
                       ],
                     ),
@@ -281,7 +282,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
           ),
           body: RefreshIndicator(
             onRefresh: _chargerNotifications,
-            color: const Color(0xFF9E6738),
+            color: AppTheme.bissap,
         child: Column(
           children: [
             // Filtres pilules avec défilement horizontal
@@ -307,7 +308,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
             Expanded(
               child: _chargement
                   ? const Center(
-                      child: CircularProgressIndicator(color: Color(0xFF9E6738)),
+                      child: CircularProgressIndicator(color: AppTheme.olive),
                     )
                   : list.isEmpty
                       ? ListView(
@@ -334,7 +335,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                   const SizedBox(height: 16),
                                   Text(
                                     "Aucune notification",
-                                    style: TextStyle(
+                                    style: TextStyle(fontFamily: AppTheme.policeTitre, 
                                       fontWeight: FontWeight.w800,
                                       fontSize: 16,
                                       color: AppTheme.couleurTexte(context),
@@ -378,10 +379,10 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                   color: AppTheme.couleurCarte(context),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: estLu ? Colors.transparent : const Color(0xFF9E6738).withValues(alpha: 0.18),
+                                    color: estLu ? Colors.transparent : AppTheme.bissap.withValues(alpha: 0.18),
                                   ),
                                   boxShadow: const [
-                                    BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
+                                    BoxShadow(color: Color(0x062C241E), blurRadius: 10, offset: Offset(0, 3)),
                                   ],
                                 ),
                                 child: Row(
@@ -454,10 +455,10 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                               child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFF1B5E20).withValues(alpha: 0.1),
+                                                  color: AppTheme.oliveProfond.withValues(alpha: 0.1),
                                                   borderRadius: BorderRadius.circular(8),
                                                   border: Border.all(
-                                                    color: const Color(0xFF1B5E20).withValues(alpha: 0.25),
+                                                    color: AppTheme.oliveProfond.withValues(alpha: 0.25),
                                                   ),
                                                 ),
                                                 child: const Row(
@@ -466,7 +467,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                                     Icon(
                                                       Icons.account_balance_wallet_rounded,
                                                       size: 15,
-                                                      color: Color(0xFF1B5E20),
+                                                      color: AppTheme.oliveProfond,
                                                     ),
                                                     SizedBox(width: 6),
                                                     Flexible(
@@ -476,7 +477,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                                         style: TextStyle(
                                                           fontSize: 11.5,
                                                           fontWeight: FontWeight.w700,
-                                                          color: Color(0xFF1B5E20),
+                                                          color: AppTheme.oliveProfond,
                                                         ),
                                                       ),
                                                     ),
@@ -484,7 +485,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                                     Icon(
                                                       Icons.chevron_right_rounded,
                                                       size: 15,
-                                                      color: Color(0xFF1B5E20),
+                                                      color: AppTheme.oliveProfond,
                                                     ),
                                                   ],
                                                 ),
@@ -510,10 +511,10 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                               child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFF1A73E8).withValues(alpha: 0.1),
+                                                  color: AppTheme.bissap.withValues(alpha: 0.1),
                                                   borderRadius: BorderRadius.circular(8),
                                                   border: Border.all(
-                                                    color: const Color(0xFF1A73E8).withValues(alpha: 0.3),
+                                                    color: AppTheme.bissap.withValues(alpha: 0.3),
                                                   ),
                                                 ),
                                                 child: const Row(
@@ -522,7 +523,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                                     Icon(
                                                       Icons.directions_rounded,
                                                       size: 15,
-                                                      color: Color(0xFF1A73E8),
+                                                      color: AppTheme.bissap,
                                                     ),
                                                     SizedBox(width: 6),
                                                     Flexible(
@@ -532,7 +533,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                                         style: TextStyle(
                                                           fontSize: 11.5,
                                                           fontWeight: FontWeight.w700,
-                                                          color: Color(0xFF1A73E8),
+                                                          color: AppTheme.bissap,
                                                         ),
                                                       ),
                                                     ),
@@ -540,7 +541,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                                     Icon(
                                                       Icons.chevron_right_rounded,
                                                       size: 15,
-                                                      color: Color(0xFF1A73E8),
+                                                      color: AppTheme.bissap,
                                                     ),
                                                   ],
                                                 ),
@@ -565,10 +566,10 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                               child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFFE65100).withValues(alpha: 0.08),
+                                                  color: AppTheme.ocreProfond.withValues(alpha: 0.08),
                                                   borderRadius: BorderRadius.circular(8),
                                                   border: Border.all(
-                                                    color: const Color(0xFFE65100).withValues(alpha: 0.25),
+                                                    color: AppTheme.ocreProfond.withValues(alpha: 0.25),
                                                   ),
                                                 ),
                                                 child: const Row(
@@ -577,7 +578,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                                     Icon(
                                                       Icons.qr_code_rounded,
                                                       size: 15,
-                                                      color: Color(0xFFE65100),
+                                                      color: AppTheme.ocreProfond,
                                                     ),
                                                     SizedBox(width: 6),
                                                     Flexible(
@@ -587,7 +588,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                                         style: TextStyle(
                                                           fontSize: 11.5,
                                                           fontWeight: FontWeight.w700,
-                                                          color: Color(0xFFE65100),
+                                                          color: AppTheme.ocreProfond,
                                                         ),
                                                       ),
                                                     ),
@@ -595,7 +596,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                                     Icon(
                                                       Icons.chevron_right_rounded,
                                                       size: 15,
-                                                      color: Color(0xFFE65100),
+                                                      color: AppTheme.ocreProfond,
                                                     ),
                                                   ],
                                                 ),
@@ -611,7 +612,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                         height: 8,
                                         margin: const EdgeInsets.only(top: 6),
                                         decoration: const BoxDecoration(
-                                          color: Color(0xFFE53935),
+                                          color: AppTheme.danger,
                                           shape: BoxShape.circle,
                                         ),
                                       ),

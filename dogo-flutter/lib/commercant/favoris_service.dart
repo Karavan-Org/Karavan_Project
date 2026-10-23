@@ -49,7 +49,7 @@ class FavorisService {
           children: [
             Icon(
               wasFavori ? Icons.heart_broken_outlined : Icons.favorite,
-              color: wasFavori ? Colors.white70 : Colors.redAccent,
+              color: wasFavori ? Colors.white70 : AppTheme.danger,
               size: 20,
             ),
             const SizedBox(width: 12),

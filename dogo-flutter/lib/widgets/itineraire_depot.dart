@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show KeyDownEvent, LogicalKeyboardKey;
 import 'package:flutter_map/flutter_map.dart';
@@ -13,7 +14,9 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../services/itineraire_service.dart';
 import '../services/navigation_live.dart';
 import '../theme/app_theme.dart';
-import 'boussole_service.dart';
+import '../services/boussole_service.dart';
+import 'itineraire_depot_widgets.dart';
+import 'recherche_lieu_sheet.dart';
 
 /// Ouvre, dans un cadre au-dessus de l'écran courant, la carte du dépôt avec navigation en direct
 /// depuis la position du commerçant — sans quitter l'application.
@@ -66,10 +69,10 @@ enum _Etape {
 
 class _ItineraireDepotState extends State<ItineraireDepot>
     with TickerProviderStateMixin {
-  static const _bleu = Color(0xFF1A73E8);
-  static const _bleuFonce = Color(0xFF0B57D0);
-  static const _vert = Color(0xFF188038);
-  static const _encre = Color(0xFF2C241E);
+  static const _bleu = AppTheme.bissap;
+  static const _bleuFonce = AppTheme.bissapProfond;
+  static const _vert = AppTheme.oliveProfond;
+  static const _encre = AppTheme.terre;
   static const _zoomGuidage = 17.5;
 
   /// Place laissée à l'en-tête, au panneau du bas et à l'étiquette du dépôt lors du cadrage du trajet.
@@ -302,7 +305,8 @@ class _ItineraireDepotState extends State<ItineraireDepot>
     _demarrerSuiviLive();
     WakelockPlus.enable().catchError((_) {});
     _verifCheminRapide?.cancel();
-    _verifCheminRapide = Timer.periodic(const Duration(seconds: 45), (_) => _chercherCheminPlusRapide());
+    _verifCheminRapide = Timer.periodic(
+        const Duration(seconds: 45), (_) => _chercherCheminPlusRapide());
     if (depart != null) _appliquerCamera(depart, capInitial, immediat: true);
   }
 
@@ -334,7 +338,10 @@ class _ItineraireDepotState extends State<ItineraireDepot>
     _suivi = true;
     final LocationSettings reglages;
     if (kIsWeb) {
-      reglages = WebSettings(accuracy: LocationAccuracy.best, distanceFilter: 0, maximumAge: Duration.zero);
+      reglages = WebSettings(
+          accuracy: LocationAccuracy.best,
+          distanceFilter: 0,
+          maximumAge: Duration.zero);
     } else if (defaultTargetPlatform == TargetPlatform.android) {
       reglages = AndroidSettings(
         accuracy: LocationAccuracy.bestForNavigation,
@@ -350,9 +357,11 @@ class _ItineraireDepotState extends State<ItineraireDepot>
         allowBackgroundLocationUpdates: false,
       );
     } else {
-      reglages = const LocationSettings(accuracy: LocationAccuracy.bestForNavigation, distanceFilter: 0);
+      reglages = const LocationSettings(
+          accuracy: LocationAccuracy.bestForNavigation, distanceFilter: 0);
     }
-    _flux = Geolocator.getPositionStream(locationSettings: reglages).listen(_surPositionLive, onError: (_) {});
+    _flux = Geolocator.getPositionStream(locationSettings: reglages)
+        .listen(_surPositionLive, onError: (_) {});
     _fluxBoussole = BoussoleService.ecouter((angle) {
       if (mounted) _surOrientationBoussole(angle);
     });
@@ -395,8 +404,9 @@ class _ItineraireDepotState extends State<ItineraireDepot>
         if (_horsRoute && !_recalcul) {
           _afficherAvis(const _AvisTrajet(
             titre: "Vous quittez l'itinéraire",
-            detail: "Continuez : Karavan recalcule le chemin si vous ne revenez pas.",
-            couleur: Color(0xFFE65100),
+            detail:
+                "Continuez : Karavan recalcule le chemin si vous ne revenez pas.",
+            couleur: AppTheme.ocreProfond,
             icone: Icons.alt_route_rounded,
           ));
         }
@@ -415,10 +425,14 @@ class _ItineraireDepotState extends State<ItineraireDepot>
       capRoute: capRoute,
       surLaRoute: surRoute,
     );
-    if (cap == null && _moi != null && ItineraireService.distance(_moi!, pos) >= 3) {
+    if (cap == null &&
+        _moi != null &&
+        ItineraireService.distance(_moi!, pos) >= 3) {
       cap = ItineraireService.cap(_moi!, pos);
     }
-    final ecartFix = _dernierFix == null ? 1000 : instant.difference(_dernierFix!).inMilliseconds;
+    final ecartFix = _dernierFix == null
+        ? 1000
+        : instant.difference(_dernierFix!).inMilliseconds;
     _dernierFix = instant;
     setState(() {
       _moi = pos;
@@ -426,7 +440,8 @@ class _ItineraireDepotState extends State<ItineraireDepot>
       _vitesse = vitesse;
       if (cap != null) _cap = (cap + 360) % 360;
     });
-    _glisserVers(cible, _cap, Duration(milliseconds: ecartFix.clamp(250, 1200)));
+    _glisserVers(
+        cible, _cap, Duration(milliseconds: ecartFix.clamp(250, 1200)));
   }
 
   /// Fait glisser la flèche (et la caméra) jusqu'à la nouvelle position au lieu de la téléporter.
@@ -456,8 +471,11 @@ class _ItineraireDepotState extends State<ItineraireDepot>
   /// la route à venir est visible), carte tournée dans son sens de marche, zoom selon la vitesse.
   void _appliquerCamera(LatLng pos, double cap, {bool immediat = false}) {
     if (!_suivi || !_carteprete || _vol.isAnimating) return;
-    final cibleZoom = _vitesse > 12 ? 16.0 : (_vitesse > 5 ? 16.8 : _zoomGuidage);
-    final zoom = immediat ? cibleZoom : _carte.camera.zoom + (cibleZoom - _carte.camera.zoom) * 0.08;
+    final cibleZoom =
+        _vitesse > 12 ? 16.0 : (_vitesse > 5 ? 16.8 : _zoomGuidage);
+    final zoom = immediat
+        ? cibleZoom
+        : _carte.camera.zoom + (cibleZoom - _carte.camera.zoom) * 0.08;
     if (_orientationBoussole && _etape == _Etape.guidage) {
       // La flèche est placée aux 3/4 bas de la zone de carte réellement visible (entre l'en-tête et
       // le panneau, dont la hauteur varie avec les bandeaux) : la route à venir occupe le reste.
@@ -465,9 +483,12 @@ class _ItineraireDepotState extends State<ItineraireDepot>
       final haut = _hauteur(_cleEntete) ?? 90;
       final bas = _hauteur(_clePanneau) ?? 260;
       final decalagePx = haut + (h - bas - haut) * 0.75 - h / 2;
-      final metresParPixel = 156543.03392 * math.cos(pos.latitude * math.pi / 180) / math.pow(2, zoom);
+      final metresParPixel = 156543.03392 *
+          math.cos(pos.latitude * math.pi / 180) /
+          math.pow(2, zoom);
       final avance = decalagePx * metresParPixel;
-      final centre = const Distance().offset(pos, avance.abs(), avance >= 0 ? cap : (cap + 180) % 360);
+      final centre = const Distance()
+          .offset(pos, avance.abs(), avance >= 0 ? cap : (cap + 180) % 360);
       _carte.moveAndRotate(centre, zoom, -cap);
       _rotationCarte = -cap;
     } else {
@@ -499,21 +520,27 @@ class _ItineraireDepotState extends State<ItineraireDepot>
         _afficherAvis(const _AvisTrajet(
           titre: "Itinéraire routier indisponible",
           detail: "Suivez la direction du dépôt indiquée par la ligne.",
-          couleur: Color(0xFF5A493B),
+          couleur: AppTheme.terreDouce,
           icone: Icons.signal_wifi_bad_rounded,
         ));
         return;
       }
       final cmp = SuiviNavigation.comparer(
-          ancienRestantSecondes: ancienSecondes, ancienRestantMetres: ancienMetres, nouveau: it);
+          ancienRestantSecondes: ancienSecondes,
+          ancienRestantMetres: ancienMetres,
+          nouveau: it);
       _afficherAvis(_AvisTrajet(
         titre: "Itinéraire recalculé · ${cmp.libelle}",
         detail: "${ItineraireService.formaterDuree(it.dureeSecondes)} · "
             "${ItineraireService.formaterDistance(it.distanceMetres)} jusqu'au dépôt (${cmp.detailDistance})",
-        couleur: cmp.plusLong ? const Color(0xFFE65100) : (cmp.plusCourt ? _vert : _bleu),
+        couleur: cmp.plusLong
+            ? AppTheme.ocreProfond
+            : (cmp.plusCourt ? _vert : _bleu),
         icone: cmp.plusLong
             ? Icons.trending_up_rounded
-            : (cmp.plusCourt ? Icons.trending_down_rounded : Icons.check_circle_rounded),
+            : (cmp.plusCourt
+                ? Icons.trending_down_rounded
+                : Icons.check_circle_rounded),
       ));
     } finally {
       if (mounted) setState(() => _recalcul = false);
@@ -523,18 +550,32 @@ class _ItineraireDepotState extends State<ItineraireDepot>
   /// Vérifie périodiquement s'il existe maintenant un chemin nettement plus rapide depuis la position.
   Future<void> _chercherCheminPlusRapide() async {
     final moi = _moi, depot = _depot;
-    if (_etape != _Etape.guidage || _recalcul || _horsRoute || moi == null || depot == null) return;
+    if (_etape != _Etape.guidage ||
+        _recalcul ||
+        _horsRoute ||
+        moi == null ||
+        depot == null) {
+      return;
+    }
     if (_restantMetres < 400) return;
     final ancienSecondes = _restantSecondes, ancienMetres = _restantMetres;
     final it = await ItineraireService.calculer(moi, depot, _mode);
-    if (!mounted || _etape != _Etape.guidage || _recalcul || !it.routier) return;
-    if (!SuiviNavigation.estNettementPlusRapide(ancienSecondes, it.dureeSecondes)) return;
+    if (!mounted || _etape != _Etape.guidage || _recalcul || !it.routier) {
+      return;
+    }
+    if (!SuiviNavigation.estNettementPlusRapide(
+        ancienSecondes, it.dureeSecondes)) {
+      return;
+    }
     final cmp = SuiviNavigation.comparer(
-        ancienRestantSecondes: ancienSecondes, ancienRestantMetres: ancienMetres, nouveau: it);
+        ancienRestantSecondes: ancienSecondes,
+        ancienRestantMetres: ancienMetres,
+        nouveau: it);
     _adopterItineraire(it);
     _afficherAvis(_AvisTrajet(
       titre: "Chemin plus rapide trouvé · ${cmp.libelle}",
-      detail: "Arrivée vers ${_heureArrivee(it.dureeSecondes)} (${cmp.detailDistance})",
+      detail:
+          "Arrivée vers ${_heureArrivee(it.dureeSecondes)} (${cmp.detailDistance})",
       couleur: _vert,
       icone: Icons.bolt_rounded,
     ));
@@ -575,7 +616,8 @@ class _ItineraireDepotState extends State<ItineraireDepot>
   /// Boussole : lissée, puis appliquée directement quand c'est elle qui donne le cap (à l'arrêt, à pied).
   void _surOrientationBoussole(double angle) {
     final precedent = _capBoussole;
-    _capBoussole = precedent == null ? angle : _interpolerAngle(precedent, angle, 0.25);
+    _capBoussole =
+        precedent == null ? angle : _interpolerAngle(precedent, angle, 0.25);
     if (_vitesse >= 2.5 || _etape != _Etape.guidage) return;
     final ecart = ((_capBoussole! - _cap + 540) % 360) - 180;
     if (ecart.abs() < 1.5) return;
@@ -583,7 +625,9 @@ class _ItineraireDepotState extends State<ItineraireDepot>
       _cap = _capBoussole!;
       if (!_glisse.isAnimating) _capAffiche = _cap;
     });
-    if (!_glisse.isAnimating && (_affiche ?? _moi) != null) _appliquerCamera(_affiche ?? _moi!, _cap);
+    if (!_glisse.isAnimating && (_affiche ?? _moi) != null) {
+      _appliquerCamera(_affiche ?? _moi!, _cap);
+    }
   }
 
   /// Prochaine manœuvre : première étape située après la distance déjà parcourue le long du tracé.
@@ -631,9 +675,12 @@ class _ItineraireDepotState extends State<ItineraireDepot>
     final it = _itineraire;
     if (it == null || _cumuls.isEmpty) return;
     final cible = (_distanceParcourue + metres).clamp(0.0, _cumuls.last);
-    final portion = ItineraireService.portion(it.points, _cumuls, cible / _cumuls.last);
+    final portion =
+        ItineraireService.portion(it.points, _cumuls, cible / _cumuls.last);
     final pos = portion.last;
-    final cap = portion.length >= 2 ? ItineraireService.cap(portion[portion.length - 2], pos) : _cap;
+    final cap = portion.length >= 2
+        ? ItineraireService.cap(portion[portion.length - 2], pos)
+        : _cap;
     _simulerPosition(pos, metres >= 0 ? cap : _cap);
   }
 
@@ -704,7 +751,9 @@ class _ItineraireDepotState extends State<ItineraireDepot>
       _suivi = true;
       _orientationBoussole = true;
     });
-    _appliquerCamera(_affiche ?? _moi!, _etape == _Etape.guidage ? _capAffiche : _cap, immediat: true);
+    _appliquerCamera(
+        _affiche ?? _moi!, _etape == _Etape.guidage ? _capAffiche : _cap,
+        immediat: true);
   }
 
   void _reinitialiserNord() {
@@ -781,7 +830,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _RechercheLieuSheet(aProximiteDe: _moi ?? _depot),
+      builder: (ctx) => RechercheLieuSheet(aProximiteDe: _moi ?? _depot),
     );
 
     if (resultat != null && mounted) {
@@ -797,7 +846,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
           backgroundColor: _encre,
           action: SnackBarAction(
             label: "Partir d'ici",
-            textColor: const Color(0xFFE8B678),
+            textColor: AppTheme.ocre,
             onPressed: () {
               setState(() {
                 _moi = resultat.position;
@@ -839,7 +888,8 @@ class _ItineraireDepotState extends State<ItineraireDepot>
             _avancerLibre(-10);
             return KeyEventResult.handled;
           }
-          if (event.logicalKey == LogicalKeyboardKey.keyW || event.logicalKey == LogicalKeyboardKey.keyZ) {
+          if (event.logicalKey == LogicalKeyboardKey.keyW ||
+              event.logicalKey == LogicalKeyboardKey.keyZ) {
             _avancerSurRoute(10);
             return KeyEventResult.handled;
           }
@@ -885,7 +935,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
   Widget _corps() {
     if (_etape == _Etape.depot) {
       return const Center(
-          child: CircularProgressIndicator(color: AppTheme.primary));
+          child: CircularProgressIndicator(color: AppTheme.olive));
     }
     if (_etape == _Etape.introuvable) {
       return Padding(
@@ -897,7 +947,10 @@ class _ItineraireDepotState extends State<ItineraireDepot>
             const SizedBox(height: 12),
             const Text("Localisation du dépôt indisponible",
                 style: TextStyle(
-                    fontWeight: FontWeight.w800, fontSize: 16, color: _encre)),
+                    fontFamily: AppTheme.policeTitre,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: _encre)),
             const SizedBox(height: 6),
             Text(
               widget.adresse ??
@@ -980,7 +1033,11 @@ class _ItineraireDepotState extends State<ItineraireDepot>
                 color: _bleu.withValues(alpha: 0.28),
                 pattern: motif),
             if (pointsParcourus.length > 1)
-              Polyline(points: pointsParcourus, strokeWidth: 7, color: const Color(0xFF9AA0A6), pattern: motif),
+              Polyline(
+                  points: pointsParcourus,
+                  strokeWidth: 7,
+                  color: AppTheme.textePale,
+                  pattern: motif),
             // Tracé actif restant en bleu vif
             if (pointsRestants.length > 1)
               Polyline(
@@ -1013,7 +1070,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
             height: 86,
             alignment: Alignment.topCenter,
             rotate: true,
-            child: _EpingleDepot(
+            child: EpingleDepot(
                 arrivee: _etape == _Etape.apercu, nom: widget.nomDepot),
           ),
           if (ici != null)
@@ -1024,8 +1081,10 @@ class _ItineraireDepotState extends State<ItineraireDepot>
               // Contre-rotation : la flèche est dessinée par rapport à l'écran (cap + rotation de la carte).
               rotate: true,
               child: enGuidage || _suivi
-                  ? _FlecheGps(cap: enGuidage ? _capAffiche : _cap, rotationCarte: _rotationCarte)
-                  : _PointDepart(pulsation: _pulsation, libelle: "Départ"),
+                  ? FlecheGps(
+                      cap: enGuidage ? _capAffiche : _cap,
+                      rotationCarte: _rotationCarte)
+                  : PointDepart(pulsation: _pulsation, libelle: "Départ"),
             ),
           if (_lieuRecherche != null)
             Marker(
@@ -1033,7 +1092,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
               width: 140,
               height: 70,
               alignment: Alignment.topCenter,
-              child: _EpingleLieuRecherche(nom: _lieuRecherche!.nom),
+              child: EpingleLieuRecherche(nom: _lieuRecherche!.nom),
             ),
         ]),
         const RichAttributionWidget(
@@ -1055,7 +1114,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-              color: Color(0x1446321E), blurRadius: 12, offset: Offset(0, 3))
+              color: Color(0x142C241E), blurRadius: 12, offset: Offset(0, 3))
         ],
       ),
       child: Column(
@@ -1066,7 +1125,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
             height: 4,
             margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
-                color: const Color(0xFFE5DDD5),
+                color: AppTheme.bordureForte,
                 borderRadius: BorderRadius.circular(2)),
           ),
           Row(
@@ -1130,14 +1189,13 @@ class _ItineraireDepotState extends State<ItineraireDepot>
             padding: const EdgeInsets.only(right: 16, bottom: 12),
             child: Column(
               children: [
-                _BoutonBoussole(
+                BoutonBoussole(
                   rotation: _rotationCarte,
                   modeSuiviOrientation: _orientationBoussole,
                   onTap: _basculerBoussole,
                 ),
                 const SizedBox(height: 8),
-
-                _BoutonRond(
+                BoutonRond(
                   icone: _suivi
                       ? Icons.navigation_rounded
                       : Icons.my_location_rounded,
@@ -1147,17 +1205,17 @@ class _ItineraireDepotState extends State<ItineraireDepot>
                   onTap: _recentrerSurMoi,
                 ),
                 const SizedBox(height: 8),
-                _BoutonRond(
+                BoutonRond(
                     icone: Icons.add_rounded,
                     aide: "Zoomer",
                     onTap: () => _zoomer(1)),
                 const SizedBox(height: 8),
-                _BoutonRond(
+                BoutonRond(
                     icone: Icons.remove_rounded,
                     aide: "Dézoomer",
                     onTap: () => _zoomer(-1)),
                 const SizedBox(height: 8),
-                _BoutonRond(
+                BoutonRond(
                     icone: Icons.fit_screen_rounded,
                     aide: "Cadrer tout le trajet",
                     onTap: _cadrerTrajet),
@@ -1173,7 +1231,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
             borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
             boxShadow: [
               BoxShadow(
-                  color: Color(0x1F46321E),
+                  color: Color(0x1F2C241E),
                   blurRadius: 18,
                   offset: Offset(0, -4))
             ],
@@ -1258,12 +1316,15 @@ class _ItineraireDepotState extends State<ItineraireDepot>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _IconePulsee(pulsation: _pulsation, icone: Icons.my_location_rounded),
+        IconePulsee(pulsation: _pulsation, icone: Icons.my_location_rounded),
         const SizedBox(height: 14),
         const Text(
           "Où vous trouvez-vous ?",
           style: TextStyle(
-              fontSize: 17, fontWeight: FontWeight.w800, color: _encre),
+              fontFamily: AppTheme.policeTitre,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: _encre),
         ),
         const SizedBox(height: 6),
         Text(
@@ -1303,7 +1364,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
   Widget _attente({required String titre, required String sousTitre}) {
     return Row(
       children: [
-        _IconePulsee(
+        IconePulsee(
             pulsation: _pulsation, icone: Icons.gps_fixed_rounded, taille: 44),
         const SizedBox(width: 14),
         Expanded(
@@ -1418,7 +1479,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: arrive ? const Color(0xFF1B5E20) : _vert,
+            color: arrive ? AppTheme.oliveProfond : _vert,
             borderRadius: BorderRadius.circular(16),
             boxShadow: const [
               BoxShadow(
@@ -1571,7 +1632,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
               padding: const EdgeInsets.only(top: 4),
               itemCount: it.etapes.length,
               separatorBuilder: (_, __) =>
-                  const Divider(height: 1, color: Color(0xFFF3ECE5)),
+                  const Divider(height: 1, color: AppTheme.bordure),
               itemBuilder: (_, i) {
                 final e = it.etapes[i];
                 final estActuelle = i == _prochaineEtapeIndex;
@@ -1614,8 +1675,8 @@ class _ItineraireDepotState extends State<ItineraireDepot>
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFC62828),
-              side: const BorderSide(color: Color(0xFFE57373), width: 1.5),
+              foregroundColor: AppTheme.danger,
+              side: const BorderSide(color: AppTheme.dangerBordure, width: 1.5),
               minimumSize: const Size(0, 46),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -1675,21 +1736,21 @@ class _ItineraireDepotState extends State<ItineraireDepot>
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _ChoixMode(
+              ChoixMode(
                 icone: Icons.directions_car_rounded,
                 libelle: "Voiture",
                 actif: _mode == ModeTrajet.voiture,
                 onTap: () => _changerMode(ModeTrajet.voiture),
               ),
               const SizedBox(width: 8),
-              _ChoixMode(
+              ChoixMode(
                 icone: Icons.two_wheeler_rounded,
                 libelle: "Moto",
                 actif: _mode == ModeTrajet.moto,
                 onTap: () => _changerMode(ModeTrajet.moto),
               ),
               const SizedBox(width: 8),
-              _ChoixMode(
+              ChoixMode(
                 icone: Icons.directions_walk_rounded,
                 libelle: "À pied",
                 actif: _mode == ModeTrajet.aPied,
@@ -1762,7 +1823,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
           ],
         ),
         const SizedBox(height: 4),
-        _LigneTrajet(
+        LigneTrajet(
             depart: _adresseDepart ?? "Votre position actuelle",
             arrivee: widget.adresse ?? widget.nomDepot),
         if (!it.routier || restant < 60) ...[
@@ -1785,7 +1846,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
                     padding: const EdgeInsets.only(top: 8),
                     itemCount: it.etapes.length,
                     separatorBuilder: (_, __) =>
-                        const Divider(height: 1, color: Color(0xFFF3ECE5)),
+                        const Divider(height: 1, color: AppTheme.bordure),
                     itemBuilder: (_, i) {
                       final e = it.etapes[i];
                       return ListTile(
@@ -1860,712 +1921,6 @@ class _ItineraireDepotState extends State<ItineraireDepot>
 }
 
 /// Épingle du dépôt avec son nom.
-class _EpingleDepot extends StatelessWidget {
-  final bool arrivee;
-  final String nom;
-
-  const _EpingleDepot({required this.arrivee, required this.nom});
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: AnimatedScale(
-        scale: arrivee ? 1.12 : 1,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.elasticOut,
-        alignment: Alignment.bottomCenter,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              margin: const EdgeInsets.only(bottom: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: const [
-                  BoxShadow(
-                      color: Color(0x3346321E),
-                      blurRadius: 6,
-                      offset: Offset(0, 2))
-                ],
-              ),
-              child: Text(nom,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryDark)),
-            ),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppTheme.primary,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
-                boxShadow: const [
-                  BoxShadow(
-                      color: Color(0x4046321E),
-                      blurRadius: 8,
-                      offset: Offset(0, 3))
-                ],
-              ),
-              child: const Icon(Icons.warehouse_rounded,
-                  color: Colors.white, size: 20),
-            ),
-            CustomPaint(size: const Size(14, 10), painter: _PointeEpingle()),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PointeEpingle extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width / 2, size.height)
-      ..close();
-    canvas.drawPath(path, Paint()..color = AppTheme.primary);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// Point bleu « vous êtes ici » avec halo pulsé et étiquette « Départ ».
-class _PointDepart extends StatelessWidget {
-  final Animation<double> pulsation;
-  final String? libelle;
-
-  const _PointDepart({required this.pulsation, this.libelle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      clipBehavior: Clip.none,
-      children: [
-        AnimatedBuilder(
-          animation: pulsation,
-          builder: (_, __) {
-            final t = pulsation.value;
-            return Container(
-              width: 16 + 34 * t,
-              height: 16 + 34 * t,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color:
-                    const Color(0xFF1A73E8).withValues(alpha: 0.32 * (1 - t)),
-              ),
-            );
-          },
-        ),
-        Container(
-          width: 18,
-          height: 18,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A73E8),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: const [
-              BoxShadow(color: Color(0x40000000), blurRadius: 4)
-            ],
-          ),
-        ),
-        if (libelle != null)
-          Positioned(
-            top: 4,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                  color: const Color(0xFF1A73E8),
-                  borderRadius: BorderRadius.circular(6)),
-              child: Text(libelle!,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800)),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-/// Flèche de navigation GPS orientée en direct selon la direction de marche et la boussole.
-class _FlecheGps extends StatelessWidget {
-  final double cap;
-  final double rotationCarte;
-
-  const _FlecheGps({required this.cap, this.rotationCarte = 0});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1A73E8).withValues(alpha: 0.45),
-            blurRadius: 14,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(6),
-      child: Transform.rotate(
-        angle: (cap + rotationCarte) * math.pi / 180,
-        child: const Icon(Icons.navigation_rounded,
-            color: Color(0xFF1A73E8), size: 34),
-      ),
-    );
-  }
-}
-
-class _IconePulsee extends StatelessWidget {
-  final Animation<double> pulsation;
-  final IconData icone;
-  final double taille;
-
-  const _IconePulsee(
-      {required this.pulsation, required this.icone, this.taille = 64});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: taille * 1.4,
-      height: taille * 1.4,
-      child: AnimatedBuilder(
-        animation: pulsation,
-        builder: (_, __) {
-          final t = pulsation.value;
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: taille * (0.8 + 0.6 * t),
-                height: taille * (0.8 + 0.6 * t),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color:
-                      const Color(0xFF1A73E8).withValues(alpha: 0.22 * (1 - t)),
-                ),
-              ),
-              Container(
-                width: taille * 0.8,
-                height: taille * 0.8,
-                decoration: const BoxDecoration(
-                    color: Color(0xFFE8F0FE), shape: BoxShape.circle),
-                child: Icon(icone,
-                    color: const Color(0xFF1A73E8), size: taille * 0.42),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// « Départ → Dépôt », comme le récapitulatif d'un trajet Google Maps.
-class _LigneTrajet extends StatelessWidget {
-  final String depart;
-  final String arrivee;
-
-  const _LigneTrajet({required this.depart, required this.arrivee});
-
-  @override
-  Widget build(BuildContext context) {
-    Widget ligne(IconData icone, Color couleur, String texte) => Row(
-          children: [
-            Icon(icone, size: 14, color: couleur),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(texte,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 12.5, color: Color(0xFF5A493B))),
-            ),
-          ],
-        );
-    return Column(
-      children: [
-        ligne(Icons.radio_button_checked_rounded, const Color(0xFF1A73E8),
-            depart),
-        const SizedBox(height: 4),
-        ligne(Icons.location_on_rounded, AppTheme.primary, arrivee),
-      ],
-    );
-  }
-}
-
-class _BoutonRond extends StatelessWidget {
-  final IconData icone;
-  final String aide;
-  final VoidCallback onTap;
-  final bool actif;
-
-  const _BoutonRond(
-      {required this.icone,
-      required this.aide,
-      required this.onTap,
-      this.actif = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: aide,
-      child: Material(
-        color: actif ? const Color(0xFF1A73E8) : Colors.white,
-        shape: const CircleBorder(),
-        elevation: 4,
-        shadowColor: const Color(0x4046321E),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Icon(icone,
-                color: actif ? Colors.white : const Color(0xFF1A73E8)),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Bouton boussole rotatif interactif (aiguille rouge pointant vers le Nord physique).
-class _BoutonBoussole extends StatelessWidget {
-  final double rotation;
-  final bool modeSuiviOrientation;
-  final VoidCallback onTap;
-
-  const _BoutonBoussole({
-    required this.rotation,
-    required this.modeSuiviOrientation,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: modeSuiviOrientation
-          ? "Orientation : Direction de marche (cliquez pour fixer au Nord)"
-          : "Orientation : Nord en haut (cliquez pour suivre la direction)",
-      child: Material(
-        color: Colors.white,
-        shape: const CircleBorder(),
-        elevation: 4,
-        shadowColor: const Color(0x4046321E),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Transform.rotate(
-                  angle: rotation * math.pi / 180,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Aiguille Nord (rouge) avec lettre N
-                      Align(
-                        alignment: Alignment.topCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 5),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                "N",
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFFD32F2F),
-                                ),
-                              ),
-                              CustomPaint(
-                                size: const Size(8, 11),
-                                painter: _AiguilleNordPainter(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      // Aiguille Sud (grise)
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 7),
-                          child: CustomPaint(
-                            size: const Size(8, 11),
-                            painter: _AiguilleSudPainter(),
-                          ),
-                        ),
-                      ),
-                      // Pivot central
-                      Container(
-                        width: 5,
-                        height: 5,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF2C241E),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (modeSuiviOrientation)
-                  Positioned(
-                    bottom: 4,
-                    right: 4,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A73E8),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AiguilleNordPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(size.width / 2, 0)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(path, Paint()..color = const Color(0xFFD32F2F));
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _AiguilleSudPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(size.width / 2, size.height)
-      ..lineTo(size.width, 0)
-      ..lineTo(0, 0)
-      ..close();
-    canvas.drawPath(path, Paint()..color = const Color(0xFF9E9E9E));
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _ChoixMode extends StatelessWidget {
-  final IconData icone;
-  final String libelle;
-  final bool actif;
-  final VoidCallback onTap;
-
-  const _ChoixMode(
-      {required this.icone,
-      required this.libelle,
-      required this.actif,
-      required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: actif ? const Color(0xFFE8F0FE) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: actif ? const Color(0xFF1A73E8) : const Color(0xFFE5DDD5)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icone,
-                size: 16,
-                color:
-                    actif ? const Color(0xFF1A73E8) : const Color(0xFF5A493B)),
-            const SizedBox(width: 6),
-            Text(libelle,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color:
-                      actif ? const Color(0xFF1A73E8) : const Color(0xFF5A493B),
-                )),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Épingle d'un lieu trouvé lors d'une recherche OpenStreetMap.
-class _EpingleLieuRecherche extends StatelessWidget {
-  final String nom;
-
-  const _EpingleLieuRecherche({required this.nom});
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            margin: const EdgeInsets.only(bottom: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2C241E),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: const [
-                BoxShadow(
-                    color: Color(0x33000000),
-                    blurRadius: 6,
-                    offset: Offset(0, 2))
-              ],
-            ),
-            child: Text(
-              nom,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white),
-            ),
-          ),
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD9381E),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2.5),
-              boxShadow: const [
-                BoxShadow(
-                    color: Color(0x40000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 3))
-              ],
-            ),
-            child:
-                const Icon(Icons.place_rounded, color: Colors.white, size: 20),
-          ),
-          CustomPaint(size: const Size(12, 8), painter: _PointeEpingle()),
-        ],
-      ),
-    );
-  }
-}
-
-/// Feuille modale de recherche de lieux avec suggestions OpenStreetMap Nominatim.
-class _RechercheLieuSheet extends StatefulWidget {
-  final LatLng? aProximiteDe;
-
-  const _RechercheLieuSheet({this.aProximiteDe});
-
-  @override
-  State<_RechercheLieuSheet> createState() => _RechercheLieuSheetState();
-}
-
-class _RechercheLieuSheetState extends State<_RechercheLieuSheet> {
-  final _controller = TextEditingController();
-  List<ResultatLieu> _resultats = const [];
-  bool _chargement = false;
-  Timer? _debounce;
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _onRechercheChanged(String val) {
-    _debounce?.cancel();
-    if (val.trim().length < 2) {
-      setState(() {
-        _resultats = const [];
-        _chargement = false;
-      });
-      return;
-    }
-
-    _debounce = Timer(const Duration(milliseconds: 350), () async {
-      setState(() => _chargement = true);
-      final res = await ItineraireService.rechercherLieux(val,
-          aProximiteDe: widget.aProximiteDe);
-      if (!mounted) return;
-      setState(() {
-        _resultats = res;
-        _chargement = false;
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
-      ),
-      padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 16,
-          bottom: bottomInset > 0 ? bottomInset + 16 : 24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: const Color(0xFFD6CBC0),
-                  borderRadius: BorderRadius.circular(2)),
-            ),
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            "Rechercher un lieu ou une adresse",
-            style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
-                color: Color(0xFF2C241E)),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6F3EF),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFDFCABA)),
-            ),
-            child: TextField(
-              controller: _controller,
-              autofocus: true,
-              onChanged: _onRechercheChanged,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                prefixIcon:
-                    const Icon(Icons.search_rounded, color: Color(0xFFA67954)),
-                hintText: "Ex : Grand Marché, Hamdallaye, ACI 2000…",
-                hintStyle:
-                    const TextStyle(fontSize: 13, color: Color(0xFFAFA79F)),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                suffixIcon: _chargement
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Color(0xFFA67954)),
-                        ),
-                      )
-                    : (_controller.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear_rounded,
-                                size: 18, color: Color(0xFF8C7E74)),
-                            onPressed: () {
-                              _controller.clear();
-                              setState(() => _resultats = const []);
-                            },
-                          )
-                        : null),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (_resultats.isNotEmpty)
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: _resultats.length,
-                separatorBuilder: (_, __) =>
-                    const Divider(height: 1, color: Color(0xFFF3ECE5)),
-                itemBuilder: (ctx, i) {
-                  final lieu = _resultats[i];
-                  return ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    leading: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                          color: Color(0xFFF2ECE6), shape: BoxShape.circle),
-                      child: const Icon(Icons.location_on_rounded,
-                          color: Color(0xFFA67954), size: 20),
-                    ),
-                    title: Text(lieu.nom,
-                        style: const TextStyle(
-                            fontSize: 13.5, fontWeight: FontWeight.w700)),
-                    subtitle: Text(
-                      lieu.adresseComplete,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 11.5, color: Color(0xFF8C7E74)),
-                    ),
-                    onTap: () => Navigator.of(context).pop(lieu),
-                  );
-                },
-              ),
-            )
-          else if (_controller.text.trim().length >= 2 && !_chargement)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: Text(
-                  "Aucun lieu trouvé pour cette recherche.",
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8C7E74)),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Message temporaire de la navigation (sortie du chemin, recalcul, chemin plus rapide…).
 class _AvisTrajet {
   final String titre;
@@ -2573,7 +1928,11 @@ class _AvisTrajet {
   final Color couleur;
   final IconData icone;
 
-  const _AvisTrajet({required this.titre, this.detail, required this.couleur, required this.icone});
+  const _AvisTrajet(
+      {required this.titre,
+      this.detail,
+      required this.couleur,
+      required this.icone});
 }
 
 class _BandeauAvis extends StatelessWidget {
@@ -2601,9 +1960,14 @@ class _BandeauAvis extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(avis.titre,
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: avis.couleur)),
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: avis.couleur)),
                 if (avis.detail != null)
-                  Text(avis.detail!, style: const TextStyle(fontSize: 12, color: Color(0xFF5A493B))),
+                  Text(avis.detail!,
+                      style: const TextStyle(
+                          fontSize: 12, color: AppTheme.terreDouce)),
               ],
             ),
           ),

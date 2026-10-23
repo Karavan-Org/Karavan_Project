@@ -144,20 +144,20 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           "Annuler la commande ?",
-          style: TextStyle(
+          style: TextStyle(fontFamily: AppTheme.policeTitre, 
             fontWeight: FontWeight.w800,
             fontSize: 18,
             color: AppTheme.couleurTexte(context),
           ),
         ),
-        content: const Text(
+        content: Text(
           "Votre participation sera annulée et le remboursement de votre paiement lancé, sans frais d'annulation.",
-          style: TextStyle(fontSize: 13, color: AppTheme.textMuted, height: 1.4),
+          style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context), height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Garder ma commande", style: TextStyle(color: AppTheme.textMuted)),
+            child: Text("Garder ma commande", style: TextStyle(color: AppTheme.couleurTexteAttenue(context))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -172,13 +172,13 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text("Participation annulée. Votre remboursement est en cours de traitement."),
-                  backgroundColor: Color(0xFFE53935),
+                  backgroundColor: AppTheme.danger,
                 ),
               );
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE53935),
+              backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -192,10 +192,10 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color fondEcran = isDark ? const Color(0xFF141210) : const Color(0xFFFAF8F5);
-    final Color couleurTexte = isDark ? Colors.white : const Color(0xFF1A1A1A);
-    final Color couleurCarte = isDark ? const Color(0xFF221E1B) : Colors.white;
-    final Color couleurBordure = isDark ? const Color(0xFF38322D) : const Color(0xFFEFE8DD);
+    final Color fondEcran = isDark ? AppTheme.darkBackground : AppTheme.creme;
+    final Color couleurTexte = isDark ? Colors.white : AppTheme.terre;
+    final Color couleurCarte = isDark ? AppTheme.darkSurface : Colors.white;
+    final Color couleurBordure = isDark ? AppTheme.darkBordure : AppTheme.bordure;
 
     final bool progressionConnue = _piecesObjectif > 0;
 
@@ -230,11 +230,11 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                     width: 72,
                     height: 72,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF1EB980),
+                      color: AppTheme.olive,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Color(0x331EB980),
+                          color: Color(0x3334C759),
                           blurRadius: 18,
                           offset: Offset(0, 6),
                         ),
@@ -256,7 +256,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
             Text(
               "Paiement effectué\navec succès !",
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: TextStyle(fontFamily: AppTheme.policeTitre, 
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: couleurTexte,
@@ -272,7 +272,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12.5,
-                  color: isDark ? Colors.white70 : const Color(0xFF6B6B6B),
+                  color: isDark ? Colors.white70 : AppTheme.textMuted,
                   height: 1.45,
                 ),
               ),
@@ -284,10 +284,10 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF12281E) : const Color(0xFFE8F7EE),
+                color: isDark ? AppTheme.darkOliveSurface : AppTheme.oliveClair,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isDark ? const Color(0xFF1C4531) : const Color(0xFFBFE7CD),
+                  color: isDark ? AppTheme.darkOliveSurface : AppTheme.oliveBordure,
                   width: 1.2,
                 ),
               ),
@@ -298,7 +298,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                     width: 32,
                     height: 32,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF1EB980),
+                      color: AppTheme.olive,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -317,7 +317,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? const Color(0xFF63D9A2) : const Color(0xFF136838),
+                            color: isDark ? AppTheme.darkOlive : AppTheme.oliveProfond,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -325,7 +325,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                           "Nous ne transférons les fonds au courtier que lorsque le groupe atteint 100%.",
                           style: TextStyle(
                             fontSize: 11.5,
-                            color: isDark ? const Color(0xFFA5E6C5) : const Color(0xFF267345),
+                            color: isDark ? AppTheme.darkOlive : AppTheme.oliveProfond,
                             height: 1.35,
                           ),
                         ),
@@ -360,7 +360,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                     border: Border.all(color: couleurBordure, width: 1.2),
                     boxShadow: [
                       BoxShadow(
-                        color: isDark ? Colors.black26 : const Color(0x0A46321E),
+                        color: isDark ? Colors.black26 : const Color(0x0A2C241E),
                         blurRadius: 14,
                         offset: const Offset(0, 4),
                       ),
@@ -374,7 +374,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                         child: Container(
                           width: 82,
                           height: 82,
-                          color: isDark ? const Color(0xFF2C2723) : const Color(0xFFF6F0E6),
+                          color: isDark ? AppTheme.darkSurfaceDouce : AppTheme.surfaceDouce,
                           padding: const EdgeInsets.all(6),
                           child: imageProduit(
                             _image,
@@ -382,7 +382,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                             errorBuilder: (_, __, ___) => const Icon(
                               Icons.inventory_2_outlined,
                               size: 38,
-                              color: Color(0xFF9E6E4B),
+                              color: AppTheme.bissap,
                             ),
                           ),
                         ),
@@ -412,15 +412,15 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
                                     color: estObjectifAtteint
-                                        ? (isDark ? const Color(0xFF143324) : const Color(0xFFE8F7EE))
-                                        : (isDark ? const Color(0xFF332715) : const Color(0xFFFFF2DC)),
+                                        ? (isDark ? AppTheme.darkOliveSurface : AppTheme.oliveClair)
+                                        : (isDark ? AppTheme.darkOcreSurface : AppTheme.ocreClair),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       if (estObjectifAtteint) ...[
-                                        const Icon(Icons.check_circle, size: 11, color: Color(0xFF1EB980)),
+                                        const Icon(Icons.check_circle, size: 11, color: AppTheme.oliveProfond),
                                         const SizedBox(width: 3),
                                       ],
                                       Text(
@@ -428,7 +428,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                         style: TextStyle(
                                           fontSize: 10.5,
                                           fontWeight: FontWeight.w800,
-                                          color: estObjectifAtteint ? const Color(0xFF1EB980) : const Color(0xFFD98200),
+                                          color: estObjectifAtteint ? AppTheme.oliveProfond : AppTheme.ocreProfond,
                                         ),
                                       ),
                                     ],
@@ -441,7 +441,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                               _pays.isNotEmpty ? _pays : widget.paysOrigine,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: isDark ? Colors.white60 : const Color(0xFF888888),
+                                color: isDark ? Colors.white60 : AppTheme.textMuted,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -462,9 +462,9 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                 child: LinearProgressIndicator(
                                   value: pct,
                                   minHeight: 6,
-                                  backgroundColor: isDark ? const Color(0xFF36302B) : const Color(0xFFF0EBE1),
+                                  backgroundColor: isDark ? AppTheme.darkBordure : AppTheme.bordure,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    estObjectifAtteint ? const Color(0xFF1EB980) : const Color(0xFFEEA823),
+                                    estObjectifAtteint ? AppTheme.olive : AppTheme.ocre,
                                   ),
                                 ),
                               ),
@@ -476,7 +476,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                     "$piecesAffichees / $_piecesObjectif pièces",
                                     style: TextStyle(
                                       fontSize: 10.5,
-                                      color: isDark ? Colors.white70 : const Color(0xFF888888),
+                                      color: isDark ? Colors.white70 : AppTheme.textMuted,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -485,7 +485,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                     style: TextStyle(
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w800,
-                                      color: estObjectifAtteint ? const Color(0xFF1EB980) : const Color(0xFFEEA823),
+                                      color: estObjectifAtteint ? AppTheme.oliveProfond : AppTheme.ocreProfond,
                                     ),
                                   ),
                                 ],
@@ -495,14 +495,14 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.verified_rounded, size: 12, color: Color(0xFF1EB980)),
+                                      const Icon(Icons.verified_rounded, size: 12, color: AppTheme.oliveProfond),
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
                                           "Objectif 100% atteint ! Expédition garantie 🚀",
                                           style: TextStyle(
                                             fontSize: 10.5,
-                                            color: isDark ? const Color(0xFF63D9A2) : const Color(0xFF136838),
+                                            color: isDark ? AppTheme.darkOlive : AppTheme.oliveProfond,
                                             fontWeight: FontWeight.w700,
                                           ),
                                           overflow: TextOverflow.ellipsis,
@@ -516,14 +516,14 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.bolt_rounded, size: 12, color: Color(0xFFEEA823)),
+                                      const Icon(Icons.bolt_rounded, size: 12, color: AppTheme.ocreProfond),
                                       const SizedBox(width: 3),
                                       Expanded(
                                         child: Text(
                                           "Plus que ${_piecesObjectif - piecesAffichees} pièces pour clôturer le groupe",
                                           style: TextStyle(
                                             fontSize: 10.5,
-                                            color: isDark ? const Color(0xFFECC276) : const Color(0xFF9E6E4B),
+                                            color: isDark ? AppTheme.ocreProfond : AppTheme.bissap,
                                             fontWeight: FontWeight.w600,
                                           ),
                                           overflow: TextOverflow.ellipsis,
@@ -537,8 +537,8 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                 borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
                                   minHeight: 5,
-                                  backgroundColor: isDark ? const Color(0xFF36302B) : const Color(0xFFF0EBE1),
-                                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFEEA823)),
+                                  backgroundColor: isDark ? AppTheme.darkBordure : AppTheme.bordure,
+                                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.ocre),
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -546,7 +546,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                 "Actualisation de la jauge...",
                                 style: TextStyle(
                                   fontSize: 10.5,
-                                  color: isDark ? Colors.white60 : const Color(0xFF888888),
+                                  color: isDark ? Colors.white60 : AppTheme.textMuted,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -631,7 +631,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9E6E4B),
+                backgroundColor: AppTheme.bissap,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 54),
                 shape: RoundedRectangleBorder(
@@ -664,7 +664,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
               child: const Text(
                 "Annuler Commande",
                 style: TextStyle(
-                  color: Color(0xFFE53935),
+                  color: AppTheme.danger,
                   fontWeight: FontWeight.w800,
                   fontSize: 13.5,
                 ),
@@ -690,13 +690,13 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF9E6E4B)),
+          Icon(icon, size: 18, color: AppTheme.bissap),
           const SizedBox(width: 10),
           Text(
             label,
             style: TextStyle(
               fontSize: 13,
-              color: isDark ? Colors.white70 : const Color(0xFF7A7A7A),
+              color: isDark ? Colors.white70 : AppTheme.textMuted,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -706,7 +706,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
             style: TextStyle(
               fontSize: 13.5,
               fontWeight: isBoldValue ? FontWeight.w800 : FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF1E1E1E),
+              color: isDark ? Colors.white : AppTheme.terre,
             ),
           ),
         ],
@@ -723,12 +723,12 @@ class _ConfettiPainter extends CustomPainter {
     final cy = size.height / 2;
 
     final particles = [
-      _Dot(cx - 36, cy - 22, 2.5, const Color(0xFF1EB980)),
-      _Dot(cx + 38, cy - 18, 3.0, const Color(0xFFEEA823)),
-      _Dot(cx + 26, cy - 36, 2.2, const Color(0xFF9E6E4B)),
-      _Dot(cx - 24, cy - 38, 2.0, const Color(0xFF1EB980)),
-      _Dot(cx - 40, cy + 18, 2.8, const Color(0xFFEEA823)),
-      _Dot(cx + 36, cy + 24, 2.4, const Color(0xFF1EB980)),
+      _Dot(cx - 36, cy - 22, 2.5, AppTheme.olive),
+      _Dot(cx + 38, cy - 18, 3.0, AppTheme.ocre),
+      _Dot(cx + 26, cy - 36, 2.2, AppTheme.bissap),
+      _Dot(cx - 24, cy - 38, 2.0, AppTheme.olive),
+      _Dot(cx - 40, cy + 18, 2.8, AppTheme.ocre),
+      _Dot(cx + 36, cy + 24, 2.4, AppTheme.olive),
     ];
 
     for (final p in particles) {

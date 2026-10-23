@@ -32,7 +32,7 @@ class CodeRetraitCommercantScreen extends StatefulWidget {
 }
 
 class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScreen> {
-  static const _rouge = Color(0xFFC0392B);
+  static const _rouge = AppTheme.danger;
   bool _chargement = true;
   String? _erreur;
   List<Map<String, dynamic>> _aRetirer = [];
@@ -113,12 +113,12 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
       appBar: AppBar(
         title: const Text(
           "Code de Retrait Sécurisé",
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w700, fontSize: 18),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.couleurCarte(context),
         elevation: 0,
-        foregroundColor: AppTheme.textPrimary,
+        foregroundColor: AppTheme.couleurTexte(context),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.of(context).pop(),
@@ -155,18 +155,18 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF9F5F0),
+                  color: AppTheme.couleurSurfaceDouce(context),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.shield_outlined, color: AppTheme.primary, size: 28),
-                    SizedBox(width: 14),
+                    Icon(Icons.shield_outlined, color: AppTheme.couleurAccent(context), size: 28),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Text(
                         "Vos fonds restent protégés jusqu'à votre retrait.",
-                        style: TextStyle(fontSize: 11.5, height: 1.35, color: AppTheme.textPrimary),
+                        style: TextStyle(fontSize: 11.5, height: 1.35, color: AppTheme.couleurTexte(context)),
                       ),
                     ),
                   ],
@@ -189,15 +189,15 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
         Icons.local_shipping_outlined,
         "Aucune commande n'est encore prête à être retirée. Votre code apparaîtra ici dès que votre colis sera "
         "disponible au point de retrait (vous recevrez aussi le PIN par SMS).",
-        AppTheme.textMuted,
+        AppTheme.couleurTexteAttenue(context),
       );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           "Choisissez la commande à retirer",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textPrimary),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context)),
         ),
         const SizedBox(height: 12),
         ..._aRetirer.map((c) => Card(
@@ -247,7 +247,7 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: const [BoxShadow(color: Color(0x0C46321E), blurRadius: 20, offset: Offset(0, 6))],
+        boxShadow: const [BoxShadow(color: Color(0x0C2C241E), blurRadius: 20, offset: Offset(0, 6))],
         border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
       ),
       child: Column(
@@ -283,12 +283,11 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE5DDD5), width: 2),
+              border: Border.all(color: AppTheme.bordureForte, width: 2),
             ),
             child: QrImageView(
               data: code.qrToken,
               size: 220,
-              backgroundColor: Colors.white,
               eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AppTheme.primaryDark),
               dataModuleStyle: const QrDataModuleStyle(
                 dataModuleShape: QrDataModuleShape.square,
@@ -301,30 +300,30 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
           const SizedBox(height: 16),
           Text(
             "Commande #${code.commandeId}",
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context)),
           ),
           if (code.expiration.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               "Valable jusqu'au ${_date(code.expiration)}",
-              style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+              style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
             ),
           ],
 
           const SizedBox(height: 20),
-          const Divider(color: Color(0xFFF0EAE4)),
+          Divider(color: AppTheme.couleurBordure(context)),
           const SizedBox(height: 16),
 
           // Consigne PIN (RG-71) : le PIN n'est connu que par SMS
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.tertiary.withValues(alpha: 0.25),
+              color: AppTheme.couleurSurfaceDouce(context),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               children: [
-                const Icon(Icons.sms_outlined, color: AppTheme.primary, size: 20),
+                Icon(Icons.sms_outlined, color: AppTheme.couleurAccent(context), size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -339,20 +338,20 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
           ),
 
           const SizedBox(height: 10),
-          const Text(
+          Text(
             "Code perdu ou bloqué ? Le guichet peut vous envoyer un nouveau code par SMS.",
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+            style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
           ),
           const SizedBox(height: 10),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.lock_outline, size: 14, color: AppTheme.textMuted),
-              SizedBox(width: 5),
+              Icon(Icons.lock_outline, size: 14, color: AppTheme.couleurTexteAttenue(context)),
+              const SizedBox(width: 5),
               Text(
                 "À montrer uniquement au guichet de retrait",
-                style: TextStyle(fontSize: 11.5, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context), fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -376,16 +375,16 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [BoxShadow(color: Color(0x0846321E), blurRadius: 15, offset: Offset(0, 4))],
+        boxShadow: const [BoxShadow(color: Color(0x082C241E), blurRadius: 15, offset: Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "Lieu de retrait",
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textPrimary),
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
           ),
           const SizedBox(height: 10),
           Row(
@@ -397,7 +396,7 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
                   color: AppTheme.secondary.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.location_on, color: AppTheme.secondary, size: 20),
+                child: const Icon(Icons.location_on, color: AppTheme.ocreProfond, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -422,8 +421,8 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
                 icon: const Icon(Icons.directions_rounded, size: 18),
                 label: const Text("Voir l'itinéraire vers le dépôt"),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1A73E8),
-                  side: const BorderSide(color: Color(0x4D1A73E8)),
+                  foregroundColor: AppTheme.bissap,
+                  side: const BorderSide(color: Color(0x4DAC7F5E)),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -431,12 +430,12 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
             ),
           ],
           const SizedBox(height: 16),
-          const Divider(color: Color(0xFFF3ECE5)),
+          const Divider(color: AppTheme.bordure),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Article", style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+              Text("Article", style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context))),
               Text("$_quantite unité(s)", style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
             ],
           ),

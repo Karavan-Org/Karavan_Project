@@ -91,7 +91,7 @@ class _NotificationsGrossisteScreenState extends State<NotificationsGrossisteScr
       messenger.showSnackBar(
         SnackBar(
           content: Text(e is ApiException ? e.messageComplet : "Erreur lors du marquage."),
-          backgroundColor: const Color(0xFFC0392B),
+          backgroundColor: AppTheme.danger,
         ),
       );
     }
@@ -126,11 +126,11 @@ class _NotificationsGrossisteScreenState extends State<NotificationsGrossisteScr
 
   Color _couleurCategorie(String cat) {
     return switch (cat) {
-      'Stock' => const Color(0xFFB45309),
+      'Stock' => AppTheme.ocreProfond,
       'Groupes' => AppTheme.primary,
-      'Commandes' => const Color(0xFF1976D2),
-      'Compte' => const Color(0xFF2E7D32),
-      _ => const Color(0xFF8C7E74),
+      'Commandes' => AppTheme.olive,
+      'Compte' => AppTheme.olive,
+      _ => AppTheme.textMuted,
     };
   }
 
@@ -168,7 +168,7 @@ class _NotificationsGrossisteScreenState extends State<NotificationsGrossisteScr
         ),
         title: Text(
           "Notifications Grossiste",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         actions: [
           if (nombreNonLues > 0)
@@ -176,7 +176,7 @@ class _NotificationsGrossisteScreenState extends State<NotificationsGrossisteScr
               onPressed: _toutMarquerLu,
               child: const Text(
                 "Tout marquer lu",
-                style: TextStyle(fontSize: 12, color: Color(0xFF9E6738), fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 12, color: AppTheme.bissap, fontWeight: FontWeight.w700),
               ),
             ),
           const SizedBox(width: 8),
@@ -215,7 +215,7 @@ class _NotificationsGrossisteScreenState extends State<NotificationsGrossisteScr
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(40),
                           children: [
-                            const Icon(Icons.error_outline, size: 48, color: Color(0xFFC0392B)),
+                            const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
                             const SizedBox(height: 12),
                             Text(_erreur!, textAlign: TextAlign.center),
                           ],
@@ -238,7 +238,7 @@ class _NotificationsGrossisteScreenState extends State<NotificationsGrossisteScr
                                 Text(
                                   "Aucune notification",
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.couleurTexte(context)),
+                                  style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.couleurTexte(context)),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
@@ -271,11 +271,11 @@ class _NotificationsGrossisteScreenState extends State<NotificationsGrossisteScr
                                         color: AppTheme.couleurCarte(context),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: estLu ? Colors.transparent : const Color(0xFF9E6738).withValues(alpha: 0.25),
+                                          color: estLu ? Colors.transparent : AppTheme.bissap.withValues(alpha: 0.25),
                                           width: estLu ? 1 : 1.5,
                                         ),
                                         boxShadow: const [
-                                          BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
+                                          BoxShadow(color: Color(0x062C241E), blurRadius: 10, offset: Offset(0, 3)),
                                         ],
                                       ),
                                       child: Row(
@@ -331,7 +331,7 @@ class _NotificationsGrossisteScreenState extends State<NotificationsGrossisteScr
                                               height: 8,
                                               margin: const EdgeInsets.only(left: 8, top: 4),
                                               decoration: const BoxDecoration(
-                                                color: Color(0xFFE53935),
+                                                color: AppTheme.danger,
                                                 shape: BoxShape.circle,
                                               ),
                                             ),
@@ -356,10 +356,10 @@ class _NotificationsGrossisteScreenState extends State<NotificationsGrossisteScr
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF9E6738) : AppTheme.couleurCarte(context),
+          color: isSelected ? AppTheme.bissap : AppTheme.couleurCarte(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF9E6738) : AppTheme.couleurBordure(context),
+            color: isSelected ? AppTheme.bissap : AppTheme.couleurBordure(context),
           ),
         ),
         child: Text(

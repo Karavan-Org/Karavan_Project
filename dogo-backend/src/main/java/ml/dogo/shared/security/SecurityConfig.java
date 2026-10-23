@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/groupes/**").permitAll()
                         .requestMatchers("/api/catalogue/categories").permitAll()
                         .requestMatchers("/api/public/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/public/contact").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/paiements/callback").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
@@ -45,7 +46,9 @@ public class SecurityConfig {
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((req, res, ex) -> ecrire(res, 401, "Authentification requise"))
                         .accessDeniedHandler((req, res, ex) -> ecrire(res, 403, "Accès refusé")))
-                .addFilterBefore(filtre, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(filtre, UsernamePasswordAuthenticationFilter.class)
+                // RG-03 : un compte en attente de validation n'accède qu'à son parcours de vérification
+                .addFilterAfter(new FiltreCompteEnAttente(), JwtFiltre.class);
         return http.build();
     }
 
@@ -61,6 +64,7 @@ public class SecurityConfig {
                 "Content-Type",
                 "Idempotency-Key",
                 "X-Signature",
+                "X-Client-Platform",
                 "Accept",
                 "Origin",
                 "X-Requested-With",

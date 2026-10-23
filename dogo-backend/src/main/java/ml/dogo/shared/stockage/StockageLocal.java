@@ -50,7 +50,8 @@ public class StockageLocal implements StockageFichiers {
             return "";
         }
         String bas = nom.toLowerCase(Locale.ROOT);
-        for (String ext : new String[]{".pdf", ".jpg", ".jpeg", ".png"}) {
+        for (String ext : new String[]{".pdf", ".jpg", ".jpeg", ".png",
+                ".docx", ".doc", ".xlsx", ".xls", ".odt", ".ods", ".rtf", ".txt", ".csv"}) {
             if (bas.endsWith(ext)) {
                 return ext;
             }

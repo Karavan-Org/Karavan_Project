@@ -13,23 +13,33 @@ Java 21 · Spring Boot 3.5 · Maven · MySQL 8 · Flyway · JWT + sessions serve
 - MySQL 8 démarré en local
 
 ### Base de données
-Les tables sont créées automatiquement par Flyway (`src/main/resources/db/migration`, V1 → V5). Il suffit que MySQL tourne :
+Les tables sont créées automatiquement par Flyway (`src/main/resources/db/migration`, V1 → V19). Il suffit que MySQL tourne :
 
 ```sql
 CREATE DATABASE dogo CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 ```
 
-Par défaut l'application se connecte à `localhost:3306/dogo` avec l'utilisateur `root`. Variables d'environnement (toutes facultatives en local) :
+Le profil par défaut est `prod` : sans profil local explicite, l'application exige des identifiants DB, secrets et origines CORS de production valides et refuse le démarrage si des comptes conservent le mot de passe partagé de V11. En local, activez le profil `local`, qui se connecte par défaut à `localhost:3306/dogo` avec `root` / `1234` :
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+Variables d'environnement :
 
 | Variable | Rôle | Défaut |
 |---|---|---|
-| `DB_URL`, `DB_USER`, `DB_PASSWORD` | connexion MySQL | `root`, mot de passe vide |
-| `DOGO_JWT_SECRET` | clé de signature des jetons (32 caractères minimum) | valeur de démo |
+| `DB_URL`, `DB_USER`, `DB_PASSWORD` | connexion MySQL | `root`, `1234` (local uniquement) |
+| `DOGO_JWT_SECRET` | clé de signature aléatoire (32 caractères minimum, 3 catégories de caractères) | valeur de démo |
 | `DOGO_MM_SECRET` | secret partagé de signature des callbacks Mobile Money | valeur de démo |
-| `DOGO_ADMIN_TEL`, `DOGO_ADMIN_PIN` | crée l'administrateur TECHNIQUE au premier démarrage (hors démo) | — |
+| `DOGO_CORS_ORIGINS` | origines exactes en HTTPS, séparées par des virgules en production | origines locales |
+| `DOGO_COOKIE_SECURE` | exige le transport HTTPS pour le cookie de session en production | `false` localement, requis à `true` en production |
+| `DOGO_ADMIN_TELEPHONE`, `DOGO_ADMIN_MOT_DE_PASSE` | crée l'administrateur TECHNIQUE au premier démarrage (hors démo) | — |
 | `DOGO_STOCKAGE` | dossier des documents KYC | `./donnees/fichiers` |
 
 > Compte MySQL dédié : créer les triggers d'audit demande le droit `TRIGGER` **et**, si le journal binaire est actif, `SET GLOBAL log_bin_trust_function_creators = 1;` (erreur 1419 sinon). En local, `root` évite le problème.
+
+En production, utilisez explicitement le profil `prod`, une base et un utilisateur dédiés, des secrets aléatoires forts, des origines CORS HTTPS exactes et `DOGO_COOKIE_SECURE=true`. Le démarrage échoue si le hachage de mot de passe partagé introduit par V11 subsiste dans la table `utilisateur` : réinitialisez ces comptes avant la mise en service.
 
 ### Lancer avec les données de démonstration
 ```bash
@@ -40,7 +50,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=demo
 - Swagger : <http://localhost:8080/swagger-ui.html> (bouton **Authorize** : coller le jeton obtenu à la connexion)
 - Santé : <http://localhost:8080/actuator/health>
 
-### Comptes de démonstration (PIN de tous : `2580`)
+### Comptes de démonstration (mot de passe de tous : `Dogo2026!`)
 | Rôle | Téléphone |
 |---|---|
 | Administrateur TECHNIQUE / VALIDATION / FINANCE / SUPPORT | `+22370000001` / `…02` / `…03` / `…04` |
@@ -54,7 +64,7 @@ Le profil `demo` active aussi : le code OTP visible dans la réponse d'inscripti
 
 ## 2. Parcours de démonstration (dans Swagger)
 
-1. **Connexion** de chacun : `POST /api/auth/connexion` `{ "telephone": "+22372000001", "pin": "2580" }` → copier `jeton`.
+1. **Connexion** de chacun : `POST /api/auth/connexion` `{ "telephone": "+22372000001", "motDePasse": "Dogo2026!" }` → copier `jeton`.
 2. **Courtier** : `GET /api/catalogue/produits` (avec le jeton du grossiste) pour l'identifiant du produit, puis `POST /api/groupes` (quantité cible, date limite, marchandise, transport, douane, autres) → le prix unitaire est calculé (RG-20). `POST /api/groupes/{id}/soumission`.
 3. **Grossiste** : `POST /api/groupes/{id}/disponibilite` (le stock doit couvrir la cible, RG-18).
 4. **Administrateur** : `POST /api/admin/groupes/{id}/publication` `{ "approuve": true }` → le groupe est `OUVERT`.
@@ -98,7 +108,7 @@ Chaque module a les couches `domain` (règles pures, testées sans Spring), `per
 - **Secrets** : PIN, OTP et PIN de retrait sont hachés (BCrypt), jamais relisibles ; le grossiste ne voit jamais l'identité des acheteurs (RG-71).
 
 ### Paramètres métier (`application.yml`)
-Commission 5 % · code de retrait valable 7 jours, 3 essais · OTP 5 min, 3 essais · PIN : verrouillage 15 min après 5 échecs · session : 30 jours d'inactivité · réservation : 15 min.
+Commission 5 % · code de retrait valable 7 jours, 3 essais · OTP 2 min, 3 essais · mot de passe : verrouillage 15 min après 5 échecs · session : 30 jours d'inactivité · réservation : 15 min.
 
 ---
 
@@ -109,13 +119,15 @@ mvn test      # tests unitaires des règles de gestion (domaine) + tests d'archi
 mvn verify    # + parcours complet de bout en bout (FluxPrincipalIT)
 ```
 
-`FluxPrincipalIT` rejoue tout le parcours ci-dessus sur une base MySQL locale **`dogo_test`** (créée, vidée et reconstruite à chaque exécution ; mêmes variables `DB_USER` / `DB_PASSWORD`). Il vérifie au passage les refus attendus : rôle insuffisant, groupe plein, PIN erroné trois fois (code bloqué), ancien code invalidé, double retrait, séquestre libéré seulement à la collecte, chaîne d'audit intacte.
+`FluxPrincipalIT` rejoue tout le parcours ci-dessus sur une base MySQL locale **`dogo_test`** (créée, vidée et reconstruite à chaque exécution ; mêmes variables `DB_USER` / `DB_PASSWORD`). N'exécuter `mvn verify` qu'avec une base `dogo_test` jetable. Il vérifie au passage les refus attendus : rôle insuffisant, groupe plein, mot de passe erroné trois fois (compte bloqué), ancien code invalidé, double retrait, séquestre libéré seulement à la collecte, chaîne d'audit intacte.
 
 ### Statut de vérification
-Le domaine (35 tests) a été exécuté. Le reste a été vérifié par analyse statique — compilation contre des interfaces Spring/JPA de contrôle, migrations et **requêtes SQL exécutées sur MySQL 8**, noms de propriétés des dépôts et des requêtes JPQL, absence de cycle entre beans et entre modules — mais **n'a pas encore été démarré avec Spring Boot**. Premier réflexe : `mvn clean verify`, puis lancer l'application en profil `demo` ; toute erreur de démarrage éventuelle est locale et se corrige vite.
+Vérification du 23 octobre 2026 : `mvn test` a exécuté 65 tests unitaires et d'architecture avec succès. Les tests d'intégration (`mvn verify`) n'ont pas été exécutés pendant l'audit : ils vident et reconstruisent `dogo_test`. Le démarrage Spring Boot avec une vraie base reste à vérifier.
 
 ---
 
 ## 5. Limites connues (hors périmètre de cette livraison)
+
+**Attention avant toute utilisation de données réelles :** la migration V11 affecte le même mot de passe de démonstration à tous les comptes déjà présents au moment de son exécution. Ne pas l'appliquer à des comptes réels. Cette migration étant déjà versionnée, sa correction nécessite une stratégie de migration/réinitialisation des comptes qui préserve les installations existantes.
 
 Le parcours principal est complet. Ne sont **pas** implémentés : le corridor et l'écart de devises (RG-16, RG-42 : tout est en XOF), le convoi et la douane (RG-45 à RG-49), les litiges et le gel de séquestre (RG-61 à RG-64), les avis (RG-65), la réconciliation avec l'opérateur (RG-43) et la libération manuelle du séquestre (RG-39). Mobile Money et SMS sont **simulés** derrière des interfaces (`PasserelleMobileMoney`, `PasserelleSms`) : brancher un vrai opérateur revient à écrire une implémentation. Le journal d'audit sérialise les transactions qui écrivent une trace (tête de chaîne verrouillée) : suffisant pour la démonstration, à revoir pour une forte charge. Un remboursement de groupe entier s'exécute en une seule transaction.

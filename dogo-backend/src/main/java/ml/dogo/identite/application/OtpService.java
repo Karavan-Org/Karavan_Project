@@ -22,6 +22,12 @@ public class OtpService {
     /** Délai minimal entre deux envois pour un même compte. */
     static final Duration DELAI_RENVOI = Duration.ofSeconds(30);
 
+    /**
+     * Plafond d'envois par numéro sur 24 h glissantes : avec 3 essais par code, deviner un code à 4 chiffres
+     * devient impraticable (15 essais par jour sur 10 000), et un numéro ne peut pas être inondé de SMS.
+     */
+    static final int MAX_ENVOIS_PAR_JOUR = 5;
+
     private final CodeOtpRepository otps;
     private final CompteursAuthentification compteurs;
     private final PasswordEncoder encodeur;
@@ -44,20 +50,32 @@ public class OtpService {
     @Transactional
     public String emettre(Utilisateur utilisateur) {
         Instant maintenant = horloge.instant();
-        otps.findFirstByUtilisateurIdOrderByDateCreationDesc(utilisateur.getId()).ifPresent(dernier -> {
+        String telephone = utilisateur.getTelephone();
+        // Comptés par numéro et non par compte : remplacer une inscription abandonnée ne remet rien à zéro
+        otps.findFirstByTelephoneOrderByDateCreationDesc(telephone).ifPresent(dernier -> {
             if (maintenant.isBefore(dernier.getDateCreation().plus(DELAI_RENVOI))) {
                 throw new ErreurMetier(CodeErreur.CONFLIT, "RG-02",
                         "Un code vient d'être envoyé, patientez quelques secondes avant d'en redemander un");
             }
         });
+        if (otps.countByTelephoneAndDateCreationAfter(telephone, maintenant.minus(Duration.ofHours(24)))
+                >= MAX_ENVOIS_PAR_JOUR) {
+            throw new ErreurMetier(CodeErreur.CONFLIT, "RG-02",
+                    "Trop de codes demandés pour ce numéro : réessayez dans 24 heures ou contactez le support");
+        }
         otps.invaliderAnciens(utilisateur.getId());
         String code = String.format("%04d", alea.nextInt(10_000));
-        otps.save(new CodeOtp(utilisateur.getId(), encodeur.encode(code),
+        otps.save(new CodeOtp(utilisateur.getId(), telephone, encodeur.encode(code),
                 maintenant.plus(proprietes.otp().validite()), maintenant));
         long minutes = Math.max(1, proprietes.otp().validite().toMinutes());
-        notifications.envoyerSms(utilisateur.getTelephone(),
+        notifications.envoyerSms(telephone,
                 "DoGo : votre code de vérification est " + code + ". Il est valable " + minutes + " min.");
         return code;
+    }
+
+    /** Vrai si le compte a encore un code utilisable (inscription en cours de vérification). */
+    public boolean codeEnCours(long utilisateurId) {
+        return otps.existsByUtilisateurIdAndUtiliseFalseAndExpirationAfter(utilisateurId, horloge.instant());
     }
 
     /**

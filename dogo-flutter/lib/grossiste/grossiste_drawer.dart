@@ -7,15 +7,59 @@ import 'parametres_grossiste_screen.dart';
 import '../widgets/tab_navigation_scope.dart';
 import '../services/api/api_config.dart';
 import '../services/auth_service.dart';
+import '../services/catalogue_api_service.dart';
+import '../services/groupe_api_service.dart';
+import '../services/notification_api_service.dart';
+import 'notifications_grossiste_screen.dart';
 
 /// Menu Burger latéral du Grossiste (Drawer)
-class GrossisteDrawer extends StatelessWidget {
+class GrossisteDrawer extends StatefulWidget {
   final String activeRoute;
 
   const GrossisteDrawer({
     super.key,
     this.activeRoute = 'dashboard',
   });
+
+  @override
+  State<GrossisteDrawer> createState() => _GrossisteDrawerState();
+}
+
+class _GrossisteDrawerState extends State<GrossisteDrawer> {
+  /// Compteurs réels, relus à chaque ouverture du menu (null tant qu'inconnus ou nuls : pas de pastille).
+  /// Mêmes filtres que les écrans ouverts par chaque entrée, pour que la pastille corresponde à ce qu'on y trouve.
+  int? _nbProduits;
+  int? _aConfirmer;
+  int? _aPreparer;
+  int? _nonLues;
+
+  String get activeRoute => widget.activeRoute;
+
+  @override
+  void initState() {
+    super.initState();
+    _chargerCompteurs();
+  }
+
+  Future<void> _chargerCompteurs() async {
+    int? nonNul(int n) => n > 0 ? n : null;
+    final resultats = await Future.wait<Object?>([
+      CatalogueApiService.instance.mesProduits().then<Object?>((p) => p.length).catchError((_) => null),
+      GroupeApiService.instance.groupesDuGrossiste().then<Object?>((g) => g).catchError((_) => null),
+      NotificationApiService.instance.nombreNonLues().then<Object?>((n) => n),
+    ]);
+    if (!mounted) return;
+    final groupes = resultats[1] as List<GroupeResume>?;
+    setState(() {
+      _nbProduits = resultats[0] is int ? nonNul(resultats[0] as int) : null;
+      if (groupes != null) {
+        // Comme MesGroupesGrossisteScreen (« À confirmer ») et GrossisteCommandesScreen (« À préparer »)
+        _aConfirmer = nonNul(groupes.where((g) => g.statut == 'EN_VALIDATION' && !g.disponibiliteValidee).length);
+        _aPreparer = nonNul(groupes.where((g) => g.statut == 'OBJECTIF_ATTEINT').length);
+      }
+      _nonLues = nonNul(resultats[2] as int);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +119,7 @@ class GrossisteDrawer extends StatelessWidget {
                                     fit: BoxFit.cover,
                                     width: 52,
                                     height: 52,
+                                    cacheWidth: (52 * MediaQuery.devicePixelRatioOf(context)).ceil(),
                                     errorBuilder: (_, __, ___) => Center(
                                       child: Text(
                                         initiales,
@@ -131,7 +176,7 @@ class GrossisteDrawer extends StatelessWidget {
                                         Icon(
                                           Icons.verified,
                                           size: 11,
-                                          color: AppTheme.success,
+                                          color: AppTheme.oliveProfond,
                                         ),
                                         SizedBox(width: 3),
                                         Text(
@@ -139,7 +184,7 @@ class GrossisteDrawer extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w700,
-                                            color: AppTheme.success,
+                                            color: AppTheme.oliveProfond,
                                           ),
                                         ),
                                       ],
@@ -188,7 +233,7 @@ class GrossisteDrawer extends StatelessWidget {
                     context: context,
                     icon: Icons.inventory_2_rounded,
                     title: "Mon Catalogue",
-                    badge: "12",
+                    badge: _nbProduits?.toString(),
                     isActive: activeRoute == 'catalogue',
                     onTap: () {
                       Navigator.pop(context);
@@ -227,7 +272,7 @@ class GrossisteDrawer extends StatelessWidget {
                     context: context,
                     icon: Icons.fact_check_rounded,
                     title: "Disponibilités à valider",
-                    badge: "3",
+                    badge: _aConfirmer?.toString(),
                     badgeColor: AppTheme.secondary,
                     isActive: activeRoute == 'disponibilites',
                     onTap: () {
@@ -247,7 +292,7 @@ class GrossisteDrawer extends StatelessWidget {
                     context: context,
                     icon: Icons.local_shipping_rounded,
                     title: "Commandes à expédier",
-                    badge: "1",
+                    badge: _aPreparer?.toString(),
                     badgeColor: AppTheme.success,
                     isActive: activeRoute == 'expeditions',
                     onTap: () {
@@ -255,9 +300,23 @@ class GrossisteDrawer extends StatelessWidget {
                       TabNavigationScope.switchToTab(context, 2);
                     },
                   ),
+                  _buildMenuItem(
+                    context: context,
+                    icon: Icons.notifications_none_rounded,
+                    title: "Notifications",
+                    badge: _nonLues?.toString(),
+                    isActive: activeRoute == 'notifications',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const NotificationsGrossisteScreen()),
+                      );
+                    },
+                  ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Divider(color: Color(0xFFEFE9E2)),
+                    child: Divider(color: AppTheme.bordure),
                   ),
                   _buildMenuItem(
                     context: context,
@@ -303,8 +362,8 @@ class GrossisteDrawer extends StatelessWidget {
                 icon: const Icon(Icons.logout_rounded, size: 18),
                 label: const Text("Déconnexion"),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.redAccent,
-                  side: const BorderSide(color: Color(0xFFFFCDD2)),
+                  foregroundColor: AppTheme.danger,
+                  side: const BorderSide(color: AppTheme.dangerBordure),
                   minimumSize: const Size(double.infinity, 46),
                 ),
               ),
@@ -354,10 +413,10 @@ class GrossisteDrawer extends StatelessWidget {
                 ),
                 child: Text(
                   badge,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppTheme.texteSur(badgeColor ?? AppTheme.primary),
                   ),
                 ),
               )

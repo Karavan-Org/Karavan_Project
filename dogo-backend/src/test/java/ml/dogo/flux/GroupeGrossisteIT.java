@@ -118,7 +118,7 @@ class GroupeGrossisteIT {
         assertTrue(appeler(HttpMethod.GET, "/api/groupes/mes-groupes", grossiste, null, 200)
                 .findValues("id").stream().anyMatch(id -> id.asLong() == groupeId));
 
-        for (String acheteur : new String[] {commercant, commercant2}) {   // RG-27 : 50 % de la cible au plus chacun
+        for (String acheteur : new String[] {commercant, commercant2}) {   // Les deux réservations atteignent exactement la cible de 10 lots.
             long participationId = appeler(HttpMethod.POST, "/api/groupes/" + groupeId + "/participations", acheteur,
                     Map.of("varianteId", varianteId, "quantite", 5), 201).get("id").asLong();
             long paiementId = appeler(HttpMethod.POST, "/api/participations/" + participationId + "/paiement", acheteur,

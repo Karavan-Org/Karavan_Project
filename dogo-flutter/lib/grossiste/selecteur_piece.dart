@@ -10,12 +10,12 @@ import 'camera_helper.dart';
 /// Fichier choisi par le grossiste pour une pièce de son dossier
 typedef FichierChoisi = ({Uint8List octets, String nom});
 
-/// Feuille de choix : photo avec l'appareil, image de la galerie ou fichier (PDF, JPG, PNG).
+/// Feuille de choix : photo avec l'appareil, image de la galerie ou fichier (PDF, image ou document électronique : Word, Excel, texte…).
 /// Renvoie null si l'utilisateur annule ou si le fichier est refusé (taille / format).
 Future<FichierChoisi?> choisirPiece(BuildContext context, {required String titre}) async {
   final source = await showModalBottomSheet<String>(
     context: context,
-    backgroundColor: Colors.white,
+    backgroundColor: AppTheme.couleurCarte(context),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
@@ -31,17 +31,17 @@ Future<FichierChoisi?> choisirPiece(BuildContext context, {required String titre
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppTheme.couleurBordureForte(ctx),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Text(titre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16.5, color: Color(0xFF2D231C))),
+            Text(titre, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16.5, color: AppTheme.couleurTexte(ctx))),
             const SizedBox(height: 4),
-            const Text(
-              "Photographiez le document ou importez-le (PDF, JPG, PNG — max 5 Mo)",
-              style: TextStyle(color: Color(0xFF7C6E65), fontSize: 12.5),
+            Text(
+              "Photographiez le document ou importez-le (PDF, image, Word, Excel, texte — max 5 Mo)",
+              style: TextStyle(color: AppTheme.couleurTexteAttenue(ctx), fontSize: 12.5),
             ),
             const SizedBox(height: 14),
             _OptionSource(
@@ -59,7 +59,7 @@ Future<FichierChoisi?> choisirPiece(BuildContext context, {required String titre
             _OptionSource(
               icone: Icons.upload_file_rounded,
               titre: "Importer un fichier",
-              sousTitre: "PDF, JPG ou PNG depuis vos fichiers",
+              sousTitre: "PDF, Word, Excel, texte ou image depuis vos fichiers",
               onTap: () => Navigator.pop(ctx, 'fichier'),
             ),
           ],
@@ -82,8 +82,8 @@ Future<FichierChoisi?> choisirPiece(BuildContext context, {required String titre
       _signaler(context, "Le fichier fait $mo Mo : la limite est de 5 Mo.");
       return null;
     }
-    if (!KycApiService.formatAccepte(choisi.octets)) {
-      _signaler(context, "Format non accepté : envoyez un PDF, un JPG ou un PNG.");
+    if (!KycApiService.formatAccepte(choisi.octets, choisi.nom)) {
+      _signaler(context, "Format non accepté : envoyez un PDF, une image (JPG, PNG) ou un document Word, Excel, OpenDocument, RTF ou texte.");
       return null;
     }
     return choisi;
@@ -136,7 +136,7 @@ Future<FichierChoisi?> _depuisGalerie() async {
 }
 
 Future<FichierChoisi?> _depuisFichiers() async {
-  final f = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png']);
+  final f = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: KycApiService.extensionsAcceptees);
   return f == null ? null : (octets: await f.readAsBytes(), nom: f.name);
 }
 
@@ -146,7 +146,7 @@ String _nomOuDefaut(String nom, String base, String ext) => nom.isNotEmpty ? nom
 
 void _signaler(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(message), backgroundColor: const Color(0xFFC0392B), behavior: SnackBarBehavior.floating),
+    SnackBar(content: Text(message), backgroundColor: AppTheme.danger, behavior: SnackBarBehavior.floating),
   );
 }
 
@@ -191,11 +191,11 @@ class _OptionSource extends StatelessWidget {
       leading: Container(
         width: 46,
         height: 46,
-        decoration: BoxDecoration(color: const Color(0xFFF5E8D3), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: AppTheme.couleurSurfaceDouce(context), borderRadius: BorderRadius.circular(12)),
         child: Icon(icone, color: AppTheme.primary),
       ),
-      title: Text(titre, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Color(0xFF2D231C))),
-      subtitle: Text(sousTitre, style: const TextStyle(fontSize: 12, color: Color(0xFF9C8E84))),
+      title: Text(titre, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.couleurTexte(context))),
+      subtitle: Text(sousTitre, style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context))),
     );
   }
 }

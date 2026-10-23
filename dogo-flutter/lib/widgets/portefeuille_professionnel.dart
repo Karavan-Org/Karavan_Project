@@ -138,13 +138,13 @@ class _DialogueRetraitState extends State<_DialogueRetrait> {
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      title: const Text('Retrait vers Mobile Money', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+      title: const Text('Retrait vers Mobile Money', style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Disponible : ${formatFcfa(widget.soldeDisponible)}',
-              style: const TextStyle(fontSize: 12.5, color: AppTheme.textMuted)),
+              style: TextStyle(fontSize: 12.5, color: AppTheme.couleurTexteAttenue(context))),
           const SizedBox(height: 12),
           TextField(
             controller: _montant,
@@ -172,7 +172,7 @@ class _DialogueRetraitState extends State<_DialogueRetrait> {
       actions: [
         TextButton(
           onPressed: _envoi ? null : () => Navigator.of(context).pop(),
-          child: const Text('Annuler', style: TextStyle(color: AppTheme.textMuted)),
+          child: Text('Annuler', style: TextStyle(color: AppTheme.couleurTexteAttenue(context))),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: widget.accent, foregroundColor: Colors.white),
@@ -195,8 +195,8 @@ class ComptesVersement extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (moyens.isEmpty) {
-      return const Text('Aucun compte enregistré : ajoutez un numéro Mobile Money dans vos paramètres.',
-          style: TextStyle(fontSize: 12.5, color: AppTheme.textMuted));
+      return Text('Aucun compte enregistré : ajoutez un numéro Mobile Money dans vos paramètres.',
+          style: TextStyle(fontSize: 12.5, color: AppTheme.couleurTexteAttenue(context)));
     }
     return Column(
       children: [
@@ -233,8 +233,8 @@ class ComptesVersement extends StatelessWidget {
                       color: AppTheme.success.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text('Par défaut',
-                        style: TextStyle(color: AppTheme.success, fontSize: 11.5, fontWeight: FontWeight.bold)),
+                    child: Text('Par défaut',
+                        style: TextStyle(color: AppTheme.couleurSucces(context), fontSize: 11.5, fontWeight: FontWeight.bold)),
                   ),
               ],
             ),
@@ -275,7 +275,7 @@ class HistoriqueMouvementsPro extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(Icons.receipt_long_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+            Icon(Icons.receipt_long_outlined, size: 40, color: AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.5)),
             const SizedBox(height: 12),
             Text('Aucun mouvement pour le moment',
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context))),
@@ -293,7 +293,7 @@ class HistoriqueMouvementsPro extends StatelessWidget {
         for (final m in tries)
           Builder(builder: (context) {
             final sens = _sens(m.type);
-            final couleur = sens.entree ? AppTheme.success : const Color(0xFFC62828);
+            final couleur = sens.entree ? AppTheme.success : AppTheme.danger;
             final d = m.date?.toLocal();
             final date = d == null
                 ? ''

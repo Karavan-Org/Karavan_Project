@@ -68,9 +68,7 @@ public class InscriptionService {
         if (d.nom() == null || d.nom().isBlank()) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-01", "Le nom est obligatoire");
         }
-        if (utilisateurs.existsByTelephone(telephone)) {
-            throw new ErreurMetier(CodeErreur.CONFLIT, "RG-01", "Ce numéro de téléphone est déjà utilisé");
-        }
+        utilisateurs.findByTelephone(telephone).ifPresent(this::libererSiInscriptionAbandonnee);
         Role role = roles.findByNom(d.type().name())
                 .orElseThrow(() -> new IllegalStateException("Rôle absent de la base : " + d.type()));
         String pinHash = encodeur.encode(d.pin());
@@ -125,6 +123,30 @@ public class InscriptionService {
                 ? "Bienvenue sur DoGo ! Envoyez maintenant votre dossier de vérification (KYC) pour activer votre compte."
                 : "Bienvenue sur DoGo ! Votre compte est actif.");
         return new Resultat(u.getId(), u.getStatutCompte().name(), null);
+    }
+
+    /**
+     * RG-01 : un numéro n'est réservé qu'une fois prouvé par OTP. Une inscription interrompue avant la saisie du
+     * code (ou faite avec le numéro de quelqu'un d'autre) ne bloque donc pas le numéro : dès que son code a expiré,
+     * une nouvelle inscription la remplace. Un tel compte n'a jamais pu se connecter (connexion refusée sans
+     * téléphone vérifié) : il ne possède ni session, ni dossier, ni portefeuille, seulement ses codes, dont
+     * l'historique reste compté par numéro (plafond d'envoi de {@link OtpService}).
+     */
+    private void libererSiInscriptionAbandonnee(Utilisateur existant) {
+        if (existant.isTelephoneVerifie()) {
+            throw new ErreurMetier(CodeErreur.CONFLIT, "RG-01", "Ce numéro de téléphone est déjà utilisé");
+        }
+        if (otp.codeEnCours(existant.getId())) {
+            // Inscription en cours : on ne la remplace pas sous les pieds de celui qui attend son SMS
+            throw new ErreurMetier(CodeErreur.CONFLIT, "RG-01",
+                    "Une inscription est en cours pour ce numéro : saisissez le code reçu par SMS, "
+                            + "ou recommencez dans quelques minutes");
+        }
+        long ancienId = existant.getId();
+        utilisateurs.delete(existant);
+        utilisateurs.flush();
+        audit.tracer(ancienId, "INSCRIPTION_ABANDONNEE_REMPLACEE", null,
+                "type=" + existant.typeActeur() + ", telephone non vérifié");
     }
 
     private static String exiger(String valeur, String champ) {

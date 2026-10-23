@@ -12,7 +12,7 @@ class PortefeuilleGrossisteScreen extends StatefulWidget {
 }
 
 class _PortefeuilleGrossisteScreenState extends State<PortefeuilleGrossisteScreen> {
-  static const Color _accent = Color(0xFF9E6738);
+  static const Color _accent = AppTheme.bissap;
 
   DonneesPortefeuillePro _donnees = const DonneesPortefeuillePro();
   bool _chargement = true;
@@ -59,7 +59,7 @@ class _PortefeuilleGrossisteScreenState extends State<PortefeuilleGrossisteScree
         ),
         title: Text(
           "Portefeuille Grossiste",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         actions: [
           IconButton(
@@ -91,21 +91,16 @@ class _PortefeuilleGrossisteScreenState extends State<PortefeuilleGrossisteScree
                 texteBoutonAction: "Retirer vers Mobile Money",
                 onTapAction: info == null ? null : _retirer,
                 couleurBouton: const [
-                  Color(0xFF3E2B1F),
-                  Color(0xFF2A1C14),
-                  Color(0xFF1B110B),
-                ],
-                couleurEmbleme: const [
-                  Color(0xFFFFFFFF),
-                  Color(0xFFE5A100),
-                  Color(0xFF7D4F27),
+                  AppTheme.terreDouce,
+                  AppTheme.terre,
+                  AppTheme.darkSurfaceBasse,
                 ],
               ),
               if (!_chargement && info == null) ...[
                 const SizedBox(height: 12),
                 const Text(
                   "Portefeuille injoignable : vérifiez votre connexion puis tirez pour actualiser.",
-                  style: TextStyle(fontSize: 12.5, color: Color(0xFFC0392B)),
+                  style: TextStyle(fontSize: 12.5, color: AppTheme.danger),
                 ),
               ],
 

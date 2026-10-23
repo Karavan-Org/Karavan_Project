@@ -6,15 +6,15 @@ import 'explorer_screen.dart';
 import 'mes_commandes_screen.dart';
 import 'profil_commercant_screen.dart';
 import 'mes_favoris_screen.dart';
-import 'suivi_colis_screen.dart';
 import 'code_retrait_commercant_screen.dart';
-import 'rejoindre_groupe_screen.dart';
+import 'fiche_campagne_screen.dart';
 import 'groupe_selection_service.dart';
 import 'ouvrir_groupe_screen.dart';
 import '../services/lien_groupe.dart';
 import '../services/session_storage_service.dart';
 import '../services/auth_service.dart';
 import '../services/url_route_helper.dart';
+import '../grossiste/grossiste_acces.dart';
 import '../models/role_acteur.dart';
 import '../widgets/onglet_navigation.dart';
 import '../widgets/tab_navigation_scope.dart';
@@ -76,8 +76,13 @@ class _CommercantMainNavState extends State<CommercantMainNav>
         tel = profil?.telephone;
       }
       tel ??= "defaut";
-      final vu = await SessionStorageService.instance.aDejaVuGuide('commercant', tel);
+      final vu =
+          await SessionStorageService.instance.aDejaVuGuide('commercant', tel);
       if (!vu && mounted) {
+        // Considérer le guide comme vu dès sa première ouverture, même si l'application
+        // est interrompue avant la dernière étape. Il reste relançable depuis Profil > Aide.
+        await SessionStorageService.instance.marquerGuideVu('commercant', tel);
+        if (!mounted) return;
         setState(() => _afficherGuide = true);
       }
     });
@@ -88,7 +93,8 @@ class _CommercantMainNavState extends State<CommercantMainNav>
       LienGroupe.enAttente = null;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => OuvrirGroupeScreen(groupeId: enAttente)));
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => OuvrirGroupeScreen(groupeId: enAttente)));
         }
       });
     }
@@ -107,11 +113,13 @@ class _CommercantMainNavState extends State<CommercantMainNav>
     );
 
     _fabController.addStatusListener((status) {
-      if (status == AnimationStatus.forward || status == AnimationStatus.completed) {
+      if (status == AnimationStatus.forward ||
+          status == AnimationStatus.completed) {
         if (!_waveLoopController.isAnimating) {
           _waveLoopController.repeat();
         }
-      } else if (status == AnimationStatus.reverse || status == AnimationStatus.dismissed) {
+      } else if (status == AnimationStatus.reverse ||
+          status == AnimationStatus.dismissed) {
         _waveLoopController.stop();
       }
     });
@@ -149,314 +157,338 @@ class _CommercantMainNavState extends State<CommercantMainNav>
     }
   }
 
+  /// L'espace ne s'ouvre qu'au commerçant actif ; un autre rôle est renvoyé vers son propre espace
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => GardeCompteActif(
+      role: RoleActeur.commercant, child: Builder(builder: _construireEspace));
+
+  Widget _construireEspace(BuildContext context) {
     return TabNavigationScope(
       onSwitchTab: setTabIndex,
       child: Stack(
         children: [
           Scaffold(
-      backgroundColor: AppTheme.couleurFond(context),
-      body: Stack(
-        children: [
-          // 1. Écrans principaux avec IndexedStack
-          IndexedStack(
-            index: _currentIndex,
-            children: _screens,
-          ),
-
-          // 2. Arrière-plan semi-transparent estompé quand le menu FAB est déployé
-          AnimatedBuilder(
-            animation: _fabController,
-            builder: (context, child) {
-              if (_fabController.value == 0.0) return const SizedBox.shrink();
-              return GestureDetector(
-                onTap: _toggleFabMenu,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  color: Colors.black.withValues(
-                    alpha: 0.48 * _fabController.value,
-                  ),
+            backgroundColor: AppTheme.couleurFond(context),
+            body: Stack(
+              children: [
+                // 1. Écrans principaux avec IndexedStack
+                IndexedStack(
+                  index: _currentIndex,
+                  children: _screens,
                 ),
-              );
-            },
-          ),
 
-          // 3. Déploiement des fonctionnalités en ARC DE CERCLE autour du bouton central (+)
-          AnimatedBuilder(
-            animation: Listenable.merge([_fabController, _waveLoopController]),
-            builder: (context, child) {
-              if (_fabController.value <= 0.01) return const SizedBox.shrink();
-
-              // Rayon de l'arc de cercle (distance entre le centre du FAB et les boutons)
-              const double radius = 124.0;
-
-              return Positioned(
-                bottom: 40,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: SizedBox(
-                    width: 340,
-                    height: 220,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        // Trait d'arc de cercle lumineux en arrière-plan
-                        CustomPaint(
-                          painter: _ArcTrackPainter(
-                            progress: _fabController.value,
-                            radius: radius,
-                            primaryColor: AppTheme.primary,
-                          ),
-                          child: const SizedBox(width: 300, height: 180),
+                // 2. Arrière-plan semi-transparent estompé quand le menu FAB est déployé
+                AnimatedBuilder(
+                  animation: _fabController,
+                  builder: (context, child) {
+                    if (_fabController.value == 0.0) {
+                      return const SizedBox.shrink();
+                    }
+                    return GestureDetector(
+                      onTap: _toggleFabMenu,
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        color: Colors.black.withValues(
+                          alpha: 0.48 * _fabController.value,
                         ),
+                      ),
+                    );
+                  },
+                ),
 
-                        // Item 0 (Gauche - 152°) : Rejoindre le groupe sélectionné en arrière-plan et passer au paiement
-                        _buildArcButton(
-                          index: 0,
-                          total: 4,
-                          angleDeg: 152.0,
-                          radius: radius,
-                          label: "Rejoindre",
-                          subLabel: "Paiement",
-                          hoverTooltip: "💳 Valider le Paiement Séquestre",
-                          icon: Icons.shopping_cart_checkout_rounded,
-                          color: const Color(0xFF2E7D32),
-                          onTap: () {
-                            _fabController.reverse();
-                            final groupe = GroupeSelectionService.instance.groupeSelectionne;
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => RejoindreGroupeScreen(
-                                  groupeId: groupe.id,
-                                  varianteId: groupe.varianteId,
-                                  variantesDisponibles: groupe.variantes,
-                                  titre: groupe.titre,
-                                  quantite: groupe.quantiteMinParCommercant,
-                                  quantiteMin: groupe.quantiteMinParCommercant,
-                                  taille: groupe.variantes.isNotEmpty
-                                      ? groupe.variantes.first.libelleComplet
-                                      : "",
-                                  prixUnitaire: groupe.prixGroupe,
-                                  courtierNom: groupe.courtierNom,
-                                  imagePath: groupe.imagePath,
-                                  paysOrigine: groupe.paysOrigine,
-                                  quantiteActuelle: groupe.quantiteActuelle,
-                                  quantiteObjectif: groupe.quantiteObjectif,
-                                ),
+                // 3. Déploiement des fonctionnalités en ARC DE CERCLE autour du bouton central (+)
+                AnimatedBuilder(
+                  animation:
+                      Listenable.merge([_fabController, _waveLoopController]),
+                  builder: (context, child) {
+                    if (_fabController.value <= 0.01) {
+                      return const SizedBox.shrink();
+                    }
+
+                    // Rayon de l'arc de cercle (distance entre le centre du FAB et les boutons)
+                    const double radius = 124.0;
+
+                    return Positioned(
+                      bottom: 40,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.bottomCenter,
+                            child: SizedBox(
+                              width: 340,
+                              height: 220,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                alignment: Alignment.bottomCenter,
+                                children: [
+                                  // Trait d'arc de cercle lumineux en arrière-plan
+                                  CustomPaint(
+                                    painter: _ArcTrackPainter(
+                                      progress: _fabController.value,
+                                      radius: radius,
+                                      primaryColor: AppTheme.primary,
+                                    ),
+                                    child:
+                                        const SizedBox(width: 300, height: 180),
+                                  ),
+
+                                  // Item 0 (Gauche - 152°) : ouvrir la fiche du groupe sélectionné
+                                  _buildArcButton(
+                                    index: 0,
+                                    total: 4,
+                                    angleDeg: 152.0,
+                                    radius: radius,
+                                    label: "Rejoindre",
+                                    subLabel: "Détails",
+                                    hoverTooltip:
+                                        "Voir les détails et choisir la quantité",
+                                    icon: Icons.shopping_cart_checkout_rounded,
+                                    color: AppTheme.olive,
+                                    onTap: () {
+                                      _fabController.reverse();
+                                      final groupe = GroupeSelectionService
+                                          .instance.groupeSelectionne;
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => FicheCampagneScreen(
+                                            id: groupe.id,
+                                            titre: groupe.titre,
+                                            sousTitre: groupe.sousTitre,
+                                            imagePath: groupe.imagePath,
+                                            prixGroupe: groupe.prixGroupe,
+                                            prixPublic: groupe.prixPublic,
+                                            quantiteActuelle:
+                                                groupe.quantiteActuelle,
+                                            quantiteObjectif:
+                                                groupe.quantiteObjectif,
+                                            categorie: groupe.categorie,
+                                            paysOrigine: groupe.paysOrigine,
+                                            courtierNom: groupe.courtierNom,
+                                            tempsRestant: groupe.tempsRestant,
+                                            groupe: groupe,
+                                            variantes: groupe.variantes,
+                                            quantiteMin:
+                                                groupe.quantiteMinParCommercant,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+
+                                  // Item 1 (Haut-Gauche - 112°) : Suivi de mes colis (suivi réel dans l'onglet Commandes)
+                                  _buildArcButton(
+                                    index: 1,
+                                    total: 4,
+                                    angleDeg: 112.0,
+                                    radius: radius,
+                                    label: "Suivi Colis",
+                                    subLabel: "Mes commandes",
+                                    hoverTooltip: "🚚 Suivre mes colis",
+                                    icon: Icons.local_shipping_rounded,
+                                    color: AppTheme.primary,
+                                    onTap: () => setTabIndex(2),
+                                  ),
+
+                                  // Item 2 (Haut-Droite - 68°) : Retrait Sécurisé (CodeRetraitCommercantScreen avec QR & PIN)
+                                  _buildArcButton(
+                                    index: 2,
+                                    total: 4,
+                                    angleDeg: 68.0,
+                                    radius: radius,
+                                    label: "Retrait",
+                                    subLabel: "QR & PIN",
+                                    hoverTooltip:
+                                        "🔑 Afficher mon Code QR & PIN",
+                                    icon: Icons.qr_code_2_rounded,
+                                    color: AppTheme.secondary,
+                                    onTap: () {
+                                      _fabController.reverse();
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const CodeRetraitCommercantScreen()),
+                                      );
+                                    },
+                                  ),
+
+                                  // Item 3 (Droite - 28°) : Favoris sauvegardés (MesFavorisScreen)
+                                  _buildArcButton(
+                                    index: 3,
+                                    total: 4,
+                                    angleDeg: 28.0,
+                                    radius: radius,
+                                    label: "Favoris",
+                                    subLabel: "Sauvegardes",
+                                    hoverTooltip: "❤️ Consulter mes Favoris",
+                                    icon: Icons.favorite_rounded,
+                                    color: AppTheme.danger,
+                                    onTap: () {
+                                      _fabController.reverse();
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const MesFavorisScreen()),
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
-                            );
-                          },
-                        ),
-
-                        // Item 1 (Haut-Gauche - 112°) : Suivi Colis (SuiviColisScreen avec jauge prescrite)
-                        _buildArcButton(
-                          index: 1,
-                          total: 4,
-                          angleDeg: 112.0,
-                          radius: radius,
-                          label: "Suivi Colis",
-                          subLabel: "Jauge Étapes",
-                          hoverTooltip: "🚚 Suivre la Jauge du Colis",
-                          icon: Icons.local_shipping_rounded,
-                          color: AppTheme.primary,
-                          onTap: () {
-                            _fabController.reverse();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const SuiviColisScreen()),
-                            );
-                          },
-                        ),
-
-                        // Item 2 (Haut-Droite - 68°) : Retrait Sécurisé (CodeRetraitCommercantScreen avec QR & PIN)
-                        _buildArcButton(
-                          index: 2,
-                          total: 4,
-                          angleDeg: 68.0,
-                          radius: radius,
-                          label: "Retrait",
-                          subLabel: "QR & PIN",
-                          hoverTooltip: "🔑 Afficher mon Code QR & PIN",
-                          icon: Icons.qr_code_2_rounded,
-                          color: AppTheme.secondary,
-                          onTap: () {
-                            _fabController.reverse();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const CodeRetraitCommercantScreen()),
-                            );
-                          },
-                        ),
-
-                        // Item 3 (Droite - 28°) : Favoris sauvegardés (MesFavorisScreen)
-                        _buildArcButton(
-                          index: 3,
-                          total: 4,
-                          angleDeg: 28.0,
-                          radius: radius,
-                          label: "Favoris",
-                          subLabel: "Sauvegardes",
-                          hoverTooltip: "❤️ Consulter mes Favoris",
-                          icon: Icons.favorite_rounded,
-                          color: const Color(0xFFE74C3C),
-                          onTap: () {
-                            _fabController.reverse();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const MesFavorisScreen()),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
+                            )),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-        ],
-      ),
-
-      // Bouton Central Flottant (+) avec rotation fluide et ondulation de vagues
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: AnimatedBuilder(
-        animation: _fabController,
-        builder: (context, child) {
-          final isExpanded = _fabController.value > 0.05;
-
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              // Onde / Halo pulsant d'eau autour du bouton central
-              if (isExpanded)
-                CustomPaint(
-                  painter: _WavePulsePainter(
-                    progress: _fabController.value,
-                    color: AppTheme.primary,
-                  ),
-                  child: const SizedBox(width: 84, height: 84),
-                ),
-
-              Container(
-                height: 58,
-                width: 58,
-                margin: const EdgeInsets.only(top: 8),
-                child: FloatingActionButton(
-                  heroTag: 'fab-nav-commercant',
-                  onPressed: _toggleFabMenu,
-                  elevation: isExpanded ? 8 : 4,
-                  backgroundColor: isExpanded ? const Color(0xFF4A3222) : AppTheme.primary,
-                  shape: const CircleBorder(),
-                  child: Transform.rotate(
-                    angle: _rotateAnimation.value,
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-
-      // Barre de navigation inférieure conforme au design Figma
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.couleurCarte(context),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.estSombre(context)
-                  ? Colors.black.withValues(alpha: 0.35)
-                  : const Color(0x3346321E),
-              blurRadius: 14,
-              offset: const Offset(0, -3),
+              ],
             ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < 100) return const SizedBox(height: 64);
-            return SizedBox(
-              height: 64,
-              child: Row(
-                children: [
-                  // Côté gauche : Accueil + Explorer
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildNavItem(
-                            index: 0,
-                            label: "Accueil",
-                            activeIcon: Icons.home,
-                            inactiveIcon: Icons.home_outlined,
-                          ),
-                        ),
-                        Expanded(
-                          child: _buildNavItem(
-                            index: 1,
-                            label: "Explorer",
-                            activeIcon: Icons.explore,
-                            inactiveIcon: Icons.explore_outlined,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  // Espace pour le FAB central (+)
-                  const SizedBox(width: 52),
+            // Bouton Central Flottant (+) avec rotation fluide et ondulation de vagues
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerDocked,
+            floatingActionButton: AnimatedBuilder(
+              animation: _fabController,
+              builder: (context, child) {
+                final isExpanded = _fabController.value > 0.05;
 
-                  // Côté droit : Commandes + Profil
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildNavItem(
-                            index: 2,
-                            label: "Commandes",
-                            activeIcon: Icons.shopping_bag,
-                            inactiveIcon: Icons.shopping_bag_outlined,
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Onde / Halo pulsant d'eau autour du bouton central
+                    if (isExpanded)
+                      CustomPaint(
+                        painter: _WavePulsePainter(
+                          progress: _fabController.value,
+                          color: AppTheme.primary,
+                        ),
+                        child: const SizedBox(width: 84, height: 84),
+                      ),
+
+                    Container(
+                      height: 58,
+                      width: 58,
+                      margin: const EdgeInsets.only(top: 8),
+                      child: FloatingActionButton(
+                        heroTag: 'fab-nav-commercant',
+                        onPressed: _toggleFabMenu,
+                        elevation: isExpanded ? 8 : 4,
+                        backgroundColor: isExpanded
+                            ? AppTheme.bissapProfond
+                            : AppTheme.primary,
+                        shape: const CircleBorder(),
+                        child: Transform.rotate(
+                          angle: _rotateAnimation.value,
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 30,
                           ),
                         ),
-                        Expanded(
-                          child: _buildNavItem(
-                            index: 3,
-                            label: "Profil",
-                            activeIcon: Icons.person,
-                            inactiveIcon: Icons.person_outline,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
+                  ],
+                );
+              },
+            ),
+
+            // Barre de navigation inférieure conforme au design Figma
+            bottomNavigationBar: Container(
+              decoration: BoxDecoration(
+                color: AppTheme.couleurBandeauNavigation(context),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.estSombre(context)
+                        ? Colors.black.withValues(alpha: 0.35)
+                        : const Color(0x332C241E),
+                    blurRadius: 14,
+                    offset: const Offset(0, -3),
                   ),
                 ],
               ),
-            );
-          },
-        ),
-        ),
+              child: SafeArea(
+                top: false,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth < 100) {
+                      return const SizedBox(height: 64);
+                    }
+                    return SizedBox(
+                      height: 64,
+                      child: Row(
+                        children: [
+                          // Côté gauche : Accueil + Explorer
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildNavItem(
+                                    index: 0,
+                                    label: "Accueil",
+                                    activeIcon: Icons.home,
+                                    inactiveIcon: Icons.home_outlined,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _buildNavItem(
+                                    index: 1,
+                                    label: "Explorer",
+                                    activeIcon: Icons.explore,
+                                    inactiveIcon: Icons.explore_outlined,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Espace pour le FAB central (+)
+                          const SizedBox(width: 52),
+
+                          // Côté droit : Commandes + Profil
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildNavItem(
+                                    index: 2,
+                                    label: "Commandes",
+                                    activeIcon: Icons.shopping_bag,
+                                    inactiveIcon: Icons.shopping_bag_outlined,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _buildNavItem(
+                                    index: 3,
+                                    label: "Profil",
+                                    activeIcon: Icons.person,
+                                    inactiveIcon: Icons.person_outline,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+          if (_afficherGuide)
+            Positioned.fill(
+              child: DidacticielGuideOverlay(
+                role: RoleActeur.commercant,
+                onTermine: () {
+                  if (mounted) setState(() => _afficherGuide = false);
+                },
+              ),
+            ),
+        ],
       ),
-    ),
-    if (_afficherGuide)
-      Positioned.fill(
-        child: DidacticielGuideOverlay(
-          role: RoleActeur.commercant,
-          onTermine: () {
-            if (mounted) setState(() => _afficherGuide = false);
-          },
-        ),
-      ),
-  ],
-),
-);
-}
+    );
+  }
 
   /// Construit un bouton positionné sur l'arc de cercle avec onde de propagation,
   /// effet de vague aquatique continue et prévisualisation interactive au survol
@@ -496,8 +528,10 @@ class _CommercantMainNavState extends State<CommercantMainNav>
 
     // Mouvement continu de vague flottante (oscillation aquatique sinusoïdale)
     final double loopVal = _waveLoopController.value;
-    final double waveFloatY = math.sin((loopVal * 2 * math.pi) + (index * 1.5)) * 3.5 * progress;
-    final double waveFloatX = math.cos((loopVal * 2 * math.pi) + (index * 1.5)) * 2.0 * progress;
+    final double waveFloatY =
+        math.sin((loopVal * 2 * math.pi) + (index * 1.5)) * 3.5 * progress;
+    final double waveFloatX =
+        math.cos((loopVal * 2 * math.pi) + (index * 1.5)) * 2.0 * progress;
 
     // Coordonnées trigonométriques cartésiennes avec composante de vague flottante
     final double dx = (currentRadius * math.cos(rad)) + waveFloatX;
@@ -505,7 +539,8 @@ class _CommercantMainNavState extends State<CommercantMainNav>
 
     // Facteurs d'échelle et d'opacité réactifs au survol
     final double hoverScale = isHovered ? 1.25 : (isOtherHovered ? 0.90 : 1.0);
-    final double finalOpacity = (progress * (isOtherHovered ? 0.55 : 1.0)).clamp(0.0, 1.0);
+    final double finalOpacity =
+        (progress * (isOtherHovered ? 0.55 : 1.0)).clamp(0.0, 1.0);
 
     return Transform.translate(
       offset: Offset(dx, dy),
@@ -545,10 +580,13 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                         decoration: BoxDecoration(
                           color: color,
                           shape: BoxShape.circle,
-                          border: isHovered ? Border.all(color: Colors.white, width: 2.5) : null,
+                          border: isHovered
+                              ? Border.all(color: Colors.white, width: 2.5)
+                              : null,
                           boxShadow: [
                             BoxShadow(
-                              color: color.withValues(alpha: isHovered ? 0.70 : 0.40),
+                              color: color.withValues(
+                                  alpha: isHovered ? 0.70 : 0.40),
                               blurRadius: isHovered ? 24 : 14,
                               spreadRadius: isHovered ? 4 : 0,
                               offset: const Offset(0, 4),
@@ -563,7 +601,7 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                         ),
                         child: Icon(
                           icon,
-                          color: Colors.white,
+                          color: AppTheme.texteSur(color),
                           size: isHovered ? 26 : 24,
                         ),
                       ),
@@ -578,10 +616,12 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                         ),
                         decoration: BoxDecoration(
                           color: isHovered ? color : Colors.white,
-                          borderRadius: BorderRadius.circular(isHovered ? 14 : 10),
+                          borderRadius:
+                              BorderRadius.circular(isHovered ? 14 : 10),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isHovered ? 0.25 : 0.12),
+                              color: Colors.black
+                                  .withValues(alpha: isHovered ? 0.25 : 0.12),
                               blurRadius: isHovered ? 10 : 6,
                               offset: const Offset(0, 2),
                             ),
@@ -592,7 +632,9 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                           style: TextStyle(
                             fontSize: isHovered ? 11 : 10.5,
                             fontWeight: FontWeight.w800,
-                            color: isHovered ? Colors.white : color,
+                            color: isHovered
+                                ? AppTheme.texteSur(color)
+                                : AppTheme.lisibleSurClair(color),
                           ),
                         ),
                       ),
@@ -604,9 +646,10 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                     Positioned(
                       bottom: 82,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2B1D14),
+                          color: AppTheme.terre,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: const [
                             BoxShadow(

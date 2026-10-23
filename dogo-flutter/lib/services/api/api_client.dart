@@ -5,13 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import 'api_exception.dart';
+import 'api_http_client.dart';
 
 /// Client HTTP centralisé de l'application DoGo
 class ApiClient {
   ApiClient._();
   static final ApiClient instance = ApiClient._();
 
-  final http.Client _httpClient = http.Client();
+  final http.Client _httpClient = creerClientHttp();
 
   /// Jeton JWT actuel (injecté après authentification)
   String? _jeton;
@@ -28,7 +29,8 @@ class ApiClient {
   }
 
   /// Prépare les en-têtes communs (Content-Type, Accept, Authorization, Idempotency-Key)
-  Map<String, String> _construireEnTetes(Map<String, String>? entetesPersonnalisees) {
+  Map<String, String> _construireEnTetes(
+      Map<String, String>? entetesPersonnalisees) {
     final Map<String, String> entetes = {
       'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
@@ -104,7 +106,9 @@ class ApiClient {
     try {
       http.Response response = await action().timeout(timeout);
 
-      if (rafraichirSur401 && response.statusCode == 401 && !endpoint.startsWith('/api/auth/')) {
+      if (rafraichirSur401 &&
+          response.statusCode == 401 &&
+          !endpoint.startsWith('/api/auth/')) {
         final reussi = await _rafraichirJeton();
         if (reussi) {
           // Rejouer la requête une seule fois avec le nouveau token
@@ -116,13 +120,16 @@ class ApiClient {
     } on ApiException {
       rethrow;
     } on SocketException {
-      throw const ApiException(statusCode: 0, message: messageServeurInjoignable);
+      throw const ApiException(
+          statusCode: 0, message: messageServeurInjoignable);
     } on http.ClientException {
-      throw const ApiException(statusCode: 0, message: messageServeurInjoignable);
+      throw const ApiException(
+          statusCode: 0, message: messageServeurInjoignable);
     } on TimeoutException {
       throw const ApiException(
         statusCode: 0,
-        message: 'Délai d\'attente dépassé lors de la requête au serveur Karavan.',
+        message:
+            'Délai d\'attente dépassé lors de la requête au serveur Karavan.',
       );
     } catch (e) {
       throw ApiException(
@@ -146,7 +153,8 @@ class ApiClient {
     };
     return _executerRequete(
       endpoint,
-      () => _httpClient.post(_construireUri(endpoint), headers: entetes, body: bodyEncode),
+      () => _httpClient.post(_construireUri(endpoint),
+          headers: entetes, body: bodyEncode),
       rafraichirSur401: false,
     );
   }
@@ -159,7 +167,8 @@ class ApiClient {
   }) {
     return _executerRequete(
       endpoint,
-      () => _httpClient.get(_construireUri(endpoint, queryParams), headers: _construireEnTetes(headers)),
+      () => _httpClient.get(_construireUri(endpoint, queryParams),
+          headers: _construireEnTetes(headers)),
     );
   }
 
@@ -172,7 +181,8 @@ class ApiClient {
     final bodyEncode = body != null ? jsonEncode(body) : null;
     return _executerRequete(
       endpoint,
-      () => _httpClient.post(_construireUri(endpoint), headers: _construireEnTetes(headers), body: bodyEncode),
+      () => _httpClient.post(_construireUri(endpoint),
+          headers: _construireEnTetes(headers), body: bodyEncode),
     );
   }
 
@@ -185,7 +195,8 @@ class ApiClient {
     final bodyEncode = body != null ? jsonEncode(body) : null;
     return _executerRequete(
       endpoint,
-      () => _httpClient.put(_construireUri(endpoint), headers: _construireEnTetes(headers), body: bodyEncode),
+      () => _httpClient.put(_construireUri(endpoint),
+          headers: _construireEnTetes(headers), body: bodyEncode),
     );
   }
 
@@ -198,7 +209,8 @@ class ApiClient {
     final bodyEncode = body != null ? jsonEncode(body) : null;
     return _executerRequete(
       endpoint,
-      () => _httpClient.patch(_construireUri(endpoint), headers: _construireEnTetes(headers), body: bodyEncode),
+      () => _httpClient.patch(_construireUri(endpoint),
+          headers: _construireEnTetes(headers), body: bodyEncode),
     );
   }
 
@@ -209,7 +221,8 @@ class ApiClient {
   }) {
     return _executerRequete(
       endpoint,
-      () => _httpClient.delete(_construireUri(endpoint), headers: _construireEnTetes(headers)),
+      () => _httpClient.delete(_construireUri(endpoint),
+          headers: _construireEnTetes(headers)),
     );
   }
 
@@ -257,7 +270,8 @@ class ApiClient {
         request.fields.addAll(fields);
       }
       for (final f in fichiers) {
-        request.files.add(http.MultipartFile.fromBytes(fieldName, f.bytes, filename: f.filename));
+        request.files.add(http.MultipartFile.fromBytes(fieldName, f.bytes,
+            filename: f.filename));
       }
       return http.Response.fromStream(await _httpClient.send(request));
     }
@@ -280,7 +294,8 @@ class ApiClient {
 
     // La console du navigateur / de l'IDE affiche la raison du refus renvoyée par le backend
     final corps = utf8.decode(response.bodyBytes, allowMalformed: true);
-    debugPrint('API ${response.request?.method} ${response.request?.url.path} -> $statusCode $corps');
+    debugPrint(
+        'API ${response.request?.method} ${response.request?.url.path} -> $statusCode $corps');
     throw ApiException.fromResponseBody(statusCode, corps);
   }
 }
