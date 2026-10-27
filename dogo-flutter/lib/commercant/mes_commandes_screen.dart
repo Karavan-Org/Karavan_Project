@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_popups.dart';
 import '../widgets/image_produit.dart';
 import 'code_retrait_commercant_screen.dart';
+import 'suivi_colis_screen.dart';
 import 'favoris_service.dart';
 import '../services/visibilite_ecran.dart';
 
@@ -659,6 +660,40 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> with Actualisat
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            // 5. BOUTON SUIVI INTERNATIONAL DÉTAILLÉ (10 PHASES & ANIMATIONS EN TEMPS RÉEL)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SuiviColisScreen(
+                        commandeIdSelectionnee: activeCmd.commandeId ?? activeCmd.id,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.public_rounded, size: 20, color: Color(0xFF7B4026)),
+                label: const Text(
+                  "Suivi international détaillé (10 phases) →",
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF7B4026),
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF7B4026), width: 1.4),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  backgroundColor: const Color(0xFF7B4026).withValues(alpha: 0.05),
                 ),
               ),
             ),
