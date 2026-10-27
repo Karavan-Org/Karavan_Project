@@ -27,13 +27,29 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
   bool _chargement = false;
 
   @override
+  void initState() {
+    super.initState();
+    _telephoneController.addListener(_masquerNotification);
+    _pinController.addListener(_masquerNotification);
+  }
+
+  void _masquerNotification() {
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    }
+  }
+
+  @override
   void dispose() {
+    _telephoneController.removeListener(_masquerNotification);
+    _pinController.removeListener(_masquerNotification);
     _telephoneController.dispose();
     _pinController.dispose();
     super.dispose();
   }
 
   Future<void> _seConnecter() async {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     final telephone = _telephoneController.text.trim();
     final motDePasse = _pinController.text.trim();
     if (telephone.length < 8) {
@@ -223,27 +239,6 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
           ],
         );
       },
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Aucun compte grossiste associé à ce numéro."),
-        backgroundColor: AppTheme.secondary,
-        duration: const Duration(seconds: 6),
-        action: SnackBarAction(
-          label: "S'inscrire",
-          textColor: Colors.white,
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => GrossisteInscriptionScreen(
-                  initialTelephone: telephone,
-                ),
-              ),
-            );
-          },
-        ),
-      ),
     );
   }
 

@@ -166,12 +166,14 @@ class BordurePointillee extends CustomPainter {
 }
 
 void afficherErreur(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).hideCurrentSnackBar();
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message),
       backgroundColor: AppTheme.danger,
       behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      duration: const Duration(seconds: 3),
     ),
   );
 }

@@ -30,20 +30,40 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _phoneController.addListener(_masquerNotification);
+    _pinController.addListener(_masquerNotification);
+  }
+
+  void _masquerNotification() {
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    }
+  }
+
+  @override
   void dispose() {
+    _phoneController.removeListener(_masquerNotification);
+    _pinController.removeListener(_masquerNotification);
     _phoneController.dispose();
     _pinController.dispose();
     super.dispose();
   }
 
   void _seConnecter() async {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     final phone = _phoneController.text.trim();
     final pin = _pinController.text.trim();
 
     if (phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Veuillez renseigner votre numéro de téléphone")),
+        SnackBar(
+          content: const Text("Veuillez renseigner votre numéro de téléphone"),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 3),
+        ),
       );
       return;
     }
@@ -51,7 +71,12 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
     final erreurMdp = ValidateurMotDePasse.validerConnexion(pin);
     if (erreurMdp != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(erreurMdp)),
+        SnackBar(
+          content: Text(erreurMdp),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 3),
+        ),
       );
       return;
     }
@@ -106,7 +131,9 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
         SnackBar(
           content: Text(message),
           backgroundColor: AppTheme.danger,
-          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 3),
         ),
       );
     } finally {
@@ -241,29 +268,6 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
           ],
         );
       },
-    );
-
-    // Notification complémentaire avec action directe
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Aucun compte associé à ce numéro."),
-        backgroundColor: AppTheme.secondary,
-        duration: const Duration(seconds: 6),
-        action: SnackBarAction(
-          label: "S'inscrire",
-          textColor: Colors.white,
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => CommercantInscriptionScreen(
-                  role: widget.role,
-                  initialTelephone: telephone,
-                ),
-              ),
-            );
-          },
-        ),
-      ),
     );
   }
 
