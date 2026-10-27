@@ -46,6 +46,9 @@ public class GroupeController {
     public record MotifRequete(@NotBlank String motif) {
     }
 
+    public record IncidentRequete(@NotBlank String motif, @Size(max = 1000) String detail, String pieceJointeUrl) {
+    }
+
     public record EtapeRequete(@NotBlank @Size(max = 80) String etape, @Size(max = 500) String commentaire) {
     }
 
@@ -155,6 +158,14 @@ public class GroupeController {
     public void signalerEtape(@AuthenticationPrincipal UtilisateurCourant moi, @PathVariable long id,
                               @Valid @RequestBody EtapeRequete r) {
         groupes.signalerEtape(moi.id(), id, r.etape(), r.commentaire());
+    }
+
+    @PostMapping("/groupes/{id}/incident")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('GROUPE_DISPONIBILITE_VALIDER')")
+    public void signalerIncident(@AuthenticationPrincipal UtilisateurCourant moi, @PathVariable long id,
+                                 @Valid @RequestBody IncidentRequete r) {
+        groupes.signalerIncident(moi.id(), id, r.motif(), r.detail(), r.pieceJointeUrl());
     }
 
     @PostMapping("/groupes/{id}/annulation")

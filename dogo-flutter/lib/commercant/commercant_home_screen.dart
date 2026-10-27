@@ -133,29 +133,29 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                     child: Row(
                       children: [
-                        ValueListenableBuilder<UtilisateurProfil?>(
-                          valueListenable: AuthService.instance.profilNotifier,
-                          builder: (context, user, _) {
-                            final String initiales = (user?.nomComplet.isNotEmpty ?? false)
-                                ? user!.nomComplet
-                                    .split(' ')
-                                    .take(2)
-                                    .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
-                                    .join()
-                                : "DG";
+                        Expanded(
+                          child: ValueListenableBuilder<UtilisateurProfil?>(
+                            valueListenable: AuthService.instance.profilNotifier,
+                            builder: (context, user, _) {
+                              final String initiales = (user?.nomComplet.isNotEmpty ?? false)
+                                  ? user!.nomComplet
+                                      .split(' ')
+                                      .take(2)
+                                      .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
+                                      .join()
+                                  : "DG";
 
-                            final bool aPhoto = user?.photoUrl != null && user!.photoUrl!.isNotEmpty;
-                            final String prenom = (user?.nomComplet.isNotEmpty ?? false)
-                                ? user!.nomComplet.split(' ').first
-                                : "Commerçant";
-                            final String quartier = (user?.quartier?.isNotEmpty ?? false)
-                                ? user!.quartier!
-                                : ((user?.structure?.isNotEmpty ?? false)
-                                    ? user!.structure!
-                                    : "Bamako, Mali");
+                              final bool aPhoto = user?.photoUrl != null && user!.photoUrl!.isNotEmpty;
+                              final String prenom = (user?.nomComplet.isNotEmpty ?? false)
+                                  ? user!.nomComplet.split(' ').first
+                                  : "Commerçant";
+                              final String quartier = (user?.quartier?.isNotEmpty ?? false)
+                                  ? user!.quartier!
+                                  : ((user?.structure?.isNotEmpty ?? false)
+                                      ? user!.structure!
+                                      : "Bamako, Mali");
 
-                            return Expanded(
-                              child: Row(
+                              return Row(
                                 children: [
                                   CircleAvatar(
                                     radius: 22,
@@ -181,6 +181,8 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                                       children: [
                                         Text(
                                           "Bonjour $prenom 👋",
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w800,
@@ -210,9 +212,9 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                                     ),
                                   ),
                                 ],
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
 
                         // Bascule de thème animée uniforme (comme Grossiste et Courtier)
@@ -915,6 +917,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
 
                 // Badge Courtier certifié
                 Container(
+                  constraints: const BoxConstraints(maxWidth: 206),
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppTheme.couleurSurfaceDouce(context),
@@ -946,22 +949,32 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                 // Prix
                 Row(
                   children: [
-                    Text(
-                      "${groupe.prixGroupe} F",
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                    Flexible(
+                      child: Text(
+                        "${groupe.prixGroupe} F",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      "${groupe.prixPublic} F",
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppTheme.couleurTexteAttenue(context),
-                        decoration: TextDecoration.lineThrough,
+                    if (groupe.prixPublic > groupe.prixGroupe) ...[
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          "${groupe.prixPublic} F",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: AppTheme.couleurTexteAttenue(context),
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
 
@@ -971,10 +984,15 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "${groupe.quantiteActuelle}/${groupe.quantiteObjectif} réservés",
-                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                    Flexible(
+                      child: Text(
+                        "${groupe.quantiteActuelle}/${groupe.quantiteObjectif} réservés",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                      ),
                     ),
+                    const SizedBox(width: 4),
                     Text(
                       "${(groupe.ratio * 100).toInt()}%",
                       style: TextStyle(
@@ -1135,22 +1153,32 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Text(
-                            "${groupe.prixGroupe} FCFA",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
+                          Flexible(
+                            child: Text(
+                              "${groupe.prixGroupe} FCFA",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            "${groupe.prixPublic} F",
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: AppTheme.couleurTexteAttenue(context),
-                              decoration: TextDecoration.lineThrough,
+                          if (groupe.prixPublic > groupe.prixGroupe) ...[
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                "${groupe.prixPublic} FCFA",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppTheme.couleurTexteAttenue(context),
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 6),

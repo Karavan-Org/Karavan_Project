@@ -80,13 +80,15 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
     // Vérification de la première connexion pour afficher le didacticiel guidé interactif
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       var tel = AuthService.instance.profilActuel?.telephone;
-      if (tel == null || tel.isEmpty) {
+      var uid = AuthService.instance.profilActuel?.id;
+      if (tel == null || tel.isEmpty || uid == null) {
         final profil = await SessionStorageService.instance.lireProfil();
-        tel = profil?.telephone;
+        tel ??= profil?.telephone;
+        uid ??= profil?.id;
       }
       tel ??= "defaut";
-      final vu =
-          await SessionStorageService.instance.aDejaVuGuide('grossiste', tel);
+      final vu = await SessionStorageService.instance
+          .aDejaVuGuide('grossiste', tel, utilisateurId: uid);
       if (!vu && mounted) {
         setState(() => _afficherGuide = true);
       }
@@ -379,6 +381,7 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                       width: 58,
                       margin: const EdgeInsets.only(top: 8),
                       child: FloatingActionButton(
+                        key: _ciblesDidacticiel.fabCentral,
                         heroTag: 'fab-nav-grossiste',
                         onPressed: _toggleFabMenu,
                         elevation: isExpanded ? 8 : 4,

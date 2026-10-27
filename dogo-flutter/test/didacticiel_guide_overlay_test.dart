@@ -1,9 +1,14 @@
 import 'package:dogo_app/models/role_acteur.dart';
+import 'package:dogo_app/services/session_storage_service.dart';
 import 'package:dogo_app/widgets/didacticiel_guide_overlay.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
+  });
   testWidgets('DidacticielGuideOverlay pour Commercant navigation complète', (tester) async {
     bool termine = false;
 
@@ -54,6 +59,7 @@ void main() {
     await tester.tap(find.text('Terminer'));
     await tester.pump(const Duration(milliseconds: 100));
     expect(termine, isTrue);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('DidacticielGuideOverlay pour Courtier navigation complète', (tester) async {
@@ -82,6 +88,7 @@ void main() {
     await tester.tap(find.text('Passer le guide'));
     await tester.pump(const Duration(milliseconds: 100));
     expect(termine, isTrue);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('DidacticielGuideOverlay pour Grossiste navigation complète (Tableau de bord, Catalogue, FAB, Tabs & Menu)', (tester) async {
@@ -146,6 +153,40 @@ void main() {
     await tester.tap(find.text('Terminer'));
     await tester.pump(const Duration(milliseconds: 100));
     expect(termine, isTrue);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Didacticiel non terminé ne marque pas le guide comme vu (relance à la prochaine ouverture)', (tester) async {
+    const identifiant = 'user_incomplet_123';
+    await SessionStorageService.instance.reinitialiserGuide('commercant', identifiant);
+
+    bool vuInitial = await SessionStorageService.instance.aDejaVuGuide('commercant', identifiant);
+    expect(vuInitial, isFalse);
+
+    // Démarrage de l'overlay mais interruption à l'étape 2 sans passer ni terminer
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DidacticielGuideOverlay(
+            role: RoleActeur.commercant,
+            onTermine: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Passe à l'étape 2
+    await tester.tap(find.text('Suivant'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('ÉTAPE 2 / 5'), findsOneWidget);
+
+    // Le guide ne doit PAS être marqué comme vu tant qu'il n'est pas terminé ou passé
+    bool vuApresEtape2 = await SessionStorageService.instance.aDejaVuGuide('commercant', identifiant);
+    expect(vuApresEtape2, isFalse);
+
+    // Démonter le widget pour libérer les AnimationController répétitifs
+    await tester.pumpWidget(const SizedBox());
   });
 }
 

@@ -239,9 +239,22 @@ class SessionStorageService {
     }
   }
 
+  /// Flag en mémoire permettant de forcer l'affichage du guide (ex : immédiatement après une nouvelle inscription)
+  bool forcerAffichageGuide = false;
+
   /// Vérifie si le didacticiel d'accueil a déjà été visualisé pour un rôle et un identifiant
-  Future<bool> aDejaVuGuide(String role, String identifiant) async {
+  Future<bool> aDejaVuGuide(String role, String identifiant, {int? utilisateurId}) async {
     try {
+      if (forcerAffichageGuide) {
+        forcerAffichageGuide = false;
+        return false;
+      }
+      // Clé primaire par UID si disponible pour ne pas bloquer un nouveau compte ayant le même numéro
+      if (utilisateurId != null && utilisateurId > 0) {
+        final keyId = 'dogo_guide_${role.toLowerCase()}_vu_uid_$utilisateurId';
+        final valId = await _storage.read(key: keyId);
+        return valId == 'true';
+      }
       final key = 'dogo_guide_${role.toLowerCase()}_vu_$identifiant';
       final val = await _storage.read(key: key);
       return val == 'true';
@@ -251,16 +264,35 @@ class SessionStorageService {
   }
 
   /// Marque le didacticiel d'accueil comme lu pour un rôle et un utilisateur
-  Future<void> marquerGuideVu(String role, String identifiant) async {
+  Future<void> marquerGuideVu(String role, String identifiant, {int? utilisateurId}) async {
     try {
+      if (utilisateurId != null && utilisateurId > 0) {
+        await _storage.write(key: 'dogo_guide_${role.toLowerCase()}_vu_uid_$utilisateurId', value: 'true');
+      }
       final key = 'dogo_guide_${role.toLowerCase()}_vu_$identifiant';
       await _storage.write(key: key, value: 'true');
     } catch (_) {}
   }
 
-  /// Réinitialise l'état du guide pour permettre de le revoir
-  Future<void> reinitialiserGuide(String role, String identifiant) async {
+  /// Réinitialise tous les flags de guides (ex: lors d'une nouvelle inscription)
+  Future<void> reinitialiserTousLesGuides() async {
+    forcerAffichageGuide = true;
     try {
+      final all = await _storage.readAll();
+      for (final k in all.keys) {
+        if (k.startsWith('dogo_guide_')) {
+          await _storage.delete(key: k);
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Réinitialise l'état du guide pour permettre de le revoir
+  Future<void> reinitialiserGuide(String role, String identifiant, {int? utilisateurId}) async {
+    try {
+      if (utilisateurId != null && utilisateurId > 0) {
+        await _storage.delete(key: 'dogo_guide_${role.toLowerCase()}_vu_uid_$utilisateurId');
+      }
       final key = 'dogo_guide_${role.toLowerCase()}_vu_$identifiant';
       await _storage.delete(key: key);
     } catch (_) {}

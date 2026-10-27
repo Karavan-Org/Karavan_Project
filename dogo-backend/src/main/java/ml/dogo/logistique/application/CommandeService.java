@@ -36,10 +36,10 @@ public class CommandeService {
     public record PointVue(long id, String nom, String adresse, String quartier, String lienGoogleMap) {
     }
 
-    /** {@code commercantId} et {@code commercantNom} sont vides pour le Grossiste, qui ne voit jamais l'identité de l'acheteur (RG-71). */
+    /** {@code commercantId} et {@code commercantNom} renseignés selon les droits de consultation. */
     public record CommandeVue(long id, long participationId, long groupeId, String produit, String sku, String taille,
                               String couleur, int quantite, String statut, PointVue pointRetrait, Long commercantId,
-                              String commercantNom, Instant dateCreation) {
+                              String commercantNom, Instant dateCreation, String photoUrl) {
     }
 
     private final CommandeRepository commandes;
@@ -121,7 +121,6 @@ public class CommandeService {
             throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, "RG-50",
                     "Toutes les commandes doivent être préparées avant l'expédition");
         }
-        // Les commandes changent d'abord (en mémoire) : la transition du groupe les enregistre puis vide le contexte.
         duGroupe.forEach(c -> c.changerStatut(StatutCommande.EXPEDIEE));
         campagne.transitionner(groupeId, "EN_EXPEDITION", (acteur.estAdministrateur() ? "ADMIN:" : "COURTIER:") + acteur.id());
         audit.tracer(acteur.id(), "GROUPE_EXPEDIE", "groupe=" + groupeId, duGroupe.size() + " commande(s)");
@@ -187,50 +186,28 @@ public class CommandeService {
         PointRetrait point = points.findById(pointRetraitId)
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Point de retrait", pointRetraitId));
 
-        if ("OBJECTIF_ATTEINT".equals(g.statut())) {
-            campagne.transitionner(groupeId, "EN_EXPEDITION", "ADMIN");
-            campagne.transitionner(groupeId, "LIVRE", "ADMIN");
-        } else if ("EN_EXPEDITION".equals(g.statut())) {
-            campagne.transitionner(groupeId, "LIVRE", "ADMIN");
-        }
-
         List<Commande> duGroupe = actives(commandes.verrouillerDuGroupe(groupeId), groupeId);
-        java.util.Set<Long> commercantsNotifies = new java.util.HashSet<>();
+
         for (Commande c : duGroupe) {
-            boolean codeGenere = false;
-            if (c.getStatut() == StatutCommande.CREEE) {
-                c.changerStatut(StatutCommande.PREPAREE);
-            }
-            if (c.getStatut() == StatutCommande.PREPAREE) {
-                c.changerStatut(StatutCommande.EXPEDIEE);
-            }
+            c.affecterPointRetrait(point.getId());
             if (c.getStatut() == StatutCommande.EXPEDIEE) {
                 c.changerStatut(StatutCommande.ARRIVEE);
             }
-            if (c.getStatut() == StatutCommande.ARRIVEE) {
-                c.changerStatut(StatutCommande.EN_ATTENTE_RETRAIT);
-                c.affecterPointRetrait(point.getId());
-                retraits.genererCode(c, point.getNom(), point.getLienGoogleMap(), point.getAdresse());
-                codeGenere = true;
-            } else if (c.getStatut() == StatutCommande.EN_ATTENTE_RETRAIT) {
-                c.affecterPointRetrait(point.getId());
-            }
-            if (codeGenere) {
-                commercantsNotifies.add(c.getCommercantId());
-            }
         }
 
-        String mapTexte = (point.getLienGoogleMap() != null && !point.getLienGoogleMap().isBlank())
-                ? " Localisation Google Maps : " + point.getLienGoogleMap().strip()
-                : "";
-        String adrTexte = (point.getAdresse() != null && !point.getAdresse().isBlank())
-                ? " (" + point.getAdresse().strip() + ")"
-                : "";
+        if ("EN_EXPEDITION".equals(g.statut())) {
+            campagne.transitionner(groupeId, "LIVRE", "ADMIN:" + acteur.id());
+        }
 
-        String messageNotif = "Colis arrivé au dépôt ! Votre colis pour le groupe #" + groupeId + " (« " + g.produitNom() + " ») est disponible au dépôt "
-                + point.getNom() + adrTexte + " !" + mapTexte + " Vous pouvez venir récupérer votre commande avec votre code de retrait.";
+        String lienLocalisation = (point.getLienGoogleMap() != null && !point.getLienGoogleMap().isBlank())
+                ? point.getLienGoogleMap()
+                : ("https://maps.google.com/?q=" + point.getAdresse().replace(" ", "+"));
 
-        // Notifier uniquement les commerçants qui n'ont pas déjà reçu de notification lors de cette étape
+        String messageNotif = "Colis arrivés au dépôt " + point.getNom() + " (" + point.getAdresse() + "). "
+                + "Localisation Google Maps : " + lienLocalisation + " . "
+                + "Votre code de retrait vous parviendra une fois le colis déchargé.";
+
+        java.util.Set<Long> commercantsNotifies = new java.util.HashSet<>();
         for (Commande c : duGroupe) {
             if (!commercantsNotifies.contains(c.getCommercantId())) {
                 notifications.notifier(c.getCommercantId(), messageNotif);
@@ -244,6 +221,27 @@ public class CommandeService {
         return duGroupe.stream().map(c -> vue(c, g, Vision.COMPLETE)).toList();
     }
 
+    /** Permet au porteur ou au grossiste de notifier tous les acheteurs du groupe. */
+    @Transactional
+    public void notifierAcheteurs(UtilisateurCourant acteur, long groupeId, String message) {
+        GroupeAchatApi.GroupeInfo g = campagne.groupe(groupeId)
+                .orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
+        boolean autorise = acteur.estAdministrateur() || g.porteurId() == acteur.id() || g.grossisteId() == acteur.id();
+        if (!autorise) {
+            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-71", "Vous ne pouvez pas notifier les acheteurs de ce groupe");
+        }
+
+        List<Long> acheteurs = participations.actives(groupeId).stream()
+                .map(ParticipationApi.ParticipationInfo::commercantId)
+                .distinct()
+                .toList();
+
+        for (Long cId : acheteurs) {
+            notifications.notifier(cId, "Groupe #" + groupeId + " (" + g.produitNom() + ") : " + message);
+        }
+        audit.tracer(acteur.id(), "NOTIFICATION_GROUPE_ENVOYEE", "groupe=" + groupeId, acheteurs.size() + " acheteur(s) notifié(s)");
+    }
+
     // ---------------------------------------------------------------------- consultation
 
     /** Commandes du Commerçant connecté (vide pour les autres profils : ils passent par les commandes d'un groupe). */
@@ -253,12 +251,17 @@ public class CommandeService {
                 .map(c -> vue(c, groupeDe(c), Vision.COMPLETE)).toList();
     }
 
-    /** Commandes d'un groupe : Courtier et administrateur voient tout, le Grossiste sans l'identité des acheteurs (RG-71). */
+    /** Commandes d'un groupe : accessible au courtier, grossiste et administrateur. */
     @Transactional(readOnly = true)
     public List<CommandeVue> duGroupe(UtilisateurCourant acteur, long groupeId) {
         GroupeAchatApi.GroupeInfo g = campagne.groupe(groupeId).orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
         Vision vision = visionSur(acteur, g);
-        return commandes.findByGroupeIdOrderByIdAsc(groupeId).stream().map(c -> vue(c, g, vision)).toList();
+        List<Commande> list = commandes.findByGroupeIdOrderByIdAsc(groupeId);
+        if (!list.isEmpty()) {
+            return list.stream().map(c -> vue(c, g, vision)).toList();
+        }
+        // Groupe sans commande formelle créée (en cours de constitution) : on liste les participations actives
+        return participations.actives(groupeId).stream().map(p -> vueParticipation(p, g, vision)).toList();
     }
 
     @Transactional(readOnly = true)
@@ -276,18 +279,14 @@ public class CommandeService {
     private enum Vision { COMPLETE, SANS_ACHETEUR }
 
     private Vision visionSur(UtilisateurCourant acteur, GroupeAchatApi.GroupeInfo g) {
-        if (acteur.estAdministrateur() || g.porteurId() == acteur.id()) {
+        if (acteur.estAdministrateur() || g.porteurId() == acteur.id() || g.grossisteId() == acteur.id()) {
             return Vision.COMPLETE;
-        }
-        if (g.grossisteId() == acteur.id()) {
-            return Vision.SANS_ACHETEUR;
         }
         throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-71", "Vous n'avez pas accès à ces commandes");
     }
 
     private GroupeAchatApi.GroupeInfo groupeDuCourtier(UtilisateurCourant acteur, long groupeId, String statutRequis) {
         GroupeAchatApi.GroupeInfo g = campagne.groupe(groupeId).orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
-        // Un groupe porté par un grossiste est acheminé par ses soins : l'Administrateur en met à jour les étapes.
         boolean autorise = g.porteParGrossiste() ? acteur.estAdministrateur() : g.courtierId() == acteur.id();
         if (!autorise) {
             throw new ErreurMetier(CodeErreur.ACCES_REFUSE, "RG-50", "Seul le courtier de ce groupe peut faire avancer ses commandes");
@@ -322,7 +321,16 @@ public class CommandeService {
         return new CommandeVue(c.getId(), c.getParticipationId(), c.getGroupeId(), g.produitNom(),
                 v.map(CatalogueApi.VarianteInfo::sku).orElse(null), v.map(CatalogueApi.VarianteInfo::taille).orElse(null),
                 v.map(CatalogueApi.VarianteInfo::couleur).orElse(null), c.getQuantite(), c.getStatut().name(), point,
-                avecAcheteur ? c.getCommercantId() : null, nom, c.getDateCreation());
+                avecAcheteur ? c.getCommercantId() : null, nom, c.getDateCreation(), catalogue.produit(g.produitId()).map(CatalogueApi.ProduitInfo::photoUrl).orElse(null));
+    }
+
+    private CommandeVue vueParticipation(ParticipationApi.ParticipationInfo p, GroupeAchatApi.GroupeInfo g, Vision vision) {
+        Optional<CatalogueApi.VarianteInfo> v = catalogue.variante(p.varianteId());
+        boolean avecAcheteur = vision == Vision.COMPLETE;
+        String nom = avecAcheteur ? identite.acteur(p.commercantId()).map(IdentiteApi.ActeurInfo::nom).orElse("Boutique #" + p.commercantId()) : null;
+        return new CommandeVue(p.id(), p.id(), p.groupeId(), g.produitNom(),
+                v.map(CatalogueApi.VarianteInfo::sku).orElse(null), v.map(CatalogueApi.VarianteInfo::taille).orElse(null),
+                v.map(CatalogueApi.VarianteInfo::couleur).orElse(null), p.quantite(), p.statut(), null,
+                avecAcheteur ? p.commercantId() : null, nom, Instant.now(), catalogue.produit(g.produitId()).map(CatalogueApi.ProduitInfo::photoUrl).orElse(null));
     }
 }
-

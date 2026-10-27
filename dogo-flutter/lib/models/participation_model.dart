@@ -12,6 +12,7 @@ class ParticipationModel {
   final double montant;
   final DateTime? expirationReservation;
   final DateTime? dateCreation;
+  final String? photoUrl;
 
   const ParticipationModel({
     required this.id,
@@ -26,6 +27,7 @@ class ParticipationModel {
     required this.montant,
     this.expirationReservation,
     this.dateCreation,
+    this.photoUrl,
   });
 
   factory ParticipationModel.fromJson(Map<String, dynamic> json) {
@@ -45,6 +47,7 @@ class ParticipationModel {
       montant: decimal(json['montant']),
       expirationReservation: DateTime.tryParse(json['expirationReservation']?.toString() ?? ''),
       dateCreation: DateTime.tryParse(json['dateCreation']?.toString() ?? ''),
+      photoUrl: json['photoUrl']?.toString(),
     );
   }
 

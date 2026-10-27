@@ -8,7 +8,12 @@ void main() {
   Widget espace(CiblesDidacticiel cibles) => PorteeCiblesDidacticiel(
         cibles: cibles,
         child: Builder(
-          builder: (context) => SizedBox(key: CiblesDidacticiel.de(context)!.grossisteKpi, height: 10),
+          builder: (context) => Column(
+            children: [
+              SizedBox(key: CiblesDidacticiel.de(context)!.grossisteKpi, height: 10),
+              SizedBox(key: CiblesDidacticiel.de(context)!.fabCentral, height: 10),
+            ],
+          ),
         ),
       );
 
@@ -20,6 +25,8 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(premier.grossisteKpi.currentContext, isNotNull);
     expect(second.grossisteKpi.currentContext, isNotNull);
+    expect(premier.fabCentral.currentContext, isNotNull);
+    expect(second.fabCentral.currentContext, isNotNull);
   });
 
   testWidgets('hors d\'un espace, aucune cible (le didacticiel garde sa position par défaut)', (tester) async {

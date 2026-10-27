@@ -288,22 +288,42 @@ public class GroupeService {
     public void signalerEtape(long grossisteId, long groupeId, String etape, String commentaire) {
         GroupeAchat g = groupeDuPorteur(grossisteId, groupeId);
         if (!g.estPorteParGrossiste()) {
-            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "L'acheminement de ce groupe est géré par son courtier");
+            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "L'acheminement de ce groupe est gÃ©rÃ© par son courtier");
         }
         StatutGroupe s = g.getStatut();
-        if (s != StatutGroupe.OBJECTIF_ATTEINT && s != StatutGroupe.EN_EXPEDITION && s != StatutGroupe.LIVRE) {
+        boolean estIncident = etape.contains("âš ï¸") || etape.toLowerCase().contains("incident") || etape.toLowerCase().contains("problÃ¨me");
+        if (!estIncident && s != StatutGroupe.OBJECTIF_ATTEINT && s != StatutGroupe.EN_EXPEDITION && s != StatutGroupe.LIVRE) {
             throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, null,
-                    "Les étapes d'acheminement se signalent une fois l'objectif atteint (état actuel : " + s + ")");
+                    "Les Ã©tapes d'acheminement se signalent une fois l'objectif atteint (Ã©tat actuel : " + s + ")");
         }
         String precision = commentaire == null || commentaire.isBlank() ? null : commentaire.strip();
         etapes.save(new EtapeAcheminement(groupeId, etape.strip(), precision, horloge.instant(), grossisteId));
-        String detail = etape.strip() + (precision == null ? "" : " — " + precision);
-        audit.tracer(grossisteId, "ETAPE_ACHEMINEMENT_SIGNALEE", "groupe=" + groupeId, detail);
+        String detail = etape.strip() + (precision == null ? "" : " â€” " + precision);
+        audit.tracer(grossisteId, estIncident ? "INCIDENT_LOGISTIQUE_GROSSISTE" : "ETAPE_ACHEMINEMENT_SIGNALEE", "groupe=" + groupeId, detail);
         String titre = g.getTitre() != null ? g.getTitre()
                 : catalogue.produit(g.getProduitId()).map(CatalogueApi.ProduitInfo::nom).orElse("");
         for (Long admin : identite.administrateursActifs()) {
-            notifications.notifier(admin, "Suivi colis — groupe #" + groupeId + " « " + titre + " » : " + detail
-                    + ". Mettez à jour le suivi vu par les commerçants.");
+            String prefixe = estIncident ? "ðŸš¨ ALERTE INCIDENT LOGISTIQUE" : "Suivi colis";
+            notifications.notifier(admin, prefixe + " â€” groupe #" + groupeId + " Â« " + titre + " Â» : " + detail
+                    + ". Mettez Ã  jour le suivi vu par les commerÃ§ants.");
+        }
+    }
+
+    @Transactional
+    public void signalerIncident(long grossisteId, long groupeId, String motif, String detail, String pieceJointeUrl) {
+        GroupeAchat g = groupes.findById(groupeId).orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
+        if (!g.getGrossisteId().equals(grossisteId) && (g.getCourtierId() == null || !g.getCourtierId().equals(grossisteId))) {
+            throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Vous n'Ãªtes pas associÃ© Ã  ce groupe");
+        }
+        String titre = g.getTitre() != null ? g.getTitre()
+                : catalogue.produit(g.getProduitId()).map(CatalogueApi.ProduitInfo::nom).orElse("");
+        String libelle = "âš ï¸ " + motif + (pieceJointeUrl != null && !pieceJointeUrl.isBlank() ? " [PJ: " + pieceJointeUrl + "]" : "");
+        String precision = detail == null || detail.isBlank() ? null : detail.strip();
+        etapes.save(new EtapeAcheminement(groupeId, libelle, precision, horloge.instant(), grossisteId));
+        audit.tracer(grossisteId, "INCIDENT_LOGISTIQUE_GROSSISTE", "groupe=" + groupeId, motif + (precision != null ? " : " + precision : ""));
+        for (Long admin : identite.administrateursActifs()) {
+            notifications.notifier(admin, "ðŸš¨ ALERTE INCIDENT LOGISTIQUE â€” groupe #" + groupeId + " Â« " + titre + " Â» : "
+                    + motif + (precision != null ? " â€” " + precision : "") + ". Intervention recommandÃ©e.");
         }
     }
 

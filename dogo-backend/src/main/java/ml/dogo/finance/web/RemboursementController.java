@@ -65,7 +65,7 @@ public class RemboursementController {
     }
 
     @GetMapping("/moi/remboursements")
-    @PreAuthorize("hasAuthority('PARTICIPATION_GERER')")
+    @PreAuthorize("hasAnyAuthority('PARTICIPATION_GERER', 'ADMIN_CREER', 'REMBOURSEMENT_APPROUVER')")
     public List<RemboursementService.RemboursementVue> mesRemboursements(@AuthenticationPrincipal UtilisateurCourant moi) {
         return remboursements.pourCommercant(moi.id());
     }

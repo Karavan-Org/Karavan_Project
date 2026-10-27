@@ -54,6 +54,9 @@ class _CommercantMainNavState extends State<CommercantMainNav>
   int? _hoveredArcIndex;
   bool _afficherGuide = false;
 
+  /// Clés propres à cet espace pour le didacticiel guidé
+  final _ciblesDidacticiel = CiblesDidacticiel();
+
   final List<Widget> _screens = const [
     CommercantHomeScreen(),
     ExplorerScreen(),
@@ -71,18 +74,16 @@ class _CommercantMainNavState extends State<CommercantMainNav>
     // Vérification de la première connexion pour afficher le didacticiel interactif guidé
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       var tel = AuthService.instance.profilActuel?.telephone;
-      if (tel == null || tel.isEmpty) {
+      var uid = AuthService.instance.profilActuel?.id;
+      if (tel == null || tel.isEmpty || uid == null) {
         final profil = await SessionStorageService.instance.lireProfil();
-        tel = profil?.telephone;
+        tel ??= profil?.telephone;
+        uid ??= profil?.id;
       }
       tel ??= "defaut";
-      final vu =
-          await SessionStorageService.instance.aDejaVuGuide('commercant', tel);
+      final vu = await SessionStorageService.instance
+          .aDejaVuGuide('commercant', tel, utilisateurId: uid);
       if (!vu && mounted) {
-        // Considérer le guide comme vu dès sa première ouverture, même si l'application
-        // est interrompue avant la dernière étape. Il reste relançable depuis Profil > Aide.
-        await SessionStorageService.instance.marquerGuideVu('commercant', tel);
-        if (!mounted) return;
         setState(() => _afficherGuide = true);
       }
     });
@@ -160,7 +161,12 @@ class _CommercantMainNavState extends State<CommercantMainNav>
   /// L'espace ne s'ouvre qu'au commerçant actif ; un autre rôle est renvoyé vers son propre espace
   @override
   Widget build(BuildContext context) => GardeCompteActif(
-      role: RoleActeur.commercant, child: Builder(builder: _construireEspace));
+        role: RoleActeur.commercant,
+        child: PorteeCiblesDidacticiel(
+          cibles: _ciblesDidacticiel,
+          child: Builder(builder: _construireEspace),
+        ),
+      );
 
   Widget _construireEspace(BuildContext context) {
     return TabNavigationScope(
@@ -369,6 +375,7 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                       width: 58,
                       margin: const EdgeInsets.only(top: 8),
                       child: FloatingActionButton(
+                        key: _ciblesDidacticiel.fabCentral,
                         heroTag: 'fab-nav-commercant',
                         onPressed: _toggleFabMenu,
                         elevation: isExpanded ? 8 : 4,

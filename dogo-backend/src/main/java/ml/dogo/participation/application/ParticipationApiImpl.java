@@ -40,6 +40,13 @@ public class ParticipationApiImpl implements ParticipationApi {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ParticipationInfo> actives(long groupeId) {
+        return participations.findByGroupeIdAndStatutIn(groupeId, ParticipationService.ACTIVES).stream()
+                .map(this::info).toList();
+    }
+
+    @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public boolean confirmerApresPaiement(long participationId) {
         return service.confirmerApresPaiement(participationId);

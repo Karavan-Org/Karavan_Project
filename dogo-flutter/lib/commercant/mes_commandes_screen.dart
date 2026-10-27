@@ -7,7 +7,9 @@ import '../services/groupe_api_service.dart';
 import '../services/logistique_api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_popups.dart';
+import '../widgets/image_produit.dart';
 import 'code_retrait_commercant_screen.dart';
+import 'favoris_service.dart';
 import '../services/visibilite_ecran.dart';
 
 export '../models/element_commande.dart';
@@ -78,18 +80,43 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> with Actualisat
           .whereType<int>()
           .toSet();
 
+      // Récupérer le catalogue pour mapper les photos réelles par ID de groupe et par nom
+      if (FavorisService.instance.toutesLesCampagnes.isEmpty) {
+        await FavorisService.instance.actualiserDepuisBackend();
+      }
+      final photosParGroupe = <int, String>{};
+      final photosParTitre = <String, String>{};
+      for (final g in FavorisService.instance.toutesLesCampagnes) {
+        final gid = int.tryParse(g.id);
+        if (gid != null && g.imagePath.isNotEmpty) photosParGroupe[gid] = g.imagePath;
+        if (g.titre.isNotEmpty && g.imagePath.isNotEmpty) {
+          photosParTitre[g.titre.toLowerCase()] = g.imagePath;
+          final court = g.titre.replaceAll(RegExp(r'^Achat groupé\s+', caseSensitive: false), '').trim().toLowerCase();
+          if (court.isNotEmpty) photosParTitre[court] = g.imagePath;
+        }
+      }
+
       final elements = <ElementCommande>[];
 
       // 1. Ajouter d'abord les commandes logistiques réelles (statut avancé)
       for (final c in commandesLogistiques) {
-        elements.add(ElementCommande.fromCommande(c));
+        final gid = (c['groupeId'] as num?)?.toInt();
+        final prod = c['produit']?.toString().trim().toLowerCase() ?? '';
+        final String? photo = c['photoUrl']?.toString() ??
+            (gid != null ? photosParGroupe[gid] : null) ??
+            (prod.isNotEmpty ? photosParTitre[prod] : null);
+        elements.add(ElementCommande.fromCommande(c, photoUrl: photo));
       }
 
       // 2. Ajouter les participations qui ne sont pas encore devenues des commandes logistiques
       for (final p in participations) {
         if (!partIdsDejaEnCommandes.contains(p.id)) {
           final remb = rembParPartId[p.id];
-          elements.add(ElementCommande.fromParticipation(p, remboursement: remb));
+          final prod = p.produit.trim().toLowerCase();
+          final String? photo = p.photoUrl ??
+              photosParGroupe[p.groupeId] ??
+              (prod.isNotEmpty ? photosParTitre[prod] : null);
+          elements.add(ElementCommande.fromParticipation(p, remboursement: remb, photoUrl: photo));
         }
       }
 
@@ -680,8 +707,10 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> with Actualisat
                 height: 62,
                 color: AppTheme.couleurSurfaceDouce(context),
                 padding: const EdgeInsets.all(5),
-                child: Image.asset(
-                  cmd.imageLocale,
+                child: imageProduit(
+                  (cmd.photoUrl != null && cmd.photoUrl!.isNotEmpty)
+                      ? cmd.photoUrl!
+                      : cmd.imageLocale,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Icon(
                     Icons.inventory_2_outlined,

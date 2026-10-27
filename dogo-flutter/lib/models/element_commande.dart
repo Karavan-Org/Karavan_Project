@@ -56,16 +56,28 @@ class ElementCommande {
     if (lower.contains('sac') || lower.contains('maroquinerie') || lower.contains('portefeuille')) {
       return 'assets/images/wallet.jpg';
     }
-    if (lower.contains('chaussure') || lower.contains('basket') || lower.contains('sneaker')) {
+    if (lower.contains('botte') || lower.contains('boot')) {
+      return 'assets/images/black-dress-boots-2-mob.jpg';
+    }
+    if (lower.contains('robe') || lower.contains('dress') || lower.contains('abaya') || lower.contains('habit') || lower.contains('tissu')) {
+      return 'assets/images/soft-elegance-abaya-coat-nida-purple-noor-and-grace.webp';
+    }
+    if (lower.contains('sandale') || lower.contains('talon') || lower.contains('claquette')) {
+      return 'assets/images/sandales-talon-rouge.jpg';
+    }
+    if (lower.contains('cahier') || lower.contains('livre') || lower.contains('papeterie') || lower.contains('fourniture')) {
+      return 'assets/images/images.jfif';
+    }
+    if (lower.contains('montre') || lower.contains('bijou') || lower.contains('accessoire')) {
+      return 'assets/images/Montre-Homme-Quartz-Acier-Inoxydable-Cadran-Rond-Affichage-Analogique-Et-Num-rique-Boucle-Pliante-Simple-Cristal-Renforc-Nihaojewelry-France.webp';
+    }
+    if (lower.contains('chaussure') || lower.contains('basket') || lower.contains('sneaker') || lower.contains('shoes') || lower.contains('lex') || lower.contains('nike') || lower.contains('bueno')) {
       return 'assets/images/Nike_Joyride-removebg-preview.png';
     }
-    if (lower.contains('montre') || lower.contains('accessoire')) {
-      return 'assets/images/logo_karavan.png';
-    }
-    return 'assets/images/Nike_Joyride-removebg-preview.png';
+    return 'assets/images/logo_karavan.png';
   }
 
-  factory ElementCommande.fromParticipation(ParticipationModel p, {RemboursementModel? remboursement}) {
+  factory ElementCommande.fromParticipation(ParticipationModel p, {RemboursementModel? remboursement, String? photoUrl}) {
     final parts = <String>[];
     if (p.detailsVariante.isNotEmpty) parts.add(p.detailsVariante);
     if (p.montant > 0) parts.add('${p.montant.toStringAsFixed(0)} FCFA');
@@ -98,6 +110,10 @@ class ElementCommande {
       arrivee = 'Réservé • En attente de paiement';
     }
 
+    final effectivePhoto = (photoUrl != null && photoUrl.isNotEmpty)
+        ? photoUrl
+        : ((p.photoUrl != null && p.photoUrl!.isNotEmpty) ? p.photoUrl : null);
+
     return ElementCommande(
       id: p.id,
       estParticipation: true,
@@ -109,6 +125,7 @@ class ElementCommande {
       statutLibelle: statutLibelle,
       montant: p.montant,
       quantite: p.quantite,
+      photoUrl: effectivePhoto,
       imageLocale: _imagePourProduit(p.produit),
       etapeActive: etape,
       arriveeEstimee: arrivee,
@@ -120,7 +137,7 @@ class ElementCommande {
     );
   }
 
-  factory ElementCommande.fromCommande(Map<String, dynamic> c) {
+  factory ElementCommande.fromCommande(Map<String, dynamic> c, {String? photoUrl}) {
     final id = (c['id'] as num?)?.toInt() ?? 1;
     final partId = (c['participationId'] as num?)?.toInt();
     final produit = c['produit']?.toString() ?? 'Commande groupée';
@@ -173,6 +190,11 @@ class ElementCommande {
         break;
     }
 
+    final String? cPhoto = c['photoUrl']?.toString();
+    final effectivePhoto = (photoUrl != null && photoUrl.isNotEmpty)
+        ? photoUrl
+        : ((cPhoto != null && cPhoto.isNotEmpty) ? cPhoto : null);
+
     return ElementCommande(
       id: id,
       estParticipation: false,
@@ -185,6 +207,7 @@ class ElementCommande {
       statutLibelle: libelle,
       montant: 0.0,
       quantite: qte,
+      photoUrl: effectivePhoto,
       imageLocale: _imagePourProduit(produit),
       etapeActive: etape,
       arriveeEstimee: arrivee,

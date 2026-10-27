@@ -202,15 +202,17 @@ class MesFavorisScreen extends StatelessWidget {
                             color: AppTheme.couleurAccent(context),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "${groupe.prixPublic} FCFA",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.couleurTexteAttenue(context),
-                            decoration: TextDecoration.lineThrough,
+                        if (groupe.prixPublic > groupe.prixGroupe) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            "${groupe.prixPublic} FCFA",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.couleurTexteAttenue(context),
+                              decoration: TextDecoration.lineThrough,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ],

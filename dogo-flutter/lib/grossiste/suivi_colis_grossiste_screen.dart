@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_popups.dart';
 import '../widgets/image_produit.dart';
 import '../services/visibilite_ecran.dart';
+import 'notifier_administration_screen.dart';
 
 /// Suivi du colis des groupes que le grossiste achemine lui-même : il valide chaque étape dans l'ordre,
 /// chaque validation est notifiée immédiatement aux administrateurs dɔgɔ, qui mettent à jour le suivi
@@ -139,63 +140,17 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
       _bloquerSuiviNonOuvert(g);
       return;
     }
-    final commentaire = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Valider l'étape"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(etape, style: const TextStyle(fontWeight: FontWeight.w700)),
-            const SizedBox(height: 4),
-            const Text("L'administrateur dɔgɔ est notifié immédiatement.",
-                style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-            TextField(
-              controller: commentaire,
-              maxLength: 500,
-              maxLines: 2,
-              decoration: const InputDecoration(labelText: "Précisions (transporteur, n° de suivi…)"),
-            ),
-          ],
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => NotifierAdministrationScreen(
+          groupe: g,
+          convoi: convoi,
+          etapeInitiale: etape,
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Annuler")),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(0, 44),
-            ),
-            child: const Text("Valider et notifier"),
-          ),
-        ],
       ),
     );
-    final texte = commentaire.text;
-    commentaire.dispose();
-    if (ok != true) return;
-    setState(() => _envoi = g.id);
-    try {
-      await GroupeApiService.instance.signalerEtape(g.id, etape: etape, commentaire: texte);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("« $etape » validée : l'administrateur est notifié"), backgroundColor: AppTheme.success),
-      );
+    if (ok == true) {
       await _charger();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e is ApiException ? e.messageComplet : 'Envoi impossible : $e'),
-          backgroundColor: AppTheme.danger,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _envoi = null);
     }
   }
 
@@ -212,7 +167,23 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
         backgroundColor: AppTheme.couleurCarte(context),
         foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
-        actions: [IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _charger)],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.campaign_outlined),
+            tooltip: "Notifier l'administration",
+            onPressed: () async {
+              final ok = await Navigator.of(context).push<bool>(
+                MaterialPageRoute(
+                  builder: (_) => NotifierAdministrationScreen(
+                    groupe: _groupes.isNotEmpty ? _groupes.first : null,
+                  ),
+                ),
+              );
+              if (ok == true) await _charger();
+            },
+          ),
+          IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _charger),
+        ],
       ),
       body: RefreshIndicator(
         color: AppTheme.olive,
@@ -362,6 +333,58 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
                 child: Text("Toutes les étapes sont validées.",
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.oliveProfond)),
               ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final ok = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(
+                          builder: (_) => NotifierAdministrationScreen(
+                            groupe: g,
+                            convoi: convoi,
+                          ),
+                        ),
+                      );
+                      if (ok == true) await _charger();
+                    },
+                    icon: const Icon(Icons.campaign_outlined, size: 16),
+                    label: const Text("Notifier l'admin", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF7B4026),
+                      side: const BorderSide(color: Color(0xFF7B4026)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final ok = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(
+                          builder: (_) => NotifierAdministrationScreen(
+                            groupe: g,
+                            convoi: convoi,
+                            modeIncident: true,
+                          ),
+                        ),
+                      );
+                      if (ok == true) await _charger();
+                    },
+                    icon: const Icon(Icons.warning_amber_rounded, size: 16, color: AppTheme.danger),
+                    label: const Text("Signaler incident", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.danger)),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppTheme.danger.withValues(alpha: 0.5)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ],
       ),

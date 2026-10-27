@@ -7,6 +7,7 @@ import 'campagne_model.dart';
 import 'favoris_service.dart';
 import 'rejoindre_groupe_screen.dart';
 import '../services/visibilite_ecran.dart';
+import '../widgets/tab_navigation_scope.dart';
 
 /// Fiche détaillée d'une campagne d'achat groupé pour le Commerçant
 class FicheCampagneScreen extends StatefulWidget {
@@ -44,6 +45,23 @@ class FicheCampagneScreen extends StatefulWidget {
     this.variantes,
     this.quantiteMin,
   });
+
+  factory FicheCampagneScreen.depuis(GroupeCampagneModel groupe) {
+    return FicheCampagneScreen(
+      id: groupe.id,
+      titre: groupe.titre,
+      sousTitre: groupe.sousTitre,
+      imagePath: groupe.imagePath,
+      prixGroupe: groupe.prixGroupe,
+      prixPublic: groupe.prixPublic,
+      quantiteActuelle: groupe.quantiteActuelle,
+      quantiteObjectif: groupe.quantiteObjectif,
+      categorie: groupe.categorie,
+      paysOrigine: groupe.paysOrigine,
+      courtierNom: groupe.courtierNom,
+      groupe: groupe,
+    );
+  }
 
   @override
   State<FicheCampagneScreen> createState() => _FicheCampagneScreenState();
@@ -384,31 +402,35 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
                           color: AppTheme.couleurAccent(context),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        "${widget.prixPublic} FCFA",
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: AppTheme.couleurTexteAttenue(context),
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.estSombre(context) ? AppTheme.darkOliveSurface : AppTheme.oliveClair,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          "Économie : ${economie * _quantite} FCFA",
+                      if (prixPub > widget.prixGroupe) ...[
+                        const SizedBox(width: 10),
+                        Text(
+                          "$prixPub FCFA",
                           style: TextStyle(
-                            color: AppTheme.couleurSucces(context),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11.5,
+                            fontSize: 15,
+                            color: AppTheme.couleurTexteAttenue(context),
+                            decoration: TextDecoration.lineThrough,
                           ),
                         ),
-                      ),
+                      ],
+                      if (economie > 0) ...[
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.estSombre(context) ? AppTheme.darkOliveSurface : AppTheme.oliveClair,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "Économie : ${economie * _quantite} FCFA",
+                            style: TextStyle(
+                              color: AppTheme.couleurSucces(context),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
 
@@ -756,20 +778,20 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Total à payer :",
+                  _quantiteMax < _quantiteMin ? "Statut du groupe :" : "Total à payer :",
                   style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
                 ),
                 Text(
-                  "${widget.prixGroupe * _quantite} FCFA",
+                  _quantiteMax < _quantiteMin ? "100% Atteint" : "${widget.prixGroupe * _quantite} FCFA",
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: _quantiteMax < _quantiteMin ? 17 : 20,
                     fontWeight: FontWeight.w800,
-                    color: AppTheme.couleurAccent(context),
+                    color: _quantiteMax < _quantiteMin ? AppTheme.couleurSucces(context) : AppTheme.couleurAccent(context),
                   ),
                 ),
               ],
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
                 onPressed: _quantite >= _quantiteMin && _quantite <= _quantiteMax ? () {
@@ -801,10 +823,17 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
                       ),
                     ),
                   );
-                } : null,
+                } : (_quantiteMax < _quantiteMin ? () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  }
+                  TabNavigationScope.switchToTab(context, 2);
+                } : null),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.couleurAccent(context),
-                  foregroundColor: AppTheme.texteSur(AppTheme.couleurAccent(context)),
+                  backgroundColor: _quantiteMax < _quantiteMin
+                      ? AppTheme.couleurSucces(context)
+                      : AppTheme.couleurAccent(context),
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
@@ -812,9 +841,9 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
                 ),
                 child: Text(
                   _quantiteMax < _quantiteMin
-                      ? "Groupe complet"
+                      ? "Groupe complet · Mes commandes →"
                       : "Rejoindre le groupe",
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
                 ),
               ),
             ),

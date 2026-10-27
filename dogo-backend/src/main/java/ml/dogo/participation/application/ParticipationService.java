@@ -35,7 +35,7 @@ public class ParticipationService {
 
     public record ParticipationVue(long id, long groupeId, String produit, String sku, String taille, String couleur,
                                    int quantite, String statut, BigDecimal prixUnitaire, BigDecimal montant,
-                                   Instant expirationReservation, Instant dateCreation) {
+                                   Instant expirationReservation, Instant dateCreation, String photoUrl) {
     }
 
     public record EtapeVue(String ancien, String nouveau, Instant date) {
@@ -238,7 +238,7 @@ public class ParticipationService {
         return new ParticipationVue(p.getId(), p.getGroupeId(), s.getProduitFige(), v.sku(), v.taille(), v.couleur(),
                 p.getQuantite(), p.getStatut().name(), s.getPrixFige(),
                 s.getPrixFige().multiply(BigDecimal.valueOf(p.getQuantite())), p.getDateExpirationReservation(),
-                p.getDateCreation());
+                p.getDateCreation(), catalogue.produit(v.produitId()).map(CatalogueApi.ProduitInfo::photoUrl).orElse(null));
     }
 }
 

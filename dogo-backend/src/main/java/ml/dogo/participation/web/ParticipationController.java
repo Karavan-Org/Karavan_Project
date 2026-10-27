@@ -40,7 +40,7 @@ public class ParticipationController {
     }
 
     @GetMapping("/moi/participations")
-    @PreAuthorize("hasAuthority('PARTICIPATION_GERER')")
+    @PreAuthorize("hasAnyAuthority('PARTICIPATION_GERER', 'ADMIN_CREER', 'AUDIT_LIRE')")
     public List<ParticipationService.ParticipationVue> mesParticipations(@AuthenticationPrincipal UtilisateurCourant moi) {
         return participations.mesParticipations(moi.id());
     }

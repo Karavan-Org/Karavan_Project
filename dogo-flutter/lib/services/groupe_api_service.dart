@@ -181,6 +181,19 @@ class GroupeApiService {
         if (commentaire != null && commentaire.trim().isNotEmpty) 'commentaire': commentaire.trim(),
       });
 
+  /// Le grossiste signale un incident ou un problème logistique urgent à l'administrateur
+  Future<void> signalerIncident(
+    int groupeId, {
+    required String motif,
+    String? detail,
+    String? pieceJointeUrl,
+  }) =>
+      ApiClient.instance.post('/api/groupes/$groupeId/incident', body: {
+        'motif': motif,
+        if (detail != null && detail.trim().isNotEmpty) 'detail': detail.trim(),
+        if (pieceJointeUrl != null && pieceJointeUrl.trim().isNotEmpty) 'pieceJointeUrl': pieceJointeUrl.trim(),
+      });
+
   /// Étapes déjà signalées par le grossiste (suivi du colis), de la plus ancienne à la plus récente
   Future<List<Map<String, dynamic>>> etapes(int groupeId) async =>
       _liste(await ApiClient.instance.get('/api/groupes/$groupeId/etapes'));
@@ -188,9 +201,17 @@ class GroupeApiService {
   /// Convois (suivi officiel mis à jour par dɔgɔ) des groupes visibles par l'utilisateur connecté
   Future<List<Map<String, dynamic>>> convois() async => _liste(await ApiClient.instance.get('/api/convois'));
 
-  /// Commandes nées d'un groupe (sans l'identité des acheteurs côté grossiste, RG-71)
+  /// Commandes nées d'un groupe (ou réservations si en cours)
   Future<List<Map<String, dynamic>>> commandesDuGroupe(int groupeId) async =>
       _liste(await ApiClient.instance.get('/api/groupes/$groupeId/commandes'));
+
+  /// Notifier les participants/acheteurs d'un groupe
+  Future<void> notifierGroupe(int groupeId, String message) async {
+    await ApiClient.instance.post(
+      '/api/groupes/$groupeId/notifier',
+      body: {'message': message},
+    );
+  }
 
   static List<Map<String, dynamic>> _liste(dynamic response) =>
       response is List ? response.map((e) => Map<String, dynamic>.from(e as Map)).toList() : [];
@@ -212,6 +233,7 @@ class GroupeResume {
   final int quantiteReservee;
   final int quantiteConfirmee;
   final num prixUnitaire;
+  final DateTime? dateOuverture;
   final DateTime? dateLimite;
   final bool disponibiliteValidee;
 
@@ -231,6 +253,7 @@ class GroupeResume {
     this.quantiteReservee = 0,
     this.quantiteConfirmee = 0,
     this.prixUnitaire = 0,
+    this.dateOuverture,
     this.dateLimite,
     this.disponibiliteValidee = false,
     this.porteParGrossiste = false,
@@ -252,6 +275,7 @@ class GroupeResume {
       quantiteReservee: entier(json['quantiteReservee']),
       quantiteConfirmee: entier(json['quantiteConfirmee']),
       prixUnitaire: (json['prixUnitaire'] as num?) ?? num.tryParse(json['prixUnitaire']?.toString() ?? '') ?? 0,
+      dateOuverture: DateTime.tryParse(json['dateOuverture']?.toString() ?? ''),
       dateLimite: DateTime.tryParse(json['dateLimite']?.toString() ?? ''),
       disponibiliteValidee: json['disponibiliteValidee'] == true,
       porteParGrossiste: json['porteParGrossiste'] == true,

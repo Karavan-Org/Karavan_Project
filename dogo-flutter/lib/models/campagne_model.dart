@@ -94,6 +94,10 @@ class GroupeCampagneModel {
 
   int get quantiteRestante => _quantiteRestante ?? (quantiteObjectif - quantiteActuelle).clamp(0, quantiteObjectif);
   bool get aPrixPublic => prixPublic > 0;
+  int get pourcentageEconomie =>
+      prixPublic > prixGroupe && prixPublic > 0
+          ? (((prixPublic - prixGroupe) / prixPublic) * 100).round()
+          : 0;
 
   const GroupeCampagneModel({
     required this.id,

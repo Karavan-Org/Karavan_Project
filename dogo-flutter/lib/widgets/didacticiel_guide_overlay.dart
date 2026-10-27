@@ -28,6 +28,7 @@ enum EmplacementCible {
 /// espaces peuvent coexister un instant (transition, route empilée). Des clés `static` partagées
 /// provoqueraient alors l'erreur « Duplicate GlobalKeys ».
 class CiblesDidacticiel {
+  final GlobalKey fabCentral = GlobalKey(debugLabel: 'didacticiel.fabCentral');
   final GlobalKey grossisteKpi = GlobalKey(debugLabel: 'didacticiel.grossisteKpi');
   final GlobalKey grossisteCatalogueEnTete = GlobalKey(debugLabel: 'didacticiel.grossisteCatalogueEnTete');
   final GlobalKey grossisteBarreApp = GlobalKey(debugLabel: 'didacticiel.grossisteBarreApp');
@@ -79,7 +80,7 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
   late AnimationController _pulsationController;
   late Animation<double> _pulsationScale;
 
-  late final List<_EtapeGuideData> _etapes;
+  late List<_EtapeGuideData> _etapes;
 
   @override
   void initState() {
@@ -105,6 +106,12 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
     _pulsationScale = Tween<double>(begin: 0.95, end: 1.25).animate(
       CurvedAnimation(parent: _pulsationController, curve: Curves.easeOut),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _etapes = _genererEtapesPourRole(widget.role, CiblesDidacticiel.de(context));
   }
 
   @override
@@ -136,12 +143,13 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             cleGlobale: cibles?.grossisteCatalogueEnTete,
             icone: Icons.inventory_2_rounded,
           ),
-          const _EtapeGuideData(
+          _EtapeGuideData(
             titre: "Créer un Groupe d'Achat",
             sousTitre: "FONCTIONNALITÉ 2 : LE BOUTON (+)",
             description:
                 "C'est le moteur de vos ventes ! Touchez (+) pour lancer une campagne d'achat groupé. Fixez le seuil de pièces à atteindre (ex : 500 paires) et la durée : les commerçants réservent et paient leur part jusqu'à 100%.",
             emplacement: EmplacementCible.fabCentral,
+            cleGlobale: cibles?.fabCentral,
             isCircle: true,
             icone: Icons.group_add_rounded,
           ),
@@ -173,8 +181,8 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
         ];
 
       case RoleActeur.commercant:
-        return const [
-          _EtapeGuideData(
+        return [
+          const _EtapeGuideData(
             titre: "Bienvenue sur Karavan Commerçant !",
             sousTitre: "LE BUT DE L'APPLICATION",
             description:
@@ -182,7 +190,7 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             emplacement: EmplacementCible.tabAccueil,
             icone: Icons.home_rounded,
           ),
-          _EtapeGuideData(
+          const _EtapeGuideData(
             titre: "Explorer & Trouver des Produits",
             sousTitre: "FONCTIONNALITÉ 1 : LE CATALOGUE",
             description:
@@ -196,10 +204,11 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             description:
                 "C'est le moteur de vos achats groupés ! Rejoignez un groupe avec un code d'invitation, initiez un nouvel achat groupé sur un article favori, suivez vos colis ou générez vos codes de retrait sécurisés.",
             emplacement: EmplacementCible.fabCentral,
+            cleGlobale: cibles?.fabCentral,
             isCircle: true,
             icone: Icons.group_add_rounded,
           ),
-          _EtapeGuideData(
+          const _EtapeGuideData(
             titre: "Suivi en Direct de vos Colis",
             sousTitre: "FONCTIONNALITÉ 3 : MES COMMANDES",
             description:
@@ -207,7 +216,7 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             emplacement: EmplacementCible.tabCommandes,
             icone: Icons.shopping_bag_rounded,
           ),
-          _EtapeGuideData(
+          const _EtapeGuideData(
             titre: "Portefeuille & Séquestre Garanti",
             sousTitre: "FONCTIONNALITÉ 4 : PAIEMENTS PROTÉGÉS",
             description:
@@ -218,8 +227,8 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
         ];
 
       case RoleActeur.courtier:
-        return const [
-          _EtapeGuideData(
+        return [
+          const _EtapeGuideData(
             titre: "Bienvenue sur Karavan Courtier !",
             sousTitre: "LE BUT DE L'APPLICATION",
             description:
@@ -227,7 +236,7 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             emplacement: EmplacementCible.tabAccueil,
             icone: Icons.home_rounded,
           ),
-          _EtapeGuideData(
+          const _EtapeGuideData(
             titre: "Gestion des Convois & Transit",
             sousTitre: "FONCTIONNALITÉ 1 : CONVOIS",
             description:
@@ -241,10 +250,11 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             description:
                 "Déployez le menu pour créer un nouveau groupe d'achat, scanner le QR code de retrait d'un commerçant au dépôt ou valider une étape clé du transit.",
             emplacement: EmplacementCible.fabCentral,
+            cleGlobale: cibles?.fabCentral,
             isCircle: true,
             icone: Icons.add_circle_rounded,
           ),
-          _EtapeGuideData(
+          const _EtapeGuideData(
             titre: "Portefeuille & Commissions",
             sousTitre: "FONCTIONNALITÉ 3 : COMMISSIONS & GAINS",
             description:
@@ -252,7 +262,7 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             emplacement: EmplacementCible.tabCommandes,
             icone: Icons.account_balance_wallet_rounded,
           ),
-          _EtapeGuideData(
+          const _EtapeGuideData(
             titre: "Profil & Société de Transit",
             sousTitre: "FONCTIONNALITÉ 4 : COORDONNÉES & DÉPÔT",
             description:
@@ -272,12 +282,14 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
 
   Future<void> _enregistrerGuideVu(String role) async {
     var tel = AuthService.instance.profilActuel?.telephone;
-    if (tel == null || tel.isEmpty) {
+    var uid = AuthService.instance.profilActuel?.id;
+    if (tel == null || tel.isEmpty || uid == null) {
       final profil = await SessionStorageService.instance.lireProfil();
-      tel = profil?.telephone;
+      tel ??= profil?.telephone;
+      uid ??= profil?.id;
     }
     tel ??= "defaut";
-    await SessionStorageService.instance.marquerGuideVu(role, tel);
+    await SessionStorageService.instance.marquerGuideVu(role, tel, utilisateurId: uid);
   }
 
   void _etapeSuivante() {
@@ -302,10 +314,22 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
       final renderBox =
           etape.cleGlobale!.currentContext!.findRenderObject() as RenderBox?;
       if (renderBox != null && renderBox.hasSize && renderBox.attached) {
-        final pos = renderBox.localToGlobal(Offset.zero);
+        final overlayBox = context.findRenderObject() as RenderBox?;
+        final Offset globalPos = renderBox.localToGlobal(Offset.zero);
+        final Offset pos = (overlayBox != null && overlayBox.hasSize && overlayBox.attached)
+            ? overlayBox.globalToLocal(globalPos)
+            : globalPos;
         final size = renderBox.size;
         if (size.width > 10 && size.height > 10) {
-          return (pos & size).inflate(etape.isCircle ? 4.0 : 6.0);
+          if (etape.isCircle) {
+            final globalCenter = renderBox.localToGlobal(renderBox.size.center(Offset.zero));
+            final center = (overlayBox != null && overlayBox.hasSize && overlayBox.attached)
+                ? overlayBox.globalToLocal(globalCenter)
+                : (pos + Offset(size.width / 2.0, size.height / 2.0));
+            final radius = (math.max(size.width, size.height) / 2.0) + 5.0;
+            return Rect.fromCircle(center: center, radius: radius);
+          }
+          return (pos & size).inflate(6.0);
         }
       }
     }
@@ -339,9 +363,9 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
 
       case EmplacementCible.fabCentral:
         final cx = largeur / 2.0;
-        final cy = hauteur - safeBottom - barHeight / 2.0 - 4.0;
-        return Rect.fromCenter(
-            center: Offset(cx, cy), width: 62.0, height: 62.0);
+        // Le FAB central est amarré à cheval au-dessus de la barre de navigation
+        final cy = hauteur - safeBottom - barHeight + 4.0;
+        return Rect.fromCircle(center: Offset(cx, cy), radius: 34.0);
 
       case EmplacementCible.tableauDeBordKpi:
         final w = math.min(largeur - 32.0, 560.0);
@@ -388,9 +412,9 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
     // Détermine si la cible est située dans la moitié inférieure de l'écran
     final bool estEnBas = targetRect.center.dy > (hauteurEcran * 0.52);
 
-    // Positionnement géométrique du doigt qui montre (largeur 52)
+    // Positionnement géométrique du doigt qui montre (largeur 52, hauteur bulle 50 + chevron 22 = 72)
     const double largeurDoigt = 52.0;
-    const double hauteurDoigt = 56.0;
+    const double hauteurDoigt = 72.0;
     final double handLeft = (targetRect.center.dx - (largeurDoigt / 2.0))
         .clamp(12.0, largeurEcran - largeurDoigt - 12.0);
 
@@ -447,14 +471,14 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             builder: (context, child) {
               double topPos;
               if (estEnBas) {
-                // Doigt au-dessus de la cible, pointant vers le bas
+                // Doigt au-dessus de la cible, pointant vers le bas avec marge nette
                 topPos = targetRect.top -
                     hauteurDoigt -
-                    4.0 -
+                    10.0 -
                     _doigtTranslation.value;
               } else {
-                // Doigt en-dessous de la cible, pointant vers le haut
-                topPos = targetRect.bottom + 4.0 + _doigtTranslation.value;
+                // Doigt en-dessous de la cible, pointant vers le haut avec marge nette
+                topPos = targetRect.bottom + 10.0 + _doigtTranslation.value;
               }
 
               return Positioned(

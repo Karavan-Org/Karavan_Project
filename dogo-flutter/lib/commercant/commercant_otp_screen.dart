@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
 import '../grossiste/grossiste_acces.dart';
 import '../services/auth_service.dart';
+import '../services/session_storage_service.dart';
 import '../services/api/api_exception.dart';
 
 /// Écran de Vérification OTP du compte conforme au modèle Figma exact
@@ -116,6 +117,9 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
           await AuthService.instance.rechargerProfil();
         } catch (_) {}
       }
+
+      // Nouvelle inscription validée : forcer la réinitialisation du guide interactif
+      await SessionStorageService.instance.reinitialiserTousLesGuides();
 
       if (!mounted) return;
 

@@ -44,6 +44,9 @@ class _CourtierMainNavState extends State<CourtierMainNav>
   int? _hoveredArcIndex;
   bool _afficherGuide = false;
 
+  /// Clés propres à cet espace pour le didacticiel guidé
+  final _ciblesDidacticiel = CiblesDidacticiel();
+
   final List<Widget> _screens = const [
     CourtierDashboardScreen(showBottomNav: false),
     GestionConvoiScreen(),
@@ -61,13 +64,15 @@ class _CourtierMainNavState extends State<CourtierMainNav>
     // Vérification de la première connexion pour afficher le didacticiel interactif guidé
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       var tel = AuthService.instance.profilActuel?.telephone;
-      if (tel == null || tel.isEmpty) {
+      var uid = AuthService.instance.profilActuel?.id;
+      if (tel == null || tel.isEmpty || uid == null) {
         final profil = await SessionStorageService.instance.lireProfil();
-        tel = profil?.telephone;
+        tel ??= profil?.telephone;
+        uid ??= profil?.id;
       }
       tel ??= "defaut";
-      final vu =
-          await SessionStorageService.instance.aDejaVuGuide('courtier', tel);
+      final vu = await SessionStorageService.instance
+          .aDejaVuGuide('courtier', tel, utilisateurId: uid);
       if (!vu && mounted) {
         setState(() => _afficherGuide = true);
       }
@@ -131,7 +136,12 @@ class _CourtierMainNavState extends State<CourtierMainNav>
   /// RG-03 : l'espace ne s'ouvre qu'à un compte actif, quel que soit le chemin pour y arriver
   @override
   Widget build(BuildContext context) => GardeCompteActif(
-      role: RoleActeur.courtier, child: Builder(builder: _construireEspace));
+        role: RoleActeur.courtier,
+        child: PorteeCiblesDidacticiel(
+          cibles: _ciblesDidacticiel,
+          child: Builder(builder: _construireEspace),
+        ),
+      );
 
   Widget _construireEspace(BuildContext context) {
     return TabNavigationScope(
@@ -319,6 +329,7 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                       width: 58,
                       margin: const EdgeInsets.only(top: 8),
                       child: FloatingActionButton(
+                        key: _ciblesDidacticiel.fabCentral,
                         heroTag: 'fab-nav-courtier',
                         onPressed: _toggleFabMenu,
                         elevation: isExpanded ? 8 : 4,

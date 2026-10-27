@@ -37,6 +37,9 @@ public class LogistiqueController {
     public record RetraitRequete(Long commandeId, String qrToken, String pin) {
     }
 
+    public record NotifierRequete(@NotBlank String message) {
+    }
+
     private final PointRetraitService points;
     private final CommandeService commandes;
     private final RetraitService retraits;
@@ -138,6 +141,15 @@ public class LogistiqueController {
                                                                  @PathVariable long groupeId,
                                                                  @Valid @RequestBody ArriveeRequete r) {
         return commandes.notifierArriveeDepot(moi, groupeId, r.pointRetraitId());
+    }
+
+    @PostMapping("/groupes/{groupeId}/notifier")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyAuthority('GROUPE_CREER', 'GROUPE_DISPONIBILITE_VALIDER', 'COMMANDE_AVANCER', 'COMMANDE_LIRE')")
+    public void notifierAcheteurs(@AuthenticationPrincipal UtilisateurCourant moi,
+                                  @PathVariable long groupeId,
+                                  @Valid @RequestBody NotifierRequete r) {
+        commandes.notifierAcheteurs(moi, groupeId, r.message());
     }
 
     // ---- retrait

@@ -1,9 +1,9 @@
 import '../widgets/image_produit.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import 'mes_commandes_screen.dart';
 import '../services/groupe_api_service.dart';
 import '../widgets/app_popups.dart';
+import '../widgets/tab_navigation_scope.dart';
 
 /// Écran de confirmation de Paiement Réussi conforme au design Figma (# reussite paiement)
 /// avec jauge dynamique et réactive liée au groupe d'achat (progression réelle animée).
@@ -175,7 +175,10 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                   backgroundColor: AppTheme.danger,
                 ),
               );
-              Navigator.pop(context);
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+              TabNavigationScope.switchToTab(context, 0);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.danger,
@@ -199,16 +202,29 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
 
     final bool progressionConnue = _piecesObjectif > 0;
 
-    return Scaffold(
-      backgroundColor: fondEcran,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: couleurTexte, size: 22),
-          onPressed: () => Navigator.of(context).maybePop(),
+    void quitterVersEspace(int tabIndex) {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+      TabNavigationScope.switchToTab(context, tabIndex);
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        quitterVersEspace(0);
+      },
+      child: Scaffold(
+        backgroundColor: fondEcran,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: couleurTexte, size: 22),
+            onPressed: () => quitterVersEspace(0),
+          ),
         ),
-      ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 4),
@@ -623,13 +639,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
 
             // 6. BOUTON D'ACTION PRINCIPAL : "Voir mes commandes →"
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (_) => const MesCommandesScreen(),
-                  ),
-                );
-              },
+              onPressed: () => quitterVersEspace(2),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.bissap,
                 foregroundColor: Colors.white,
@@ -675,8 +685,9 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDetailRow({
     required BuildContext context,

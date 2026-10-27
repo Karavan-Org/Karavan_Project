@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/detail_groupe_screen.dart';
 import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
 import 'image_produit.dart';
@@ -10,8 +11,15 @@ class CarteGroupe extends StatelessWidget {
   /// Nom affiché sous le produit (le grossiste pour le courtier, le courtier pour le grossiste)
   final String partenaire;
   final Widget? action;
+  final VoidCallback? onTap;
 
-  const CarteGroupe({super.key, required this.groupe, required this.partenaire, this.action});
+  const CarteGroupe({
+    super.key,
+    required this.groupe,
+    required this.partenaire,
+    this.action,
+    this.onTap,
+  });
 
   /// Palette Dɔgɔ : bissap = actif, ocre = point d'attention, olive = progression / étape terminée.
   static Color couleurStatut(String statut) => switch (statut) {
@@ -32,16 +40,28 @@ class CarteGroupe extends StatelessWidget {
     final limite = groupe.dateLimite?.toLocal();
 
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: const [BoxShadow(color: Color(0x062C241E), blurRadius: 10, offset: Offset(0, 3))],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap ?? () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => DetailGroupeScreen(groupe: groupe),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -140,6 +160,9 @@ class CarteGroupe extends StatelessWidget {
           if (action != null) ...[const SizedBox(height: 12), action!],
         ],
       ),
-    );
+    ),
+  ),
+),
+);
   }
 }

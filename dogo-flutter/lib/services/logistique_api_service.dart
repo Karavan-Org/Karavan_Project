@@ -64,6 +64,20 @@ class LogistiqueApiService {
     }
   }
 
+  /// Récupère la liste des convois actifs (GET /api/convois)
+  Future<List<Map<String, dynamic>>> convois() async {
+    try {
+      final response = await ApiClient.instance.get(ApiConfig.convois);
+      if (response is List) {
+        return response.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('LogistiqueApiService.convois - Repli local : $e');
+      return [];
+    }
+  }
+
   /// Commandes prêtes à être retirées (statut EN_ATTENTE_RETRAIT) : ce sont les seules qui ont un code
   Future<List<Map<String, dynamic>>> commandesARetirer() async {
     final commandes = await mesCommandes();

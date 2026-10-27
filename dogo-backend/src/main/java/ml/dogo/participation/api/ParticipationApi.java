@@ -22,6 +22,9 @@ public interface ParticipationApi {
     /** Participations CONFIRMEE d'un groupe (base des commandes, RG-44). */
     List<ParticipationInfo> confirmees(long groupeId);
 
+    /** Participations actives (DEMANDEE, RESERVEE, CONFIRMEE) d'un groupe. */
+    List<ParticipationInfo> actives(long groupeId);
+
     /**
      * RG-30 : à réception du paiement, passe la participation à CONFIRMEE et confirme la quantité dans le groupe, dans
      * la transaction de l'appelant. Renvoie faux si ce n'est plus possible (réservation expirée ou annulée, groupe fermé) :

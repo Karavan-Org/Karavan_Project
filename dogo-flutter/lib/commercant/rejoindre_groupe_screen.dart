@@ -366,7 +366,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
 
       if (!mounted) return;
 
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => ReussitePaiementScreen(
             groupeId: widget.groupeId,
@@ -383,6 +383,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
             piecesObjectif: piecesObjectif,
           ),
         ),
+        (route) => route.isFirst,
       );
     } catch (e) {
       if (!mounted) return;
