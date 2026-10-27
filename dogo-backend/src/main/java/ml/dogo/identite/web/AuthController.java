@@ -66,6 +66,12 @@ public class AuthController {
     public record RefreshRequete(String refreshToken, String deviceId) {
     }
 
+    public record DemandeResetMdpRequete(@NotBlank String telephone) {
+    }
+
+    public record ReinitialiserMdpRequete(@NotBlank String telephone, @NotBlank String code, @NotBlank String nouveauMotDePasse) {
+    }
+
     private static final String COOKIE_NAME = "dogo_refresh_token";
 
     private final InscriptionService inscription;
@@ -92,6 +98,17 @@ public class AuthController {
     @PostMapping("/verifier-otp")
     public InscriptionService.Resultat verifierOtp(@Valid @RequestBody OtpRequete r) {
         return inscription.verifierOtp(r.telephone(), r.code());
+    }
+
+    @PostMapping("/mot-de-passe-oublie/demande")
+    public InscriptionService.Resultat demanderReinitialisationMotDePasse(@Valid @RequestBody DemandeResetMdpRequete r) {
+        return auth.demanderReinitialisationMotDePasse(r.telephone());
+    }
+
+    @PostMapping("/mot-de-passe-oublie/reinitialiser")
+    public java.util.Map<String, String> reinitialiserMotDePasse(@Valid @RequestBody ReinitialiserMdpRequete r) {
+        auth.reinitialiserMotDePasseParOtp(r.telephone(), r.code(), r.nouveauMotDePasse());
+        return java.util.Map.of("message", "Votre mot de passe a été réinitialisé avec succès.");
     }
 
     @PostMapping("/connexion")

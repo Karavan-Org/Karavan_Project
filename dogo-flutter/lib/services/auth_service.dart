@@ -226,6 +226,35 @@ class AuthService {
     return response is Map<String, dynamic> ? response : {};
   }
 
+  /// Demande de réinitialisation de mot de passe par SMS OTP (mot de passe oublié)
+  Future<Map<String, dynamic>> demanderReinitialisationMotDePasse({
+    required String telephone,
+  }) async {
+    final rep = await ApiClient.instance.postSansAuth(
+      ApiConfig.demandeResetMdp,
+      body: {'telephone': telephone},
+      headers: _entetesPlateforme,
+    );
+    return rep is Map<String, dynamic> ? rep : <String, dynamic>{};
+  }
+
+  /// Validation du code OTP et définition du nouveau mot de passe
+  Future<void> reinitialiserMotDePasse({
+    required String telephone,
+    required String code,
+    required String nouveauMotDePasse,
+  }) async {
+    await ApiClient.instance.postSansAuth(
+      ApiConfig.reinitialiserMdp,
+      body: {
+        'telephone': telephone,
+        'code': code,
+        'nouveauMotDePasse': nouveauMotDePasse,
+      },
+      headers: _entetesPlateforme,
+    );
+  }
+
   /// Upload d'une photo de profil (JPEG, PNG, WEBP) vers le serveur (stockage sécurisé)
   Future<String> uploaderPhotoProfil(Uint8List octets,
       {String nom = 'avatar.jpg'}) async {

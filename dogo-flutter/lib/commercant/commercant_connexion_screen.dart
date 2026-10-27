@@ -1,5 +1,6 @@
 import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/bouton_google_signin.dart';
+import '../widgets/mot_de_passe_oublie_modal.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -404,12 +405,14 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
                   // Lien mot de passe oublié
                   TextButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                              "Un SMS de réinitialisation de votre mot de passe vous a été envoyé."),
-                          backgroundColor: camelColor,
-                        ),
+                      MotDePasseOublieModal.ouvrir(
+                        context,
+                        initialTelephone: _phoneController.text.trim(),
+                        onMotDePasseReinitialise: (tel) {
+                          setState(() {
+                            _phoneController.text = tel;
+                          });
+                        },
                       );
                     },
                     style: TextButton.styleFrom(

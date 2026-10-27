@@ -4,7 +4,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import ml.dogo.audit.api.AuditApi;
+import ml.dogo.identite.domain.RegleAcces;
 import ml.dogo.identite.domain.StatutCompte;
+import ml.dogo.notification.api.NotificationApi;
 import ml.dogo.identite.domain.Telephone;
 import ml.dogo.identite.persistence.SessionUtilisateur;
 import ml.dogo.identite.persistence.SessionUtilisateurRepository;
@@ -44,6 +47,9 @@ public class AuthService {
     private final JwtService jwt;
     private final DogoProperties proprietes;
     private final Clock horloge;
+    private final OtpService otp;
+    private final NotificationApi notifications;
+    private final AuditApi audit;
 
     /** Haché factice pour dépenser le même temps de calcul quand le numéro est inconnu (pas d'énumération par le temps). */
     private final String hacheFactice;
@@ -51,7 +57,8 @@ public class AuthService {
     public AuthService(UtilisateurRepository utilisateurs, SessionUtilisateurRepository sessions,
                        CompteursAuthentification compteurs, SessionService sessionService,
                        RefreshTokenService refreshTokenService, PasswordEncoder encodeur,
-                       JwtService jwt, DogoProperties proprietes, Clock horloge) {
+                       JwtService jwt, DogoProperties proprietes, Clock horloge,
+                       OtpService otp, NotificationApi notifications, AuditApi audit) {
         this.utilisateurs = utilisateurs;
         this.sessions = sessions;
         this.compteurs = compteurs;
@@ -61,6 +68,9 @@ public class AuthService {
         this.jwt = jwt;
         this.proprietes = proprietes;
         this.horloge = horloge;
+        this.otp = otp;
+        this.notifications = notifications;
+        this.audit = audit;
         this.hacheFactice = encodeur.encode("pin-factice");
     }
 
@@ -103,6 +113,38 @@ public class AuthService {
 
         var nouveauRt = refreshTokenService.creerToken(u.getId(), session.getId(), deviceId, ip, estAdmin);
         return new Connexion(jeton, nouveauRt.jetonBrut(), expiration, nouveauRt.expiration(), profil(u, permissions));
+    }
+
+    @Transactional
+    public InscriptionService.Resultat demanderReinitialisationMotDePasse(String telephoneBrut) {
+        String telephone = Telephone.normaliser(telephoneBrut);
+        Utilisateur u = utilisateurs.findByTelephone(telephone)
+                .orElseThrow(() -> new ErreurMetier(CodeErreur.COMPTE_INEXISTANT, "RG-07",
+                        "Aucun compte n'est associé à ce numéro de téléphone."));
+        if (!u.isTelephoneVerifie()) {
+            throw new ErreurMetier(CodeErreur.COMPTE_INACTIF, "RG-02",
+                    "Ce numéro n'a pas encore validé son inscription.");
+        }
+        String code = otp.emettre(u);
+        return new InscriptionService.Resultat(u.getId(), u.getStatutCompte().name(),
+                proprietes.otp().afficherDansReponse() ? code : null);
+    }
+
+    @Transactional
+    public void reinitialiserMotDePasseParOtp(String telephoneBrut, String codeOtp, String nouveauMotDePasse) {
+        String telephone = Telephone.normaliser(telephoneBrut);
+        Utilisateur u = utilisateurs.findByTelephone(telephone)
+                .orElseThrow(() -> new ErreurMetier(CodeErreur.COMPTE_INEXISTANT, "RG-07",
+                        "Aucun compte n'est associé à ce numéro de téléphone."));
+        otp.verifier(u.getId(), codeOtp);
+        RegleAcces.verifierFormatMotDePasse(nouveauMotDePasse);
+        u.changerMotDePasse(encodeur.encode(nouveauMotDePasse));
+        u.reinitialiserEchecsPin();
+        utilisateurs.save(u);
+        sessionService.invaliderToutes(u.getId());
+        refreshTokenService.revoquerPourUtilisateur(u.getId());
+        audit.tracer(u.getId(), "MOT_DE_PASSE_REINITIALISE_OTP", "telephone=" + telephone, null);
+        notifications.envoyerSms(telephone, "DoGo : Votre mot de passe a été réinitialisé avec succès.");
     }
 
     @Transactional

@@ -55,6 +55,8 @@ class ApiConfig {
   static const String changerMotDePasse = '/api/moi/mot-de-passe';
   static const String verifierOtp = '/api/auth/verifier-otp';
   static const String renvoyerOtp = '/api/auth/renvoyer-otp';
+  static const String demandeResetMdp = '/api/auth/mot-de-passe-oublie/demande';
+  static const String reinitialiserMdp = '/api/auth/mot-de-passe-oublie/reinitialiser';
 
   // --- Endpoints Dossier KYC (Grossiste / Courtier) ---
   static const String kyc = '/api/kyc';

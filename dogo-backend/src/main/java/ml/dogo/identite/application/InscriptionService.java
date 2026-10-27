@@ -17,6 +17,7 @@ import ml.dogo.shared.config.DogoProperties;
 import ml.dogo.shared.errors.CodeErreur;
 import ml.dogo.shared.errors.ErreurMetier;
 import java.time.Clock;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,10 +44,11 @@ public class InscriptionService {
     private final NotificationApi notifications;
     private final DogoProperties proprietes;
     private final Clock horloge;
+    private final JdbcTemplate jdbcTemplate;
 
     public InscriptionService(UtilisateurRepository utilisateurs, RoleRepository roles, OtpService otp,
                               PasswordEncoder encodeur, AuditApi audit, NotificationApi notifications,
-                              DogoProperties proprietes, Clock horloge) {
+                              DogoProperties proprietes, Clock horloge, JdbcTemplate jdbcTemplate) {
         this.utilisateurs = utilisateurs;
         this.roles = roles;
         this.otp = otp;
@@ -55,6 +57,7 @@ public class InscriptionService {
         this.notifications = notifications;
         this.proprietes = proprietes;
         this.horloge = horloge;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Transactional
@@ -139,6 +142,13 @@ public class InscriptionService {
         }
         // Le numéro n'est pas vérifié (inscription non finalisée) : on remplace proprement le brouillon
         long ancienId = existant.getId();
+        jdbcTemplate.update("UPDATE code_otp SET utilisateur_id = NULL WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM commercant WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM grossiste WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM courtier WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM notification WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM session_utilisateur WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM refresh_token WHERE utilisateur_id = ?", ancienId);
         utilisateurs.delete(existant);
         utilisateurs.flush();
         audit.tracer(ancienId, "INSCRIPTION_NON_FINALISEE_REMPLACEE", null,

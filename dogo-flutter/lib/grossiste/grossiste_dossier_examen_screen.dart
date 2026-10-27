@@ -286,6 +286,9 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
 
   @override
   Widget build(BuildContext context) {
+    if (widget.role == RoleActeur.commercant) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final nom = AuthService.instance.profilActuel?.nom ?? "Mon entreprise";
     final documents = _dossier.typesDocuments;
     final resume = [

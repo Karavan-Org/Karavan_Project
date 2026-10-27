@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
@@ -6,6 +5,8 @@ import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../commercant/commercant_otp_screen.dart';
+import '../services/validateur_mot_de_passe.dart';
+import 'mot_de_passe_oublie_modal.dart';
 
 /// Bouton officiel « Continuer avec Google » respectant la charte graphique Google et l'identité visuelle Karavan.
 class BoutonGoogleSignIn extends StatelessWidget {
@@ -196,12 +197,15 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
   final String _nomGoogle = "Salif Modibo Keïta";
   final String _emailGoogle = "salifmodibok@gmail.com";
   final TextEditingController _phoneController = TextEditingController(text: "+223 ");
+  final TextEditingController _passwordController = TextEditingController();
+  bool _masquerMotDePasse = true;
   bool _envoiEnCours = false;
   String? _messageErreur;
 
   @override
   void dispose() {
     _phoneController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -216,35 +220,22 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
     }
   }
 
-  /// Génère un secret aléatoire fort conforme à RG-07 pour sécuriser le compte Google
-  String _genererSecretSecurise() {
-    final rng = math.Random.secure();
-    const lettresMaj = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-    const lettresMin = "abcdefghijkmnopqrstuvwxyz";
-    const chiffres = "23456789";
-    const symboles = "!@#\$%*=";
-    const tous = lettresMaj + lettresMin + chiffres + symboles;
-
-    final chars = <String>[
-      lettresMaj[rng.nextInt(lettresMaj.length)],
-      lettresMin[rng.nextInt(lettresMin.length)],
-      chiffres[rng.nextInt(chiffres.length)],
-      symboles[rng.nextInt(symboles.length)],
-    ];
-    for (int i = 0; i < 20; i++) {
-      chars.add(tous[rng.nextInt(tous.length)]);
-    }
-    chars.shuffle(rng);
-    return chars.join();
-  }
-
   Future<void> _confirmerEtRecevoir2FA() async {
     final telBrut = _phoneController.text.trim();
     final telNettoye = telBrut.replaceAll(RegExp(r'\s+'), '');
+    final motDePasse = _passwordController.text;
 
     if (telNettoye.length < 8) {
       setState(() {
         _messageErreur = "Veuillez saisir un numéro de téléphone valide pour recevoir le code 2FA.";
+      });
+      return;
+    }
+
+    final erreurMdp = ValidateurMotDePasse.validerCreation(motDePasse);
+    if (erreurMdp != null) {
+      setState(() {
+        _messageErreur = erreurMdp;
       });
       return;
     }
@@ -255,8 +246,34 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
     });
 
     try {
+      // 1. Tenter une connexion directe au cas où le compte existe déjà
+      try {
+        await AuthService.instance.connecter(
+          telephone: telNettoye,
+          motDePasse: motDePasse,
+          pin: motDePasse,
+        );
+        if (!mounted) return;
+        Navigator.of(context).pop();
+        final route = switch (widget.role) {
+          RoleActeur.grossiste => '/grossiste',
+          RoleActeur.courtier => '/courtier',
+          RoleActeur.commercant => '/commercant',
+        };
+        Navigator.of(context).pushReplacementNamed(route);
+        return;
+      } catch (eConn) {
+        if (eConn is ApiException && eConn.statusCode == 401) {
+          setState(() {
+            _envoiEnCours = false;
+            _messageErreur =
+                "Ce compte existe déjà avec un mot de passe différent. Saisissez votre mot de passe habituel ou cliquez sur « Mot de passe oublié ? ».";
+          });
+          return;
+        }
+      }
+
       String? codeOtpSimule;
-      final secretCompte = _genererSecretSecurise();
 
       // Inscription ou renvoi OTP selon l'existence du compte
       try {
@@ -264,8 +281,8 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
           typeActeur: widget.role.name.toUpperCase(),
           telephone: telNettoye,
           nom: _nomGoogle,
-          motDePasse: secretCompte,
-          pin: secretCompte,
+          motDePasse: motDePasse,
+          pin: motDePasse,
           nomBoutique: widget.role == RoleActeur.commercant ? "Boutique $_nomGoogle" : null,
           quartierBamako: widget.role == RoleActeur.commercant ? "Grand Marché" : null,
           nomBoutiqueMarche: widget.role == RoleActeur.grossiste ? "Établissements $_nomGoogle" : null,
@@ -284,7 +301,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
             setState(() {
               _envoiEnCours = false;
               _messageErreur =
-                  "Ce numéro de téléphone est déjà associé à un compte existant. Veuillez vous connecter directement avec votre mot de passe.";
+                  "Ce numéro est déjà actif sur la plateforme. Connectez-vous avec votre mot de passe ou cliquez sur « Mot de passe oublié ? ».";
             });
             return;
           }
@@ -305,8 +322,8 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
             role: widget.role,
             codeSimulation: codeOtpSimule,
             nom: _nomGoogle,
-            motDePasse: secretCompte,
-            pin: secretCompte,
+            motDePasse: motDePasse,
+            pin: motDePasse,
           ),
         ),
       );
@@ -316,7 +333,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
         _envoiEnCours = false;
         _messageErreur = e is ApiException
             ? e.messageComplet
-            : "Une erreur est survenue lors de l'envoi du code 2FA : $e";
+            : "Une erreur est survenue lors de l'authentification : $e";
       });
     }
   }
@@ -592,6 +609,103 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                     ),
                   ),
                 ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Champ de configuration du mot de passe
+            Text(
+              "Mot de passe du compte",
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: couleurTexte,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: couleurCarte,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _messageErreur != null ? AppTheme.danger : couleurBordure,
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.bissap.withValues(alpha: 0.08),
+                    ),
+                    child: const Icon(Icons.lock_rounded, color: AppTheme.bissap, size: 19),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _passwordController,
+                      obscureText: _masquerMotDePasse,
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w600,
+                        color: couleurTexte,
+                      ),
+                      decoration: InputDecoration(
+                        filled: false,
+                        hintText: "8+ car., maj., min., chiffre",
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: couleurAttenue,
+                        ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      _masquerMotDePasse ? Icons.visibility_off : Icons.visibility,
+                      color: couleurAttenue,
+                      size: 20,
+                    ),
+                    onPressed: () => setState(() => _masquerMotDePasse = !_masquerMotDePasse),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  final tel = _phoneController.text.trim();
+                  Navigator.of(context).pop();
+                  MotDePasseOublieModal.ouvrir(context, initialTelephone: tel);
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text(
+                  "Mot de passe oublié ?",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.bissap,
+                  ),
+                ),
               ),
             ),
 

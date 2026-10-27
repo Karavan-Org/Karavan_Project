@@ -161,6 +161,9 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
 
   @override
   Widget build(BuildContext context) {
+    if (widget.role == RoleActeur.commercant) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       backgroundColor: AppTheme.couleurFond(context),
       body: SafeArea(

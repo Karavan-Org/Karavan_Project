@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/bouton_bascule_theme.dart';
+import '../widgets/mot_de_passe_oublie_modal.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/api/api_exception.dart';
@@ -245,20 +246,14 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
   }
 
   void _pinOublie() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Mot de passe oublié"),
-        content: const Text(
-          "Pour des raisons de sécurité, la réinitialisation du mot de passe se fait avec l'équipe d'intégration dɔgɔ. "
-          "Contactez le support depuis votre agence ou par WhatsApp à Bamako.",
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text("Compris"))
-        ],
-      ),
+    MotDePasseOublieModal.ouvrir(
+      context,
+      initialTelephone: _telephoneController.text.trim(),
+      onMotDePasseReinitialise: (tel) {
+        setState(() {
+          _telephoneController.text = tel;
+        });
+      },
     );
   }
 
