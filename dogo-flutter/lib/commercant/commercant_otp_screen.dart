@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
+import 'commercant_main_nav.dart';
 import '../grossiste/grossiste_acces.dart';
 import '../grossiste/grossiste_documents_kyc_screen.dart';
 import '../services/auth_service.dart';
@@ -150,10 +151,9 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
           );
           return;
         case RoleActeur.commercant:
-          const destinationCommercant = GrossisteDocumentsKycScreen(role: RoleActeur.commercant);
           if (!mounted) return;
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => destinationCommercant),
+            MaterialPageRoute(builder: (_) => const CommercantMainNav()),
             (route) => false,
           );
           return;

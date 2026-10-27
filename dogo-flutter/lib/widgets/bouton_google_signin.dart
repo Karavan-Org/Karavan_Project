@@ -639,7 +639,9 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
             const SizedBox(height: 12),
             Center(
               child: Text(
-                "Étape suivante : Vérification OTP SMS puis dépôt des documents KYC",
+                widget.role == RoleActeur.commercant
+                    ? "Étape suivante : Vérification OTP SMS puis accès immédiat à votre espace"
+                    : "Étape suivante : Vérification OTP SMS puis dépôt des pièces justificatives (KYC)",
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
