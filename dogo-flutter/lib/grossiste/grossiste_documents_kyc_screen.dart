@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
+import '../services/auth_service.dart';
 import '../models/role_acteur.dart';
 import '../services/kyc_api_service.dart';
 import '../theme/app_theme.dart';
