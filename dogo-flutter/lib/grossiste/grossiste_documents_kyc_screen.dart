@@ -98,6 +98,11 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
   }
 
   Future<void> _soumettre() async {
+    if (!AuthService.instance.estConnecte) {
+      afficherErreur(context, "Vous devez être connecté pour soumettre votre dossier. Veuillez vous connecter.");
+      return;
+    }
+
     final manquants = _emplacements.where((e) => e.obligatoire && !_pieces.containsKey(e.type)).toList();
     if (manquants.isNotEmpty) {
       afficherErreur(context, "Pièces obligatoires manquantes :\n• ${manquants.map((e) => e.titre).join('\n• ')}");

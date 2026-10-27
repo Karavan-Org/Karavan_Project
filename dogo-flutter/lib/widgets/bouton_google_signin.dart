@@ -189,7 +189,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
   // Compte Google connecté par défaut dans le navigateur ou personnalisable
   final String _nomGoogle = "Salif Modibo Keïta";
   final String _emailGoogle = "salifmodibok@gmail.com";
-  final TextEditingController _phoneController = TextEditingController(text: "+223 70 00 00 01");
+  final TextEditingController _phoneController = TextEditingController(text: "+223 ");
   bool _envoiEnCours = false;
   String? _messageErreur;
 
@@ -270,13 +270,12 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
         codeOtpSimule = res['codeOtp']?.toString();
       } on ApiException catch (e) {
         if (e.statusCode == 409 || e.code == 'CONFLIT') {
-          // Le compte existe déjà avec ce numéro : on génère un nouvel OTP par renvoyerOtp
-          try {
-            final resRenvoyer = await AuthService.instance.renvoyerOtp(telephone: telNettoye);
-            codeOtpSimule = resRenvoyer['codeOtp']?.toString();
-          } catch (_) {
-            // Ignorer si déjà actif ou renvoi limité
-          }
+          setState(() {
+            _envoiEnCours = false;
+            _messageErreur =
+                "Ce numéro de téléphone est déjà associé à un compte existant. Veuillez vous connecter directement avec votre mot de passe.";
+          });
+          return;
         } else {
           rethrow;
         }
