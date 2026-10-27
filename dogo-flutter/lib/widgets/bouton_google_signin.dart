@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
@@ -209,6 +210,28 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
     }
   }
 
+  /// Génère un secret aléatoire fort conforme à RG-07 pour sécuriser le compte Google
+  String _genererSecretSecurise() {
+    final rng = math.Random.secure();
+    const lettresMaj = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const lettresMin = "abcdefghijkmnopqrstuvwxyz";
+    const chiffres = "23456789";
+    const symboles = "!@#\$%*=";
+    const tous = lettresMaj + lettresMin + chiffres + symboles;
+
+    final chars = <String>[
+      lettresMaj[rng.nextInt(lettresMaj.length)],
+      lettresMin[rng.nextInt(lettresMin.length)],
+      chiffres[rng.nextInt(chiffres.length)],
+      symboles[rng.nextInt(symboles.length)],
+    ];
+    for (int i = 0; i < 20; i++) {
+      chars.add(tous[rng.nextInt(tous.length)]);
+    }
+    chars.shuffle(rng);
+    return chars.join();
+  }
+
   Future<void> _confirmerEtRecevoir2FA() async {
     final telBrut = _phoneController.text.trim();
     final telNettoye = telBrut.replaceAll(RegExp(r'\s+'), '');
@@ -227,6 +250,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
 
     try {
       String? codeOtpSimule;
+      final secretCompte = _genererSecretSecurise();
 
       // Inscription ou renvoi OTP selon l'existence du compte
       try {
@@ -234,8 +258,8 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
           typeActeur: widget.role.name.toUpperCase(),
           telephone: telNettoye,
           nom: _nomGoogle,
-          motDePasse: "Dogo2026!",
-          pin: "Dogo2026!",
+          motDePasse: secretCompte,
+          pin: secretCompte,
           nomBoutique: widget.role == RoleActeur.commercant ? "Boutique $_nomGoogle" : null,
           quartierBamako: widget.role == RoleActeur.commercant ? "Grand Marché" : null,
           nomBoutiqueMarche: widget.role == RoleActeur.grossiste ? "Établissements $_nomGoogle" : null,
@@ -270,8 +294,8 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
             role: widget.role,
             codeSimulation: codeOtpSimule,
             nom: _nomGoogle,
-            motDePasse: "Dogo2026!",
-            pin: "Dogo2026!",
+            motDePasse: secretCompte,
+            pin: secretCompte,
           ),
         ),
       );

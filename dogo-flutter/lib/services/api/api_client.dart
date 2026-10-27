@@ -294,8 +294,10 @@ class ApiClient {
 
     // La console du navigateur / de l'IDE affiche la raison du refus renvoyée par le backend
     final corps = utf8.decode(response.bodyBytes, allowMalformed: true);
-    debugPrint(
-        'API ${response.request?.method} ${response.request?.url.path} -> $statusCode $corps');
+    if (kDebugMode) {
+      debugPrint(
+          'API ${response.request?.method} ${response.request?.url.path} -> $statusCode $corps');
+    }
     throw ApiException.fromResponseBody(statusCode, corps);
   }
 }
