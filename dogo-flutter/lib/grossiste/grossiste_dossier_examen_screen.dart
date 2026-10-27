@@ -38,9 +38,14 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
   };
 
   bool get _courtier => widget.role == RoleActeur.courtier;
+  bool get _commercant => widget.role == RoleActeur.commercant;
 
   /// Écran de dépôt du dossier (rejet → nouveau dépôt), déclaré dans main.dart
-  String get _routeDepot => _courtier ? '/courtier/kyc' : '/grossiste/kyc';
+  String get _routeDepot => switch (widget.role) {
+    RoleActeur.courtier => '/courtier/kyc',
+    RoleActeur.commercant => '/commercant/kyc',
+    RoleActeur.grossiste => '/grossiste/kyc',
+  };
 
   @override
   void initState() {
@@ -107,7 +112,9 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                _courtier ? "Compte Courtier Validé !" : "Compte Grossiste Validé !",
+                _courtier
+                    ? "Compte Courtier Validé !"
+                    : (_commercant ? "Compte Commerçant Validé !" : "Compte Grossiste Validé !"),
                 style: TextStyle(fontFamily: AppTheme.policeTitre, fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context)),
               ),
             ),
@@ -120,14 +127,18 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
             Text(
               _courtier
                   ? "Félicitations ! Votre dossier de courtier a été examiné et approuvé par l'équipe de conformité Karavan."
-                  : "Félicitations ! Votre dossier vendeur a été examiné et approuvé par l'équipe de conformité Karavan.",
+                  : (_commercant
+                      ? "Félicitations ! Votre dossier commerçant a été examiné et approuvé par l'équipe de conformité Karavan."
+                      : "Félicitations ! Votre dossier vendeur a été examiné et approuvé par l'équipe de conformité Karavan."),
               style: TextStyle(fontSize: 13.5, color: AppTheme.couleurTexte(context), height: 1.4, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 10),
             Text(
               _courtier
                   ? "Votre pièce d'identité et votre licence de transitaire sont désormais certifiées. Vous pouvez dès à présent vous connecter pour accéder à votre espace courtier."
-                  : "Toutes vos pièces légales (RCCM, NIF) sont désormais certifiées. Vous pouvez dès à présent vous connecter pour accéder à votre espace vendeur et commencer vos ventes.",
+                  : (_commercant
+                      ? "Votre pièce d'identité et votre justificatif de commerce sont certifiés. Vous pouvez désormais commander et participer aux achats groupés."
+                      : "Toutes vos pièces légales (RCCM, NIF) sont désormais certifiées. Vous pouvez dès à présent vous connecter pour accéder à votre espace vendeur et commencer vos ventes."),
               style: const TextStyle(fontSize: 12.5, color: CouleursArrivee.texteDoux, height: 1.4),
             ),
           ],
@@ -171,7 +182,12 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
   void _redirigerVersConnexion() {
     _timerVerif?.cancel();
     AuthService.instance.deconnecter();
-    Navigator.of(context).pushNamedAndRemoveUntil('/grossiste/connexion', (route) => route.isFirst);
+    final route = switch (widget.role) {
+      RoleActeur.courtier => '/courtier/connexion',
+      RoleActeur.commercant => '/commercant/connexion',
+      RoleActeur.grossiste => '/grossiste/connexion',
+    };
+    Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => route.isFirst);
   }
 
   Future<void> _actualiser() async {
@@ -322,7 +338,9 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _courtier ? "Espace Courtier dɔgɔ" : "Espace Vendeur dɔgɔ",
+                          _courtier
+                              ? "Espace Courtier Karavan"
+                              : (_commercant ? "Espace Acheteur Karavan" : "Espace Vendeur Karavan"),
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.couleurTexteAttenue(context)),
                         ),
                         Text(

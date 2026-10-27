@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/role_acteur.dart';
 import '../grossiste/grossiste_acces.dart';
+import '../grossiste/grossiste_documents_kyc_screen.dart';
 import '../services/auth_service.dart';
 import '../services/session_storage_service.dart';
 import '../services/api/api_exception.dart';
@@ -141,10 +142,20 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
           );
           return;
         case RoleActeur.courtier:
-          Navigator.of(context).pushNamedAndRemoveUntil('/courtier', (route) => false);
+          const destinationCourtier = GrossisteDocumentsKycScreen(role: RoleActeur.courtier);
+          if (!mounted) return;
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => destinationCourtier),
+            (route) => false,
+          );
           return;
         case RoleActeur.commercant:
-          Navigator.of(context).pushNamedAndRemoveUntil('/commercant', (route) => false);
+          const destinationCommercant = GrossisteDocumentsKycScreen(role: RoleActeur.commercant);
+          if (!mounted) return;
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => destinationCommercant),
+            (route) => false,
+          );
           return;
       }
     } catch (e) {

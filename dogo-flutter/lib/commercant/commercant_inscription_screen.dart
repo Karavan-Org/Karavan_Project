@@ -1,4 +1,5 @@
 import '../widgets/bouton_bascule_theme.dart';
+import '../widgets/bouton_google_signin.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -392,6 +393,34 @@ class _CommercantInscriptionScreenState
                         ),
                       ),
               ),
+
+              const SizedBox(height: 24),
+
+                            const SizedBox(height: 18),
+
+              // Séparateur OU
+              Row(
+                children: [
+                  Expanded(child: Divider(color: AppTheme.couleurBordure(context), thickness: 1)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Text(
+                      "OU",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.couleurTexteAttenue(context),
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: AppTheme.couleurBordure(context), thickness: 1)),
+                ],
+              ),
+
+              const SizedBox(height: 18),
+
+              // S'inscrire rapidement avec Google
+              BoutonGoogleSignIn(role: widget.role, libelle: "S'inscrire avec Google"),
 
               const SizedBox(height: 24),
 

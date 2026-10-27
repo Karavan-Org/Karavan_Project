@@ -82,7 +82,7 @@ class CoreRegleTest {
 
     @Test
     void rg03_seuls_grossiste_et_courtier_exigent_un_kyc() {
-        assertFalse(TypeActeur.COMMERCANT.exigeKyc());
+        assertTrue(TypeActeur.COMMERCANT.exigeKyc());
         assertTrue(TypeActeur.GROSSISTE.exigeKyc());
         assertTrue(TypeActeur.COURTIER.exigeKyc());
         assertFalse(TypeActeur.ADMINISTRATEUR.exigeKyc());
@@ -93,7 +93,7 @@ class CoreRegleTest {
         assertTrue(TypeDocument.obligatoiresPour(TypeActeur.GROSSISTE).contains(TypeDocument.REGISTRE_COMMERCE));
         assertTrue(TypeDocument.obligatoiresPour(TypeActeur.COURTIER).contains(TypeDocument.LICENCE_TRANSIT));
         assertTrue(TypeDocument.obligatoiresPour(TypeActeur.COURTIER).contains(TypeDocument.PIECE_IDENTITE));
-        assertTrue(TypeDocument.obligatoiresPour(TypeActeur.COMMERCANT).isEmpty());
+        assertTrue(TypeDocument.obligatoiresPour(TypeActeur.COMMERCANT).contains(TypeDocument.PIECE_IDENTITE));
     }
 
     @Test

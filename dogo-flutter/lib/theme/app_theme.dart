@@ -28,6 +28,7 @@ class AppTheme {
   static const Color oliveBordure = Color(0xFFB8E6C4);
   static const Color rose = tertiary;
   static const Color roseClair = Color(0xFFFAF3E9);
+  static const Color doreKaravan = Color(0xFFF2A832);
   static const Color ocre = secondary;
   static const Color ocreProfond = Color(0xFF9A6C08);
   static const Color ocreClair = Color(0xFFFFF5D8);

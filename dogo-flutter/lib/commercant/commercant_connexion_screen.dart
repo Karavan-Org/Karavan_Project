@@ -1,4 +1,5 @@
 import '../widgets/bouton_bascule_theme.dart';
+import '../widgets/bouton_google_signin.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -460,6 +461,34 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
               ),
 
               const SizedBox(height: 28),
+
+                            const SizedBox(height: 18),
+
+              // Séparateur OU
+              Row(
+                children: [
+                  Expanded(child: Divider(color: AppTheme.couleurBordure(context), thickness: 1)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Text(
+                      "OU",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.couleurTexteAttenue(context),
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: AppTheme.couleurBordure(context), thickness: 1)),
+                ],
+              ),
+
+              const SizedBox(height: 18),
+
+              // Continuer avec Google (avec confirmation obligatoire du 2FA)
+              BoutonGoogleSignIn(role: widget.role),
+
+              const SizedBox(height: 24),
 
               // 6. LIEN INFÉRIEUR "VOUS N'AVEZ PAS DE COMPTE ? INSCRIPTION"
               Row(

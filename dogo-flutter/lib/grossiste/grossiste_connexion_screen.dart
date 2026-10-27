@@ -5,6 +5,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../services/validateur_mot_de_passe.dart';
+import '../widgets/bouton_google_signin.dart';
+import '../models/role_acteur.dart';
 import '../theme/app_theme.dart';
 import 'grossiste_acces.dart';
 import 'grossiste_inscription_screen.dart';
@@ -386,7 +388,33 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                           color: AppTheme.primary),
                     ),
                   ),
-                  const SizedBox(height: 84),
+                  const SizedBox(height: 18),
+
+                  // Séparateur OU
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: AppTheme.couleurBordure(context), thickness: 1)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Text(
+                          "OU",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.couleurTexteAttenue(context),
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: AppTheme.couleurBordure(context), thickness: 1)),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Continuer avec Google (rôle grossiste avec confirmation 2FA)
+                  const BoutonGoogleSignIn(role: RoleActeur.grossiste),
+
+                  const SizedBox(height: 36),
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(

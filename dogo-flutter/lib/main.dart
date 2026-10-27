@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'commercant/commercant_connexion_screen.dart';
 import 'commercant/commercant_main_nav.dart';
 import 'commercant/ouvrir_groupe_screen.dart';
 import 'courtier/courtier_main_nav.dart';
+import 'grossiste/grossiste_connexion_screen.dart';
 import 'grossiste/grossiste_documents_kyc_screen.dart';
 import 'grossiste/grossiste_main_nav.dart';
 import 'screens/onboarding_screen.dart';
@@ -64,8 +66,11 @@ class DogoApp extends StatelessWidget {
       // Table des routes nommées pour la navigation directe et web
       routes: {
         '/commercant': (_) => const CommercantMainNav(),
+        '/commercant/connexion': (_) => const CommercantConnexionScreen(role: RoleActeur.commercant),
         '/courtier': (_) => const CourtierMainNav(),
+        '/courtier/connexion': (_) => const CommercantConnexionScreen(role: RoleActeur.courtier),
         '/grossiste': (_) => const GrossisteMainNav(),
+        '/grossiste/connexion': (_) => const GrossisteConnexionScreen(),
         '/onboarding': (_) => const OnboardingScreen(),
       },
       // Lien reçu pendant que l'app tourne ou navigation dynamique
@@ -91,6 +96,13 @@ class DogoApp extends StatelessWidget {
           final motif = settings.arguments as String?;
           return MaterialPageRoute(
             builder: (_) => GrossisteDocumentsKycScreen(motifRejet: motif, role: RoleActeur.courtier),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/commercant/kyc') {
+          final motif = settings.arguments as String?;
+          return MaterialPageRoute(
+            builder: (_) => GrossisteDocumentsKycScreen(motifRejet: motif, role: RoleActeur.commercant),
             settings: settings,
           );
         }
