@@ -12,7 +12,9 @@ import 'grossiste_onboarding_widgets.dart';
 
 /// Inscription du Grossiste (maquette Figma « inscription »)
 class GrossisteInscriptionScreen extends StatefulWidget {
-  const GrossisteInscriptionScreen({super.key});
+  final String? initialTelephone;
+
+  const GrossisteInscriptionScreen({super.key, this.initialTelephone});
 
   @override
   State<GrossisteInscriptionScreen> createState() =>
@@ -29,6 +31,14 @@ class _GrossisteInscriptionScreenState
   bool _pinMasque = true;
   bool _confirmMasque = true;
   bool _chargement = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialTelephone != null && widget.initialTelephone!.isNotEmpty) {
+      _telephoneController.text = widget.initialTelephone!;
+    }
+  }
 
   @override
   void dispose() {

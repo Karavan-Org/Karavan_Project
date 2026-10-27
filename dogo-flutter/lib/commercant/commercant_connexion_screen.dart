@@ -78,9 +78,30 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
       Navigator.of(context).pushReplacementNamed(route);
     } catch (e) {
       if (!mounted) return;
-      final message = e is ApiException
-          ? e.messageComplet
-          : 'Erreur de connexion : ${e.toString()}';
+
+      final estCompteInexistant = e is ApiException &&
+          (e.code == 'COMPTE_INEXISTANT' ||
+              e.statusCode == 404 ||
+              e.message.toLowerCase().contains('aucun compte'));
+
+      if (estCompteInexistant) {
+        _proposerInscription(phone);
+        return;
+      }
+
+      // Procédure standard pour compte existant mais code secret/mot de passe erroné
+      _pinController.clear();
+      final String message;
+      if (e is ApiException && e.statusCode == 401) {
+        message = 'Mot de passe ou code secret incorrect. Veuillez vérifier votre saisie et réessayer.';
+      } else if (e is ApiException && e.statusCode == 423) {
+        message = e.message; // Compte verrouillé suite à plusieurs échecs (RG-08)
+      } else if (e is ApiException) {
+        message = e.messageComplet;
+      } else {
+        message = 'Erreur de connexion : ${e.toString()}';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -91,6 +112,159 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _proposerInscription(String telephone) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        final isDark = AppTheme.estSombre(ctx);
+        const camelColor = AppTheme.bissap;
+        return AlertDialog(
+          backgroundColor: AppTheme.couleurCarte(ctx),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 8),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
+          title: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppTheme.secondary.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.person_add_alt_1_rounded,
+                  color: AppTheme.secondary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  "Compte introuvable",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Aucun compte Karavan n'est associé au numéro :",
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: AppTheme.couleurTexte(ctx),
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white10 : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.phone_rounded, size: 16, color: camelColor),
+                    const SizedBox(width: 8),
+                    Text(
+                      telephone,
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                "Vous êtes nouveau sur Karavan ? Créez votre compte en quelques secondes pour rejoindre les achats groupés.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.couleurTexteAttenue(ctx),
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                "Corriger le numéro",
+                style: TextStyle(
+                  color: AppTheme.couleurTexteAttenue(ctx),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CommercantInscriptionScreen(
+                      role: widget.role,
+                      initialTelephone: telephone,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.arrow_forward_rounded, size: 17),
+              label: const Text(
+                "S'inscrire",
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: camelColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Notification complémentaire avec action directe
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text("Aucun compte associé à ce numéro."),
+        backgroundColor: AppTheme.secondary,
+        duration: const Duration(seconds: 6),
+        action: SnackBarAction(
+          label: "S'inscrire",
+          textColor: Colors.white,
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => CommercantInscriptionScreen(
+                  role: widget.role,
+                  initialTelephone: telephone,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override

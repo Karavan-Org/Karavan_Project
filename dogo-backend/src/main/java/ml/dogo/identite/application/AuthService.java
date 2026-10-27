@@ -70,14 +70,14 @@ public class AuthService {
         Utilisateur u = utilisateurs.findByTelephone(telephone).orElse(null);
         if (u == null) {
             encodeur.matches(pin == null ? "" : pin, hacheFactice);
-            throw identifiantsInvalides();
+            throw compteInexistant();
         }
         u.verifierNonVerrouille(maintenant);
         boolean motDePasseValide = pin != null && encodeur.matches(pin, u.getMotDePasseHash());
         if (!motDePasseValide) {
             compteurs.enregistrerEchecPin(u.getId(), proprietes.pin().maxEchecs(), proprietes.pin().verrouillage(),
                     maintenant);
-            throw identifiantsInvalides();
+            throw codeIncorrect();
         }
         if (!u.getStatutCompte().peutSAuthentifier()) {
             throw new ErreurMetier(CodeErreur.COMPTE_INACTIF, "RG-09", "Ce compte est suspendu ou désactivé");
@@ -128,7 +128,13 @@ public class AuthService {
                 u.getPhotoUrl(), u.getStatutCompte().name(), permissions);
     }
 
-    private static ErreurMetier identifiantsInvalides() {
-        return new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, "RG-07", "Téléphone ou PIN incorrect");
+    private static ErreurMetier compteInexistant() {
+        return new ErreurMetier(CodeErreur.COMPTE_INEXISTANT, "RG-07",
+                "Aucun compte n'est associé à ce numéro de téléphone. Souhaitez-vous créer un compte ?");
+    }
+
+    private static ErreurMetier codeIncorrect() {
+        return new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, "RG-07",
+                "Mot de passe ou code secret incorrect. Veuillez vérifier votre saisie et réessayer.");
     }
 }

@@ -3,6 +3,7 @@ package ml.dogo.shared.errors;
 /** Codes d'erreur métier, chacun rattaché à un statut HTTP et, quand c'est utile, à une règle de gestion. */
 public enum CodeErreur {
     NON_TROUVE(404),
+    COMPTE_INEXISTANT(404),
     ACCES_REFUSE(403),
     NON_AUTHENTIFIE(401),
     DONNEES_INVALIDES(400),

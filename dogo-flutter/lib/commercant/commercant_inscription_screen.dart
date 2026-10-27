@@ -11,10 +11,12 @@ import 'commercant_otp_screen.dart';
 /// Écran d'Inscription conforme au modèle Figma exact et aux specs backend (mot de passe + infos métier)
 class CommercantInscriptionScreen extends StatefulWidget {
   final RoleActeur role;
+  final String? initialTelephone;
 
   const CommercantInscriptionScreen({
     super.key,
     this.role = RoleActeur.commercant,
+    this.initialTelephone,
   });
 
   @override
@@ -33,6 +35,14 @@ class _CommercantInscriptionScreenState
   bool _obscurePin = true;
   bool _obscureConfirmPin = true;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialTelephone != null && widget.initialTelephone!.isNotEmpty) {
+      _phoneController.text = widget.initialTelephone!;
+    }
+  }
 
   @override
   void dispose() {
