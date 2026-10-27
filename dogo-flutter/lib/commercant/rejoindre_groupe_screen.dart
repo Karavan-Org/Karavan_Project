@@ -11,6 +11,7 @@ import '../services/api/api_config.dart';
 import '../services/api/api_exception.dart';
 import 'campagne_model.dart';
 import 'reussite_paiement_screen.dart';
+import '../widgets/mobile_money_logo.dart';
 import '../widgets/app_popups.dart';
 
 /// Écran de confirmation de participation, choix des variantes/quantités et paiement Mobile Money pour le Commerçant
@@ -768,24 +769,28 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: op["couleur"] as Color,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            op["sigle"] as String,
-                                  style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
+                      if (isPortefeuille)
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: op["couleur"] as Color,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              "💼",
+                              style: TextStyle(fontSize: 18),
                             ),
                           ),
+                        )
+                      else
+                        MobileMoneyLogo(
+                          operateur: op["nom"] as String,
+                          taille: 40,
+                          estCercle: false,
+                          rayonArrondi: 10,
                         ),
-                      ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(

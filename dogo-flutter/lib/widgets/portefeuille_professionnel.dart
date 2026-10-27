@@ -4,6 +4,7 @@ import '../services/paiement_api_service.dart';
 import '../services/portefeuille_api_service.dart';
 import '../services/profil_api_service.dart';
 import '../theme/app_theme.dart';
+import 'mobile_money_logo.dart';
 import 'app_popups.dart';
 
 /// Briques communes aux portefeuilles du Courtier et du Grossiste (RG-38, RG-41) :
@@ -162,7 +163,16 @@ class _DialogueRetraitState extends State<_DialogueRetrait> {
               for (final m in widget.moyens)
                 DropdownMenuItem(
                   value: m.id,
-                  child: Text('${libelleOperateur(m.operateur)} • ${m.numero}', overflow: TextOverflow.ellipsis),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      MobileMoneyLogo(operateur: m.operateur, taille: 22),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text('${libelleOperateur(m.operateur)} • ${m.numero}', overflow: TextOverflow.ellipsis),
+                      ),
+                    ],
+                  ),
                 ),
             ],
             onChanged: _envoi ? null : (id) => setState(() => _moyen = widget.moyens.firstWhere((m) => m.id == id)),
@@ -211,10 +221,7 @@ class ComptesVersement extends StatelessWidget {
             ),
             child: Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: AppTheme.tertiary.withValues(alpha: 0.4),
-                  child: const Icon(Icons.phone_android_rounded, color: AppTheme.primary, size: 20),
-                ),
+                MobileMoneyLogo(operateur: m.operateur, taille: 40),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(

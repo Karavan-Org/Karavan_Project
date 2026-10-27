@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/profil_api_service.dart';
 import '../services/api/api_exception.dart';
 import '../theme/app_theme.dart';
+import 'mobile_money_logo.dart';
 
 /// Section réutilisable de gestion des numéros Mobile Money (RG-10, GET/POST/PUT/DELETE /api/moi/moyens-paiement)
 class MoyensPaiementSection extends StatefulWidget {
@@ -50,13 +51,6 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
         _ => op,
       };
 
-  static Color _couleurOperateur(String op) => switch (op) {
-        'ORANGE_MONEY' => const Color(0xFFFF6600),
-        'MOOV_MONEY' => const Color(0xFF005BA6),
-        'WAVE' => const Color(0xFF1BA6E8),
-        _ => AppTheme.primary,
-      };
-
   Future<void> _ajouterMoyen() async {
     final numCtrl = TextEditingController(text: "+223 ");
     String operateur = "ORANGE_MONEY";
@@ -84,9 +78,39 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
                 initialValue: operateur,
                 decoration: const InputDecoration(labelText: "Opérateur"),
                 items: const [
-                  DropdownMenuItem(value: "ORANGE_MONEY", child: Text("Orange Money 🇲🇱")),
-                  DropdownMenuItem(value: "MOOV_MONEY", child: Text("Moov Money 🇲🇱")),
-                  DropdownMenuItem(value: "WAVE", child: Text("Wave 🇲🇱")),
+                  DropdownMenuItem(
+                    value: "ORANGE_MONEY",
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        MobileMoneyLogo(operateur: "ORANGE_MONEY", taille: 22),
+                        SizedBox(width: 10),
+                        Text("Orange Money 🇲🇱"),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: "MOOV_MONEY",
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        MobileMoneyLogo(operateur: "MOOV_MONEY", taille: 22),
+                        SizedBox(width: 10),
+                        Text("Moov Money 🇲🇱"),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: "WAVE",
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        MobileMoneyLogo(operateur: "WAVE", taille: 22),
+                        SizedBox(width: 10),
+                        Text("Wave 🇲🇱"),
+                      ],
+                    ),
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) setDialogState(() => operateur = val);
@@ -267,16 +291,10 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
                           separatorBuilder: (_, __) => Divider(height: 1, indent: 56, color: AppTheme.couleurBordure(context)),
                           itemBuilder: (context, i) {
                             final m = _moyens[i];
-                            final opColor = _couleurOperateur(m.operateur);
                             return ListTile(
-                              leading: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: opColor.withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(Icons.phone_android_rounded, color: opColor, size: 20),
+                              leading: MobileMoneyLogo(
+                                operateur: m.operateur,
+                                taille: 38,
                               ),
                               title: Row(
                                 children: [

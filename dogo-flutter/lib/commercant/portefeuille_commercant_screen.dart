@@ -4,6 +4,7 @@ import '../models/remboursement_model.dart';
 import '../services/auth_service.dart';
 import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/mobile_money_logo.dart';
 import '../widgets/zone_portefeuille_neumorphic.dart';
 import '../widgets/app_popups.dart';
 import '../services/portefeuille_api_service.dart';
@@ -321,20 +322,31 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
       child: GestureDetector(
         onTap: () => onSelect(nom),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-              color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurSurfaceDouce(context),
+            color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurSurfaceDouce(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurBordureForte(context)),
           ),
-          child: Text(
-            nom,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              color: isSelected ? AppTheme.texteSur(AppTheme.couleurAccent(context)) : AppTheme.couleurTexte(context),
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              MobileMoneyLogo(operateur: nom, taille: 20),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  nom,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: isSelected ? AppTheme.texteSur(AppTheme.couleurAccent(context)) : AppTheme.couleurTexte(context),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -407,54 +419,21 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                     context: context,
                     label: "Orange",
                     onTap: () => _showRechargeModal(operateurInitial: "Orange Money"),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFFF7900),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        "OM",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11),
-                      ),
-                    ),
+                    child: const MobileMoneyLogo(operateur: "ORANGE_MONEY", taille: 32),
                   ),
                   const SizedBox(width: 24),
                   ZonePortefeuilleNeumorphic.buildSquircleRapide(
                     context: context,
                     label: "Moov",
                     onTap: () => _showRechargeModal(operateurInitial: "Moov Africa"),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFF005DAA),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        "MM",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11),
-                      ),
-                    ),
+                    child: const MobileMoneyLogo(operateur: "MOOV_MONEY", taille: 32),
                   ),
                   const SizedBox(width: 24),
                   ZonePortefeuilleNeumorphic.buildSquircleRapide(
                     context: context,
                     label: "Wave",
                     onTap: () => _showRechargeModal(operateurInitial: "Wave"),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFF1DC4F2),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.waves_rounded, color: Colors.white, size: 18),
-                    ),
+                    child: const MobileMoneyLogo(operateur: "WAVE", taille: 32),
                   ),
                 ],
               ),

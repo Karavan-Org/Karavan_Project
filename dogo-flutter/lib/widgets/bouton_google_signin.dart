@@ -85,8 +85,14 @@ class GoogleGIcon extends StatelessWidget {
     return SizedBox(
       width: taille,
       height: taille,
-      child: CustomPaint(
-        painter: _GoogleGLogoPainter(),
+      child: Image.asset(
+        'assets/logo/Google__G__logo.svg.webp',
+        width: taille,
+        height: taille,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => CustomPaint(
+          painter: _GoogleGLogoPainter(),
+        ),
       ),
     );
   }

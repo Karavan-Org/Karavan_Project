@@ -40,6 +40,7 @@ flutter:
     - assets/images/karavan/
     - assets/icons/
     - assets/html/
+    - assets/logo/
 
   # Inter, police officielle DoGo (assets/fonts/Inter-OFL.txt).
   fonts:
