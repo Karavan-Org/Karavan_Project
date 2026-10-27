@@ -100,9 +100,8 @@ class DogoApp extends StatelessWidget {
           );
         }
         if (settings.name == '/commercant/kyc') {
-          final motif = settings.arguments as String?;
           return MaterialPageRoute(
-            builder: (_) => GrossisteDocumentsKycScreen(motifRejet: motif, role: RoleActeur.commercant),
+            builder: (_) => const CommercantMainNav(),
             settings: settings,
           );
         }

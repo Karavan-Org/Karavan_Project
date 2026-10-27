@@ -50,6 +50,12 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
   @override
   void initState() {
     super.initState();
+    if (widget.role == RoleActeur.commercant) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).pushReplacementNamed('/commercant');
+      });
+      return;
+    }
     _estValide = _dossier.statut == 'APPROUVE';
     if (_estValide) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _afficherNotificationValidation());

@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import ml.dogo.identite.domain.StatutCompte;
 import ml.dogo.identite.domain.Telephone;
 import ml.dogo.identite.persistence.SessionUtilisateur;
 import ml.dogo.identite.persistence.SessionUtilisateurRepository;
@@ -85,6 +86,9 @@ public class AuthService {
         if (!u.isTelephoneVerifie()) {
             throw new ErreurMetier(CodeErreur.COMPTE_INACTIF, "RG-02",
                     "Téléphone non vérifié : saisissez le code reçu par SMS");
+        }
+        if (!u.typeActeur().exigeKyc() && u.getStatutCompte() == StatutCompte.EN_ATTENTE) {
+            u.changerStatut(StatutCompte.ACTIF);
         }
         u.reinitialiserEchecsPin();
         utilisateurs.save(u);

@@ -15,6 +15,9 @@ import 'grossiste_main_nav.dart';
 /// attente, ni bloquer un compte qui vient d'être validé. Le serveur refuse de toute façon (403) les actions
 /// d'un compte en attente : cet aiguillage évite seulement de lui montrer un espace inutilisable.
 Future<Widget> ecranSelonStatut(UtilisateurProfil profil, RoleActeur role) async {
+  if (role == RoleActeur.commercant) {
+    return const CommercantMainNav();
+  }
   final Widget espace = switch (role) {
     RoleActeur.courtier => const CourtierMainNav(),
     RoleActeur.grossiste => const GrossisteMainNav(),
@@ -50,6 +53,7 @@ class _GardeCompteActifState extends State<GardeCompteActif> {
   bool _redirection = false;
 
   bool get _enAttente {
+    if (widget.role == RoleActeur.commercant) return false;
     final statut = AuthService.instance.profilActuel?.statut;
     return statut != null && statut != 'ACTIF';
   }

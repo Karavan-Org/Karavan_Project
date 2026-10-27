@@ -88,6 +88,16 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
   final List<FichierChoisi> _supplementaires = [];
   bool _envoi = false;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.role == RoleActeur.commercant) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).pushReplacementNamed('/commercant');
+      });
+    }
+  }
+
   Future<void> _choisir(_EmplacementPiece e) async {
     final fichier = await choisirPiece(context, titre: e.titre);
     if (fichier != null) setState(() => _pieces[e.type] = fichier);

@@ -118,6 +118,7 @@ public class InscriptionService {
         if (!u.typeActeur().exigeKyc() && u.getStatutCompte() == StatutCompte.EN_ATTENTE) {
             u.changerStatut(StatutCompte.ACTIF);
         }
+        utilisateurs.save(u);
         audit.tracer(u.getId(), "TELEPHONE_VERIFIE", null, "statut=" + u.getStatutCompte());
         notifications.notifier(u.getId(), u.typeActeur().exigeKyc()
                 ? "Bienvenue sur DoGo ! Envoyez maintenant votre dossier de vérification (KYC) pour activer votre compte."

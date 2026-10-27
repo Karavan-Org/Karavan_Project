@@ -88,9 +88,14 @@ public class CompteService {
 
     // ------------------------------------------------------------------ profil
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ProfilComplet profil(long utilisateurId) {
-        return versProfil(charger(utilisateurId));
+        Utilisateur u = charger(utilisateurId);
+        if (!u.typeActeur().exigeKyc() && u.isTelephoneVerifie() && u.getStatutCompte() == StatutCompte.EN_ATTENTE) {
+            u.changerStatut(StatutCompte.ACTIF);
+            utilisateurs.save(u);
+        }
+        return versProfil(u);
     }
 
     @Transactional

@@ -14,7 +14,6 @@ import '../services/lien_groupe.dart';
 import '../services/session_storage_service.dart';
 import '../services/auth_service.dart';
 import '../services/url_route_helper.dart';
-import '../grossiste/grossiste_acces.dart';
 import '../models/role_acteur.dart';
 import '../widgets/onglet_navigation.dart';
 import '../widgets/tab_navigation_scope.dart';
@@ -158,14 +157,11 @@ class _CommercantMainNavState extends State<CommercantMainNav>
     }
   }
 
-  /// L'espace ne s'ouvre qu'au commerçant actif ; un autre rôle est renvoyé vers son propre espace
+  /// L'espace Commerçant est directement ouvert sans aucune étape KYC
   @override
-  Widget build(BuildContext context) => GardeCompteActif(
-        role: RoleActeur.commercant,
-        child: PorteeCiblesDidacticiel(
-          cibles: _ciblesDidacticiel,
-          child: Builder(builder: _construireEspace),
-        ),
+  Widget build(BuildContext context) => PorteeCiblesDidacticiel(
+        cibles: _ciblesDidacticiel,
+        child: Builder(builder: _construireEspace),
       );
 
   Widget _construireEspace(BuildContext context) {
