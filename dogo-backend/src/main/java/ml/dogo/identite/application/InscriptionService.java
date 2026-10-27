@@ -137,16 +137,11 @@ public class InscriptionService {
         if (existant.isTelephoneVerifie()) {
             throw new ErreurMetier(CodeErreur.CONFLIT, "RG-01", "Ce numéro de téléphone est déjà utilisé");
         }
-        if (otp.codeEnCours(existant.getId())) {
-            // Inscription en cours : on ne la remplace pas sous les pieds de celui qui attend son SMS
-            throw new ErreurMetier(CodeErreur.CONFLIT, "RG-01",
-                    "Une inscription est en cours pour ce numéro : saisissez le code reçu par SMS, "
-                            + "ou recommencez dans quelques minutes");
-        }
+        // Le numéro n'est pas vérifié (inscription non finalisée) : on remplace proprement le brouillon
         long ancienId = existant.getId();
         utilisateurs.delete(existant);
         utilisateurs.flush();
-        audit.tracer(ancienId, "INSCRIPTION_ABANDONNEE_REMPLACEE", null,
+        audit.tracer(ancienId, "INSCRIPTION_NON_FINALISEE_REMPLACEE", null,
                 "type=" + existant.typeActeur() + ", telephone non vérifié");
     }
 

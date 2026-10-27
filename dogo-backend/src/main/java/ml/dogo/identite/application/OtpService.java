@@ -53,7 +53,8 @@ public class OtpService {
         String telephone = utilisateur.getTelephone();
         // Comptés par numéro et non par compte : remplacer une inscription abandonnée ne remet rien à zéro
         otps.findFirstByTelephoneOrderByDateCreationDesc(telephone).ifPresent(dernier -> {
-            if (maintenant.isBefore(dernier.getDateCreation().plus(DELAI_RENVOI))) {
+            Duration delai = proprietes.otp().afficherDansReponse() ? Duration.ofSeconds(2) : DELAI_RENVOI;
+            if (maintenant.isBefore(dernier.getDateCreation().plus(delai))) {
                 throw new ErreurMetier(CodeErreur.CONFLIT, "RG-02",
                         "Un code vient d'être envoyé, patientez quelques secondes avant d'en redemander un");
             }

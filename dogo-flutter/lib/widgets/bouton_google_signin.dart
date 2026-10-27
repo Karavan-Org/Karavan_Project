@@ -276,12 +276,18 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
         codeOtpSimule = res['codeOtp']?.toString();
       } on ApiException catch (e) {
         if (e.statusCode == 409 || e.code == 'CONFLIT') {
-          setState(() {
-            _envoiEnCours = false;
-            _messageErreur =
-                "Ce numéro de téléphone est déjà associé à un compte existant. Veuillez vous connecter directement avec votre mot de passe.";
-          });
-          return;
+          // Tentative de récupération du code OTP si une inscription non finalisée est en attente
+          try {
+            final renvoi = await AuthService.instance.renvoyerOtp(telephone: telNettoye);
+            codeOtpSimule = renvoi['codeOtp']?.toString();
+          } catch (_) {
+            setState(() {
+              _envoiEnCours = false;
+              _messageErreur =
+                  "Ce numéro de téléphone est déjà associé à un compte existant. Veuillez vous connecter directement avec votre mot de passe.";
+            });
+            return;
+          }
         } else {
           rethrow;
         }
