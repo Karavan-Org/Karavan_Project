@@ -55,35 +55,13 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
     _EmplacementPiece(TypeDocumentKyc.autre, "Autres documents (optionnel)", Icons.workspace_premium_outlined),
   ];
 
-  static const _emplacementsCommercant = [
-    _EmplacementPiece(TypeDocumentKyc.pieceIdentite, "Pièce d'identité (CNI / Passeport / NINA)", Icons.badge_outlined,
-        obligatoire: true),
-    _EmplacementPiece(TypeDocumentKyc.registreCommerce, "Justificatif de commerce (RCCM, déclaration boutique)",
-        Icons.storefront_outlined,
-        obligatoire: true),
-    _EmplacementPiece(TypeDocumentKyc.nif, "Attestation NIF (si assujetti)", Icons.receipt_long_outlined),
-    _EmplacementPiece(TypeDocumentKyc.autre, "Photo boutique / Autre document (optionnel)", Icons.workspace_premium_outlined),
-  ];
+  List<_EmplacementPiece> get _emplacements =>
+      widget.role == RoleActeur.courtier ? _emplacementsCourtier : _emplacementsGrossiste;
 
-  List<_EmplacementPiece> get _emplacements => switch (widget.role) {
-    RoleActeur.courtier => _emplacementsCourtier,
-    RoleActeur.commercant => _emplacementsCommercant,
-    RoleActeur.grossiste => _emplacementsGrossiste,
-  };
+  String get _sousTitrePage => widget.role == RoleActeur.courtier
+      ? "Pour valider votre statut de courtier agréé, veuillez fournir les pièces suivantes."
+      : "Pour valider votre compte grossiste partenaire, veuillez fournir les pièces suivantes.";
 
-  String get _titrePage => switch (widget.role) {
-    RoleActeur.courtier => "Dossier Courtier - Documents requis",
-    RoleActeur.commercant => "Dossier Commerçant - Documents requis",
-    RoleActeur.grossiste => "Dossier Grossiste - Documents requis",
-  };
-
-  String get _sousTitrePage => switch (widget.role) {
-    RoleActeur.courtier => "Pour valider votre statut de courtier agréé, veuillez fournir les pièces suivantes.",
-    RoleActeur.commercant => "Pour sécuriser vos achats groupés et valider votre compte commerçant, veuillez fournir les pièces suivantes.",
-    RoleActeur.grossiste => "Pour valider votre compte grossiste partenaire, veuillez fournir les pièces suivantes.",
-  };
-
-  /// Une pièce par emplacement, plus les documents ajoutés via « Ajouter un document »
   final Map<TypeDocumentKyc, FichierChoisi> _pieces = {};
   final List<FichierChoisi> _supplementaires = [];
   bool _envoi = false;
@@ -109,14 +87,14 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
   }
 
   Future<void> _soumettre() async {
-    if (!AuthService.instance.estConnecte) {
-      afficherErreur(context, "Vous devez être connecté pour soumettre votre dossier. Veuillez vous connecter.");
-      return;
-    }
-
     final manquants = _emplacements.where((e) => e.obligatoire && !_pieces.containsKey(e.type)).toList();
     if (manquants.isNotEmpty) {
       afficherErreur(context, "Pièces obligatoires manquantes :\n• ${manquants.map((e) => e.titre).join('\n• ')}");
+      return;
+    }
+
+    if (!AuthService.instance.estConnecte) {
+      afficherErreur(context, "Vous devez être connecté pour soumettre votre dossier. Veuillez vous connecter.");
       return;
     }
 
@@ -184,7 +162,7 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
                     ),
                   Expanded(
                     child: Text(
-                      _titrePage,
+                      "Soumettre mes documents",
                       style: TextStyle(fontFamily: AppTheme.policeTitre, fontSize: 18.5, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context)),
                     ),
                   ),
