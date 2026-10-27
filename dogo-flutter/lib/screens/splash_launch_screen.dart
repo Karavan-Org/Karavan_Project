@@ -368,7 +368,7 @@ class _Scene extends StatelessWidget {
     );
   }
 
-  /// La dune (dégradé bissap → rose poudre) se dessine comme une douce vague.
+  /// La dune (dégradé doré chaud) se dessine comme une douce vague.
   Widget _dune() {
     final t = Curves.easeInOutCubic.transform(_phase(progress, 0.02, 0.24));
     if (t <= 0) return const SizedBox.shrink();
