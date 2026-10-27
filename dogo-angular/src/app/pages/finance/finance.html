@@ -1,0 +1,336 @@
+<div class="dogo-view finance-view">
+  
+  <!-- Cercles d'ambiance 3D organiques en arrière-plan -->
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <!-- En-tête -->
+  <header class="view-header">
+    <div>
+      <h1>Gestion du Séquestre & Flux Financiers</h1>
+      <p>Surveillance des fonds bloqués, garanties marchandes, reliquats de transport et libérations Karavan.</p>
+    </div>
+    <div class="header-btns">
+      <button class="btn-sec-neumorphic" type="button" (click)="rapprochement()">
+        <mat-icon>account_balance</mat-icon> Rapprochement
+      </button>
+      <button class="btn-main-neumorphic" type="button" (click)="exporterGrandLivre()">
+        <mat-icon>file_download</mat-icon> Exporter Grand-Livre
+      </button>
+    </div>
+  </header>
+
+  <!-- GRAND PORTEFEUILLE SÉQUESTRE NEUMORPHIQUE / SOFT 3D GLASS (Aesthetic Portefeuille) -->
+  <section class="neumorphic-wallet-hero">
+    
+    <!-- Sphères lumineuses décoratives -->
+    <div class="wallet-orb orb-1"></div>
+    <div class="wallet-orb orb-2"></div>
+
+    <div class="wallet-inner">
+      
+      <!-- Ligne supérieure : Emblème 3D Squircle Pillow + Titre & Sous-titre -->
+      <div class="wallet-top-header">
+        <div class="emblem-squircle">
+          <!-- Emblème 3D DoGo vectoriel fluide (Rubans superposés avec dégradés riches) -->
+          <svg class="emblem-svg" viewBox="0 0 44 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="dogoGradWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="60%" stop-color="var(--primary-tint)"/>
+                <stop offset="100%" stop-color="var(--border-strong)"/>
+              </linearGradient>
+              <linearGradient id="dogoGradGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--secondary)"/>
+                <stop offset="50%" stop-color="var(--secondary-hover)"/>
+                <stop offset="100%" stop-color="var(--primary-hover)"/>
+              </linearGradient>
+              <linearGradient id="dogoGradCamel" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--primary)"/>
+                <stop offset="60%" stop-color="var(--primary-hover)"/>
+                <stop offset="100%" stop-color="var(--text-main)"/>
+              </linearGradient>
+              <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="var(--text-main)" flood-opacity="0.18"/>
+              </filter>
+            </defs>
+            <!-- Vaguelette supérieure claire avec reflet spéculaire -->
+            <path d="M20 3 C28 3 38 10 36 17 C34 22 28 20 24 16 C19 11 16 7 20 3 Z" fill="url(#dogoGradWhite)" filter="url(#softGlow)"/>
+            <!-- Ruban intermédiaire doré vibrant -->
+            <path d="M14 13 C22 13 34 21 32 30 C30 36 22 33 18 28 C14 23 11 18 14 13 Z" fill="url(#dogoGradGold)" filter="url(#softGlow)"/>
+            <!-- Vaguelette inférieure terracotta foncée -->
+            <path d="M9 25 C17 25 30 33 26 43 C23 48 16 44 13 39 C9 34 7 30 9 25 Z" fill="url(#dogoGradCamel)" filter="url(#softGlow)"/>
+          </svg>
+        </div>
+
+        <div class="wallet-headings">
+          <span class="badge-institutionnel">
+            <span class="pulse-dot"></span> SÉQUESTRE OFFICIEL KARAVAN • GESTION BANCAIRE NATIONALE
+          </span>
+          <h2 class="wallet-main-title">Portefeuille Séquestre & Trésorerie Centrale</h2>
+          <p class="wallet-sub-title">Fonds marchands protégés • Garanties de livraison • Commissions Karavan prélevées</p>
+        </div>
+      </div>
+
+      <!-- Solde Imposant avec relief 3D -->
+      <div class="wallet-balance-zone">
+        <span class="balance-tag">TOTAL ACTUELLEMENT PROTÉGÉ SOUS SÉQUESTRE</span>
+        <div class="balance-number">
+          {{ (tableau()?.totalBloque ?? 0) | number:'1.0-0' }} <span class="currency">FCFA</span>
+        </div>
+        <div class="balance-sub-badge">
+          <mat-icon class="shield-check">verified_user</mat-icon>
+          <span>{{ bloques().length }} séquestre(s) sous mandat actif · Fonds sécurisés contre tout litige</span>
+        </div>
+      </div>
+
+      <!-- 3 Pilules d'informations concaves (recessed Soft UI) -->
+      <div class="concave-pills-row">
+        
+        <!-- Pilule 1 : Fonds Débloqués -->
+        <div class="concave-pill">
+          <div class="pill-icon-squircle green-tint">
+            <mat-icon>done_all</mat-icon>
+          </div>
+          <div class="pill-content">
+            <span class="pill-title">Fonds Débloqués</span>
+            <div class="pill-amount">{{ (tableau()?.totalLibere ?? 0) | number:'1.0-0' }} <small>FCFA</small></div>
+            <span class="pill-caption">{{ liberes().length }} remise(s) vérifiée(s) au retrait QR / PIN</span>
+          </div>
+        </div>
+
+        <!-- Pilule 2 : Commissions Dɔgɔ -->
+        <div class="concave-pill">
+          <div class="pill-icon-squircle camel-tint">
+            <mat-icon>savings</mat-icon>
+          </div>
+          <div class="pill-content">
+            <span class="pill-title">Commissions Karavan (RG-37)</span>
+            <div class="pill-amount">{{ (tableau()?.commissions ?? 0) | number:'1.0-0' }} <small>FCFA</small></div>
+            <span class="pill-caption">Frais de plateforme prélevés au retrait</span>
+          </div>
+        </div>
+
+        <!-- Pilule 3 : Fonds Gelés / Litiges -->
+        <div class="concave-pill">
+          <div class="pill-icon-squircle amber-tint">
+            <mat-icon>shield</mat-icon>
+          </div>
+          <div class="pill-content">
+            <span class="pill-title">Fonds Gelés & Arbitrages</span>
+            <div class="pill-amount orange">{{ (tableau()?.totalGele ?? 0) | number:'1.0-0' }} <small>FCFA</small></div>
+            <span class="pill-caption">{{ remboursements().length }} dossier(s) en attente d'approbation</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Boutons d'Action Neumorphiques avec Flèche Circulaire -->
+      <div class="wallet-actions-row">
+        
+        <!-- Bouton Gradient Principal avec Flèche Circulaire (Aesthetic Maquette) -->
+        <button type="button" class="btn-gradient-pill" (click)="rapprochement()">
+          <span class="btn-text">Lancer le Rapprochement Bancaire des Séquestres</span>
+          <div class="arrow-circle">
+            <mat-icon>arrow_forward</mat-icon>
+          </div>
+        </button>
+
+        <!-- Bouton Secondaire Relief -->
+        <button type="button" class="btn-soft-pill" (click)="exporterGrandLivre()">
+          <mat-icon>download</mat-icon>
+          <span>Exporter Grand-Livre (CSV)</span>
+        </button>
+
+      </div>
+
+      <!-- Squircles d'Opérateurs et Canaux de Paiement Sécurisés -->
+      <div class="operators-section">
+        <div class="operators-divider">
+          <span class="line"></span>
+          <span class="label">PASSERELLES & CANAUX DE PAIEMENT SÉCURISÉS</span>
+          <span class="line"></span>
+        </div>
+
+        <div class="operators-grid">
+          
+          <!-- Orange Money -->
+          <div class="operator-squircle-item" (click)="setFilter('blocked')">
+            <div class="operator-squircle om">
+              <span class="op-badge-code">OM</span>
+            </div>
+            <span class="op-name">Orange Money</span>
+            <span class="op-status">Canal actif</span>
+          </div>
+
+          <!-- Wave Mobile -->
+          <div class="operator-squircle-item" (click)="setFilter('blocked')">
+            <div class="operator-squircle wave">
+              <span class="op-badge-code">W</span>
+            </div>
+            <span class="op-name">Wave Mobile</span>
+            <span class="op-status">Canal actif</span>
+          </div>
+
+          <!-- Moov Money -->
+          <div class="operator-squircle-item" (click)="setFilter('blocked')">
+            <div class="operator-squircle moov">
+              <span class="op-badge-code">MM</span>
+            </div>
+            <span class="op-name">Moov Money</span>
+            <span class="op-status">Canal actif</span>
+          </div>
+
+          <!-- Banque / Coris / BDM -->
+          <div class="operator-squircle-item" (click)="setFilter('all')">
+            <div class="operator-squircle bank">
+              <mat-icon>account_balance</mat-icon>
+            </div>
+            <span class="op-name">Coris / BDM</span>
+            <span class="op-status">Virement garanti</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Grille principale : Tableau des transactions à gauche + Passerelles & Arbitrage à droite -->
+  <div class="content-grid">
+    
+    <!-- Bloc Tableau des opérations -->
+    <div class="card-panel table-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Opérations de Séquestre en Temps Réel</h2>
+          <p>Suivi des retenues financières, déblocages automatiques et autorisations de virement.</p>
+        </div>
+        
+        <!-- Filtres par jetons concaves -->
+        <div class="filter-chips">
+          <button type="button" class="chip" [class.active]="selectedFilter() === 'all'" (click)="setFilter('all')">Tous</button>
+          <button type="button" class="chip" [class.active]="selectedFilter() === 'blocked'" (click)="setFilter('blocked')">Bloqués ({{ bloques().length }})</button>
+          <button type="button" class="chip" [class.active]="selectedFilter() === 'released'" (click)="setFilter('released')">Libérés ({{ liberes().length }})</button>
+        </div>
+      </div>
+
+      <table class="clean-table">
+        <thead>
+          <tr>
+            <th>RÉF & GROUPE</th>
+            <th>ACHETEUR / BÉNÉFICIAIRE</th>
+            <th>MONTANT (FCFA)</th>
+            <th>STATUT SÉQUESTRE</th>
+            <th class="text-right">ACTION ADMIN</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="chargement()"><td colspan="5" class="text-center">Chargement…</td></tr>
+          <tr *ngIf="erreur()"><td colspan="5" class="text-center">{{ erreur() }}</td></tr>
+          <tr *ngIf="!chargement() && !erreur() && filteredTransactions().length === 0"><td colspan="5" class="text-center">Aucune opération.</td></tr>
+          <tr *ngFor="let item of filteredTransactions()">
+            <td>
+              <div class="entity-info">
+                <span class="company">{{ item.ref }}</span>
+                <span class="sub-text">{{ item.group }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="entity-info">
+                <span class="company">{{ item.buyer }}</span>
+                <span class="sub-text">➔ {{ item.beneficiary }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="amount-pill-wrap">
+                <span class="val-num-pill" [class.green-amount]="item.classe === 'status-libere'">
+                  {{ item.amount }}
+                </span>
+                <span class="sub-text">{{ item.detailText }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="status-pill" [ngClass]="item.classe">
+                <span class="dot"></span> {{ item.status }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="actions">
+                <button *ngIf="item.actionType === 'details'" type="button" class="btn-sec-sm" (click)="details(item)">
+                  Détails <mat-icon>open_in_new</mat-icon>
+                </button>
+                <button *ngIf="item.actionType === 'pdf'" type="button" class="btn-sec-sm" (click)="recu(item)">
+                  Reçu PDF <mat-icon>description</mat-icon>
+                </button>
+                <button *ngIf="item.actionType === 'arbitrate'" type="button" class="btn-approve warning" [disabled]="envoi()" (click)="arbitrer(item)">
+                  Arbitrer <mat-icon>gavel</mat-icon>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="panel-footer">
+        <span class="sub green">
+          <mat-icon>verified</mat-icon>
+          Total affiché : <strong>{{ fcfa(totalAffiche()) }}</strong>{{ message() ? ' · ' + message() : '' }}
+        </span>
+        <a href="" class="link-more" *ngIf="restantes() > 0" (click)="$event.preventDefault(); voirPlus()">
+          Voir les {{ restantes() }} autres transactions ➔
+        </a>
+      </div>
+    </div>
+
+    <!-- Bloc Latéral : Passerelles et Arbitrage -->
+    <aside class="side-panel-container">
+      
+      <!-- Carte Passerelles -->
+      <div class="card-panel side-panel">
+        <div class="panel-header">
+          <h2>Répartition des Fonds</h2>
+          <span class="live-dot" title="En direct"></span>
+        </div>
+
+        <div class="gateway-list">
+          <div *ngFor="let g of gateways()" class="gateway-item">
+            <div class="gateway-badge" [ngClass]="g.logoClass">{{ g.code }}</div>
+            <div class="gateway-info">
+              <span class="route">{{ g.name }}</span>
+              <span class="info">{{ g.subtitle }}</span>
+            </div>
+            <span class="gateway-val">{{ g.amount }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carte d'Arbitrage -->
+      <div class="card-panel side-panel arbitrate-panel">
+        <div class="panel-header">
+          <h2>Arbitrage Financier</h2>
+          <mat-icon class="shield-icon">shield</mat-icon>
+        </div>
+        <p class="arbitrate-desc">
+          Remboursements en attente d'approbation (annulation, échec du groupe, colis perdu, litige).
+        </p>
+        <div class="gateway-list">
+          <p class="arbitrate-desc" *ngIf="remboursements().length === 0">Aucun remboursement en attente.</p>
+          <div *ngFor="let r of remboursements()" class="gateway-item">
+            <div class="gateway-info">
+              <span class="route">#{{ r.id }} · {{ r.motif }}</span>
+              <span class="info">Paiement #{{ r.paiementId }} · {{ fcfa(r.montant) }}</span>
+            </div>
+            <button class="btn-sec-sm" [disabled]="envoi()" (click)="rejeter(r)">Rejeter</button>
+            <button class="btn-approve" [disabled]="envoi()" (click)="approuver(r)">Approuver</button>
+          </div>
+        </div>
+        <button class="btn-main full-width" [disabled]="envoi()" (click)="forceRelease()">
+          <mat-icon>gavel</mat-icon> Approuver le plus ancien
+        </button>
+      </div>
+
+    </aside>
+
+  </div>
+</div>

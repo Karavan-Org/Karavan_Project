@@ -1,0 +1,322 @@
+<div class="dogo-view">
+  <header class="view-header">
+    <div>
+      <h1>Supervision Opérationnelle</h1>
+      <p>
+        Centre de contrôle des flux, agréments KYC et suivi des corridors logistiques.
+      </p>
+      <p class="header-date">{{ dateDuJour }}</p>
+    </div>
+
+    <div class="header-btns">
+      <button
+        class="btn-sec"
+        type="button"
+        (click)="telechargerRapport()"
+      >
+        <mat-icon>file_download</mat-icon>
+        Rapport
+      </button>
+
+      <button class="btn-main btn-audit-glow" type="button" (click)="ouvrirAudit()">
+        <mat-icon>shield</mat-icon>
+        Audit Séquestre
+      </button>
+    </div>
+  </header>
+
+  <!-- Indicateurs principaux -->
+  <section class="kpi-row">
+
+    <!-- Volume sous séquestre -->
+    <div class="kpi-card gold-accent neumorphic-kpi-card">
+      <div class="card-top-header">
+        <span class="label">Volume Sous Séquestre</span>
+        <div class="squircle-icon-mini gold">
+          <mat-icon>account_balance_wallet</mat-icon>
+        </div>
+      </div>
+
+      <div class="val gold" *ngIf="!chargementFinance && !erreurFinance">
+        {{ totalBloque | number:'1.0-0':'fr-FR' }}
+        <small>FCFA</small>
+      </div>
+
+      <div class="val" *ngIf="chargementFinance">
+        <small>Chargement...</small>
+      </div>
+
+      <div class="val" *ngIf="erreurFinance">
+        <small>Indisponible</small>
+      </div>
+
+      <span class="sub green" *ngIf="!erreurFinance">
+        <mat-icon>verified</mat-icon>
+        Fonds protégés sous séquestre Karavan
+      </span>
+
+      <span class="sub muted" *ngIf="erreurFinance">
+        Données financières indisponibles
+      </span>
+    </div>
+
+    <!-- Convois en transit -->
+    <div class="kpi-card">
+      <span class="label">Convois en Transit</span>
+
+      <div class="val" *ngIf="!chargementConvois && !erreurConvois">
+        {{ nombreConvoisTransit }}
+        <small>convois</small>
+      </div>
+
+      <div class="val" *ngIf="chargementConvois">
+        <small>Chargement...</small>
+      </div>
+
+      <div class="val" *ngIf="erreurConvois">
+        <small>Indisponible</small>
+      </div>
+
+      <span class="sub muted" *ngIf="!erreurConvois">
+        <mat-icon>local_shipping</mat-icon>
+        Convois au statut EN_TRANSIT
+      </span>
+
+      <span class="sub muted" *ngIf="erreurConvois">
+        Impossible de charger les convois
+      </span>
+    </div>
+
+    <!-- Dossiers KYC en attente -->
+    <div class="kpi-card warning-accent">
+      <div class="label-row">
+        <span class="label">Dossiers KYC en Attente</span>
+
+        <span
+          class="badge-urgent"
+          *ngIf="!chargementKyc && !erreurKyc && kycPendingList.length > 0"
+        >
+          EN ATTENTE
+        </span>
+      </div>
+
+      <div class="val orange" *ngIf="!chargementKyc && !erreurKyc">
+        {{ kycPendingList.length }}
+        <small>demandes</small>
+      </div>
+
+      <div class="val" *ngIf="chargementKyc">
+        <small>Chargement...</small>
+      </div>
+
+      <div class="val" *ngIf="erreurKyc">
+        <small>Indisponible</small>
+      </div>
+
+      <span class="sub muted" *ngIf="!chargementKyc && !erreurKyc">
+        {{ nombreCourtiersEnAttente }} Courtier(s)
+        ·
+        {{ nombreGrossistesEnAttente }} Grossiste(s)
+      </span>
+
+      <span class="sub muted" *ngIf="chargementKyc">
+        Chargement des dossiers...
+      </span>
+
+      <span class="sub muted" *ngIf="erreurKyc">
+        Impossible de charger les dossiers KYC
+      </span>
+    </div>
+
+    <!-- Groupes clôturés -->
+    <div class="kpi-card">
+      <span class="label">Groupes clôturés</span>
+
+      <div
+        class="val"
+        *ngIf="!chargementGroupes && !erreurGroupes"
+      >
+        {{ groupesClotures }}
+        <small>groupes</small>
+      </div>
+
+      <div class="val" *ngIf="chargementGroupes">
+        <small>Chargement...</small>
+      </div>
+
+      <div class="val" *ngIf="erreurGroupes">
+        <small>Indisponible</small>
+      </div>
+
+      <span class="sub muted" *ngIf="!erreurGroupes">
+        <mat-icon>check_circle</mat-icon>
+        Groupes ayant terminé leur cycle
+      </span>
+
+      <span class="sub muted" *ngIf="erreurGroupes">
+        {{ erreurGroupes }}
+      </span>
+    </div>
+
+  </section>
+
+  <!-- Réseau d'utilisateurs : accès direct à la gestion de chaque population -->
+  <section class="reseau-row" *ngIf="stats() as s">
+    <a class="reseau-item" routerLink="/utilisateurs" [queryParams]="{ type: 'GROSSISTE' }">
+      <mat-icon>storefront</mat-icon>
+      <span><strong>{{ s.totalGrossistes }}</strong> grossistes</span>
+    </a>
+    <a class="reseau-item" routerLink="/utilisateurs" [queryParams]="{ type: 'COURTIER' }">
+      <mat-icon>badge</mat-icon>
+      <span><strong>{{ s.totalCourtiers }}</strong> courtiers</span>
+    </a>
+    <a class="reseau-item" routerLink="/utilisateurs" [queryParams]="{ type: 'COMMERCANT' }">
+      <mat-icon>shopping_cart</mat-icon>
+      <span><strong>{{ s.totalCommercants }}</strong> commerçants</span>
+    </a>
+    <a class="reseau-item" *ngIf="peutVoirGroupes" routerLink="/groupes" [queryParams]="{ onglet: 'OUVERT' }">
+      <mat-icon>groups</mat-icon>
+      <span><strong>{{ groupesOuverts() }}</strong> groupes ouverts</span>
+    </a>
+    <a class="reseau-item alerte" *ngIf="peutVoirGroupes && groupesAModerer()" routerLink="/groupes" [queryParams]="{ onglet: 'A_MODERER' }">
+      <mat-icon>pending_actions</mat-icon>
+      <span><strong>{{ groupesAModerer() }}</strong> à modérer</span>
+    </a>
+  </section>
+
+  <!-- Contenu principal -->
+  <div class="content-grid">
+
+    <!-- Tableau des dossiers KYC -->
+    <div class="card-panel table-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Agréments KYC Soumis</h2>
+          <p>
+            Dossiers professionnels en attente de vérification NIF / RCCM.
+          </p>
+        </div>
+
+        <button class="filter-chip" type="button">
+          <mat-icon>filter_alt</mat-icon>
+          Filtrer ({{ kycPendingList.length }})
+        </button>
+      </div>
+
+      <table class="clean-table">
+        <thead>
+          <tr>
+            <th>ACTEUR / SOCIÉTÉ</th>
+            <th>RÔLE</th>
+            <th>DOCUMENTS</th>
+            <th>ARRIVÉE</th>
+            <th class="text-right">DÉCISION</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <!-- Chargement -->
+          <tr *ngIf="chargementKyc">
+            <td colspan="5">Chargement des dossiers KYC...</td>
+          </tr>
+
+          <!-- Erreur -->
+          <tr *ngIf="!chargementKyc && erreurKyc">
+            <td colspan="5">{{ erreurKyc }}</td>
+          </tr>
+
+          <!-- Aucun dossier -->
+          <tr
+            *ngIf="
+              !chargementKyc &&
+              !erreurKyc &&
+              kycPendingList.length === 0
+            "
+          >
+            <td colspan="5">Aucun dossier KYC en attente.</td>
+          </tr>
+
+          <!-- Dossiers récupérés depuis le backend -->
+          <tr *ngFor="let dossier of kycPendingList">
+            <td>
+              <div class="entity-info">
+                <a class="company" [routerLink]="['/utilisateurs', dossier.utilisateurId]">{{ dossier.nom }}</a>
+                <span class="nif">{{ dossier.telephone }}</span>
+              </div>
+            </td>
+
+            <td>
+              <span
+                class="tag"
+                [ngClass]="{
+                  'grossiste': dossier.typeActeur === 'GROSSISTE',
+                  'courtier': dossier.typeActeur === 'COURTIER'
+                }"
+              >
+                {{ dossier.typeActeur }}
+              </span>
+            </td>
+
+            <td>
+              <div class="doc-check">
+                <mat-icon>description</mat-icon>
+                {{ documentsDu(dossier) || 'Aucun document' }}
+              </div>
+            </td>
+
+            <td class="time-text">
+              {{ dateRelative(dossier.dateSoumission) }}
+            </td>
+
+            <td class="text-right">
+              <div class="actions">
+                <button
+                  class="btn-icon"
+                  type="button"
+                  title="Voir le dossier"
+                  (click)="ouvrirDossier(dossier)"
+                  [attr.aria-label]="'Voir le dossier de ' + dossier.nom"
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
+
+                <span>À examiner</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Statut des corridors -->
+    <aside class="card-panel side-panel">
+      <div class="panel-header">
+        <h2>Statut Corridors</h2>
+        <span class="live-dot" title="En direct"></span>
+      </div>
+
+      <div class="corridor-list">
+
+        <div class="corridor-item" *ngIf="corridors.length === 0">
+          <div class="corridor-head">
+            <span class="route">Aucun groupe en acheminement</span>
+          </div>
+        </div>
+
+        <div class="corridor-item" *ngFor="let c of corridors" [class.alert]="c.alerte">
+          <div class="corridor-head">
+            <span class="flag">🌍</span>
+            <span class="route">{{ c.route }}</span>
+          </div>
+
+          <div class="corridor-foot">
+            <span class="info" [class.alert-text]="c.alerte">{{ c.info }}</span>
+            <span class="dot" [ngClass]="c.alerte ? 'orange' : 'green'"></span>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </div>
+</div>

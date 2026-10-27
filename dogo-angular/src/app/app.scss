@@ -1,0 +1,21 @@
+.app-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg-app); // Fond crème officiel DoGo Design System
+
+  .main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+
+    .page-content {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+  }
+}

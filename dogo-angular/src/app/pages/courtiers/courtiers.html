@@ -1,0 +1,122 @@
+<div class="page-container">
+
+  <!-- En-tête -->
+  <header class="header">
+    <div>
+      <h1>Courtiers & Transitaires Agréés</h1>
+      <p>Supervision des transitaires certifiés, capacité de groupage et garanties de fret.</p>
+    </div>
+    <div class="header-btns">
+      <button class="btn-sec" (click)="registreDouane()">Registre Douane 📄</button>
+      <button class="btn-primary" (click)="agreer()">+ Agréer un Courtier</button>
+    </div>
+  </header>
+
+  <!-- 3 Cartes KPI Claires -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <span class="title">Courtiers & Transitaires Actifs</span>
+      <div class="number">{{ actifs() }} <small>certifiés Karavan</small></div>
+    </div>
+    <div class="kpi-card">
+      <span class="title">Capacité Groupage Disponible</span>
+      <div class="number">{{ capacite() | number:'1.0-0' }} <small>places / colis</small></div>
+    </div>
+    <div class="kpi-card gold-accent">
+      <span class="title">Part Courtiers sous Séquestre</span>
+      <div class="number gold">{{ sequestreTotal() | number:'1.0-0' }} <small>FCFA</small></div>
+    </div>
+  </section>
+
+  <!-- Contenu Principal -->
+  <div class="layout-grid">
+
+    <!-- Liste des courtiers à gauche -->
+    <main class="card main-table">
+      <div class="card-header">
+        <h2>Courtiers & Concessionnaires Actifs</h2>
+        <span class="sub-filter">Statut : Actifs ({{ actifs() }}) · Total {{ comptes().length }}</span>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>SOCIÉTÉ & REPRÉSENTANT</th>
+            <th>LICENCE & NIF</th>
+            <th>CONVOI ACTIF & SÉQUESTRE</th>
+            <th class="text-right">ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="chargement()"><td colspan="4">Chargement…</td></tr>
+          <tr *ngIf="erreur()"><td colspan="4">{{ erreur() }}</td></tr>
+          <tr *ngIf="!chargement() && !erreur() && lignes().length === 0"><td colspan="4">Aucun courtier inscrit.</td></tr>
+          <tr *ngFor="let b of lignes()">
+            <td>
+              <div class="user-row-cell">
+                <div class="user-avatar-mini blue">
+                  <img *ngIf="b.compte.photoUrl" [src]="urlImage(b.compte.photoUrl)" [alt]="b.compte.nom" class="avatar-mini-img" />
+                  <span *ngIf="!b.compte.photoUrl">{{ b.compte.nom.slice(0, 2).toUpperCase() }}</span>
+                </div>
+                <div class="user-row-info">
+                  <a class="nom-lien" [routerLink]="['/utilisateurs', b.compte.id]">{{ b.compte.nomSocieteImport || b.compte.nom }}</a>
+                  <small>{{ b.compte.nom }} · {{ b.compte.adresseDepot || b.compte.telephone }}</small>
+                  <small *ngIf="fournisseurs(b.compte.id) as f">Grossistes : {{ f }}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <strong>{{ b.compte.licenceTransit || 'Licence non déclarée' }}</strong>
+              <small class="green-text">{{ libelleStatut(b.compte.statut) }}{{ b.compte.statut === 'ACTIF' ? ' ✓' : '' }}</small>
+            </td>
+            <td>
+              <div class="convoy-info">
+                <strong>{{ b.convoi?.reference || (b.groupe ? 'Groupe #' + b.groupe.id : 'Aucun convoi') }} · <span class="amount">{{ fcfa(b.sequestre) }}</span></strong>
+                <div class="sub-row">
+                  <small>{{ b.groupe ? b.groupe.titre + ' (' + b.groupe.quantiteConfirmee + '/' + b.groupe.quantiteCible + ' pcs)' : '—' }}</small>
+                  <span class="badge" [ngClass]="b.badge">{{ b.statut }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="text-right">
+              <button class="btn-sm" [disabled]="envoi()" (click)="superviseBroker(b)">
+                {{ b.compte.statut === 'EN_ATTENTE' ? 'À valider' : 'Fiche' }} ➔
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+
+    <!-- Sidebar à droite -->
+    <aside class="sidebar">
+
+      <!-- Répartition des Convois -->
+      <div class="card">
+        <h3>Répartition des Convois Ouverts</h3>
+        <div class="distribution-list">
+          <div class="dist-item" *ngIf="corridorsDistribution().length === 0">
+            <span class="dist-name">Aucun convoi ouvert</span>
+          </div>
+          <div *ngFor="let item of corridorsDistribution()" class="dist-item">
+            <span class="dist-name">{{ item.name }}</span>
+            <span class="dist-count">{{ item.count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sécurité & Licences -->
+      <div class="card security-card">
+        <h3>Sécurité Fret & Cautionnement</h3>
+        <p>Garantie Karavan enregistrée auprès de la Direction Générale des Douanes.</p>
+        <p *ngIf="message()"><small>{{ message() }}</small></p>
+        <button class="btn-dark" (click)="checkLicenses()">
+          Vérifier les Licences 🛡️
+        </button>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>

@@ -1,0 +1,347 @@
+<div class="page-container">
+
+  <nav class="fil">
+    <a routerLink="/utilisateurs">Utilisateurs</a>
+    <ng-container *ngIf="membre() as m">
+      › <a routerLink="/utilisateurs" [queryParams]="{ type: m.type }">{{ libellesType[m.type] }}s</a> › {{ m.nom }}
+    </ng-container>
+  </nav>
+
+  <p class="message erreur" *ngIf="erreur()">{{ erreur() }}</p>
+  <p class="vide" *ngIf="chargement() && !membre()">Chargement de la fiche…</p>
+
+  <ng-container *ngIf="membre() as m">
+
+    <!-- Identité et actions de gestion -->
+    <header class="card identite">
+      <div class="avatar" [ngClass]="badgeType(m.type)">
+        <img *ngIf="m.photoUrl" [src]="urlImage(m.photoUrl)" [alt]="m.nom" class="avatar-photo" />
+        <span *ngIf="!m.photoUrl">{{ m.nom.slice(0, 2).toUpperCase() }}</span>
+      </div>
+      <div class="infos">
+        <h1>{{ m.nom }}</h1>
+        <p>
+          <span class="badge" [ngClass]="badgeType(m.type)">{{ libellesType[m.type] }}</span>
+          <span class="badge" [ngClass]="badgeStatut(m.statut)">{{ libellesCompte[m.statut] ?? m.statut }}</span>
+          <span *ngIf="m.entreprise">{{ m.entreprise }}</span>
+        </p>
+        <p class="contact">
+          <a class="lien" [href]="'tel:' + m.telephone">{{ m.telephone }}</a>
+          · compte #{{ m.id }} · inscrit le {{ dateCourte(m.dateCreation) }}
+        </p>
+      </div>
+      <div class="actions">
+        <button class="btn-sec" type="button" *ngIf="dossierEnAttente() && auth.peut('KYC_VALIDER')" (click)="examinerKyc()">
+          Voir les pièces du dossier
+        </button>
+        <!-- Accepter un grossiste / courtier sur la plateforme (ou le valider avant de le réactiver) -->
+        <button class="btn-success" type="button" *ngIf="aValider() && auth.peut('KYC_VALIDER')" [disabled]="envoi()" (click)="ouvrirValidation()">
+          {{ m.statut === 'SUSPENDU' ? 'Valider et réactiver le compte' : 'Valider le compte' }}
+        </button>
+        <ng-container *ngIf="auth.peut('COMPTE_SUSPENDRE') && !estMoi()">
+          <button class="btn-success" type="button" *ngIf="m.statut === 'SUSPENDU' && !aValider()" [disabled]="envoi()" (click)="reactiver()">
+            Réactiver le compte
+          </button>
+          <button
+            class="btn-danger"
+            type="button"
+            *ngIf="m.statut !== 'SUSPENDU' && m.statut !== 'DESACTIVE'"
+            [disabled]="envoi()"
+            (click)="suspensionOuverte.set(!suspensionOuverte())">
+            Suspendre…
+          </button>
+          <button class="btn-main" type="button" (click)="messageSupportOuvert.set(!messageSupportOuvert())" style="background:var(--info);color:#fff;">
+            💬 Répondre / Support…
+          </button>
+          <button class="btn-sec" type="button" (click)="diffusionAdminsOuverte.set(!diffusionAdminsOuverte())">
+            📢 Note aux Admins…
+          </button>
+        </ng-container>
+        <button class="btn-sec" type="button" [disabled]="chargement()" (click)="charger()">Actualiser</button>
+      </div>
+    </header>
+
+    <form class="card formulaire validation" *ngIf="validationOuverte()" (ngSubmit)="validerCompte()">
+      <label>
+        Ce qui a été vérifié (conservé dans le dossier KYC et le journal d'audit)
+        <textarea name="commentaireValidation" rows="2" required [(ngModel)]="commentaireValidation"></textarea>
+      </label>
+      <p class="avertissement">
+        <ng-container *ngIf="dossierEnAttente() as d; else sansDossier">Le dossier #{{ d.id }} ({{ d.documents.length }} pièce(s)) sera approuvé.</ng-container>
+        <ng-template #sansDossier>Aucun dossier déposé : une validation manuelle sera enregistrée à votre nom.</ng-template>
+        {{ m.statut === 'SUSPENDU' ? 'Le compte sera ensuite réactivé.' : 'Le compte devient actif et le ' + (libellesType[m.type] | lowercase) + ' est notifié.' }}
+      </p>
+      <div class="actions">
+        <button class="btn-success" type="submit" [disabled]="envoi() || !commentaireValidation.trim()">Confirmer la validation</button>
+        <button class="btn-sec" type="button" (click)="validationOuverte.set(false)">Annuler</button>
+      </div>
+    </form>
+
+    <form class="card formulaire suspension" *ngIf="suspensionOuverte()" (ngSubmit)="suspendre()">
+      <label>
+        Motif de la suspension (envoyé dans le journal d'audit)
+        <textarea name="motif" rows="2" required [(ngModel)]="motif"
+          placeholder="Ex. : fraude signalée sur le groupe #12, documents falsifiés…"></textarea>
+      </label>
+      <p class="avertissement">
+        Le compte ne pourra plus se connecter et toutes ses sessions sont fermées.
+        <ng-container *ngIf="groupesActifs()">Il est lié à {{ groupesActifs() }} groupe(s) en cours : pensez à les suivre dans « Groupes d'achat ».</ng-container>
+      </p>
+      <div class="actions">
+        <button class="btn-danger" type="submit" [disabled]="envoi() || !motif.trim()">Confirmer la suspension</button>
+        <button class="btn-sec" type="button" (click)="suspensionOuverte.set(false)">Annuler</button>
+      </div>
+    </form>
+
+    <!-- Formulaire d'envoi de message Support à l'utilisateur -->
+    <form class="card formulaire support" *ngIf="messageSupportOuvert()" (ngSubmit)="envoyerMessageSupport()" style="border-left: 4px solid var(--info); background: var(--info-light); padding: 16px; margin-bottom: 20px; border-radius: 8px;">
+      <h3 style="margin-top: 0; color: var(--info); font-size: 15px; font-weight: 600;">💬 Répondre à l'utilisateur (Notification In-App + SMS)</h3>
+      <p style="font-size: 13px; color: var(--text-body); margin: 4px 0 12px;">
+        Votre message sera transmis instantanément sur l'application mobile de {{ m.nom }} ({{ m.telephone }}) et sauvegardé dans le journal d'audit.
+      </p>
+      <label style="display: block; font-weight: 500; font-size: 13px; color: var(--text-main); margin-bottom: 6px;">
+        Message de réponse ou suivi de litige / réclamation :
+        <textarea name="messageSupportTexte" rows="3" required [(ngModel)]="messageSupportTexte"
+          placeholder="Ex. : Bonjour, suite à votre réclamation sur la commande #4, notre équipe support a vérifié votre dossier..."
+          style="width: 100%; padding: 8px; border: 1px solid var(--border-strong); border-radius: 6px; font-family: inherit; font-size: 13px; box-sizing: border-box;"></textarea>
+      </label>
+      <div class="actions" style="display: flex; gap: 8px; margin-top: 10px;">
+        <button class="btn-main" type="submit" [disabled]="envoi() || !messageSupportTexte.trim()" style="background:var(--info); color:#fff;">
+          Envoyer le message
+        </button>
+        <button class="btn-sec" type="button" (click)="messageSupportOuvert.set(false)">Annuler</button>
+      </div>
+    </form>
+
+    <!-- Formulaire de partage d'informations avec les autres administrateurs -->
+    <form class="card formulaire diffusion" *ngIf="diffusionAdminsOuverte()" (ngSubmit)="diffuserAuxAdmins()" style="border-left: 4px solid var(--primary); background: var(--rose-light); padding: 16px; margin-bottom: 20px; border-radius: 8px;">
+      <h3 style="margin-top: 0; color: var(--primary-hover); font-size: 15px; font-weight: 600;">📢 Partager l'information avec les autres administrateurs</h3>
+      <p style="font-size: 13px; color: var(--text-body); margin: 4px 0 12px;">
+        Une notification d'information sera diffusée à toute l'équipe administrative (Technique, Validation, Finance, Logistique).
+      </p>
+      <label style="display: block; font-weight: 500; font-size: 13px; color: var(--text-main); margin-bottom: 6px;">
+        Sujet de l'alerte ou de la note :
+        <input type="text" name="diffusionSujet" required [(ngModel)]="diffusionSujet"
+          placeholder="Ex. : Litige réclamation commande #4 - Utilisateur {{ m.nom }}"
+          style="width: 100%; padding: 8px; border: 1px solid var(--border-strong); border-radius: 6px; font-family: inherit; font-size: 13px; box-sizing: border-box; margin-bottom: 8px;" />
+      </label>
+      <label style="display: block; font-weight: 500; font-size: 13px; color: var(--text-main); margin-bottom: 6px;">
+        Détails pour l'équipe :
+        <textarea name="diffusionMessage" rows="3" required [(ngModel)]="diffusionMessage"
+          placeholder="Ex. : Note pour l'admin finance : merci de suspendre le déblocage du séquestre en attendant la vérification des photos du colis..."
+          style="width: 100%; padding: 8px; border: 1px solid var(--border-strong); border-radius: 6px; font-family: inherit; font-size: 13px; box-sizing: border-box;"></textarea>
+      </label>
+      <div class="actions" style="display: flex; gap: 8px; margin-top: 10px;">
+        <button class="btn-main" type="submit" [disabled]="envoi() || !diffusionSujet.trim() || !diffusionMessage.trim()" style="background:var(--primary); color:#fff;">
+          Diffuser à tous les administrateurs
+        </button>
+        <button class="btn-sec" type="button" (click)="diffusionAdminsOuverte.set(false)">Annuler</button>
+      </div>
+    </form>
+
+    <p class="message" [class.erreur]="echec()" *ngIf="message()">{{ message() }}</p>
+
+    <!-- Indicateurs -->
+    <section class="kpi-grid" *ngIf="m.type !== 'ADMINISTRATEUR'">
+      <div class="kpi-card">
+        <span class="title">{{ m.type === 'COMMERCANT' ? 'Groupes rejoints (payés)' : 'Groupes' }}</span>
+        <div class="number">{{ reseau().groupes.length }}</div>
+        <span class="sub">{{ groupesActifs() }} en cours</span>
+      </div>
+      <div class="kpi-card">
+        <span class="title">Partenaires liés</span>
+        <div class="number">{{ reseau().partenaires.length }}</div>
+        <span class="sub">Grossistes, courtiers et commerçants en commun</span>
+      </div>
+      <div class="kpi-card gold-card">
+        <span class="title">{{ m.type === 'COMMERCANT' ? 'Payé, en séquestre' : 'Séquestre en cours' }}</span>
+        <div class="number gold">{{ fcfa(sequestreBloque()) }}</div>
+        <span class="sub">{{ fcfa(sequestreLibere()) }} déjà libérés</span>
+      </div>
+    </section>
+
+    <div class="layout-grid">
+
+      <div class="colonne">
+
+        <!-- Groupes -->
+        <section class="card" *ngIf="m.type !== 'ADMINISTRATEUR'">
+          <div class="card-header">
+            <h2>Groupes d'achat liés</h2>
+            <span class="sub-filter">{{ reseau().groupes.length }} groupe(s)</span>
+          </div>
+          <p class="vide" *ngIf="reseau().groupes.length === 0">
+            {{ m.type === 'COMMERCANT' ? 'Aucun groupe payé par ce commerçant.' : 'Aucun groupe lié à ce compte.' }}
+          </p>
+          <div class="table-wrap" *ngIf="reseau().groupes.length">
+            <table>
+              <thead>
+                <tr>
+                  <th>Groupe</th>
+                  <th>Rôle</th>
+                  <th>Grossiste / courtier</th>
+                  <th>Progression</th>
+                  <th>État</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let g of reseau().groupes" class="cliquable" (click)="ouvrirGroupe(g)">
+                  <td>
+                    <strong>#{{ g.id }} · {{ g.titre }}</strong>
+                    <small>{{ g.produit.nom }} · {{ fcfa(g.prixUnitaire) }}/pce · limite {{ dateCourte(g.dateLimite) }}</small>
+                  </td>
+                  <td>{{ roleDans(g) }}</td>
+                  <td (click)="$event.stopPropagation()">
+                    <a class="lien" [routerLink]="['/utilisateurs', g.grossiste.id]">{{ g.grossiste.nom }}</a>
+                    <small *ngIf="g.courtier; else sansCourtier">
+                      Courtier : <a class="lien" [routerLink]="['/utilisateurs', g.courtier.id]">{{ g.courtier.nom }}</a>
+                    </small>
+                    <ng-template #sansCourtier><small>Sans courtier (porté par le grossiste)</small></ng-template>
+                  </td>
+                  <td>
+                    {{ g.quantiteConfirmee }} / {{ g.quantiteCible }}
+                    <div class="progression"><span [style.width.%]="progression(g)"></span></div>
+                  </td>
+                  <td><span class="badge" [ngClass]="badgeGroupe(g.statut)">{{ libellesGroupe[g.statut] ?? g.statut }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Commandes du commerçant -->
+        <section class="card" *ngIf="m.type === 'COMMERCANT'">
+          <div class="card-header">
+            <h2>Commandes et retraits</h2>
+            <span class="sub-filter">{{ sesCommandes().length }} commande(s)</span>
+          </div>
+          <p class="vide" *ngIf="sesCommandes().length === 0">
+            {{ auth.peut('COMMANDE_LIRE') ? 'Aucune commande : elles naissent quand un groupe atteint son objectif.' : 'Votre rôle ne permet pas de consulter les commandes.' }}
+          </p>
+          <div class="table-wrap" *ngIf="sesCommandes().length">
+            <table>
+              <thead>
+                <tr><th>Commande</th><th>Quantité</th><th>Montant</th><th>État</th><th class="text-right"></th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of sesCommandes()">
+                  <td>
+                    <strong>#{{ c.id }} · {{ c.produit }}</strong>
+                    <small>Groupe #{{ c.groupeId }}</small>
+                  </td>
+                  <td>{{ c.quantite }}</td>
+                  <td>{{ fcfa(c.montant) }}</td>
+                  <td><span class="badge" [ngClass]="c.statut === 'COLLECTEE' ? 'green' : c.statut === 'EN_ATTENTE_RETRAIT' ? 'yellow' : 'orange'">{{ libellesCommande[c.statut] ?? c.statut }}</span></td>
+                  <td class="text-right">
+                    <button class="btn-sm" type="button" *ngIf="c.statut === 'EN_ATTENTE_RETRAIT' && auth.peut('RETRAIT_VALIDER')" [disabled]="envoi()" (click)="regenererCode(c)">
+                      Nouveau code 🔑
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Séquestres -->
+        <section class="card" *ngIf="reseau().sequestres.length">
+          <div class="card-header">
+            <h2>Flux financiers (séquestre)</h2>
+            <a class="lien" routerLink="/finance">Séquestre & Finance ➔</a>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Réf.</th><th>Groupe</th><th>Acheteur ➔ bénéficiaire</th><th>Montant</th><th>État</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of reseau().sequestres">
+                  <td><strong>#SQ-{{ s.id }}</strong><small>{{ dateCourte(s.dateBlocage) }}</small></td>
+                  <td>{{ s.groupeTitre ? '#' + s.groupeId + ' · ' + s.groupeTitre : 'Paiement #' + s.paiementId }}</td>
+                  <td>
+                    <a class="lien" *ngIf="s.acheteurId; else nomAcheteur" [routerLink]="['/utilisateurs', s.acheteurId]">{{ s.acheteur }}</a>
+                    <ng-template #nomAcheteur>{{ s.acheteur || '—' }}</ng-template>
+                    ➔
+                    <a class="lien" *ngIf="s.beneficiaireId; else nomBenef" [routerLink]="['/utilisateurs', s.beneficiaireId]">{{ s.beneficiaire }}</a>
+                    <ng-template #nomBenef>{{ s.beneficiaire || '—' }}</ng-template>
+                  </td>
+                  <td>{{ fcfa(s.montantBloque) }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="s.gele ? 'red' : s.statut === 'BLOQUE' ? 'yellow' : 'green'">
+                      {{ s.gele ? 'Gelé (litige)' : libellesSequestre[s.statut] ?? s.statut }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Journal d'audit -->
+        <section class="card" *ngIf="auth.peut('AUDIT_LIRE')">
+          <div class="card-header">
+            <h2>Historique (journal d'audit)</h2>
+            <a class="lien" routerLink="/audit">Journal complet ➔</a>
+          </div>
+          <p class="vide" *ngIf="audit().length === 0">Aucune action tracée par ou sur ce compte.</p>
+          <ul class="chronologie" *ngIf="audit().length">
+            <li *ngFor="let l of audit().slice(0, 30)">
+              <strong>{{ libelleAction(l.action) }}</strong>
+              <small>{{ dateCourte(l.date) }} · {{ l.acteurId === m.id ? 'par ce compte' : 'par l’administrateur #' + (l.acteurId ?? '—') }}</small>
+              <small *ngIf="l.apres">{{ l.apres }}</small>
+            </li>
+          </ul>
+        </section>
+      </div>
+
+      <aside class="colonne">
+
+        <!-- Informations -->
+        <section class="card">
+          <h3>Informations du compte</h3>
+          <dl class="proprietes">
+            <dt>Téléphone</dt><dd>{{ m.telephone }}</dd>
+            <ng-container *ngFor="let d of m.details">
+              <dt>{{ d.libelle }}</dt>
+              <dd>{{ d.libelle === 'Rôle administratif' ? (libellesRoleAdmin[d.valeur] ?? d.valeur) : d.valeur }}</dd>
+            </ng-container>
+          </dl>
+        </section>
+
+        <!-- Partenaires -->
+        <section class="card" *ngIf="m.type !== 'ADMINISTRATEUR'">
+          <h3>Partenaires liés</h3>
+          <p class="vide" *ngIf="reseau().partenaires.length === 0">Aucun autre acteur lié pour l'instant.</p>
+          <div *ngFor="let s of partenairesParType()" class="groupe-partenaires">
+            <h4>{{ s.titre }} ({{ s.liste.length }})</h4>
+            <ul class="liste-liens">
+              <li *ngFor="let r of s.liste">
+                <div>
+                  <a class="lien" [routerLink]="['/utilisateurs', r.id]">{{ libellePartenaire(r) }}</a>
+                  <small>{{ r.role }}</small>
+                </div>
+                <span class="badge" *ngIf="r.membre" [ngClass]="badgeStatut(r.membre.statut)">{{ libellesCompte[r.membre.statut] ?? r.membre.statut }}</span>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- KYC -->
+        <section class="card" *ngIf="exigeKyc()">
+          <h3>Dossiers KYC</h3>
+          <p class="vide" *ngIf="dossiers().length === 0">Aucun dossier déposé : le compte reste en attente (RG-03).</p>
+          <ul class="liste-liens">
+            <li *ngFor="let d of dossiers()">
+              <div>
+                <strong>Dossier #{{ d.id }}</strong>
+                <small>Déposé {{ relatif(d.dateSoumission) }} · {{ d.documents.length }} pièce(s)</small>
+                <small *ngIf="d.motifRejet">Motif : {{ d.motifRejet }}</small>
+              </div>
+              <span class="badge" [ngClass]="badgeKyc(d.statut)">{{ d.statut === 'APPROUVE' ? 'Approuvé' : d.statut === 'REJETE' ? 'Rejeté' : 'En attente' }}</span>
+            </li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </ng-container>
+</div>

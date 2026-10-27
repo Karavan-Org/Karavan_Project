@@ -1,0 +1,138 @@
+// ==============================================================================
+// SYSTÈME UNIFIÉ D'ANIMATIONS & MICRO-INTERACTIONS DƆGƆ DESIGN SYSTEM
+// ==============================================================================
+
+// --- 1. KEYFRAMES PRINCIPALES ---
+
+// Arrivée fluide des pages et vues
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Fade in progressif
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+// Effet de pop / échelle douce pour les modales et cartes
+@keyframes scaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// Déroulement fluide des menus (notifications, recherche)
+@keyframes dropdownSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Onde radar pour les statuts "Live" et nœuds opérationnels
+@keyframes statusPulseRadar {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.75);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(52, 199, 89, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0);
+  }
+}
+
+// Pulsation subtile pour badges en attente (KYC, litiges, etc.)
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.92;
+  }
+}
+
+// Flottement doux pour mascottes et illustrations
+@keyframes floatMascot {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+// Balayage lumineux délicat (shimmer)
+@keyframes shimmerSweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// Halo pulsant pour boutons d'audit ou alertes
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 4px 14px rgba(172, 127, 94, 0.35);
+  }
+  50% {
+    box-shadow: 0 6px 22px rgba(172, 127, 94, 0.55), 0 0 12px rgba(238, 168, 35, 0.3);
+  }
+}
+
+// --- 2. CLASSES UTILITAIRES DE TRANSITION & ÉLÉVATION ---
+
+.animate-enter {
+  animation: pageEnter 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-pop {
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-fade {
+  animation: fadeIn 0.25s ease both;
+}
+
+// Micro-interaction de survol avec élévation
+.hover-lift {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px -4px rgba(57, 40, 36, 0.08), 0 2px 6px -1px rgba(57, 40, 36, 0.04);
+  }
+}
+
+// Effet tactile d'enfoncement au clic
+.pressable {
+  transition: transform 0.12s ease-out;
+
+  &:active:not(:disabled) {
+    transform: scale(0.975) translateY(1px);
+  }
+}
+

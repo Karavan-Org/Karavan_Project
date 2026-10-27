@@ -1,0 +1,193 @@
+<div class="kyc-container">
+
+  <!-- Header / Fil d'Ariane -->
+  <header class="kyc-header">
+    <div class="breadcrumb">
+      <span class="muted">Plateforme Karavan</span>
+      <span class="sep">/</span>
+      <span class="active-link">Validations KYC</span>
+      <ng-container *ngIf="selection() as d">
+        <span class="sep">/</span>
+        <span class="dossier-id">Dossier #KYC-{{ d.id }}</span>
+      </ng-container>
+    </div>
+
+    <div class="operator-badge">
+      <span class="dot green"></span>
+      <span>Opérateur Conformité : <strong>Actif</strong></span>
+    </div>
+  </header>
+
+  <!-- Layout Principal (2 colonnes) -->
+  <div class="kyc-body">
+
+    <!-- COLONNE GAUCHE : Liste des dossiers -->
+    <aside class="dossiers-sidebar">
+      <div class="sidebar-title">
+        <h2>Dossiers en attente ({{ dossiers().length }})</h2>
+        <span class="subtext">Trier par ordre d'arrivée chronologique</span>
+      </div>
+
+      <div class="dossier-list">
+        <p class="manager-info" *ngIf="chargement()">Chargement des dossiers…</p>
+        <p class="manager-info" *ngIf="erreur()">{{ erreur() }}</p>
+        <p class="manager-info" *ngIf="!chargement() && !erreur() && dossiers().length === 0">
+          Aucun dossier en attente : tous les grossistes et courtiers inscrits ont été examinés.
+        </p>
+
+        <div
+          *ngFor="let item of dossiers()"
+          class="dossier-card"
+          [class.active]="selection()?.id === item.id"
+          (click)="selectDossier(item)">
+
+          <div class="card-header">
+            <span class="badge" [ngClass]="item.typeActeur.toLowerCase()">{{ item.typeActeur }}</span>
+            <span class="time">{{ relatif(item.dateSoumission) }}</span>
+          </div>
+
+          <h3 class="company-title">{{ entreprise(item) }}</h3>
+
+          <p class="manager-info">
+            {{ item.nom }} · {{ identifiantFiscal(item) }}
+          </p>
+
+          <p class="docs-info">
+            {{ resumePieces(item) }}
+          </p>
+
+        </div>
+      </div>
+    </aside>
+
+    <!-- COLONNE DROITE : Détails du dossier & Prévisualisation -->
+    <main class="dossier-detail" *ngIf="selection() as d">
+
+      <!-- Carte Entête Entreprise -->
+      <section class="company-card">
+        <div class="avatar-box">{{ initiales(d) }}</div>
+
+        <div class="company-info">
+          <h2>{{ entreprise(d) }}</h2>
+          <p class="meta">
+            Gérant : <a class="lien-fiche" [routerLink]="['/utilisateurs', d.utilisateurId]"><strong>{{ d.nom }}</strong></a> · WhatsApp :
+            <a [href]="lienWhatsApp(d)" target="_blank" rel="noopener">{{ d.telephone }}</a>
+          </p>
+          <p class="meta">
+            Domiciliation : {{ domiciliation(d) }}
+          </p>
+        </div>
+
+        <div class="card-actions">
+          <span class="badge-tag outline">{{ d.typeActeur }}</span>
+          <span class="badge-tag warning">
+            <span class="dot yellow"></span> DEMANDE EN ATTENTE
+          </span>
+        </div>
+      </section>
+
+      <!-- Onglets Documents -->
+      <nav class="doc-tabs">
+        <button
+          *ngFor="let doc of d.documents; let i = index"
+          class="tab-btn"
+          [class.active]="documentActif()?.id === doc.id"
+          (click)="selectDoc(doc)">
+          {{ i + 1 }}. {{ libellePiece(doc.type) }}
+          <mat-icon class="doc-icon">{{ doc.type === 'PIECE_IDENTITE' ? 'badge' : 'description' }}</mat-icon>
+        </button>
+      </nav>
+
+      <!-- Visionneuse & Contrôle Conformité -->
+      <div class="viewer-grid">
+
+        <!-- Visionneuse du document réel téléversé par l'acteur -->
+        <div class="pdf-viewer-card">
+          <div class="viewer-toolbar">
+            <span class="filename">
+              {{ documentActif() ? libellePiece(documentActif()!.type) : 'Aucune pièce jointe' }}
+            </span>
+            <div class="zoom-controls">
+              <button class="btn-icon" (click)="zoomer(-10)">-</button>
+              <span class="zoom-level">{{ zoom() }}%</span>
+              <button class="btn-icon" (click)="zoomer(10)">+</button>
+            </div>
+          </div>
+
+          <div class="pdf-document">
+            <p *ngIf="!documentActif()">Ce dossier ne contient aucune pièce.</p>
+            <p *ngIf="apercuChargement()">Chargement du document…</p>
+            <p *ngIf="apercuErreur()">{{ apercuErreur() }}</p>
+
+            <ng-container *ngIf="apercuUrl() as url">
+              <img
+                *ngIf="apercuImage()"
+                [src]="url"
+                alt="Pièce justificative"
+                [style.width.%]="zoom()"
+                style="display: block; max-width: none; margin: 0 auto;" />
+              <iframe
+                *ngIf="!apercuImage()"
+                [src]="url"
+                title="Pièce justificative"
+                [style.height.px]="6 * zoom()"
+                style="width: 100%; border: 0;"></iframe>
+            </ng-container>
+
+            <div *ngIf="telechargement() as fichier" class="document-telechargeable">
+              <p>Ce document électronique (Word, Excel…) ne peut pas s'afficher dans le navigateur.</p>
+              <a class="btn btn-outline" [href]="fichier.url" [download]="fichier.nom">Télécharger {{ fichier.nom }}</a>
+            </div>
+
+            <p class="sub" *ngIf="documentActif() as doc">
+              Empreinte SHA-256 : <code>{{ doc.empreinteSha256 }}</code>
+            </p>
+          </div>
+        </div>
+
+        <!-- Panneau de Validation -->
+        <div class="control-panel">
+          <h3>Points de Contrôle Conformité</h3>
+          <p class="subtitle">Validez chaque élément avant activation</p>
+
+          <ul class="check-list">
+            <li class="check-item" *ngFor="let c of controles()">
+              <mat-icon class="icon-check" [style.color]="c.ok ? null : 'var(--danger)'">
+                {{ c.ok ? 'check_circle' : 'error' }}
+              </mat-icon>
+              <div>
+                <strong>{{ c.titre }}</strong>
+                <p class="success-text" [style.color]="c.ok ? null : 'var(--danger)'">{{ c.detail }}</p>
+              </div>
+            </li>
+          </ul>
+
+          <div class="analysis-box">
+            <span class="analysis-title">ANALYSE AUTOMATIQUE</span>
+            <p><strong>{{ dossierComplet() ? 'Dossier complet' : 'Dossier incomplet' }}</strong></p>
+            <p>N° Dossier : #KYC-{{ d.id }} · soumis le {{ dateCourte(d.dateSoumission) }}</p>
+            <p class="risk-low" *ngIf="d.motifRejet">Dernier motif : <strong>{{ d.motifRejet }}</strong></p>
+          </div>
+
+          <p class="subtitle" *ngIf="message()">{{ message() }}</p>
+
+          <div class="action-buttons">
+            <button class="btn btn-success" [disabled]="envoi()" (click)="valider()">
+              <mat-icon>check</mat-icon> Valider et Activer le compte
+            </button>
+            <button class="btn btn-outline" [disabled]="envoi()" (click)="demanderComplement()">
+              Demander un document complémentaire
+            </button>
+            <button class="btn btn-danger-link" [disabled]="envoi()" (click)="rejeter()">
+              Rejeter la demande (Motif)
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+</div>

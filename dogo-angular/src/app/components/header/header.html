@@ -1,0 +1,89 @@
+<header class="top-header">
+  <!-- Barre de recherche globale -->
+  <div class="search-wrapper">
+    <div class="search-bar">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        #champRecherche
+        type="search"
+        placeholder="Rechercher un commerçant, grossiste, courtier, NIF, RCCM, groupe #…"
+        [value]="recherche()"
+        (focus)="ouvrirRecherche()"
+        (input)="recherche.set(champRecherche.value)"
+        (keydown.enter)="ouvrirPremier()"
+        (keydown.escape)="fermerRecherche(champRecherche)"
+        (blur)="fermerPlusTard()" />
+      <kbd class="shortcut">Ctrl K</kbd>
+    </div>
+
+    <div class="search-results" *ngIf="rechercheOuverte() && recherche().trim()">
+      <p class="search-empty" *ngIf="annuaire.chargement() && !resultats().length">Chargement de l'annuaire…</p>
+      <p class="search-empty" *ngIf="!annuaire.chargement() && !resultats().length">Aucun résultat.</p>
+      <button
+        type="button"
+        class="search-item"
+        *ngFor="let r of resultats()"
+        (mousedown)="$event.preventDefault()"
+        (click)="aller(r, champRecherche)">
+        <mat-icon>{{ r.icone }}</mat-icon>
+        <span class="search-text">
+          <strong>{{ r.titre }}</strong>
+          <small>{{ r.detail }}</small>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <!-- Statut Nœud -->
+    <div class="status-badge">
+      <span class="status-dot"></span>
+      <span class="status-text">{{ systemStatus }}</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Notification : reçues du backend (KYC, groupes à publier, étapes de colis, réceptions…) -->
+    <div class="notif-wrapper">
+      <!-- Le badge est porté par le bouton (l'icône est aria-hidden) pour être lu par les lecteurs d'écran -->
+      <button
+        class="icon-btn"
+        title="Notifications"
+        [attr.aria-label]="notifications.nonLues() ? 'Notifications : ' + notifications.nonLues() + ' non lue(s)' : 'Notifications'"
+        [matBadge]="notifications.nonLues() || ''"
+        [matBadgeHidden]="notifications.nonLues() === 0"
+        matBadgeColor="warn"
+        matBadgeSize="small"
+        (click)="basculerNotifications()">
+        <mat-icon>{{ notifications.nonLues() ? 'notifications_active' : 'notifications_none' }}</mat-icon>
+      </button>
+
+      <div class="notif-panel" *ngIf="panneauOuvert()">
+        <div class="notif-head">
+          <strong>Notifications</strong>
+          <button class="notif-link" type="button" *ngIf="notifications.nonLues()" (click)="notifications.toutMarquerLu()">
+            Tout marquer comme lu
+          </button>
+        </div>
+
+        <p class="notif-empty" *ngIf="notifications.notifications().length === 0">Aucune notification.</p>
+
+        <ul class="notif-list">
+          <li
+            *ngFor="let n of notifications.notifications()"
+            [class.unread]="n.statut !== 'LUE'"
+            (click)="ouvrir(n)">
+            <span class="notif-text">{{ n.contenu }}</span>
+            <span class="notif-date">{{ relatif(n.date) }} · {{ n.statut === 'LUE' ? 'Lue' : 'Reçue' }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Horloge & Localisation -->
+    <div class="time-info">
+      <span class="time-location">{{ currentLocationTime }}</span>
+      <span class="date">{{ currentDate }}</span>
+    </div>
+  </div>
+</header>

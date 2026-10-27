@@ -1,0 +1,108 @@
+<div class="page-container">
+  
+  <!-- En-tête -->
+  <header class="header">
+    <div>
+      <h1>Journal d'Audit Système & Manifestes Légaux</h1>
+      <p>Registre immuable des transactions, déblocages sous séquestre et scellés douaniers.</p>
+    </div>
+    <div class="header-btns">
+      <button class="btn-sec" (click)="downloadLogs()">Exporter Logs (CSV) 📥</button>
+      <button class="btn-primary" (click)="exporterJson()">Exporter Logs (JSON) 📥</button>
+    </div>
+  </header>
+
+  <!-- 3 Cartes KPI Claires -->
+  <section class="kpi-grid">
+    <div class="kpi-card dark">
+      <span class="title">Événements Horodatés</span>
+      <div class="number gold">{{ verification()?.lignesVerifiees ?? lignes().length }} <small>logs tracés</small></div>
+    </div>
+    <div class="kpi-card">
+      <span class="title">Actes Logistiques & Groupes</span>
+      <div class="number">{{ nombre('manifests') }} <small>actes tracés</small></div>
+    </div>
+    <div class="kpi-card gold-accent">
+      <span class="title">Remises Confirmées (QR/PIN)</span>
+      <div class="number green-text">{{ remises() }} <small>signatures num.</small></div>
+    </div>
+  </section>
+
+  <!-- Contenu Principal -->
+  <div class="layout-grid">
+    
+    <!-- Tableau des logs à gauche -->
+    <main class="card main-table">
+      <div class="card-header">
+        <h2>Registre d'Audit Système</h2>
+        
+        <!-- Filtres rapides -->
+        <div class="filter-chips">
+          <button class="chip" [class.active]="selectedFilter() === 'all'" (click)="setFilter('all')">Tous</button>
+          <button class="chip" [class.active]="selectedFilter() === 'manifests'" (click)="setFilter('manifests')">Logistique ({{ nombre('manifests') }})</button>
+          <button class="chip" [class.active]="selectedFilter() === 'escrow'" (click)="setFilter('escrow')">Séquestre & QR ({{ nombre('escrow') }})</button>
+          <button class="chip" [class.active]="selectedFilter() === 'kyc'" (click)="setFilter('kyc')">KYC & Comptes ({{ nombre('kyc') }})</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>HORODATAGE</th>
+            <th>TYPE D'ACTE</th>
+            <th>ACTEUR & DÉTTAIL</th>
+            <th class="text-right">EMPREINTE (HASH)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="chargement()"><td colspan="4">Chargement…</td></tr>
+          <tr *ngIf="erreur()"><td colspan="4">{{ erreur() }}</td></tr>
+          <tr *ngFor="let log of filtres()">
+            <td>
+              <strong>{{ log.time }}</strong>
+              <small>{{ log.date }}</small>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="log.badgeClass">{{ log.type }}</span>
+            </td>
+            <td>
+              <strong>{{ log.actor }} · <span class="entity">{{ log.entity }}</span></strong>
+              <small>{{ log.detail }} ({{ log.subDetail }})</small>
+            </td>
+            <td class="text-right">
+              <code class="hash-code" [title]="log.source.hash">{{ log.hash }}</code>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+
+    <!-- Sidebar unique & efficace à droite -->
+    <aside class="sidebar">
+      
+      <!-- Contrôle d'Inviolabilité -->
+      <div class="card audit-card">
+        <div class="card-header-sm">
+          <h3>Inviolabilité SHA-256</h3>
+          <span class="badge-success" *ngIf="verification() as v">{{ v.chaineIntacte ? 'SÉCURISÉ ✓' : 'ALTÉRÉ ✗' }}</span>
+        </div>
+        
+        <p>Chaque entrée est cryptographiquement enchaînée. Preuve juridique opposable au Mali.</p>
+        
+        <div class="manifest-preview">
+          <span class="preview-title">Dernier acte logistique : {{ dernierActeLogistique()?.type ?? 'aucun' }}</span>
+          <small>{{ dernierActeLogistique() ? dernierActeLogistique()!.date + ' ' + dernierActeLogistique()!.time + ' · ' + dernierActeLogistique()!.entity : '—' }}</small>
+        </div>
+
+        <p *ngIf="message()"><small>{{ message() }}</small></p>
+
+        <button class="btn-success" (click)="verifyIntegrity()">
+          Vérifier la Chaîne de Hachage
+        </button>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>

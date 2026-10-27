@@ -1,0 +1,201 @@
+<div class="page-container">
+
+  <header class="header">
+    <div>
+      <h1>Groupes d'achat</h1>
+      <p>Cycle de vie de chaque groupe, avec son grossiste, son courtier et ses commerçants acheteurs.</p>
+    </div>
+    <div class="header-btns">
+      <button class="btn-sec" type="button" (click)="exporter()">Exporter (CSV)</button>
+      <button class="btn-sec" type="button" [disabled]="chargement()" (click)="charger()">Actualiser</button>
+    </div>
+  </header>
+
+  <p class="message erreur" *ngIf="erreur()">{{ erreur() }}</p>
+
+  <div class="layout-grid">
+
+    <main class="card">
+      <div class="barre-outils">
+        <div class="onglets">
+          <button type="button" *ngFor="let o of onglets" [class.actif]="onglet() === o.cle" (click)="onglet.set(o.cle)">
+            {{ o.libelle }}<span class="compte">{{ comptes().get(o.cle) ?? 0 }}</span>
+          </button>
+        </div>
+        <input
+          class="champ-recherche"
+          type="search"
+          placeholder="N°, titre, produit, origine, grossiste, courtier…"
+          [ngModel]="texte()"
+          (ngModelChange)="texte.set($event)" />
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Groupe</th>
+              <th>Grossiste</th>
+              <th>Porteur</th>
+              <th>Progression</th>
+              <th>État</th>
+              <th class="text-right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="chargement() && groupes().length === 0"><td colspan="6">Chargement…</td></tr>
+            <tr *ngIf="!chargement() && groupes().length === 0"><td colspan="6" class="vide">Aucun groupe dans cette catégorie.</td></tr>
+            <tr
+              *ngFor="let g of groupes()"
+              class="cliquable"
+              [class.selection]="g.id === selectionId()"
+              (click)="selectionner(g)">
+              <td>
+                <strong>#{{ g.id }} · {{ g.titre }}</strong>
+                <small>{{ g.produit.nom }} · {{ g.produit.paysOrigine || '?' }} ➔ Bamako · limite {{ dateCourte(g.dateLimite) }}</small>
+              </td>
+              <td (click)="$event.stopPropagation()">
+                <a class="lien" [routerLink]="['/utilisateurs', g.grossiste.id]">{{ g.grossiste.nom }}</a>
+              </td>
+              <td (click)="$event.stopPropagation()">
+                <a class="lien" *ngIf="g.courtier; else porteur" [routerLink]="['/utilisateurs', g.courtier.id]">{{ g.courtier.nom }}</a>
+                <ng-template #porteur><small>Le grossiste (sans courtier)</small></ng-template>
+              </td>
+              <td>
+                {{ g.quantiteConfirmee }} / {{ g.quantiteCible }}
+                <div class="progression"><span [style.width.%]="progression(g)"></span></div>
+              </td>
+              <td><span class="badge" [ngClass]="badge(g.statut)">{{ libellesGroupe[g.statut] ?? g.statut }}</span></td>
+              <td class="text-right" (click)="$event.stopPropagation()">
+                <button class="btn-success btn-ligne" type="button" *ngIf="g.statut === 'EN_VALIDATION' && auth.peut('GROUPE_PUBLICATION_VALIDER')" [disabled]="envoi()" (click)="publier(g)">Publier</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Détail du groupe sélectionné -->
+    <aside class="colonne">
+      <section class="card" *ngIf="!selection()">
+        <h3>Détail du groupe</h3>
+        <p class="vide">Sélectionnez un groupe pour voir ses acteurs, son historique et les actions possibles.</p>
+      </section>
+
+      <ng-container *ngIf="selection() as g">
+        <section class="card">
+          <div class="card-header">
+            <h2>#{{ g.id }} · {{ g.titre }}</h2>
+            <span class="badge" [ngClass]="badge(g.statut)">{{ libellesGroupe[g.statut] ?? g.statut }}</span>
+          </div>
+
+          <dl class="proprietes">
+            <dt>Produit</dt><dd>{{ g.produit.nom }} ({{ g.produit.categorie }})</dd>
+            <dt>Origine</dt><dd>{{ g.produit.paysOrigine || '—' }}</dd>
+            <dt>Grossiste</dt><dd><a class="lien" [routerLink]="['/utilisateurs', g.grossiste.id]">{{ g.grossiste.nom }}</a></dd>
+            <dt>Courtier</dt>
+            <dd>
+              <a class="lien" *ngIf="g.courtier; else sansCourtier" [routerLink]="['/utilisateurs', g.courtier.id]">{{ g.courtier.nom }}</a>
+              <ng-template #sansCourtier>Aucun : le grossiste porte le groupe</ng-template>
+            </dd>
+            <dt>Prix</dt><dd>{{ fcfa(g.prixUnitaire) }} / pce</dd>
+            <dt>Dont</dt>
+            <dd>
+              <small>
+                marchandise {{ fcfa(g.grille.marchandise) }} · transport {{ fcfa(g.grille.transport) }} ·
+                douane {{ fcfa(g.grille.douane) }} · frais Karavan {{ fcfa(g.grille.fraisPlateforme) }}
+              </small>
+            </dd>
+            <dt>Objectif</dt><dd>{{ g.quantiteConfirmee }} / {{ g.quantiteCible }} pces ({{ g.quantiteReservee }} réservées)</dd>
+            <dt>Conditions</dt><dd>min. {{ g.conditions.quantiteMinParCommercant }} pce(s) · livraison {{ g.conditions.delaiLivraisonJours }} j</dd>
+            <dt>Ouvert le</dt><dd>{{ dateCourte(g.dateOuverture) }}</dd>
+            <dt>Limite</dt><dd>{{ dateCourte(g.dateLimite) }}</dd>
+            <dt>Stock</dt><dd>{{ g.disponibiliteValidee ? '✓ confirmé par le grossiste' : '⏳ non confirmé' }}</dd>
+            <dt>Suivi colis</dt>
+            <dd>
+              <ng-container *ngIf="convoiAssocie() as c; else sansConvoi">
+                <span class="badge green">✓ Ouvert ({{ c.reference }} · {{ c.statut }})</span>
+              </ng-container>
+              <ng-template #sansConvoi>
+                <span [class]="['OBJECTIF_ATTEINT', 'EN_EXPEDITION'].includes(g.statut) ? 'badge orange' : ''">
+                  {{ ['OBJECTIF_ATTEINT', 'EN_EXPEDITION'].includes(g.statut) ? '⏳ En attente d’ouverture' : 'Non applicable' }}
+                </span>
+              </ng-template>
+            </dd>
+          </dl>
+        </section>
+
+        <!-- Actions -->
+        <section class="card actions-card" *ngIf="peutPublier() || peutAnnuler() || peutPiloter() || peutOuvrirSuiviDirect()">
+          <h3>Actions</h3>
+          <div class="formulaire">
+            <div class="actions" *ngIf="!decision()">
+              <button class="btn-success" type="button" *ngIf="peutPublier()" [disabled]="envoi()" (click)="publier(g)">Publier le groupe</button>
+              <button class="btn-sec" type="button" *ngIf="peutPublier()" [disabled]="envoi()" (click)="decision.set('REFUS')">Refuser…</button>
+              <button class="btn-danger" type="button" *ngIf="peutAnnuler()" [disabled]="envoi()" (click)="decision.set('ANNULATION')">Annuler le groupe…</button>
+              <button class="btn-primary" type="button" *ngIf="peutOuvrirSuiviDirect()" [disabled]="envoi()" (click)="ouvrirSuiviDirect(g)">🚚 Ouvrir le suivi du colis (1 clic)</button>
+              <button class="btn-sec" type="button" *ngIf="peutPiloter()" (click)="piloter()">
+                {{ convoiAssocie() ? 'Voir les étapes du convoi ➔' : 'Piloter l’acheminement ➔' }}
+              </button>
+            </div>
+            <form *ngIf="decision()" class="formulaire" (ngSubmit)="confirmerDecision()">
+              <label>
+                {{ decision() === 'REFUS' ? 'Motif du refus (envoyé au porteur)' : 'Motif de l’annulation (RG-68)' }}
+                <textarea name="motif" rows="3" required [(ngModel)]="motif"></textarea>
+              </label>
+              <div class="actions">
+                <button [class]="decision() === 'REFUS' ? 'btn-primary' : 'btn-danger'" type="submit" [disabled]="envoi() || !motif.trim()">Confirmer</button>
+                <button class="btn-sec" type="button" (click)="decision.set(null)">Retour</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <p class="message" [class.erreur]="echec()" *ngIf="message()">{{ message() }}</p>
+
+        <!-- Acheteurs -->
+        <section class="card">
+          <h3>Commerçants acheteurs ({{ acheteurs().length }})</h3>
+          <p class="vide" *ngIf="acheteurs().length === 0">Aucun paiement enregistré pour ce groupe.</p>
+          <ul class="liste-liens">
+            <li *ngFor="let a of acheteurs()">
+              <div>
+                <a class="lien" *ngIf="a.id; else nomSeul" [routerLink]="['/utilisateurs', a.id]">{{ a.nom }}</a>
+                <ng-template #nomSeul>{{ a.nom }}</ng-template>
+                <small>{{ a.etat }}</small>
+              </div>
+              <strong>{{ a.quantite }} pce{{ a.quantite > 1 ? 's' : '' }}</strong>
+            </li>
+          </ul>
+        </section>
+
+        <!-- Étapes signalées par le grossiste -->
+        <section class="card" *ngIf="etapes().length">
+          <h3>Étapes signalées par le grossiste</h3>
+          <ul class="chronologie">
+            <li *ngFor="let e of etapes()">
+              <strong>{{ e.etape }}</strong>
+              <small>{{ dateCourte(e.date) }}{{ e.commentaire ? ' · ' + e.commentaire : '' }}</small>
+            </li>
+          </ul>
+        </section>
+
+        <!-- Historique -->
+        <section class="card">
+          <h3>Historique du groupe</h3>
+          <p class="vide" *ngIf="historique().length === 0">Aucune transition enregistrée.</p>
+          <ul class="chronologie">
+            <li *ngFor="let t of historique()">
+              <strong>{{ libellesGroupe[t.ancien] ?? t.ancien }} ➔ {{ libellesGroupe[t.nouveau] ?? t.nouveau }}</strong>
+              <small>
+                {{ dateCourte(t.date) }} ·
+                <a class="lien" *ngIf="auteur(t).id; else auteurSeul" [routerLink]="['/utilisateurs', auteur(t).id]">{{ auteur(t).libelle }}</a>
+                <ng-template #auteurSeul>{{ auteur(t).libelle }}</ng-template>
+              </small>
+            </li>
+          </ul>
+        </section>
+      </ng-container>
+    </aside>
+  </div>
+</div>

@@ -1,0 +1,429 @@
+<div class="page-container">
+
+  <!-- En-tête -->
+  <header class="header">
+    <div>
+      <h1>Corridors & Convois</h1>
+      <p>Suivi en direct des expéditions et axes logistiques.</p>
+    </div>
+    <button class="btn-primary" [disabled]="envoi()" (click)="ouvrirModalSuivi()">+ Ouvrir un suivi colis</button>
+  </header>
+
+  <!-- 3 Cartes KPI Simples -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <span class="title">Convois Actifs</span>
+      <div class="number">{{ convoisActifs() }}</div>
+    </div>
+    <div class="kpi-card">
+      <span class="title">Colis en Transit</span>
+      <div class="number">{{ colisEnTransit() }}</div>
+    </div>
+    <div class="kpi-card">
+      <span class="title">Axes Opérationnels</span>
+      <div class="number">{{ corridors().length }}</div>
+    </div>
+  </section>
+
+  <!-- Contenu Principal -->
+  <div class="layout-grid">
+
+    <!-- Tableau à gauche -->
+    <main class="card main-table">
+      <h2>Convois en cours</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Référence & Axe</th>
+            <th>Courtier</th>
+            <th>Statut</th>
+            <th class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="chargement()"><td colspan="4">Chargement…</td></tr>
+          <tr *ngIf="erreur()"><td colspan="4">{{ erreur() }}</td></tr>
+          <tr *ngIf="!chargement() && !erreur() && expeditions().length === 0">
+            <td colspan="4">Aucun groupe en acheminement pour l’instant.</td>
+          </tr>
+          <tr *ngFor="let e of expeditions()" [style.background]="selectionId() === e.groupe.id ? 'var(--surface-alt)' : null">
+            <td>
+              <strong>{{ reference(e) }}</strong>
+              <small>{{ route(e) }}</small>
+            </td>
+            <td>{{ responsable(e) }}</td>
+            <td>
+              <span class="badge" [ngClass]="badge(e)">{{ statut(e) }}</span>
+            </td>
+            <td class="text-right">
+              <button class="btn-sm" (click)="selectionner(e.groupe.id)">Voir</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+
+    <!-- Sidebar à droite -->
+    <aside class="sidebar">
+
+      <!-- Suivi du groupe sélectionné : étapes reçues du grossiste et mises à jour à publier -->
+      <div class="card" *ngIf="selection() as e">
+        <h3>{{ reference(e) }} · {{ e.groupe.titre }}</h3>
+        <p><small>{{ responsable(e) }} · {{ e.groupe.quantiteConfirmee }} pcs confirmées</small></p>
+        <p class="liens-acteurs">
+          <small>
+            Grossiste : <a [routerLink]="['/utilisateurs', e.groupe.grossiste.id]">{{ e.groupe.grossiste.nom }}</a>
+            <ng-container *ngIf="e.groupe.courtier"> · Courtier : <a [routerLink]="['/utilisateurs', e.groupe.courtier.id]">{{ e.groupe.courtier.nom }}</a></ng-container>
+            · <a routerLink="/groupes" [queryParams]="{ id: e.groupe.id }">Acheteurs et historique ➔</a>
+          </small>
+        </p>
+
+        <div class="status-list" *ngIf="e.groupe.porteParGrossiste">
+          <strong>Étapes signalées par le grossiste</strong>
+          <div class="status-item" *ngIf="etapes().length === 0">
+            <span>Aucune étape signalée</span>
+          </div>
+          <div class="status-item" *ngFor="let x of etapes()">
+            <span>{{ x.etape }}<small *ngIf="x.commentaire"> — {{ x.commentaire }}</small></span>
+            <span class="dot-badge green">{{ dateCourte(x.date) }}</span>
+          </div>
+        </div>
+
+        <div class="status-list">
+          <strong>Suivi visible des commerçants</strong>
+          <div class="status-item" *ngIf="!e.convoi">
+            <span>Suivi pas encore ouvert</span>
+          </div>
+          <div class="status-item" *ngFor="let ev of e.convoi?.evenements ?? []">
+            <span>{{ libelleEvenement(ev.statut) }} <small>({{ ev.localisation }})</small></span>
+            <span class="dot-badge green">{{ dateCourte(ev.date) }}</span>
+          </div>
+        </div>
+
+        <p *ngIf="message()"><small>{{ message() }}</small></p>
+
+        <!-- Alerte Étape Grossiste : Arrivés au dépôt -->
+        <div *ngIf="estDerniereEtapeDepot()" class="depot-alert-card">
+          <div class="depot-alert-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Étape Grossiste atteinte : « Arrivés au dépôt » !</span>
+          </div>
+          <p class="depot-alert-desc">
+            Le grossiste a validé la dernière étape. Vous pouvez envoyer directement la notification de récupération contenant la localisation Google Maps du dépôt aux commerçants.
+          </p>
+          <button class="btn-sm btn-depot-notif" [disabled]="envoi()" (click)="notifierDepotAvecGoogleMap(e.groupe)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            Envoyer la notification d'arrivée au dépôt (avec Google Maps)
+          </button>
+        </div>
+
+        <div class="status-list">
+          <button class="btn-sm" *ngFor="let a of actions()" [disabled]="envoi()" (click)="a.executer()">
+            {{ a.libelle }}
+          </button>
+        </div>
+      </div>
+
+      <!-- État des axes -->
+      <div class="card">
+        <h3>État des Couloirs</h3>
+        <div class="status-list">
+          <div class="status-item" *ngIf="corridors().length === 0">
+            <span>Aucun axe actif</span>
+          </div>
+          <div *ngFor="let item of corridors()" class="status-item">
+            <span>{{ item.name }}</span>
+            <span class="dot-badge" [ngClass]="item.color">{{ item.state }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Points de retrait où les commerçants récupèrent leurs colis (RG-53) -->
+      <div class="card">
+        <h3>Points de retrait & Dépôts ({{ points().length }})</h3>
+        <div class="status-list">
+          <div class="status-item" *ngIf="points().length === 0"><span>Aucun point enregistré</span></div>
+          <div class="status-item" *ngFor="let p of points()" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+            <div>
+              <span><strong>{{ p.nom }}</strong> <small>— {{ p.adresse }} ({{ p.quartier || 'Bamako' }})</small></span>
+              <div *ngIf="p.lienGoogleMap" style="margin-top: 3px;">
+                <a [href]="p.lienGoogleMap" target="_blank" rel="noopener noreferrer" class="link-maps">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  Voir sur Google Maps ↗
+                </a>
+              </div>
+            </div>
+            <button *ngIf="peutGererPoints" type="button" class="btn-sm btn-edit-point" (click)="editerPoint(p)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              Modifier
+            </button>
+          </div>
+        </div>
+        <form class="form-point" *ngIf="peutGererPoints" (ngSubmit)="sauvegarderPoint()">
+          <h4 style="margin: 8px 0 4px 0; font-size: 12px; color: var(--text-body);">{{ pointEnEdition() ? 'Modifier le dépôt' : '+ Ajouter un nouveau dépôt' }}</h4>
+          <input name="nom" placeholder="Nom du point (ex. Dépôt Central Dabanani)" required [(ngModel)]="nouveauPoint.nom" />
+          <input name="adresse" placeholder="Adresse complète" required [(ngModel)]="nouveauPoint.adresse" />
+          <input name="quartier" placeholder="Quartier / Ville" [(ngModel)]="nouveauPoint.quartier" />
+          <input name="lienGoogleMap" placeholder="Lien Google Maps (ex. https://maps.google.com/?q=...)" [(ngModel)]="nouveauPoint.lienGoogleMap" />
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-sm" type="submit" [disabled]="envoi() || !nouveauPoint.nom.trim() || !nouveauPoint.adresse.trim()">
+              {{ pointEnEdition() ? 'Enregistrer les modifications' : '+ Ajouter le dépôt' }}
+            </button>
+            <button *ngIf="pointEnEdition()" class="btn-sm" type="button" (click)="annulerEdition()">
+              Annuler
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Action rapide -->
+      <div class="card action-card">
+        <h3>Manifeste Douane</h3>
+        <p>Générer le document d'apurement du convoi sélectionné (commandes, étapes et suivi).</p>
+        <button class="btn-dark" (click)="genererManifeste()">Générer Manifeste</button>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- Modal : Groupes en attente de déblocage du Suivi Officiel -->
+  <div class="modal-backdrop" *ngIf="modalGroupesEnAttente()" (click)="fermerModalGroupes()">
+    <div class="modal-container modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2>Ouvrir un suivi officiel Karavan</h2>
+          <p>Consultez les groupes d'achat en attente du déblocage de leur suivi officiel de convoi.</p>
+        </div>
+        <button type="button" class="btn-close" (click)="fermerModalGroupes()" aria-label="Fermer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Filtres et Recherche -->
+      <div class="modal-toolbar">
+        <div class="search-box">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            placeholder="Rechercher par titre, produit, ID, grossiste…"
+            [ngModel]="rechercheModal()"
+            (ngModelChange)="rechercheModal.set($event)"
+          />
+        </div>
+        <div class="filter-tabs">
+          <button
+            type="button"
+            class="tab-btn"
+            [class.active]="filtreModal() === 'TOUS'"
+            (click)="filtreModal.set('TOUS')"
+          >
+            Tous <span class="tab-count">{{ nombreGroupesEnAttente('TOUS') }}</span>
+          </button>
+          <button
+            type="button"
+            class="tab-btn success-tab"
+            [class.active]="filtreModal() === 'OBJECTIF_ATTEINT'"
+            (click)="filtreModal.set('OBJECTIF_ATTEINT')"
+          >
+            <svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span>100% Atteint</span>
+            <span class="tab-count">{{ nombreGroupesEnAttente('OBJECTIF_ATTEINT') }}</span>
+          </button>
+          <button
+            type="button"
+            class="tab-btn warning-tab"
+            [class.active]="filtreModal() === 'EN_COURS'"
+            (click)="filtreModal.set('EN_COURS')"
+          >
+            <svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>En cours &lt; 100%</span>
+            <span class="tab-count">{{ nombreGroupesEnAttente('EN_COURS') }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Liste des groupes -->
+      <div class="modal-body">
+        <div class="empty-state" *ngIf="groupesEnAttente().length === 0">
+          <div class="empty-icon-wrapper">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+          </div>
+
+          <ng-container *ngIf="filtreModal() === 'OBJECTIF_ATTEINT' && nombreGroupesEnAttente('EN_COURS') > 0">
+            <h4>Aucun groupe à 100% pour le moment</h4>
+            <p>
+              {{ nombreGroupesEnAttente('EN_COURS') }} groupe(s) d'achat sont actuellement en cours de souscription.
+              Leur suivi officiel pourra être débloqué dès qu'ils auront atteint 100% de leur objectif.
+            </p>
+            <button type="button" class="btn-filter-redirect" (click)="filtreModal.set('EN_COURS')">
+              Voir les groupes en cours ({{ nombreGroupesEnAttente('EN_COURS') }})
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </ng-container>
+
+          <ng-container *ngIf="filtreModal() !== 'OBJECTIF_ATTEINT' || nombreGroupesEnAttente('EN_COURS') === 0">
+            <h4 *ngIf="rechercheModal().trim()">Aucun résultat pour « {{ rechercheModal() }} »</h4>
+            <h4 *ngIf="!rechercheModal().trim()">Aucun groupe en attente</h4>
+            <p *ngIf="rechercheModal().trim()">Essayez un autre mot-clé ou réinitialisez votre recherche.</p>
+            <p *ngIf="!rechercheModal().trim()">Tous les groupes éligibles ont déjà leur suivi ouvert ou aucun convoi n'est en attente.</p>
+            <button *ngIf="rechercheModal().trim()" type="button" class="btn-filter-redirect" (click)="rechercheModal.set('')">
+              Effacer la recherche
+            </button>
+          </ng-container>
+        </div>
+
+        <div class="groupes-grid" *ngIf="groupesEnAttente().length > 0">
+          <div
+            class="groupe-card"
+            *ngFor="let g of groupesEnAttente()"
+            [class.eligible]="estEligible(g)"
+            [class.non-eligible]="!estEligible(g)"
+          >
+            <div class="card-top">
+              <div>
+                <span class="groupe-ref">Groupe #{{ g.id }}</span>
+                <h4 class="groupe-titre">{{ g.titre }}</h4>
+                <p class="groupe-produit">{{ g.produit?.nom }} · {{ g.produit?.paysOrigine || '?' }} ➔ Bamako</p>
+              </div>
+              <span class="badge" [ngClass]="estEligible(g) ? 'green' : 'yellow'">
+                {{ estEligible(g) ? '100% Atteint' : progression(g) + '% En cours' }}
+              </span>
+            </div>
+
+            <div class="card-acteurs">
+              <small><strong>Grossiste :</strong> {{ g.grossiste?.nom }}</small>
+              <small *ngIf="g.courtier"><strong>Courtier :</strong> {{ g.courtier?.nom }}</small>
+              <small *ngIf="g.porteParGrossiste" class="porteur-badge">Grossiste acheminement propre</small>
+            </div>
+
+            <!-- Barre de progression -->
+            <div class="progression-section">
+              <div class="progression-infos">
+                <span>Progression de l'objectif</span>
+                <strong>{{ g.quantiteConfirmee }} / {{ g.quantiteCible }} pcs ({{ progression(g) }}%)</strong>
+              </div>
+              <div class="progression-bar">
+                <div
+                  class="progression-fill"
+                  [class.full]="estEligible(g)"
+                  [style.width.%]="progression(g)"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Action de déblocage -->
+            <div class="card-action">
+              <button
+                type="button"
+                *ngIf="estEligible(g)"
+                class="btn-debloquer btn-debloquer-ready"
+                (click)="tenterOuvrirSuivi(g)"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1" y="3" width="15" height="13"></rect>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                  <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                  <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                </svg>
+                Débloquer le suivi officiel Karavan
+              </button>
+
+              <button
+                type="button"
+                *ngIf="!estEligible(g)"
+                class="btn-debloquer btn-debloquer-locked"
+                (click)="tenterOuvrirSuivi(g)"
+                title="Ce groupe n'a pas atteint 100% de l'objectif"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Débloquer le suivi officiel ({{ progression(g) }}%)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pop-up d'alerte bloquant : Objectif non atteint -->
+  <div class="modal-backdrop alert-backdrop" *ngIf="groupeBloquePopup() as gBloque" (click)="fermerPopupBloque()">
+    <div class="modal-alert-card" (click)="$event.stopPropagation()">
+      <div class="alert-icon-wrapper">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--warning-dark)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <h3>Ce groupe n'a pas atteint l'objectif</h3>
+      <p class="alert-text">
+        L'administrateur ne peut pas ouvrir le suivi officiel pour <strong>« {{ gBloque.titre }} » (#{{ gBloque.id }})</strong> tant que l'objectif de 100% n'est pas atteint.
+      </p>
+
+      <div class="alert-box">
+        <div class="alert-stat">
+          <span class="label">Progression actuelle</span>
+          <span class="valeur">{{ progression(gBloque) }}%</span>
+        </div>
+        <div class="alert-stat">
+          <span class="label">Quantité confirmée</span>
+          <span class="valeur">{{ gBloque.quantiteConfirmee }} / {{ gBloque.quantiteCible }} pièces</span>
+        </div>
+        <div class="alert-stat">
+          <span class="label">Manque pour atteindre l'objectif</span>
+          <span class="valeur-highlight">{{ gBloque.quantiteCible - gBloque.quantiteConfirmee }} pièces</span>
+        </div>
+        <div class="progression-bar" style="margin-top: 10px;">
+          <div class="progression-fill" [style.width.%]="progression(gBloque)"></div>
+        </div>
+      </div>
+
+      <p class="alert-note">
+        Conformément aux règles de la plateforme Karavan, le suivi officiel de convoi et l'acheminement ne peuvent être débloqués que lorsque l'objectif de commande est validé à 100%.
+      </p>
+
+      <div class="alert-actions">
+        <button type="button" class="btn-dark" (click)="fermerPopupBloque()">
+          Compris
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

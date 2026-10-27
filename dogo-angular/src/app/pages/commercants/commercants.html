@@ -1,0 +1,118 @@
+<div class="page-container">
+
+  <!-- En-tête -->
+  <header class="header">
+    <div>
+      <h1>Gestion des Commerçants & Portefeuilles Acheteurs</h1>
+      <p>Supervision des comptes acheteurs, suivi des achats groupés et retraits sécurisés.</p>
+    </div>
+    <div class="header-btns">
+      <button class="btn-sec" (click)="charger()">Actualiser l’annuaire 📄</button>
+      <button class="btn-primary" [disabled]="envoi()" (click)="validerRetrait()">Valider un retrait (QR / PIN)</button>
+    </div>
+  </header>
+
+  <!-- 3 Cartes KPI Claires -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <span class="title">Commerçants Inscrits</span>
+      <div class="number">{{ comptes().length }} <small>boutiques</small></div>
+    </div>
+    <div class="kpi-card">
+      <span class="title">Commandes en Attente de Retrait</span>
+      <div class="number">{{ enAttenteRetrait() }} <small>commandes</small></div>
+    </div>
+    <div class="kpi-card gold-accent">
+      <span class="title">Séquestre Actif (Acheteurs)</span>
+      <div class="number gold">{{ sequestreAcheteurs() | number:'1.0-0' }} <small>FCFA</small></div>
+    </div>
+  </section>
+
+  <!-- Contenu Principal -->
+  <div class="layout-grid">
+
+    <!-- Liste des Commerçants à gauche -->
+    <main class="card main-table">
+      <div class="card-header">
+        <h2>Répertoire des Boutiques & Commerçants Clients</h2>
+        <span class="sub-filter">Marché : Tous ({{ comptes().length }})</span>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>BOUTIQUE & COMMERÇANT</th>
+            <th>MARCHÉ & EMPLACEMENT</th>
+            <th>COMMANDES & SÉQUESTRE</th>
+            <th class="text-right">ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="chargement()"><td colspan="4">Chargement…</td></tr>
+          <tr *ngIf="erreur()"><td colspan="4">{{ erreur() }}</td></tr>
+          <tr *ngIf="!chargement() && !erreur() && lignes().length === 0"><td colspan="4">Aucun commerçant inscrit.</td></tr>
+          <tr *ngFor="let m of lignes()">
+            <td>
+              <div class="user-row-cell">
+                <div class="user-avatar-mini green">
+                  <img *ngIf="m.compte.photoUrl" [src]="urlImage(m.compte.photoUrl)" [alt]="m.compte.nom" class="avatar-mini-img" />
+                  <span *ngIf="!m.compte.photoUrl">{{ m.compte.nom.slice(0, 2).toUpperCase() }}</span>
+                </div>
+                <div class="user-row-info">
+                  <a class="nom-lien" [routerLink]="['/utilisateurs', m.compte.id]">{{ m.compte.nomBoutique || m.compte.nom }}</a>
+                  <small>{{ m.compte.nom }} · {{ m.compte.telephone }}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <strong>{{ m.compte.quartierBamako || 'Quartier non renseigné' }}</strong>
+              <small>{{ m.compte.adresseLivraison || m.compte.canalVente || '—' }}</small>
+            </td>
+            <td>
+              <div class="order-info">
+                <strong>{{ m.commandes.length }} commande{{ m.commandes.length > 1 ? 's' : '' }} · <span class="amount">{{ fcfa(m.sequestre) }}</span></strong>
+                <div class="sub-row">
+                  <small>{{ resumeCommandes(m) }}</small>
+                  <span class="badge" [ngClass]="m.badge">{{ m.compte.statut === 'SUSPENDU' ? 'Suspendu' : m.statut }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="text-right">
+              <button class="btn-sm" [disabled]="envoi()" (click)="consultMerchant(m)">
+                Fiche ➔
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+
+    <!-- Sidebar à droite -->
+    <aside class="sidebar">
+
+      <!-- Répartition des Commerçants -->
+      <div class="card">
+        <h3>Répartition des Commerçants</h3>
+        <div class="distribution-list">
+          <div *ngFor="let item of marketDistribution()" class="dist-item">
+            <span class="dist-name">{{ item.name }}</span>
+            <span class="dist-count">{{ item.count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assistance Code PIN de Secours -->
+      <div class="card pin-card">
+        <h3>Assistance Retrait & Code PIN</h3>
+        <p>Code bloqué après 3 essais ou perdu : un nouveau code est envoyé par SMS au commerçant.</p>
+        <p *ngIf="message()"><small>{{ message() }}</small></p>
+        <button class="btn-dark" [disabled]="envoi()" (click)="generateEmergencyPin()">
+          Générer un Code PIN de Secours 🔑
+        </button>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>

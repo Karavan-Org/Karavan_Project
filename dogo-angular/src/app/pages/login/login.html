@@ -1,0 +1,112 @@
+<div class="login-container">
+    <!-- Card principale de connexion -->
+    <div class="login-card">
+
+        <!-- Section Formulaire (Gauche) -->
+        <div class="form-section">
+            <div class="form-header">
+                <h2>Connexion</h2>
+                <p class="subtitle">Bienvenue sur Karavan - Plateforme d'achats groupés</p>
+            </div>
+
+            <div style="background: #fdf6f0; border: 1px solid #ebd3c2; border-left: 4px solid #AC7F5E; padding: 10px 14px; border-radius: 10px; margin-bottom: 18px; font-size: 12.5px; color: #5a4638; line-height: 1.5;">
+                <span style="font-weight: 700; color: #AC7F5E;">💡 Espace Administration Karavan :</span><br/>
+                Téléphone : <b>+22370000001</b> (pré-rempli)<br/>
+                Mot de passe : <b>Dogo2026!</b>
+            </div>
+
+            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+
+                <!-- Identifiant / Email -->
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <span class="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </span>
+                        <input type="tel" formControlName="telephone" placeholder="Numéro de téléphone (ex: +22370000001)"
+                            autocomplete="off"
+                            [class.is-invalid]="loginForm.get('telephone')?.touched && loginForm.get('telephone')?.invalid" />
+                    </div>
+
+                    <div class="error-msg"
+                        *ngIf="loginForm.get('telephone')?.touched && loginForm.get('telephone')?.invalid">
+                        Numéro de téléphone requis
+                    </div>
+                </div>
+
+                <!-- Mot de passe -->
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <span class="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </span>
+
+                        <input [type]="afficherMotDePasse ? 'text' : 'password'" formControlName="motDePasse" placeholder="Mot de passe"
+                            autocomplete="off"
+                            [class.is-invalid]="loginForm.get('motDePasse')?.touched && loginForm.get('motDePasse')?.invalid" />
+
+                        <button type="button" class="btn-toggle-mdp" (click)="afficherMotDePasse = !afficherMotDePasse" tabindex="-1" title="Afficher/masquer le mot de passe" style="background:none;border:none;cursor:pointer;padding:0 8px;display:flex;align-items:center;">
+                            <span class="icon" style="color:var(--text-muted);">
+                                <svg *ngIf="!afficherMotDePasse" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg *ngIf="afficherMotDePasse" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="error-msg" *ngIf="loginForm.get('motDePasse')?.touched && loginForm.get('motDePasse')?.invalid">
+                        Mot de passe requis (ex: Dogo2026!)
+                    </div>
+                </div>
+
+                <p class="form-options">
+                    Mot de passe oublié ? Contactez l’administrateur de la plateforme pour récupérer votre accès.
+                </p>
+
+                <!-- Message d'erreur serveur -->
+                <div class="server-error" *ngIf="errorMessage">
+                    {{ errorMessage }}
+                </div>
+
+                <!-- Bouton Submit -->
+                <button type="submit" class="btn-submit" [disabled]="isLoading">
+                    <span *ngIf="!isLoading">Se connecter</span>
+                    <span *ngIf="isLoading" class="spinner">Connexion en cours...</span>
+                </button>
+
+                <!-- Raccourci Démo -->
+                <div style="margin-top: 14px; text-align: center;">
+                    <button type="button" (click)="remplirDemo()" style="background: none; border: 1px dashed #A8204B; color: #A8204B; border-radius: 8px; padding: 6px 14px; font-size: 12px; cursor: pointer; font-weight: 600;">
+                        🔑 Remplir les identifiants Admin Démo (+22370000001)
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Section Illustration / Visual (Droite) -->
+        <div class="illustration-section">
+            <div class="wave-bg"></div>
+            <div class="illustration-content">
+                <!-- Illustration officielle Karavan -->
+                <img src="assets/logo_karavan.png" alt="Karavan Achats Groupés" class="hero-img" />
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,10 @@
+@use '../../shared/page';
+
+.layout-grid { grid-template-columns: minmax(0, 1fr) 380px; }
+
+.actions-card {
+  background: var(--warning-light);
+  border-color: var(--warning-border);
+}
+
+.btn-ligne { padding: 6px 12px; font-size: 12px; }

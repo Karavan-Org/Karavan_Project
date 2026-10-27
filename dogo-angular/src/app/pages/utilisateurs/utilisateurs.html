@@ -1,0 +1,112 @@
+<div class="page-container">
+
+  <header class="header">
+    <div>
+      <h1>Utilisateurs de la plateforme</h1>
+      <p>Commerçants, grossistes et courtiers : statut, groupes et partenaires de chaque compte.</p>
+    </div>
+    <div class="header-btns">
+      <button class="btn-sec" type="button" (click)="exporter()">Exporter (CSV)</button>
+      <button class="btn-sec" type="button" [disabled]="chargement()" (click)="charger()">Actualiser</button>
+      <a class="btn-primary" *ngIf="auth.peut('ADMIN_CREER')" routerLink="/administrateurs">+ Administrateur</a>
+    </div>
+  </header>
+
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <span class="title">Comptes</span>
+      <div class="number">{{ comptes().get('TOUS') ?? 0 }}</div>
+      <span class="sub">
+        {{ comptes().get('GROSSISTE') ?? 0 }} grossistes · {{ comptes().get('COURTIER') ?? 0 }} courtiers ·
+        {{ comptes().get('COMMERCANT') ?? 0 }} commerçants
+      </span>
+    </div>
+    <div class="kpi-card">
+      <span class="title">KYC en attente</span>
+      <div class="number orange">{{ enAttente() }}</div>
+      <a class="sub lien" *ngIf="auth.peut('KYC_VALIDER')" routerLink="/kyc-validation">Examiner les dossiers ➔</a>
+    </div>
+    <div class="kpi-card">
+      <span class="title">Comptes suspendus</span>
+      <div class="number">{{ suspendus() }}</div>
+      <span class="sub">Connexion bloquée (RG-09)</span>
+    </div>
+  </section>
+
+  <main class="card">
+    <div class="barre-outils">
+      <div class="onglets">
+        <button
+          type="button"
+          *ngFor="let o of ongletsVisibles()"
+          [class.actif]="filtre() === o.cle"
+          (click)="filtre.set(o.cle)">
+          {{ o.libelle }}<span class="compte">{{ comptes().get(o.cle) ?? 0 }}</span>
+        </button>
+      </div>
+      <div class="onglets">
+        <button
+          type="button"
+          *ngFor="let s of statuts"
+          [class.actif]="filtreStatut() === s.cle"
+          (click)="filtreStatut.set(s.cle)">
+          {{ s.libelle }}
+        </button>
+      </div>
+      <input
+        class="champ-recherche"
+        type="search"
+        placeholder="Nom, téléphone, boutique, NIF, RCCM, licence, quartier…"
+        [ngModel]="texte()"
+        (ngModelChange)="texte.set($event)" />
+    </div>
+
+    <p class="message erreur" *ngIf="erreur()">{{ erreur() }}</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Compte</th>
+            <th>Type</th>
+            <th>Entreprise</th>
+            <th>Statut</th>
+            <th>Groupes</th>
+            <th>Partenaires liés</th>
+            <th>Séquestre bloqué</th>
+            <th class="text-right"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="chargement() && lignes().length === 0"><td colspan="8">Chargement…</td></tr>
+          <tr *ngIf="!chargement() && lignes().length === 0"><td colspan="8" class="vide">Aucun compte ne correspond.</td></tr>
+          <tr *ngFor="let l of lignes()" class="cliquable" (click)="ouvrir(l.membre)">
+            <td>
+              <div class="user-row-cell">
+                <div class="user-avatar-mini" [ngClass]="badgeType(l.membre.type)">
+                  <img *ngIf="l.membre.photoUrl" [src]="urlImage(l.membre.photoUrl)" [alt]="l.membre.nom" class="avatar-mini-img" />
+                  <span *ngIf="!l.membre.photoUrl">{{ l.membre.nom.slice(0, 2).toUpperCase() }}</span>
+                </div>
+                <div class="user-row-info">
+                  <strong>{{ l.membre.nom }}</strong>
+                  <small>{{ l.membre.telephone }} · inscrit le {{ dateCourte(l.membre.dateCreation) }}</small>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge" [ngClass]="badgeType(l.membre.type)">{{ libellesType[l.membre.type] }}</span></td>
+            <td>{{ l.membre.entreprise || '—' }}</td>
+            <td><span class="badge" [ngClass]="badgeStatut(l.membre.statut)">{{ libellesCompte[l.membre.statut] ?? l.membre.statut }}</span></td>
+            <td>
+              <strong>{{ l.groupes }}</strong>
+              <small *ngIf="l.groupesActifs">{{ l.groupesActifs }} en cours</small>
+            </td>
+            <td>{{ l.partenaires }}</td>
+            <td>{{ l.sequestre ? fcfa(l.sequestre) : '—' }}</td>
+            <td class="text-right"><button class="btn-sm" type="button">Fiche ➔</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+</div>

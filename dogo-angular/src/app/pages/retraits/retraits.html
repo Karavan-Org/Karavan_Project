@@ -1,0 +1,105 @@
+<div class="page-container">
+
+  <header class="header">
+    <div>
+      <h1>Retraits au dépôt</h1>
+      <p>Remise des colis aux commerçants : QR code (caméra ou lecteur) ou numéro de commande + PIN.</p>
+    </div>
+    <button class="btn-sec" type="button" (click)="chargerCommandes()">Actualiser</button>
+  </header>
+
+  <div class="layout-grid">
+
+    <main class="colonne">
+      <section class="card">
+        <div class="onglets">
+          <button type="button" [class.actif]="mode() === 'CAMERA'" (click)="changerMode('CAMERA')">📷 Scanner avec la caméra</button>
+          <button type="button" [class.actif]="mode() === 'LECTEUR'" (click)="changerMode('LECTEUR')">Lecteur de QR code</button>
+          <button type="button" [class.actif]="mode() === 'PIN'" (click)="changerMode('PIN')">N° de commande + PIN</button>
+        </div>
+
+        <!-- Caméra de l'ordinateur -->
+        <div class="zone" *ngIf="mode() === 'CAMERA'">
+          <div class="viseur" *ngIf="cameraActive(); else cameraArretee">
+            <video #video playsinline muted></video>
+            <span class="cadre"></span>
+          </div>
+          <ng-template #cameraArretee>
+            <div class="viseur vide-viseur">
+              <span>Présentez le QR code affiché dans l'application du commerçant.</span>
+            </div>
+          </ng-template>
+          <canvas #canvas hidden></canvas>
+          <div class="actions">
+            <button class="btn-primary" type="button" *ngIf="!cameraActive()" [disabled]="envoi()" (click)="demarrerCamera()">Activer la caméra</button>
+            <button class="btn-sec" type="button" *ngIf="cameraActive()" (click)="arreterCamera()">Arrêter</button>
+          </div>
+        </div>
+
+        <!-- Lecteur USB : il saisit le contenu du QR code puis « Entrée » -->
+        <form class="zone formulaire" *ngIf="mode() === 'LECTEUR'" (ngSubmit)="validerLecteur()">
+          <label>
+            Code lu (placez le curseur ici puis scannez)
+            <input name="codeLecteur" autocomplete="off" autofocus [(ngModel)]="codeLecteur" placeholder="Contenu du QR code" />
+          </label>
+          <div class="actions">
+            <button class="btn-primary" type="submit" [disabled]="envoi() || !codeLecteur.trim()">Valider le retrait</button>
+          </div>
+        </form>
+
+        <!-- Numéro de commande + PIN reçu par SMS -->
+        <form class="zone formulaire" *ngIf="mode() === 'PIN'" (ngSubmit)="validerPin()">
+          <label>
+            Numéro de commande
+            <input name="commandeId" type="number" min="1" required [(ngModel)]="commandeId" />
+          </label>
+          <label>
+            PIN de retrait (SMS du commerçant)
+            <input name="pin" type="password" inputmode="numeric" maxlength="6" required [(ngModel)]="pin" autocomplete="off" />
+          </label>
+          <small class="vide">3 PIN erronés bloquent le code : un nouveau code peut alors être envoyé (RG-54).</small>
+          <div class="actions">
+            <button class="btn-primary" type="submit" [disabled]="envoi() || !commandeId || !pin.trim()">Valider le retrait</button>
+          </div>
+        </form>
+
+        <p class="message" [class.erreur]="echec()" *ngIf="message()">{{ message() }}</p>
+      </section>
+
+      <section class="card" *ngIf="historique().length">
+        <h3>Retraits validés pendant cette séance</h3>
+        <ul class="liste-liens">
+          <li *ngFor="let r of historique()">
+            <div>
+              <strong>Commande #{{ r.commandeId }}</strong>
+              <small>{{ dateCourte(r.date) }} · par {{ r.mode === 'QR' ? 'QR code' : 'PIN' }}</small>
+            </div>
+            <span class="badge green">Retirée</span>
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <aside class="card">
+      <h3>Prêtes pour retrait ({{ enAttente() }})</h3>
+      <p class="vide" *ngIf="chargement()">Chargement…</p>
+      <p class="vide" *ngIf="!chargement() && !enAttente()">Aucune commande en attente de retrait.</p>
+      <ul class="liste-liens">
+        <li *ngFor="let c of prete()">
+          <div>
+            <strong>#{{ c.id }} · {{ c.quantite }} × {{ c.groupe.produit.nom }}</strong>
+            <small>
+              <a class="lien" *ngIf="c.commercantId; else nomSeul" [routerLink]="['/utilisateurs', c.commercantId]">{{ c.commercantNom }}</a>
+              <ng-template #nomSeul>{{ c.commercantNom || 'Commerçant' }}</ng-template>
+              · groupe #{{ c.groupeId }}
+            </small>
+          </div>
+          <div class="mini-actions">
+            <button class="btn-sm" type="button" (click)="choisir(c)">PIN</button>
+            <button class="btn-sm" type="button" [disabled]="envoi()" (click)="regenerer(c)" title="Envoyer un nouveau code par SMS">🔑</button>
+          </div>
+        </li>
+      </ul>
+    </aside>
+  </div>
+</div>

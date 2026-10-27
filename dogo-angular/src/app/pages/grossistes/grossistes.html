@@ -1,0 +1,124 @@
+<div class="page-container">
+
+  <!-- En-tête -->
+  <header class="header">
+    <div>
+      <h1>Grossistes & Dépôts Partenaires</h1>
+      <p>Supervision des dépôts agréés, validation des offres et gestion des stocks.</p>
+    </div>
+    <button class="btn-primary" (click)="agreer()">+ Agréer un Grossiste</button>
+  </header>
+
+  <!-- 3 Cartes KPI Claires -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <span class="title">Dépôts Agréés</span>
+      <div class="number">{{ agrees() }}</div>
+    </div>
+    <div class="kpi-card">
+      <span class="title">Lots en Distribution</span>
+      <div class="number">{{ lotsEnDistribution() }} <small>campagnes</small></div>
+    </div>
+    <div class="kpi-card gold-accent">
+      <span class="title">Valeur sous Séquestre</span>
+      <div class="number gold">{{ valeurSequestre() | number:'1.0-0' }} <small>FCFA</small></div>
+    </div>
+  </section>
+
+  <!-- Contenu Principal -->
+  <div class="layout-grid">
+
+    <!-- Liste des Grossistes à gauche -->
+    <main class="card main-table">
+      <div class="card-header">
+        <h2>Dépôts Actifs à Bamako</h2>
+        <span class="sub-filter">Marché : Tous ({{ comptes().length }})</span>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>GROSSISTE & MARCHÉ</th>
+            <th>LOTS ACTIFS & STOCK</th>
+            <th>SÉQUESTRE</th>
+            <th class="text-right">ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="chargement()"><td colspan="4">Chargement…</td></tr>
+          <tr *ngIf="erreur()"><td colspan="4">{{ erreur() }}</td></tr>
+          <tr *ngIf="!chargement() && !erreur() && lignes().length === 0"><td colspan="4">Aucun grossiste inscrit.</td></tr>
+          <tr *ngFor="let l of lignes()">
+            <td>
+              <div class="user-row-cell">
+                <div class="user-avatar-mini gold">
+                  <img *ngIf="l.compte.photoUrl" [src]="urlImage(l.compte.photoUrl)" [alt]="l.compte.nom" class="avatar-mini-img" />
+                  <span *ngIf="!l.compte.photoUrl">{{ l.compte.nom.slice(0, 2).toUpperCase() }}</span>
+                </div>
+                <div class="user-row-info">
+                  <a class="nom-lien" [routerLink]="['/utilisateurs', l.compte.id]">{{ l.compte.nomBoutiqueMarche || l.compte.nom }}</a>
+                  <small>{{ l.compte.nom }} · {{ l.compte.telephone }} · {{ libelleStatut(l.compte.statut) }}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge orange">{{ l.groupesActifs }} lots actifs</span>
+              <small class="block-text">{{ l.produits }}</small>
+              <small class="block-text" *ngIf="l.partenaires">Courtiers : {{ l.partenaires }}</small>
+            </td>
+            <td>
+              <strong class="green-text">{{ fcfa(l.sequestre) }}</strong>
+            </td>
+            <td class="text-right">
+              <button class="btn-sm" [disabled]="envoi()" (click)="gerer(l)">
+                {{ l.compte.statut === 'EN_ATTENTE' ? 'À valider' : 'Fiche' }} ➔
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+
+    <!-- Modération rapide à droite -->
+    <aside class="sidebar">
+
+      <div class="card moderation-card" *ngIf="peutModerer()">
+        <div class="card-header-sm">
+          <h3>Modération Lot en Attente</h3>
+          <span class="badge-urgent" *ngIf="aPublier().length">{{ aPublier().length }} EN ATTENTE</span>
+        </div>
+
+        <div class="lot-preview" *ngIf="lotEnAttente() as g; else aucunLot">
+          <h4>{{ g.titre }} ({{ g.quantiteCible }} pcs)</h4>
+          <p>Grossiste : <strong>{{ g.grossiste.nom }}</strong>{{ g.porteParGrossiste ? ' (porte le groupe)' : '' }}</p>
+          <p *ngIf="g.courtier">Courtier : <strong>{{ g.courtier.nom }}</strong></p>
+          <p>Prix fixé : <strong>{{ fcfa(g.prixUnitaire) }} / pc</strong></p>
+          <span class="check-text">
+            {{ g.disponibiliteValidee ? '✓ Stock confirmé par le grossiste (RG-18)' : '⏳ Stock pas encore confirmé' }}
+            · Min. {{ g.conditions.quantiteMinParCommercant }} pcs/commerçant
+          </span>
+        </div>
+        <ng-template #aucunLot>
+          <div class="lot-preview">
+            <p>Aucun groupe en attente de publication.</p>
+          </div>
+        </ng-template>
+
+        <p *ngIf="message()"><small>{{ message() }}</small></p>
+
+        <button class="btn-success" [disabled]="envoi() || !lotEnAttente()" (click)="approveLot()">
+          Approuver et Publier le Lot
+        </button>
+        <button class="btn-sm" *ngIf="lotEnAttente()" [disabled]="envoi()" (click)="refuserLot()">
+          Refuser (motif)
+        </button>
+        <a class="lien-discret" routerLink="/groupes" [queryParams]="{ onglet: 'A_MODERER' }">
+          Voir tous les groupes à modérer ({{ aPublier().length }}) ➔
+        </a>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>

@@ -1,0 +1,92 @@
+
+<aside class="sidebar">
+
+  <!-- Identité Karavan -->
+  <div class="brand-header">
+    <img
+      src="assets/logo_karavan.png"
+      alt="Logo Karavan"
+      class="brand-logo"
+    />
+
+    <div class="brand-info">
+      <span class="brand-name">Karavan</span>
+      <span class="brand-tag">ADMINISTRATION</span>
+    </div>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <!-- Navigation -->
+  <nav class="nav-container" aria-label="Navigation principale">
+
+    <div *ngFor="let section of sections(); trackBy: parTitre" class="nav-section">
+
+      <h2 class="section-title">
+        {{ section.title }}
+      </h2>
+
+      <ul>
+        <li *ngFor="let item of section.items; trackBy: parRoute">
+
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="nav-item"
+            [attr.aria-label]="item.label">
+
+            <mat-icon class="nav-icon">
+              {{ item.icon }}
+            </mat-icon>
+
+            <span class="nav-label">
+              {{ item.label }}
+            </span>
+
+            <span
+              *ngIf="item.badge"
+              class="nav-badge">
+              {{ item.badge }}
+            </span>
+
+          </a>
+
+        </li>
+      </ul>
+
+    </div>
+
+  </nav>
+
+  <!-- Profil administrateur -->
+  <footer class="user-footer">
+
+    <div class="avatar">
+      {{ adminProfile.initials }}
+    </div>
+
+    <div class="user-details">
+      <span class="user-name">
+        {{ adminProfile.name }}
+      </span>
+
+      <span class="user-role">
+        {{ adminProfile.role }}
+      </span>
+    </div>
+
+    <button
+      type="button"
+      class="logout-btn"
+      aria-label="Déconnexion"
+      title="Déconnexion"
+      (click)="deconnecter()">
+
+      <mat-icon>logout</mat-icon>
+
+    </button>
+
+  </footer>
+
+</aside>

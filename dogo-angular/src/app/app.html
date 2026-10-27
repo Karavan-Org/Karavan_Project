@@ -1,0 +1,20 @@
+<!-- CAS 1 : Si c'est la page de connexion (Plein écran sans Sidebar/Header) -->
+<ng-container *ngIf="isLoginPage">
+  <router-outlet></router-outlet>
+</ng-container>
+
+<!-- CAS 2 : Si c'est une autre page (Dashboard, Finance, etc.) avec la disposition normale -->
+<div class="app-layout" *ngIf="!isLoginPage">
+  <!-- 1. Votre Sidebar rénovée -->
+  <app-sidebar></app-sidebar>
+
+  <div class="main-wrapper">
+    <!-- 2. Votre Header rénové -->
+    <app-header></app-header>
+
+    <!-- 3. Le contenu de la page active -->
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
