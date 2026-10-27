@@ -42,7 +42,7 @@ class AppPopups {
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 420),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.couleurCarte(ctx),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -78,10 +78,10 @@ class AppPopups {
                     Text(
                       titre,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.couleurTexte(ctx),
                         letterSpacing: -0.2,
                       ),
                     ),
@@ -91,9 +91,9 @@ class AppPopups {
                     Text(
                       message,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13.5,
-                        color: Color(0xFF555555),
+                        color: AppTheme.couleurTexteAttenue(ctx),
                         height: 1.45,
                       ),
                     ),
@@ -105,16 +105,16 @@ class AppPopups {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF7F5F2),
+                          color: AppTheme.couleurSurfaceDouce(ctx),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE8E2D9)),
+                          border: Border.all(color: AppTheme.couleurBordure(ctx)),
                         ),
                         child: Text(
                           detailSupplementaire,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF6E6862),
+                            color: AppTheme.couleurTexteAttenue(ctx),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -134,8 +134,8 @@ class AppPopups {
                                 onSecondBouton?.call();
                               },
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.textPrimary,
-                                side: const BorderSide(color: Color(0xFFD6CEC5)),
+                                foregroundColor: AppTheme.couleurTexte(ctx),
+                                side: BorderSide(color: AppTheme.couleurBordureForte(ctx)),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
@@ -202,8 +202,8 @@ class AppPopups {
       message: message,
       detailSupplementaire: detail,
       icone: Icons.check_circle_outline_rounded,
-      couleurIcone: const Color(0xFF1E88E5), // Bleu information/action déjà faite
-      couleurFondIcone: const Color(0xFFE3F2FD),
+      couleurIcone: AppTheme.olive, // Bleu information/action déjà faite
+      couleurFondIcone: AppTheme.roseClair,
       boutonTexte: "Fermer et continuer",
       onFermer: onFermer,
     );
@@ -223,8 +223,8 @@ class AppPopups {
       message: message,
       detailSupplementaire: detail,
       icone: Icons.info_outline_rounded,
-      couleurIcone: const Color(0xFFE65100), // Ambre/Orange alerte douce
-      couleurFondIcone: const Color(0xFFFFF3E0),
+      couleurIcone: AppTheme.ocreProfond, // Ambre/Orange alerte douce
+      couleurFondIcone: AppTheme.ocreClair,
       boutonTexte: "J'ai compris",
       onFermer: onFermer,
     );

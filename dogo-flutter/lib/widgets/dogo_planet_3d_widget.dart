@@ -75,7 +75,7 @@ class _DogoPlanet3DWidgetState extends State<DogoPlanet3DWidget> {
               height: 36,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.olive),
               ),
             ),
           ),
@@ -108,7 +108,7 @@ class _DogoPlanet3DWidgetState extends State<DogoPlanet3DWidget> {
     }
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.background,
+        color: AppTheme.couleurFond(context),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Center(
@@ -128,10 +128,10 @@ class _DogoPlanet3DWidgetState extends State<DogoPlanet3DWidget> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               "Animation 3D Three.js active",
               style: TextStyle(
-                color: AppTheme.primaryDark,
+                color: AppTheme.couleurAccent(context),
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),

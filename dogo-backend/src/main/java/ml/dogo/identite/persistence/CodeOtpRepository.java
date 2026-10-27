@@ -13,6 +13,15 @@ public interface CodeOtpRepository extends JpaRepository<CodeOtp, Long> {
 
     Optional<CodeOtp> findFirstByUtilisateurIdOrderByDateCreationDesc(Long utilisateurId);
 
+    /** Dernier code envoyé à un numéro, quel que soit le compte (délai entre deux envois, RG-02). */
+    Optional<CodeOtp> findFirstByTelephoneOrderByDateCreationDesc(String telephone);
+
+    /** Codes envoyés à un numéro depuis un instant (plafond d'envoi, RG-02). */
+    long countByTelephoneAndDateCreationAfter(String telephone, Instant depuis);
+
+    /** Vrai si le compte a un code encore utilisable : une inscription est en cours (RG-01). */
+    boolean existsByUtilisateurIdAndUtiliseFalseAndExpirationAfter(Long utilisateurId, Instant maintenant);
+
     /** Un nouveau code annule les précédents (RG-02). */
     @Modifying
     @Query("update CodeOtp c set c.utilise = true where c.utilisateurId = :uid and c.utilise = false")

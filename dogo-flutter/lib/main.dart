@@ -7,6 +7,7 @@ import 'grossiste/grossiste_documents_kyc_screen.dart';
 import 'grossiste/grossiste_main_nav.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/splash_launch_screen.dart';
+import 'models/role_acteur.dart';
 import 'services/api/api_config.dart';
 import 'services/lien_groupe.dart';
 import 'services/theme_service.dart';
@@ -85,6 +86,13 @@ class DogoApp extends StatelessWidget {
         if (settings.name == '/grossiste/kyc') {
           final motif = settings.arguments as String?;
           return MaterialPageRoute(builder: (_) => GrossisteDocumentsKycScreen(motifRejet: motif), settings: settings);
+        }
+        if (settings.name == '/courtier/kyc') {
+          final motif = settings.arguments as String?;
+          return MaterialPageRoute(
+            builder: (_) => GrossisteDocumentsKycScreen(motifRejet: motif, role: RoleActeur.courtier),
+            settings: settings,
+          );
         }
         if (settings.name == '/onboarding') {
           return MaterialPageRoute(builder: (_) => const OnboardingScreen(), settings: settings);

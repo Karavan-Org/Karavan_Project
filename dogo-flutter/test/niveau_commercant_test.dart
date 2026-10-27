@@ -62,7 +62,7 @@ void main() {
       expect(find.text("Plus que 8 commande(s) pour atteindre le Niveau 3 • VIP !"), findsOneWidget);
 
       // Vérifie les 3 paliers
-      expect(find.text("1 à 4 commandes"), findsOneWidget);
+      expect(find.text("0 à 4 commandes"), findsOneWidget);
       expect(find.text("5 à 19 commandes"), findsOneWidget);
       expect(find.text("20 commandes et +"), findsOneWidget);
       expect(find.text("Votre niveau"), findsOneWidget);
@@ -71,7 +71,7 @@ void main() {
       expect(find.text("Explorer les groupes d'achat"), findsOneWidget);
     });
 
-    testWidgets('ProfilCommercantScreen ouvre la feuille au tap sur le badge Niveau 2', (tester) async {
+    testWidgets('ProfilCommercantScreen ouvre la feuille au tap sur le badge de niveau', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: ProfilCommercantScreen(),
@@ -80,8 +80,9 @@ void main() {
 
       await tester.pump();
 
-      // On trouve le badge "Niveau 2"
-      final badgeFinder = find.text("Niveau 2");
+      // Sans commande (nouveau compte), le commerçant est au Niveau 1 : jamais une valeur de maquette
+      expect(find.text("Niveau 2"), findsNothing);
+      final badgeFinder = find.text("Niveau 1");
       expect(badgeFinder, findsOneWidget);
 
       // On clique dessus pour ouvrir la feuille

@@ -67,7 +67,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("Nouveau numéro Mobile Money", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          title: const Text("Nouveau numéro Mobile Money", style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 16)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -136,7 +136,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(e is ApiException ? e.messageComplet : "Erreur lors de l'ajout : $e"),
-          backgroundColor: const Color(0xFFC0392B),
+          backgroundColor: AppTheme.danger,
         ),
       );
     }
@@ -154,7 +154,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(e is ApiException ? e.messageComplet : "Erreur : $e"),
-          backgroundColor: const Color(0xFFC0392B),
+          backgroundColor: AppTheme.danger,
         ),
       );
     }
@@ -171,7 +171,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Annuler")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFC0392B),
+              backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -194,7 +194,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(e is ApiException ? e.messageComplet : "Impossible de supprimer : $e"),
-          backgroundColor: const Color(0xFFC0392B),
+          backgroundColor: AppTheme.danger,
         ),
       );
     }
@@ -208,9 +208,9 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               "NUMÉROS MOBILE MONEY",
-              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF8C7E74), letterSpacing: 0.8),
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppTheme.couleurTexteAttenue(context), letterSpacing: 0.8),
             ),
             TextButton.icon(
               onPressed: _ajouterMoyen,
@@ -222,9 +222,9 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
         const SizedBox(height: 4),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.couleurCarte(context),
             borderRadius: BorderRadius.circular(18),
-            boxShadow: const [BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3))],
+            boxShadow: const [BoxShadow(color: Color(0x062C241E), blurRadius: 10, offset: Offset(0, 3))],
           ),
           child: _chargement
               ? const Padding(
@@ -236,7 +236,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
                       padding: const EdgeInsets.all(16),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, color: Color(0xFFC0392B), size: 20),
+                          const Icon(Icons.error_outline, color: AppTheme.danger, size: 20),
                           const SizedBox(width: 8),
                           Expanded(child: Text(_erreur!, style: const TextStyle(fontSize: 12))),
                           IconButton(icon: const Icon(Icons.refresh, size: 18), onPressed: _charger),
@@ -248,9 +248,9 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
                           padding: const EdgeInsets.all(20),
                           child: Column(
                             children: [
-                              const Icon(Icons.phone_android_outlined, size: 36, color: Color(0xFFC7B8AA)),
+                              const Icon(Icons.phone_android_outlined, size: 36, color: AppTheme.textePale),
                               const SizedBox(height: 8),
-                              const Text("Aucun numéro Mobile Money enregistré.", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+                              Text("Aucun numéro Mobile Money enregistré.", style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context))),
                               const SizedBox(height: 10),
                               OutlinedButton.icon(
                                 onPressed: _ajouterMoyen,
@@ -264,7 +264,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _moyens.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1, indent: 56, color: Color(0xFFF3ECE5)),
+                          separatorBuilder: (_, __) => Divider(height: 1, indent: 56, color: AppTheme.couleurBordure(context)),
                           itemBuilder: (context, i) {
                             final m = _moyens[i];
                             final opColor = _couleurOperateur(m.operateur);
@@ -289,14 +289,14 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
                                         color: AppTheme.success.withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
-                                      child: const Text("Défaut", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.success)),
+                                      child: Text("Défaut", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.couleurSucces(context))),
                                     ),
                                   ],
                                 ],
                               ),
-                              subtitle: Text(_nomOperateur(m.operateur), style: const TextStyle(fontSize: 11.5, color: Color(0xFF8C7E74))),
+                              subtitle: Text(_nomOperateur(m.operateur), style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context))),
                               trailing: PopupMenuButton<String>(
-                                icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF8C7E74)),
+                                icon: Icon(Icons.more_vert, size: 20, color: AppTheme.couleurTexteAttenue(context)),
                                 onSelected: (val) {
                                   if (val == 'defaut') _definirParDefaut(m);
                                   if (val == 'supprimer') _supprimer(m);
@@ -306,7 +306,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
                                     const PopupMenuItem(value: 'defaut', child: Text("Définir par défaut")),
                                   const PopupMenuItem(
                                     value: 'supprimer',
-                                    child: Text("Supprimer", style: TextStyle(color: Color(0xFFC0392B))),
+                                    child: Text("Supprimer", style: TextStyle(color: AppTheme.danger)),
                                   ),
                                 ],
                               ),

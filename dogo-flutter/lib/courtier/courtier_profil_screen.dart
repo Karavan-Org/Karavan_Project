@@ -5,10 +5,13 @@ import 'mes_groupes_courtier_screen.dart';
 import 'historique_courtier_screen.dart';
 import 'parametres_courtier_screen.dart';
 import 'notifications_courtier_screen.dart';
+import '../widgets/mes_documents.dart';
+import '../models/role_acteur.dart';
 import 'assistance_courtier_screen.dart';
 import '../services/auth_service.dart';
 import '../widgets/avatar_profil_interactif.dart';
 import '../widgets/bouton_bascule_theme.dart';
+import '../services/notification_api_service.dart';
 
 /// Écran du Profil Courtier fidèle à la maquette Figma Dogo (Frame "profil" Courtier)
 /// Nom : Amadou Touré
@@ -27,6 +30,15 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
   void initState() {
     super.initState();
     AuthService.instance.rechargerProfil();
+    _chargerNonLues();
+  }
+
+  /// Notifications non lues, lues sur le serveur (un nouveau compte n'a que celle de bienvenue)
+  int _nonLues = 0;
+
+  Future<void> _chargerNonLues() async {
+    final n = await NotificationApiService.instance.nombreNonLues();
+    if (mounted) setState(() => _nonLues = n);
   }
 
   void _confirmerDeconnexion(BuildContext context) {
@@ -34,18 +46,18 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: const Text(
+        title: Text(
           "Déconnexion",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2C241E)),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(ctx)),
         ),
-        content: const Text(
+        content: Text(
           "Êtes-vous sûr de vouloir vous déconnecter de votre espace Courtier ?",
-          style: TextStyle(fontSize: 13, color: Color(0xFF5A493B)),
+          style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(ctx)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text("Annuler", style: TextStyle(color: Color(0xFF8C7E74), fontWeight: FontWeight.w600)),
+            child: Text("Annuler", style: TextStyle(color: AppTheme.couleurTexteAttenue(ctx), fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -57,7 +69,7 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE53935),
+              backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -121,7 +133,7 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
                     top: -10,
                     child: CustomPaint(
                       painter: _CourtierOrganicBackgroundPainter(),
-                      child: const SizedBox(width: 320, height: 160),
+                      child: SizedBox(width: (MediaQuery.sizeOf(context).width - 40).clamp(0.0, 320.0).toDouble(), height: 160),
                     ),
                   ),
 
@@ -150,10 +162,10 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
                           // Nom
                           Text(
                             nomAffiche,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 19,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF2C241E),
+                              color: AppTheme.couleurTexte(context),
                               letterSpacing: -0.2,
                             ),
                           ),
@@ -162,9 +174,9 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
                             const SizedBox(height: 3),
                             Text(
                               structureAffiche,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF8C7E74),
+                                color: AppTheme.couleurTexteAttenue(context),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -174,9 +186,9 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
                             const SizedBox(height: 2),
                             Text(
                               telephoneAffiche,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF8C7E74),
+                                color: AppTheme.couleurTexteAttenue(context),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -191,13 +203,13 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1E2832),
+                                  color: AppTheme.couleurSurfaceDouce(context),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   "Courtier",
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppTheme.couleurTexte(context),
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -209,23 +221,23 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF9E6),
+                                  color: AppTheme.estSombre(context) ? AppTheme.darkOcreSurface : AppTheme.ocreClair,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFFE5A100).withValues(alpha: 0.35)),
+                                  border: Border.all(color: AppTheme.ocre.withValues(alpha: 0.35)),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       Icons.verified_rounded,
                                       size: 13,
-                                      color: Color(0xFFD48800),
+                                      color: AppTheme.couleurAttention(context),
                                     ),
-                                    SizedBox(width: 5),
+                                    const SizedBox(width: 5),
                                     Text(
                                       "Compte vérifié",
                                       style: TextStyle(
-                                        color: Color(0xFFB37400),
+                                        color: AppTheme.couleurAttention(context),
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -247,12 +259,12 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
               // --- CARTE MENU BLANCHE COMPRENANT LES 6 ITEMS FIGMA COURTIER ---
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.couleurCarte(context),
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFFEFE9E0)),
+                  border: Border.all(color: AppTheme.couleurBordure(context)),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x0846321E),
+                      color: Color(0x082C241E),
                       blurRadius: 14,
                       offset: Offset(0, 4),
                     ),
@@ -284,6 +296,18 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
                       },
                     ),
 
+                    // Dossier de vérification réel (pièce d'identité, licence de transitaire)
+                    _buildFigmaMenuItem(
+                      context: context,
+                      icon: Icons.folder_shared_outlined,
+                      label: "Mes documents",
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const MesDocumentsScreen(role: RoleActeur.courtier)),
+                        );
+                      },
+                    ),
+
                     // Item 3 : Paramètres
                     _buildFigmaMenuItem(
                       context: context,
@@ -296,16 +320,16 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
                       },
                     ),
 
-                    // Item 4 : Notifications avec badge '3'
+                    // Item 4 : Notifications, avec le nombre réel de non lues
                     _buildFigmaMenuItem(
                       context: context,
                       icon: Icons.notifications_none_rounded,
                       label: "Notifications",
-                      badgeText: "3",
+                      badgeText: _nonLues > 0 ? "$_nonLues" : null,
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const NotificationsCourtierScreen()),
-                        );
+                        Navigator.of(context)
+                            .push(MaterialPageRoute(builder: (_) => const NotificationsCourtierScreen()))
+                            .then((_) => _chargerNonLues());
                       },
                     ),
 
@@ -372,7 +396,7 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
             style: const TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF2C241E),
+              color: AppTheme.terre,
             ),
           ),
           trailing: Row(
@@ -382,7 +406,7 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFE53935),
+                    color: AppTheme.danger,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
@@ -398,7 +422,7 @@ class _CourtierProfilScreenState extends State<CourtierProfilScreen> {
               ],
               const Icon(
                 Icons.chevron_right_rounded,
-                color: Color(0xFFC7B8AA),
+                color: AppTheme.textePale,
                 size: 20,
               ),
             ],
@@ -421,11 +445,11 @@ class _CourtierOrganicBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint1 = Paint()
-      ..color = const Color(0xFFF4ECE3).withValues(alpha: 0.85)
+      ..color = AppTheme.surfaceDouce.withValues(alpha: 0.85)
       ..style = PaintingStyle.fill;
 
     final paint2 = Paint()
-      ..color = const Color(0xFFEEDFCF).withValues(alpha: 0.60)
+      ..color = AppTheme.bordureForte.withValues(alpha: 0.60)
       ..style = PaintingStyle.fill;
 
     final pathLeft = Path()
@@ -455,11 +479,11 @@ class _CourtierAvatarPainter extends CustomPainter {
     final h = size.height;
 
     // Fond chaud
-    final bgPaint = Paint()..color = const Color(0xFFE8DCCF);
+    final bgPaint = Paint()..color = AppTheme.bordureForte;
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), bgPaint);
 
     // Vêtement (Haut jaune moutarde chaud d'après la maquette Amadou Touré)
-    final clothesPaint = Paint()..color = const Color(0xFFE5A100);
+    final clothesPaint = Paint()..color = AppTheme.ocre;
     final clothesPath = Path()
       ..moveTo(w * 0.15, h)
       ..quadraticBezierTo(w * 0.25, h * 0.68, w * 0.5, h * 0.68)
@@ -489,7 +513,7 @@ class _CourtierAvatarPainter extends CustomPainter {
     canvas.drawOval(headRect, skinPaint);
 
     // Cheveux soignés
-    final hairPaint = Paint()..color = const Color(0xFF2C241E);
+    final hairPaint = Paint()..color = AppTheme.terre;
     final hairPath = Path()
       ..moveTo(w * 0.28, h * 0.42)
       ..quadraticBezierTo(w * 0.5, h * 0.16, w * 0.72, h * 0.42)

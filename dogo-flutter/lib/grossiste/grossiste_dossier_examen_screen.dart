@@ -4,15 +4,19 @@ import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../services/kyc_api_service.dart';
 import '../theme/app_theme.dart';
+import '../courtier/assistance_courtier_screen.dart';
+import '../models/role_acteur.dart';
 import 'assistance_grossiste_screen.dart';
 import 'grossiste_onboarding_widgets.dart';
+import '../services/visibilite_ecran.dart';
 
-/// Espace vendeur verrouillé pendant l'examen du dossier (maquette Figma « Espace Vendeur dɔgɔ »).
-/// Tirer vers le bas relit le dossier : approuvé → espace vendeur, rejeté → nouveau dépôt.
+/// Espace verrouillé pendant l'examen du dossier d'un Grossiste ou d'un Courtier (maquette Figma « Espace Vendeur
+/// dɔgɔ »). Tirer vers le bas relit le dossier : approuvé → reconnexion puis espace, rejeté → nouveau dépôt.
 class GrossisteDossierExamenScreen extends StatefulWidget {
   final DossierKyc dossier;
+  final RoleActeur role;
 
-  const GrossisteDossierExamenScreen({super.key, required this.dossier});
+  const GrossisteDossierExamenScreen({super.key, required this.dossier, this.role = RoleActeur.grossiste});
 
   @override
   State<GrossisteDossierExamenScreen> createState() => _GrossisteDossierExamenScreenState();
@@ -28,9 +32,15 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
     'PIECE_IDENTITE': "Pièce d'identité",
     'REGISTRE_COMMERCE': "Registre de commerce (RCCM)",
     'NIF': "Attestation NIF",
+    'LICENCE_TRANSIT': "Licence de transitaire",
     'RELEVE_BANCAIRE': "Relevé bancaire",
     'AUTRE': "Document complémentaire",
   };
+
+  bool get _courtier => widget.role == RoleActeur.courtier;
+
+  /// Écran de dépôt du dossier (rejet → nouveau dépôt), déclaré dans main.dart
+  String get _routeDepot => _courtier ? '/courtier/kyc' : '/grossiste/kyc';
 
   @override
   void initState() {
@@ -40,7 +50,9 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
       WidgetsBinding.instance.addPostFrameCallback((_) => _afficherNotificationValidation());
     } else {
       // Polling en temps réel toutes les 4 secondes pour détecter la validation de l'administrateur
-      _timerVerif = Timer.periodic(const Duration(seconds: 4), (_) => _verifierStatutAutomatique());
+      _timerVerif = Timer.periodic(const Duration(seconds: 4), (_) {
+        if (mounted && ecranVisible(context)) _verifierStatutAutomatique();
+      });
     }
   }
 
@@ -64,7 +76,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
       } else if (dossier.statut == 'REJETE') {
         _timerVerif?.cancel();
         Navigator.of(context).pushNamedAndRemoveUntil(
-          '/grossiste/kyc',
+          _routeDepot,
           (route) => route.isFirst,
           arguments: dossier.motifRejet,
         );
@@ -87,7 +99,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFD1FAE5),
+                color: AppTheme.oliveClair,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.verified_rounded, color: CouleursArrivee.vert, size: 28),
@@ -95,8 +107,8 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                "Compte Grossiste Validé !",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context)),
+                _courtier ? "Compte Courtier Validé !" : "Compte Grossiste Validé !",
+                style: TextStyle(fontFamily: AppTheme.policeTitre, fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context)),
               ),
             ),
           ],
@@ -106,13 +118,17 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Félicitations ! Votre dossier vendeur a été examiné et approuvé par l'équipe de conformité Karavan.",
+              _courtier
+                  ? "Félicitations ! Votre dossier de courtier a été examiné et approuvé par l'équipe de conformité Karavan."
+                  : "Félicitations ! Votre dossier vendeur a été examiné et approuvé par l'équipe de conformité Karavan.",
               style: TextStyle(fontSize: 13.5, color: AppTheme.couleurTexte(context), height: 1.4, fontWeight: FontWeight.w600),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
-              "Toutes vos pièces légales (RCCM, NIF) sont désormais certifiées. Vous pouvez dès à présent vous connecter pour accéder à votre espace vendeur et commencer vos ventes.",
-              style: TextStyle(fontSize: 12.5, color: CouleursArrivee.texteDoux, height: 1.4),
+              _courtier
+                  ? "Votre pièce d'identité et votre licence de transitaire sont désormais certifiées. Vous pouvez dès à présent vous connecter pour accéder à votre espace courtier."
+                  : "Toutes vos pièces légales (RCCM, NIF) sont désormais certifiées. Vous pouvez dès à présent vous connecter pour accéder à votre espace vendeur et commencer vos ventes.",
+              style: const TextStyle(fontSize: 12.5, color: CouleursArrivee.texteDoux, height: 1.4),
             ),
           ],
         ),
@@ -172,7 +188,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
       } else if (dossier.statut == 'REJETE') {
         _timerVerif?.cancel();
         Navigator.of(context).pushNamedAndRemoveUntil(
-          '/grossiste/kyc',
+          _routeDepot,
           (route) => route.isFirst,
           arguments: dossier.motifRejet,
         );
@@ -234,7 +250,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(
         child: ListTile(
-          leading: const Icon(Icons.logout, color: Color(0xFFC0392B)),
+          leading: const Icon(Icons.logout, color: AppTheme.danger),
           title: const Text("Se déconnecter"),
           onTap: () {
             AuthService.instance.deconnecter();
@@ -253,6 +269,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
     final resume = [
       if (documents.contains('REGISTRE_COMMERCE')) "RCCM",
       if (documents.contains('NIF')) "NIF",
+      if (documents.contains('LICENCE_TRANSIT')) "licence de transitaire",
       if (documents.contains('PIECE_IDENTITE')) "pièce d'identité",
     ].join(' & ');
 
@@ -261,7 +278,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          color: AppTheme.primary,
+          color: AppTheme.olive,
           onRefresh: _actualiser,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -305,7 +322,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Espace Vendeur dɔgɔ",
+                          _courtier ? "Espace Courtier dɔgɔ" : "Espace Vendeur dɔgɔ",
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.couleurTexteAttenue(context)),
                         ),
                         Text(
@@ -352,12 +369,12 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
                 decoration: BoxDecoration(
-                  color: _estValide ? const Color(0xFFF0FDF4) : const Color(0xFFFFFCF5),
+                  color: _estValide ? AppTheme.oliveClair : AppTheme.ocreClair,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: _estValide ? CouleursArrivee.vert : CouleursArrivee.ambre, width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: _estValide ? const Color(0x1410B981) : const Color(0x14EEA823),
+                      color: _estValide ? const Color(0x1434C759) : const Color(0x14E6A823),
                       blurRadius: 14,
                       offset: const Offset(0, 4),
                     ),
@@ -371,7 +388,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _estValide ? const Color(0xFFDCFCE7) : const Color(0xFFFDEFC7),
+                            color: _estValide ? AppTheme.oliveClair : AppTheme.ocreClair,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
@@ -390,7 +407,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                                 style: TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
-                                  color: _estValide ? const Color(0xFF166534) : CouleursArrivee.ambreFonce,
+                                  color: _estValide ? AppTheme.oliveProfond : CouleursArrivee.ambreFonce,
                                 ),
                               ),
                             ],
@@ -415,12 +432,16 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                     const SizedBox(height: 4),
                     Text(
                       _estValide
-                          ? "Votre compte vendeur est activé avec succès. Vous pouvez désormais publier vos produits, créer des groupes d'achat et encaisser vos paiements en toute sécurité."
-                          : "Votre RCCM et NIF sont en cours d'audit par l'équipe conformité dɔgɔ pour protéger les transactions du réseau.",
+                          ? (_courtier
+                              ? "Votre compte courtier est activé avec succès. Vous pouvez désormais créer vos groupes d'achat et organiser vos convois en toute sécurité."
+                              : "Votre compte vendeur est activé avec succès. Vous pouvez désormais publier vos produits, créer des groupes d'achat et encaisser vos paiements en toute sécurité.")
+                          : (_courtier
+                              ? "Votre pièce d'identité et votre licence de transitaire sont en cours d'audit par l'équipe conformité dɔgɔ pour protéger les transactions du réseau."
+                              : "Votre RCCM et NIF sont en cours d'audit par l'équipe conformité dɔgɔ pour protéger les transactions du réseau."),
                       style: TextStyle(fontSize: 10.5, color: AppTheme.couleurTexteAttenue(context), height: 1.3),
                     ),
                     const SizedBox(height: 10),
-                    Divider(height: 1, color: _estValide ? const Color(0xFFBBF7D0) : const Color(0xFFF1E4CF)),
+                    Divider(height: 1, color: _estValide ? AppTheme.oliveBordure : AppTheme.ocreBordure),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -434,7 +455,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                         ),
                         Expanded(
                           child: _Liaison(
-                            couleur: _estValide ? CouleursArrivee.vert : const Color(0xFFE5DED7),
+                            couleur: _estValide ? CouleursArrivee.vert : AppTheme.bordure,
                             pointille: !_estValide,
                           ),
                         ),
@@ -485,11 +506,11 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
               const SizedBox(height: 12),
               _CarteAction(
                 fond: Colors.white,
-                bordure: const Color(0xFFEDE7E1),
+                bordure: AppTheme.bordure,
                 icone: Container(
                   width: 42,
                   height: 42,
-                  decoration: BoxDecoration(color: const Color(0xFFF7EFE6), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: AppTheme.surfaceDouce, borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.article_outlined, color: AppTheme.primary),
                 ),
                 titre: "Documents légaux soumis",
@@ -503,22 +524,24 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
               ),
               const SizedBox(height: 12),
               _CarteAction(
-                fond: const Color(0xFFF0FDF4),
-                bordure: const Color(0xFFBBF7D0),
+                fond: AppTheme.oliveClair,
+                bordure: AppTheme.oliveBordure,
                 icone: Container(
                   width: 42,
                   height: 42,
-                  decoration: const BoxDecoration(color: Color(0xFF22C55E), shape: BoxShape.circle),
+                  decoration: const BoxDecoration(color: AppTheme.olive, shape: BoxShape.circle),
                   child: const Icon(Icons.chat_rounded, color: Colors.white, size: 20),
                 ),
                 titre: "Équipe d'intégration dɔgɔ",
-                couleurTitre: const Color(0xFF14532D),
+                couleurTitre: AppTheme.oliveProfond,
                 ligne1: "Besoin d'accélérer la vérification de votre compte ?",
-                couleurLigne1: const Color(0xFF166534),
+                couleurLigne1: AppTheme.oliveProfond,
                 ligne2: "Échanger sur WhatsApp avec un agent à Bamako →",
-                couleurLigne2: const Color(0xFF15803D),
+                couleurLigne2: AppTheme.oliveProfond,
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AssistanceGrossisteScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => _courtier ? const AssistanceCourtierScreen() : const AssistanceGrossisteScreen(),
+                  ),
                 ),
               ),
               const SizedBox(height: 40),
@@ -526,15 +549,15 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFBF3EC),
+                  color: AppTheme.surfaceDouce,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFF1E4D8)),
+                  border: Border.all(color: AppTheme.bordure),
                 ),
                 child: Row(
                   children: [
                     const CircleAvatar(
                       radius: 10,
-                      backgroundColor: Color(0xFFD1FAE5),
+                      backgroundColor: AppTheme.oliveClair,
                       child: Icon(Icons.check, size: 12, color: CouleursArrivee.vert),
                     ),
                     const SizedBox(width: 10),
@@ -546,10 +569,10 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                               text: "Engagement dɔgɔ :\n",
                               style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context), fontSize: 11),
                             ),
-                            TextSpan(text: "Votre catalogue sera immédiatement débloqué après validation."),
+                            const TextSpan(text: "Votre catalogue sera immédiatement débloqué après validation."),
                           ],
                         ),
-                        style: TextStyle(fontSize: 10.5, color: CouleursArrivee.texteDoux),
+                        style: const TextStyle(fontSize: 10.5, color: CouleursArrivee.texteDoux),
                       ),
                     ),
                   ],
@@ -725,7 +748,7 @@ class _BarreVerrouillee extends StatelessWidget {
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                boxShadow: [BoxShadow(color: Color(0x0F2D231C), blurRadius: 16, offset: Offset(0, -4))],
+                boxShadow: [BoxShadow(color: Color(0x0F2C241E), blurRadius: 16, offset: Offset(0, -4))],
               ),
               child: SafeArea(
                 top: false,
@@ -752,8 +775,8 @@ class _BarreVerrouillee extends StatelessWidget {
               child: Container(
                 width: 48,
                 height: 48,
-                decoration: const BoxDecoration(color: Color(0xFFEDE4DA), shape: BoxShape.circle),
-                child: const Icon(Icons.lock_rounded, color: Color(0xFF7C6E65), size: 22),
+                decoration: const BoxDecoration(color: AppTheme.bordure, shape: BoxShape.circle),
+                child: const Icon(Icons.lock_rounded, color: AppTheme.textMuted, size: 22),
               ),
             ),
           ),

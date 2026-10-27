@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/role_acteur.dart';
 import '../models/utilisateur_profil.dart';
@@ -42,21 +43,30 @@ class SessionStorageService {
     final profilJson = jsonEncode(profil.toJson());
 
     // 1. Stockage isolé propre à cet onglet (sessionStorage web)
-    setSessionStorageItem('dogo_tab_refresh_token', refreshToken);
+    if (kIsWeb) {
+      await _effacerJetonsWeb();
+    } else {
+      setSessionStorageItem('dogo_tab_refresh_token', refreshToken);
+    }
     setSessionStorageItem('dogo_tab_profil', profilJson);
     if (espace != null) {
       setSessionStorageItem('dogo_tab_espace', espace);
       _dernierEspaceEnMemoire = espace;
       // 2. Stockage persistant cloisonné par rôle pour préserver les sessions distinctes
       try {
-        await _storage.write(key: '${_cleRefreshToken}_$espace', value: refreshToken);
+        if (!kIsWeb) {
+          await _storage.write(
+              key: '${_cleRefreshToken}_$espace', value: refreshToken);
+        }
         await _storage.write(key: '${_cleProfil}_$espace', value: profilJson);
       } catch (_) {}
     }
 
     // 3. Stockage générique par défaut
     try {
-      await _storage.write(key: _cleRefreshToken, value: refreshToken);
+      if (!kIsWeb) {
+        await _storage.write(key: _cleRefreshToken, value: refreshToken);
+      }
       await _storage.write(key: _cleProfil, value: profilJson);
     } catch (_) {}
   }
@@ -80,6 +90,10 @@ class SessionStorageService {
 
   /// Lit le refresh token stocké de manière sécurisée (priorité à l'onglet courant puis à l'espace URL)
   Future<String?> lireRefreshToken() async {
+    if (kIsWeb) {
+      await _effacerJetonsWeb();
+      return null;
+    }
     // 1. Priorité absolue : le jeton propre à cet onglet (survit au F5 de cet onglet uniquement)
     final tabToken = getSessionStorageItem('dogo_tab_refresh_token');
     if (tabToken != null && tabToken.isNotEmpty) {
@@ -87,10 +101,13 @@ class SessionStorageService {
     }
 
     // 2. Priorité par espace : si l'onglet cible un espace particulier (/commercant, /grossiste, /courtier)
-    final espace = detecterEspaceUrlOnglet() ?? getSessionStorageItem('dogo_tab_espace') ?? _dernierEspaceEnMemoire;
+    final espace = detecterEspaceUrlOnglet() ??
+        getSessionStorageItem('dogo_tab_espace') ??
+        _dernierEspaceEnMemoire;
     if (espace != null && espace.isNotEmpty) {
       try {
-        final espaceToken = await _storage.read(key: '${_cleRefreshToken}_${espace.toLowerCase()}');
+        final espaceToken = await _storage.read(
+            key: '${_cleRefreshToken}_${espace.toLowerCase()}');
         if (espaceToken != null && espaceToken.isNotEmpty) {
           return espaceToken;
         }
@@ -117,10 +134,13 @@ class SessionStorageService {
     }
 
     // 2. Priorité par espace ciblé par l'onglet
-    final espace = detecterEspaceUrlOnglet() ?? getSessionStorageItem('dogo_tab_espace') ?? _dernierEspaceEnMemoire;
+    final espace = detecterEspaceUrlOnglet() ??
+        getSessionStorageItem('dogo_tab_espace') ??
+        _dernierEspaceEnMemoire;
     if (espace != null && espace.isNotEmpty) {
       try {
-        final espaceProfilStr = await _storage.read(key: '${_cleProfil}_${espace.toLowerCase()}');
+        final espaceProfilStr =
+            await _storage.read(key: '${_cleProfil}_${espace.toLowerCase()}');
         if (espaceProfilStr != null && espaceProfilStr.isNotEmpty) {
           final map = jsonDecode(espaceProfilStr) as Map<String, dynamic>;
           return UtilisateurProfil.fromJson(map);
@@ -166,7 +186,8 @@ class SessionStorageService {
     }
 
     // 3. Mémoire volatile
-    if (_dernierEspaceEnMemoire != null && _dernierEspaceEnMemoire!.isNotEmpty) {
+    if (_dernierEspaceEnMemoire != null &&
+        _dernierEspaceEnMemoire!.isNotEmpty) {
       return _dernierEspaceEnMemoire;
     }
 
@@ -191,6 +212,9 @@ class SessionStorageService {
     removeSessionStorageItem('dogo_tab_espace');
 
     try {
+      if (kIsWeb) {
+        await _effacerJetonsWeb();
+      }
       if (espace != null) {
         await _storage.delete(key: '${_cleRefreshToken}_$espace');
         await _storage.delete(key: '${_cleProfil}_$espace');
@@ -199,6 +223,20 @@ class SessionStorageService {
       await _storage.delete(key: _cleProfil);
       await _storage.delete(key: _cleDernierEspace);
     } catch (_) {}
+  }
+
+  Future<void> _effacerJetonsWeb() async {
+    removeSessionStorageItem('dogo_tab_refresh_token');
+    for (final key in [
+      _cleRefreshToken,
+      '${_cleRefreshToken}_commercant',
+      '${_cleRefreshToken}_grossiste',
+      '${_cleRefreshToken}_courtier',
+    ]) {
+      try {
+        await _storage.delete(key: key);
+      } catch (_) {}
+    }
   }
 
   /// Vérifie si le didacticiel d'accueil a déjà été visualisé pour un rôle et un identifiant
@@ -229,7 +267,10 @@ class SessionStorageService {
   }
 
   /// Rétro-compatibilité pour le rôle Grossiste
-  Future<bool> aDejaVuGuideGrossiste(String identifiant) => aDejaVuGuide('grossiste', identifiant);
-  Future<void> marquerGuideGrossisteVu(String identifiant) => marquerGuideVu('grossiste', identifiant);
-  Future<void> reinitialiserGuideGrossiste(String identifiant) => reinitialiserGuide('grossiste', identifiant);
+  Future<bool> aDejaVuGuideGrossiste(String identifiant) =>
+      aDejaVuGuide('grossiste', identifiant);
+  Future<void> marquerGuideGrossisteVu(String identifiant) =>
+      marquerGuideVu('grossiste', identifiant);
+  Future<void> reinitialiserGuideGrossiste(String identifiant) =>
+      reinitialiserGuide('grossiste', identifiant);
 }

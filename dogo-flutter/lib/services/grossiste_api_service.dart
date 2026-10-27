@@ -1,4 +1,4 @@
-import '../commercant/campagne_model.dart';
+import '../models/campagne_model.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
 

@@ -33,10 +33,24 @@ class _BoutonBasculeThemeState extends State<BoutonBasculeTheme>
       vsync: this,
       duration: const Duration(milliseconds: 3600),
     );
-    if (_estEnTest) {
-      _continuousController.value = 0.5;
-    } else {
+    // Pas de boucle permanente : le bouton est présent sur une quinzaine d'écrans et une animation
+    // infinie forcerait un rendu à 60 images/s en continu. Le soleil / la lune « respirent »
+    // une fois au changement de thème, et en continu seulement pendant le survol (web, bureau).
+    if (_estEnTest) _continuousController.value = 0.5;
+  }
+
+  void _basculer(BuildContext context) {
+    ThemeService.instance.basculerMode(context);
+    if (!_estEnTest) _continuousController.forward(from: 0);
+  }
+
+  void _survol(bool actif) {
+    if (_estEnTest) return;
+    if (actif) {
       _continuousController.repeat();
+    } else if (_continuousController.isAnimating) {
+      // Termine le cycle en cours pour revenir en douceur à l'image de repos
+      _continuousController.forward();
     }
   }
 
@@ -63,7 +77,8 @@ class _BoutonBasculeThemeState extends State<BoutonBasculeTheme>
               shape: const CircleBorder(),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: () => ThemeService.instance.basculerMode(context),
+                onTap: () => _basculer(context),
+                onHover: _survol,
                 customBorder: const CircleBorder(),
                 child: Container(
                   width: 38,
@@ -167,7 +182,8 @@ class _BoutonBasculeThemeState extends State<BoutonBasculeTheme>
               borderRadius: BorderRadius.circular(14),
               child: InkWell(
                 borderRadius: BorderRadius.circular(14),
-                onTap: () => ThemeService.instance.basculerMode(context),
+                onTap: () => _basculer(context),
+                onHover: _survol,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                   child: Row(
@@ -312,7 +328,8 @@ class _SoleilRayonnantPainter extends CustomPainter {
       ..strokeWidth = 1.85
       ..strokeCap = StrokeCap.round;
 
-    final slowRotation = progress * 2 * math.pi * 0.35;
+    // Un quart de tour par cycle : 8 rayons, donc l'image de fin (1.0) est identique à celle de repos (0.0)
+    final slowRotation = progress * 2 * math.pi * 0.25;
 
     for (int i = 0; i < 8; i++) {
       final angle = (i * math.pi / 4) + slowRotation;

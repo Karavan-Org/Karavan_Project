@@ -8,7 +8,9 @@ const NotchedShape formeBarreNavigation = AutomaticNotchedShape(
   CircleBorder(),
 );
 
-/// Onglet de la barre inférieure : l'icône active repose sur une pilule crème animée.
+/// Onglet du bandeau de navigation (terre sombre, Palette Dɔgɔ) : l'onglet actif
+/// repose sur une pilule ocre animée (icône terre), libellé ocre : le bissap reste
+/// réservé au bouton d'action central.
 class OngletNavigation extends StatelessWidget {
   final String label;
   final IconData activeIcon;
@@ -25,16 +27,9 @@ class OngletNavigation extends StatelessWidget {
     required this.onTap,
   });
 
-  static const Color _inactif = Color(0xFF8C7E74);
-
   @override
   Widget build(BuildContext context) {
-    final couleurInactif = Theme.of(context).brightness == Brightness.dark
-        ? AppTheme.darkTextMuted
-        : _inactif;
-    final couleur = selectionne
-        ? (Theme.of(context).brightness == Brightness.dark ? AppTheme.darkPrimary : AppTheme.primaryDark)
-        : couleurInactif;
+    final couleur = selectionne ? AppTheme.ocre : AppTheme.creme.withValues(alpha: 0.62);
     return Semantics(
       selected: selectionne,
       button: true,
@@ -45,6 +40,8 @@ class OngletNavigation extends StatelessWidget {
         radius: 36,
         highlightShape: BoxShape.rectangle,
         containedInkWell: false,
+        highlightColor: Colors.white.withValues(alpha: 0.06),
+        splashColor: AppTheme.rose.withValues(alpha: 0.16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -56,10 +53,8 @@ class OngletNavigation extends StatelessWidget {
               height: 30,
               decoration: BoxDecoration(
                 color: selectionne
-                  ? (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF38291E)
-                      : AppTheme.tertiary)
-                  : Colors.transparent,
+                    ? AppTheme.ocre
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(15),
               ),
               child: AnimatedSwitcher(
@@ -68,7 +63,7 @@ class OngletNavigation extends StatelessWidget {
                 child: Icon(
                   selectionne ? activeIcon : inactiveIcon,
                   key: ValueKey(selectionne),
-                  color: couleur,
+                  color: selectionne ? AppTheme.terre : couleur,
                   size: 23,
                 ),
               ),
@@ -77,8 +72,8 @@ class OngletNavigation extends StatelessWidget {
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
+                fontFamily: AppTheme.police,
                 fontSize: 11,
-                letterSpacing: -0.1,
                 fontWeight: selectionne ? FontWeight.w700 : FontWeight.w500,
                 color: couleur,
               ),

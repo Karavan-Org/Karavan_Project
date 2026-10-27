@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'karavan_logo.dart';
 
 /// Composant Portefeuille Neumorphique / Soft 3D Glass
 /// Reproduit fidèlement le design Soft UI avec relief doux, double ombre lumineuse,
@@ -14,7 +15,6 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
   final String texteBoutonAction;
   final VoidCallback? onTapAction;
   final List<Color>? couleurBouton;
-  final List<Color>? couleurEmbleme;
   final List<Widget>? squirclesRapides;
   final String? titreSquirclesRapides;
   final bool compact;
@@ -29,7 +29,6 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
     required this.texteBoutonAction,
     this.onTapAction,
     this.couleurBouton,
-    this.couleurEmbleme,
     this.squirclesRapides,
     this.titreSquirclesRapides,
     this.compact = false,
@@ -51,8 +50,8 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  const Color(0xFFEADBCE).withValues(alpha: 0.45),
-                  const Color(0xFFFAF7F2).withValues(alpha: 0.0),
+                  AppTheme.bordureForte.withValues(alpha: 0.45),
+                  AppTheme.creme.withValues(alpha: 0.0),
                 ],
               ),
             ),
@@ -68,8 +67,8 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  const Color(0xFFE2CBB7).withValues(alpha: 0.35),
-                  const Color(0xFFFAF7F2).withValues(alpha: 0.0),
+                  AppTheme.bordureForte.withValues(alpha: 0.35),
+                  AppTheme.creme.withValues(alpha: 0.0),
                 ],
               ),
             ),
@@ -81,46 +80,48 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
           width: double.infinity,
           padding: EdgeInsets.all(compact ? 18 : 24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.couleurCarte(context),
             borderRadius: BorderRadius.circular(32),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: AppTheme.estSombre(context)
                   ? const [
-                      Color(0xFF26201B),
-                      Color(0xFF201B17),
-                      Color(0xFF1B1714),
+                      AppTheme.darkSurfaceHaute,
+                      AppTheme.darkSurface,
+                      AppTheme.darkSurfaceBasse,
                     ]
                   : const [
                       Color(0xFFFFFFFF),
-                      Color(0xFFFAF6F1),
-                      Color(0xFFF6EFE6),
+                      AppTheme.surfaceDouce,
+                      AppTheme.surfaceDouce,
                     ],
-              stops: [0.0, 0.65, 1.0],
+              stops: const [0.0, 0.65, 1.0],
             ),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.95),
+              color: AppTheme.couleurBordureForte(context),
               width: 2.0,
             ),
-            boxShadow: const [
-              // Reflet supérieur gauche blanc pur (effet lumineux spéculaire)
+            boxShadow: [
+              // Reflet supérieur gauche discret, adapté à la luminosité du thème.
               BoxShadow(
-                color: Colors.white,
-                offset: Offset(-7, -7),
+                color: AppTheme.estSombre(context)
+                    ? Colors.white.withValues(alpha: 0.035)
+                    : Colors.white,
+                offset: const Offset(-7, -7),
                 blurRadius: 16,
                 spreadRadius: 2,
               ),
               // Ombre portée inférieure droite douce et tactile
-              BoxShadow(
-                color: Color(0x184A3319),
+              const BoxShadow(
+                color: Color(0x182C241E),
                 offset: Offset(9, 16),
                 blurRadius: 26,
                 spreadRadius: 0,
               ),
               // Lueur d'ambiance chaude subtile
-              BoxShadow(
-                color: Color(0x0C7D4F27),
+              const BoxShadow(
+                color: Color(0x0C84173A),
                 offset: Offset(0, 4),
                 blurRadius: 10,
               ),
@@ -129,7 +130,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Emblème 3D en squircle pillow (style flamme DoGo 3D)
+              // Emblème 3D en squircle pillow : logo Karavan
               Container(
                 width: compact ? 56 : 68,
                 height: compact ? 56 : 68,
@@ -138,29 +139,33 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFFFFFFF),
-                      Color(0xFFF4ECE2),
-                    ],
+                    colors: AppTheme.estSombre(context)
+                        ? const [AppTheme.darkSurfaceHaute, AppTheme.darkSurface]
+                        : const [Colors.white, AppTheme.surfaceDouce],
                   ),
-                  border: Border.all(color: Colors.white, width: 2.2),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.white,
-                      offset: Offset(-4, -4),
+              border: Border.all(color: AppTheme.couleurBordureForte(context), width: 2.2),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.estSombre(context)
+                      ? Colors.white.withValues(alpha: 0.035)
+                      : Colors.white,
+                  offset: const Offset(-4, -4),
                       blurRadius: 10,
                     ),
-                    BoxShadow(
-                      color: Color(0x1E4A3319),
+                    const BoxShadow(
+                      color: Color(0x1E2C241E),
                       offset: Offset(4, 9),
                       blurRadius: 16,
                     ),
                   ],
                 ),
-                child: Center(
-                  child: CustomPaint(
-                    painter: _Dogo3DEmblemPainter(couleurs: couleurEmbleme),
-                    size: Size(compact ? 30 : 38, compact ? 34 : 42),
+                // Logo Karavan logé dans le squircle (sa pastille crème en épouse la forme)
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(compact ? 16 : 20),
+                  child: Image.asset(
+                    KaravanLogo.asset,
+                    fit: BoxFit.cover,
+                    cacheWidth: 200,
                   ),
                 ),
               ),
@@ -216,12 +221,12 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                     color: AppTheme.couleurSurfaceDouce(context),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: AppTheme.couleurBordure(context),
                       width: 1.5,
                     ),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color(0x0E3A2412),
+                        color: Color(0x0E2C241E),
                         offset: Offset(0, 2),
                         blurRadius: 5,
                       ),
@@ -232,7 +237,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.couleurCarte(context),
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: const [
                             BoxShadow(
@@ -245,7 +250,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                         child: Icon(
                           iconeInfo ?? Icons.verified_user_rounded,
                           size: 15,
-                          color: const Color(0xFF9E6738),
+                          color: AppTheme.couleurAccent(context),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -278,16 +283,13 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
-                      colors: couleurBouton ??
-                          const [
-                            Color(0xFFB87333),
-                            Color(0xFF915123),
-                            Color(0xFF753812),
-                          ],
+                    colors: AppTheme.estSombre(context)
+                        ? const [AppTheme.darkPrimaryDark, AppTheme.darkPrimaryDark, AppTheme.darkPrimaryDark]
+                        : (couleurBouton ?? const [AppTheme.bissap, AppTheme.bissapProfond, AppTheme.bissapProfond]),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: (couleurBouton?.last ?? const Color(0xFF753812))
+                        color: (couleurBouton?.last ?? AppTheme.bissapProfond)
                             .withValues(alpha: 0.40),
                         offset: const Offset(0, 8),
                         blurRadius: 18,
@@ -305,7 +307,9 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                           texteBoutonAction,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.estSombre(context)
+                                ? AppTheme.texteSur(AppTheme.darkPrimaryDark)
+                                : Colors.white,
                             fontSize: compact ? 13 : 14.5,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.1,
@@ -370,6 +374,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
 
   /// Constructeur pour un squircle rapide d'opérateur ou d'action (comme les icônes rondes/squircles du bas)
   static Widget buildSquircleRapide({
+    required BuildContext context,
     required Widget child,
     required String label,
     required VoidCallback onTap,
@@ -384,10 +389,10 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.couleurCarte(context),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: couleurBordure ?? Colors.white,
+                color: couleurBordure ?? AppTheme.couleurBordureForte(context),
                 width: 1.5,
               ),
               boxShadow: const [
@@ -397,7 +402,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                   blurRadius: 8,
                 ),
                 BoxShadow(
-                  color: Color(0x184A3319),
+                  color: Color(0x182C241E),
                   offset: Offset(3, 6),
                   blurRadius: 10,
                 ),
@@ -409,99 +414,14 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
-          style: const TextStyle(
+            style: TextStyle(
             fontSize: 10.5,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF5A493B),
+              color: AppTheme.couleurTexteAttenue(context),
           ),
         ),
       ],
     );
   }
-}
-
-/// Peintre vectoriel 3D reproduisant le style de l'emblème ondulé en relief (Rubans superposés)
-/// adapté à la palette chaude & prestigieuse de DoGo.
-class _Dogo3DEmblemPainter extends CustomPainter {
-  final List<Color>? couleurs;
-
-  const _Dogo3DEmblemPainter({this.couleurs});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    // Couleurs par défaut (Warm Terracotta / Golden Amber / Ivory DoGo)
-    final col1 = couleurs != null && couleurs!.isNotEmpty
-        ? couleurs![0]
-        : const Color(0xFFFFFFFF);
-    final col2 = couleurs != null && couleurs!.length > 1
-        ? couleurs![1]
-        : const Color(0xFFE5A100);
-    final col3 = couleurs != null && couleurs!.length > 2
-        ? couleurs![2]
-        : const Color(0xFF9E5C23);
-
-    // 1. Vaguelette supérieure (claire, en relief)
-    final path1 = Path()
-      ..moveTo(w * 0.45, h * 0.05)
-      ..cubicTo(w * 0.65, h * 0.05, w * 0.90, h * 0.22, w * 0.85, h * 0.38)
-      ..cubicTo(w * 0.80, h * 0.48, w * 0.65, h * 0.45, w * 0.55, h * 0.35)
-      ..cubicTo(w * 0.42, h * 0.22, w * 0.35, h * 0.15, w * 0.45, h * 0.05)
-      ..close();
-
-    final paint1 = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          col1,
-          const Color(0xFFEBDDCB),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, w, h));
-    canvas.drawPath(path1, paint1);
-
-    // 2. Vaguelette centrale (Ambre dorée vibrante)
-    final path2 = Path()
-      ..moveTo(w * 0.25, h * 0.25)
-      ..cubicTo(w * 0.45, h * 0.22, w * 0.82, h * 0.38, w * 0.75, h * 0.60)
-      ..cubicTo(w * 0.70, h * 0.72, w * 0.52, h * 0.68, w * 0.38, h * 0.52)
-      ..cubicTo(w * 0.22, h * 0.38, w * 0.18, h * 0.30, w * 0.25, h * 0.25)
-      ..close();
-
-    final paint2 = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          col2,
-          const Color(0xFFD48800),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, w, h));
-    canvas.drawPath(path2, paint2);
-
-    // 3. Vaguelette inférieure (Terracotta foncée / Bronze)
-    final path3 = Path()
-      ..moveTo(w * 0.18, h * 0.50)
-      ..cubicTo(w * 0.35, h * 0.45, w * 0.72, h * 0.62, w * 0.60, h * 0.88)
-      ..cubicTo(w * 0.52, h * 0.98, w * 0.36, h * 0.95, w * 0.28, h * 0.80)
-      ..cubicTo(w * 0.14, h * 0.65, w * 0.10, h * 0.58, w * 0.18, h * 0.50)
-      ..close();
-
-    final paint3 = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          col3,
-          const Color(0xFF6B3614),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, w, h));
-    canvas.drawPath(path3, paint3);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 

@@ -71,7 +71,7 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
 
   void _erreur(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: const Color(0xFFC0392B)),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.danger),
     );
   }
 
@@ -91,7 +91,7 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
           icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text("Validation du Retrait", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        title: Text("Validation du Retrait", style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
         backgroundColor: AppTheme.couleurCarte(context),
         foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
@@ -221,10 +221,10 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                         color: AppTheme.success.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.check_rounded, color: AppTheme.success, size: 48),
+                      child: const Icon(Icons.check_rounded, color: AppTheme.oliveProfond, size: 48),
                     ),
                     const SizedBox(height: 16),
-                    Text("Retrait Confirmé !", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context))),
+                    Text("Retrait Confirmé !", style: TextStyle(fontFamily: AppTheme.policeTitre, fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context))),
                     const SizedBox(height: 6),
                     Text(
                       "Commande #${_retrait!['commandeId'] ?? ''} remise au commerçant "
@@ -243,9 +243,9 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text("Statut du paiement :", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.couleurTexte(context))),
-                          Text(
+                          const Text(
                             "Fonds libérés",
-                            style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w800, fontSize: 15),
+                            style: TextStyle(color: AppTheme.oliveProfond, fontWeight: FontWeight.w800, fontSize: 15),
                           ),
                         ],
                       ),

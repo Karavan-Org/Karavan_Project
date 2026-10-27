@@ -22,23 +22,27 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
 
-  final List<String> _pays = [
-    "Tous",
-    "Chine 🇨🇳",
-    "Turquie 🇹🇷",
-    "Dubaï 🇦🇪",
-    "Mali 🇲🇱",
-    "France 🇫🇷",
-  ];
-  final List<String> _categories = [
-    "Tous",
-    "Chaussures",
-    "Électronique",
-    "Vêtements",
-    "Sneakers",
-    "Mode Féminine",
-    "Montres & Bijoux",
-  ];
+  /// Pays d'origine et catégories des groupes réellement publiés : les filtres suivent le catalogue vivant
+  /// et ne proposent jamais une valeur sans résultat.
+  static String _cle(String s) => s.trim().toLowerCase();
+
+  List<String> get _pays {
+    final vus = <String, String>{};
+    for (final c in FavorisService.instance.toutesLesCampagnes) {
+      final p = c.paysOrigine.trim();
+      if (p.isNotEmpty) vus.putIfAbsent(_cle(p), () => p);
+    }
+    return ["Tous", ...vus.values];
+  }
+
+  List<String> get _categories {
+    final vues = <String, String>{};
+    for (final c in FavorisService.instance.toutesLesCampagnes) {
+      final cat = c.categorie.trim();
+      if (cat.isNotEmpty) vues.putIfAbsent(_cle(cat), () => cat);
+    }
+    return ["Tous", ...vues.values];
+  }
 
   @override
   void initState() {
@@ -70,7 +74,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
         ),
         title: const Text(
           "Explorer les Arrivages",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -93,36 +97,15 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
           final favorisIds = FavorisService.instance.favorisNotifier.value;
           final toutesCampagnes = FavorisService.instance.toutesLesCampagnes;
 
+          // Un filtre dont la valeur a disparu après une actualisation retombe sur « Tous »
+          if (!_pays.contains(_paysActif)) _paysActif = "Tous";
+          if (!_categories.contains(_categorieActive)) _categorieActive = "Tous";
+
           final filtrees = toutesCampagnes.where((c) {
-            if (_categorieActive != "Tous" &&
-                !c.categorie.toLowerCase().contains(_categorieActive.toLowerCase())) {
+            if (_categorieActive != "Tous" && _cle(c.categorie) != _cle(_categorieActive)) {
               return false;
             }
-            final pays = c.paysOrigine.toLowerCase();
-            if (_paysActif == "Chine 🇨🇳" &&
-                !pays.contains("chine") &&
-                !pays.contains("china")) {
-              return false;
-            }
-            if (_paysActif == "Turquie 🇹🇷" &&
-                !pays.contains("turquie") &&
-                !pays.contains("turkey") &&
-                !pays.contains("turk")) {
-              return false;
-            }
-            if (_paysActif == "Dubaï 🇦🇪" &&
-                !pays.contains("dubaï") &&
-                !pays.contains("dubai") &&
-                !pays.contains("uae") &&
-                !pays.contains("émirats")) {
-              return false;
-            }
-            if (_paysActif == "Mali 🇲🇱" && !pays.contains("mali")) {
-              return false;
-            }
-            if (_paysActif == "France 🇫🇷" &&
-                !pays.contains("france") &&
-                !pays.contains("paris")) {
+            if (_paysActif != "Tous" && _cle(c.paysOrigine) != _cle(_paysActif)) {
               return false;
             }
             if (_searchQuery.isNotEmpty) {
@@ -199,10 +182,10 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                           margin: const EdgeInsets.only(right: 8),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.primary : AppTheme.couleurCarte(context),
+                            color: isSelected ? AppTheme.terre : AppTheme.couleurCarte(context),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: isSelected ? AppTheme.primary : AppTheme.couleurBordure(context),
+                              color: isSelected ? AppTheme.terre : AppTheme.couleurBordure(context),
                             ),
                           ),
                           child: Text(
@@ -245,7 +228,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
+                              color: isSelected ? AppTheme.terre : AppTheme.couleurTexte(context),
                             ),
                           ),
                         ),
@@ -344,7 +327,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             BoxShadow(
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.black.withValues(alpha: 0.25)
-                  : const Color(0x0646321E),
+                  : const Color(0x062C241E),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -383,7 +366,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                           style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.secondary,
+                            color: AppTheme.ocreProfond,
                           ),
                         ),
                       ),
@@ -393,7 +376,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                         padding: EdgeInsets.zero,
                         icon: Icon(
                           isFav ? Icons.favorite : Icons.favorite_border,
-                          color: isFav ? Colors.redAccent : AppTheme.couleurTexteAttenue(context),
+                          color: isFav ? AppTheme.danger : AppTheme.couleurTexteAttenue(context),
                           size: 18,
                         ),
                         onPressed: () => FavorisService.instance.toggleFavori(g, context),
@@ -415,7 +398,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                     "Courtier : ${g.courtierNom}",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11.5, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context), fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 6),
                   Row(
@@ -423,7 +406,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                     children: [
                       Text(
                         "${g.prixGroupe} FCFA",
-                        style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.primary, fontSize: 13.5),
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
                       ),
                       Text(
                         "${(g.ratio * 100).toInt()}% réservé",

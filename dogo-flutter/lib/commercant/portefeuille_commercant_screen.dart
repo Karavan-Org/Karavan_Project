@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/zone_portefeuille_neumorphic.dart';
 import '../widgets/app_popups.dart';
 import '../services/portefeuille_api_service.dart';
+import '../services/visibilite_ecran.dart';
 
 /// Écran Portefeuille Achats du Commerçant (Frame Figma "Portefeuille Achats")
 /// Affiche le solde disponible (remboursements validés, recharges) et les fonds en séquestre.
@@ -17,21 +18,28 @@ class PortefeuilleCommercantScreen extends StatefulWidget {
   State<PortefeuilleCommercantScreen> createState() => _PortefeuilleCommercantScreenState();
 }
 
-class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScreen> {
+class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScreen> with ActualisationAutomatique<PortefeuilleCommercantScreen> {
   int _soldeDisponible = 0;
   int _soldeSequestre = 0;
   bool _chargement = true;
 
   final List<Map<String, dynamic>> _mouvements = [];
 
+  /// Données vivantes : relues en arrière-plan tant que l'écran est affiché
+  @override
+  Future<void> actualiserEnSilence() async {
+    await _chargerDonneesPortefeuille(silencieux: true);
+  }
+
   @override
   void initState() {
     super.initState();
+    demarrerActualisation();
     _chargerDonneesPortefeuille();
   }
 
-  Future<void> _chargerDonneesPortefeuille() async {
-    setState(() => _chargement = true);
+  Future<void> _chargerDonneesPortefeuille({bool silencieux = false}) async {
+    if (!silencieux) setState(() => _chargement = true);
     try {
       final futures = await Future.wait([
         PortefeuilleApiService.instance.voirPortefeuille(),
@@ -169,6 +177,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
         });
       }
     } catch (e) {
+      if (silencieux) return;
       debugPrint("PortefeuilleCommercantScreen - Erreur chargement : $e");
     } finally {
       if (mounted) setState(() => _chargement = false);
@@ -186,9 +195,9 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => Container(
           padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(ctx).viewInsets.bottom + 30),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          decoration: BoxDecoration(
+            color: AppTheme.couleurCarte(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -199,7 +208,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                   width: 44,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5DDD5),
+                    color: AppTheme.bordureForte,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -207,15 +216,15 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
               const SizedBox(height: 18),
               Text(
                 "Recharger mon Portefeuille",
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+                style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 "Créditez votre compte pour valider vos achats groupés instantanément.",
-                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
               ),
               const SizedBox(height: 18),
-              const Text("Choisir l'opérateur :", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              Text("Choisir l'opérateur :", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context))),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -227,7 +236,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                 ],
               ),
               const SizedBox(height: 16),
-              const Text("Montant (FCFA) :", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              Text("Montant (FCFA) :", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context))),
               const SizedBox(height: 8),
               TextFormField(
                 controller: montantController,
@@ -280,8 +289,8 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                           message: "Votre portefeuille a été crédité de ${montantController.text} FCFA avec succès.",
                           detailSupplementaire: "Ce montant est immédiatement disponible pour régler vos achats groupés.",
                           icone: Icons.check_circle_outline_rounded,
-                          couleurIcone: const Color(0xFF1B5E20),
-                          couleurFondIcone: const Color(0xFFE8F5E9),
+                          couleurIcone: AppTheme.couleurSucces(context),
+                          couleurFondIcone: AppTheme.couleurFondSucces(context),
                           boutonTexte: "Fermer et continuer",
                         );
                       } catch (e) {
@@ -292,7 +301,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7D4F27),
+                    backgroundColor: AppTheme.bissapProfond,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
@@ -315,16 +324,16 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
           padding: const EdgeInsets.symmetric(vertical: 10),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF7D4F27) : const Color(0xFFF7F2EC),
+              color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurSurfaceDouce(context),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isSelected ? const Color(0xFF7D4F27) : const Color(0xFFE5DDD5)),
+            border: Border.all(color: isSelected ? AppTheme.couleurAccent(context) : AppTheme.couleurBordureForte(context)),
           ),
           child: Text(
             nom,
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              color: isSelected ? Colors.white : AppTheme.textDark,
+              color: isSelected ? AppTheme.texteSur(AppTheme.couleurAccent(context)) : AppTheme.couleurTexte(context),
             ),
           ),
         ),
@@ -350,7 +359,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
           children: [
             Text(
               "Portefeuille Achats",
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.couleurTexte(context)),
+              style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.couleurTexte(context)),
             ),
             Text(
               nomCommercant,
@@ -388,18 +397,14 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                 texteBoutonAction: "Recharger mon Portefeuille",
                 onTapAction: () => _showRechargeModal(),
                 couleurBouton: const [
-                  Color(0xFFB87333),
-                  Color(0xFF915123),
-                  Color(0xFF753812),
-                ],
-                couleurEmbleme: const [
-                  Color(0xFFFFFFFF),
-                  Color(0xFFE5A100),
-                  Color(0xFF9E5C23),
+                  AppTheme.bissap,
+                  AppTheme.bissapProfond,
+                  AppTheme.bissapProfond,
                 ],
                 titreSquirclesRapides: "RECHARGER VIA MOBILE MONEY",
                 squirclesRapides: [
                   ZonePortefeuilleNeumorphic.buildSquircleRapide(
+                    context: context,
                     label: "Orange",
                     onTap: () => _showRechargeModal(operateurInitial: "Orange Money"),
                     child: Container(
@@ -418,6 +423,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                   ),
                   const SizedBox(width: 24),
                   ZonePortefeuilleNeumorphic.buildSquircleRapide(
+                    context: context,
                     label: "Moov",
                     onTap: () => _showRechargeModal(operateurInitial: "Moov Africa"),
                     child: Container(
@@ -436,6 +442,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                   ),
                   const SizedBox(width: 24),
                   ZonePortefeuilleNeumorphic.buildSquircleRapide(
+                    context: context,
                     label: "Wave",
                     onTap: () => _showRechargeModal(operateurInitial: "Wave"),
                     child: Container(
@@ -479,7 +486,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 36),
-                    child: CircularProgressIndicator(color: AppTheme.primary),
+                    child: CircularProgressIndicator(color: AppTheme.olive),
                   ),
                 )
               else if (_mouvements.isEmpty)
@@ -487,23 +494,23 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.couleurCarte(context),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
+                      border: Border.all(color: AppTheme.couleurBordure(context), width: 1.2),
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.receipt_long_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                      Icon(Icons.receipt_long_outlined, size: 40, color: AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.5)),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         "Aucun mouvement récent",
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textPrimary),
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         "Vos remboursements validés et paiements sécurisés s'afficheront ici.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                        style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
                       ),
                     ],
                   ),
@@ -522,10 +529,10 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                     return Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.couleurCarte(context),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: const [
-                          BoxShadow(color: Color(0x0646321E), blurRadius: 8, offset: Offset(0, 2)),
+                          BoxShadow(color: Color(0x062C241E), blurRadius: 8, offset: Offset(0, 2)),
                         ],
                       ),
                       child: Row(
@@ -535,8 +542,10 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                             height: 40,
                             decoration: BoxDecoration(
                               color: isCredit
-                                  ? const Color(0xFFE8F5E9)
-                                  : (isPending ? const Color(0xFFFFF8E1) : const Color(0xFFFBE9E7)),
+                                  ? AppTheme.couleurFondSucces(context)
+                                  : (isPending
+                                      ? (AppTheme.estSombre(context) ? AppTheme.darkOcreSurface : AppTheme.ocreClair)
+                                      : AppTheme.couleurFondDanger(context)),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -544,8 +553,8 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                                   ? Icons.arrow_downward_rounded
                                   : (isPending ? Icons.hourglass_top_rounded : Icons.lock_outline_rounded),
                               color: isCredit
-                                  ? AppTheme.success
-                                  : (isPending ? const Color(0xFFF57F17) : const Color(0xFFC62828)),
+                                  ? AppTheme.couleurSucces(context)
+                                  : (isPending ? AppTheme.couleurAttention(context) : AppTheme.couleurDanger(context)),
                               size: 20,
                             ),
                           ),
@@ -585,8 +594,8 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                                   fontWeight: FontWeight.w800,
                                   fontSize: 14,
                                   color: isCredit
-                                      ? AppTheme.success
-                                      : (isPending ? const Color(0xFFF57F17) : const Color(0xFFC62828)),
+                                      ? AppTheme.couleurSucces(context)
+                                      : (isPending ? AppTheme.couleurAttention(context) : AppTheme.couleurDanger(context)),
                                 ),
                               ),
                               if (m["statut"] != null) ...[
@@ -595,8 +604,8 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: isCredit
-                                        ? const Color(0xFFE8F5E9)
-                                        : (isPending ? const Color(0xFFFFF8E1) : const Color(0xFFFFF3E0)),
+                                        ? AppTheme.couleurFondSucces(context)
+                                        : (AppTheme.estSombre(context) ? AppTheme.darkOcreSurface : AppTheme.ocreClair),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -605,8 +614,8 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
                                       color: isCredit
-                                          ? const Color(0xFF2E7D32)
-                                          : (isPending ? const Color(0xFFF57F17) : const Color(0xFFE65100)),
+                                          ? AppTheme.couleurSucces(context)
+                                          : AppTheme.couleurAttention(context),
                                     ),
                                   ),
                                 ),

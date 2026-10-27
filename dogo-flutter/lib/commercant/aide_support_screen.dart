@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/session_storage_service.dart';
+import '../widgets/support_plateforme.dart';
 
 /// Écran Aide & Support Commerçant (WhatsApp direct, FAQ et assistance Dogo Mali)
 class AideSupportScreen extends StatelessWidget {
@@ -20,71 +21,14 @@ class AideSupportScreen extends StatelessWidget {
         ),
         title: Text(
           "Aide & Support",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Carte Assistance Rapide WhatsApp
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF25D366), Color(0xFF1EBE5D)],
-              ),
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: const [
-                BoxShadow(color: Color(0x2025D366), blurRadius: 14, offset: Offset(0, 4)),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF25D366), size: 26),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Support WhatsApp Karavan Mali",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
-                      ),
-                      const SizedBox(height: 3),
-                      const Text(
-                        "Réponse en moins de 15 minutes • 7j/7",
-                        style: TextStyle(color: Colors.white, fontSize: 11.5),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Ouverture de l'assistance WhatsApp Karavan Mali (+223 70 00 00 00)...")),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF1EBE5D),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          minimumSize: Size.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          elevation: 0,
-                        ),
-                        child: const Text("Démarrer la discussion", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Coordonnées réelles du support (configurées sur le serveur)
+          const CarteSupportPlateforme(),
 
           const SizedBox(height: 14),
 
@@ -96,7 +40,7 @@ class AideSupportScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppTheme.couleurBordure(context)),
               boxShadow: const [
-                BoxShadow(color: Color(0x0AF59E0B), blurRadius: 10, offset: Offset(0, 3)),
+                BoxShadow(color: Color(0x0AE6A823), blurRadius: 10, offset: Offset(0, 3)),
               ],
             ),
             child: Row(
@@ -104,11 +48,11 @@ class AideSupportScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7ED),
+                    color: AppTheme.ocreClair,
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFFEDD5)),
+                    border: Border.all(color: AppTheme.ocreClair),
                   ),
-                  child: const Icon(Icons.touch_app_rounded, color: Color(0xFFD97706), size: 22),
+                  child: const Icon(Icons.touch_app_rounded, color: AppTheme.ocreProfond, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -141,13 +85,13 @@ class AideSupportScreen extends StatelessWidget {
                     }
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFF7ED),
+                    backgroundColor: AppTheme.ocreClair,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text(
                     "Revoir",
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFFD97706)),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppTheme.ocreProfond),
                   ),
                 ),
               ],
@@ -171,7 +115,7 @@ class AideSupportScreen extends StatelessWidget {
           _buildFaqItem(
             context,
             question: "Où puis-je récupérer mes colis ?",
-            reponse: "Au point relais du Grand Marché de Bamako. Un SMS vous prévient à l'arrivée.",
+            reponse: "Au point de retrait indiqué dans votre commande, avec son itinéraire. Un SMS et une notification vous préviennent dès que votre colis y est disponible.",
           ),
           _buildFaqItem(
             context,
@@ -184,34 +128,6 @@ class AideSupportScreen extends StatelessWidget {
             reponse: "Par Orange Money, Moov Africa ou Wave.",
           ),
 
-          const SizedBox(height: 24),
-
-          // Contact bureau Bamako
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.couleurCarte(context),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppTheme.couleurBordure(context)),
-              boxShadow: const [
-                BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Bureau Karavan Bamako",
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppTheme.couleurTexte(context)),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Dabanani Center, Bamako\ncontact@dogo.ml • +223 76 00 11 22",
-                  style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context), height: 1.4),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -225,7 +141,7 @@ class AideSupportScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.couleurBordure(context)),
         boxShadow: const [
-          BoxShadow(color: Color(0x0646321E), blurRadius: 8, offset: Offset(0, 2)),
+          BoxShadow(color: Color(0x062C241E), blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
       child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(16), clipBehavior: Clip.antiAlias, child: ExpansionTile(

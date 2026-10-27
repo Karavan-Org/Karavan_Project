@@ -1,17 +1,28 @@
-# dogo_app
+# Application mobile Dɔgɔ
 
-A new Flutter project.
+Client Flutter pour les espaces commerçant, grossiste et courtier. Le backend Spring Boot fournit les données métier et l'authentification. Voir le [README racine](../README.md) pour lancer l'ensemble du projet.
 
-## Getting Started
+## Développement
 
-This project is a starting point for a Flutter application.
+```powershell
+flutter pub get
+flutter run -d chrome
+```
 
-A few resources to get you started if this is your first Flutter project:
+Flutter Web utilise `http://localhost:8080` par défaut. Pour pointer vers une autre API, définir `ip` et éventuellement `port` :
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```powershell
+flutter run -d chrome --dart-define=ip=192.168.1.10 --dart-define=port=8080
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Sur un appareil physique, remplacer l'adresse par l'adresse réseau de la machine qui exécute le backend. Ne pas utiliser `localhost` depuis le téléphone.
+
+## Contrôles
+
+```powershell
+flutter analyze
+flutter test
+flutter build web
+```
+
+Les journaux de `flutter analyze` distinguent les erreurs des lints informatifs. Le profil backend `demo` et ses comptes partagés sont réservés au développement.

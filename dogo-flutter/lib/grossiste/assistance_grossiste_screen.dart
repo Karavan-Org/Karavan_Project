@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/support_plateforme.dart';
 
 /// Écran Assistance Grossiste (Support B2B International DoGo)
 class AssistanceGrossisteScreen extends StatelessWidget {
@@ -18,71 +19,14 @@ class AssistanceGrossisteScreen extends StatelessWidget {
         ),
         title: Text(
           "Assistance Fournisseurs",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Carte WhatsApp International Fournisseurs
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF25D366), Color(0xFF1EBE5D)],
-              ),
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: const [
-                BoxShadow(color: Color(0x2025D366), blurRadius: 14, offset: Offset(0, 4)),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF25D366), size: 26),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Ligne Directe B2B WhatsApp",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
-                      ),
-                      const SizedBox(height: 3),
-                      const Text(
-                        "Support multilingue (Français, English, 中文) • 24/7",
-                        style: TextStyle(color: Colors.white, fontSize: 11.5),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Connexion au Support B2B Fournisseurs (+223 70 99 88 77)...")),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF1EBE5D),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          minimumSize: Size.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          elevation: 0,
-                        ),
-                        child: const Text("Contacter un gestionnaire B2B", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Coordonnées réelles du support (configurées sur le serveur)
+          const CarteSupportPlateforme(),
 
           const SizedBox(height: 24),
 
@@ -95,47 +39,20 @@ class AssistanceGrossisteScreen extends StatelessWidget {
 
           _buildFaqItem(
             context: context,
-            question: "Quel est le délai d'engagement de stock (RG-18) ?",
-            reponse: "Objectif atteint : confirmez votre stock sous 24 h pour lancer l'expédition.",
+            question: "Quand dois-je confirmer mon stock (RG-18) ?",
+            reponse: "Avant sa publication, chaque groupe monté sur vos produits attend votre confirmation de disponibilité : menu « Disponibilités à valider ».",
           ),
           _buildFaqItem(
             context: context,
-            question: "Quand mon paiement est-il débloqué ?",
-            reponse: "Acompte à la remise du lot au transitaire, solde à l'arrivée.",
+            question: "Quand suis-je payé ?",
+            reponse: "Pour les groupes que vous portez vous-même, chaque retrait validé verse sur votre portefeuille le montant payé par le commerçant, frais de plateforme déduits. Pour un groupe porté par un courtier, c'est lui qui reçoit les fonds.",
           ),
           _buildFaqItem(
             context: context,
-            question: "Comment organiser le ramassage avec le courtier ?",
-            reponse: "Bouton (+) > 'Expédier Lot'. Le transitaire vient récupérer le lot.",
+            question: "Comment se passe l'expédition d'un lot ?",
+            reponse: "Dès l'objectif atteint, l'onglet « Lots & Ventes » détaille les pièces à préparer. Le courtier prépare puis expédie le lot et publie le suivi du convoi ; pour un groupe que vous portez, signalez vous-même les étapes dans « Suivi des colis ».",
           ),
 
-          const SizedBox(height: 24),
-
-          // Coordonnées desk B2B
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.couleurCarte(context),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: const [
-                BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3)),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Karavan Global Sourcing Desk",
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppTheme.couleurTexte(context)),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Bamako • Guangzhou • Istanbul\nsuppliers@dogo.ml • +223 76 55 44 33",
-                  style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context), height: 1.4),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -148,7 +65,7 @@ class AssistanceGrossisteScreen extends StatelessWidget {
         color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
-          BoxShadow(color: Color(0x0646321E), blurRadius: 8, offset: Offset(0, 2)),
+          BoxShadow(color: Color(0x062C241E), blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
       child: Material(type: MaterialType.transparency, borderRadius: BorderRadius.circular(16), clipBehavior: Clip.antiAlias, child: ExpansionTile(
@@ -156,7 +73,7 @@ class AssistanceGrossisteScreen extends StatelessWidget {
           question,
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.couleurTexte(context)),
         ),
-        iconColor: const Color(0xFF9E6738),
+        iconColor: AppTheme.bissap,
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         children: [
           Text(

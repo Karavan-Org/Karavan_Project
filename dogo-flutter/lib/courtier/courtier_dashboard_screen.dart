@@ -1,15 +1,24 @@
+import 'dart:async';
 import '../widgets/bouton_bascule_theme.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
-import '../services/api/api_config.dart';
+import '../services/convoi_api_service.dart';
+import '../services/groupe_api_service.dart';
+import '../services/notification_api_service.dart';
+import '../services/portefeuille_api_service.dart';
+import '../services/visibilite_ecran.dart';
+import '../utils/format.dart';
 import '../widgets/zone_portefeuille_neumorphic.dart';
 import 'gestion_convoi_screen.dart';
 import 'creer_groupe_courtier_screen.dart';
+import 'notifications_courtier_screen.dart';
 import 'portefeuille_courtier_screen.dart';
 import 'scanner_retrait_screen.dart';
+import '../widgets/image_produit.dart';
 
-/// Tableau de bord d'accueil du Courtier (Frame 7 - accueil 1 de la planche)
+/// Tableau de bord d'accueil du Courtier, alimenté en direct : solde et séquestre de son portefeuille,
+/// ses groupes, ses convois en cours et ses notifications non lues.
 class CourtierDashboardScreen extends StatefulWidget {
   final bool showBottomNav;
 
@@ -25,8 +34,57 @@ class CourtierDashboardScreen extends StatefulWidget {
 class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
   int _bottomIndex = 0;
 
+  PortefeuilleInfo? _portefeuille;
+  List<Convoi> _convois = [];
+  List<GroupeResume> _groupes = [];
+  int _nonLues = 0;
+  bool _charge = false;
+  Timer? _actualisation;
+
+  @override
+  void initState() {
+    super.initState();
+    _charger();
+    _actualisation = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted && ecranVisible(context)) _charger();
+    });
+  }
+
+  @override
+  void dispose() {
+    _actualisation?.cancel();
+    super.dispose();
+  }
+
+  /// Chaque bloc se charge indépendamment : une source en panne n'empêche pas les autres de s'afficher
+  Future<void> _charger() async {
+    final resultats = await Future.wait<Object?>([
+      PortefeuilleApiService.instance.voirPortefeuille().catchError((_) => null),
+      ConvoiApiService.instance.lister().then<Object?>((c) => c).catchError((_) => null),
+      GroupeApiService.instance.mesGroupesCourtier().then<Object?>((g) => g).catchError((_) => null),
+      NotificationApiService.instance.nombreNonLues().then<Object?>((n) => n),
+    ]);
+    if (!mounted) return;
+    setState(() {
+      _portefeuille = resultats[0] as PortefeuilleInfo? ?? _portefeuille;
+      if (resultats[1] != null) _convois = resultats[1] as List<Convoi>;
+      if (resultats[2] != null) _groupes = resultats[2] as List<GroupeResume>;
+      _nonLues = resultats[3] as int;
+      _charge = true;
+    });
+  }
+
+  Future<void> _ouvrir(Widget ecran) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => ecran));
+    _charger(); // retour : soldes, convois et notifications peuvent avoir changé
+  }
+
   @override
   Widget build(BuildContext context) {
+    final convoisEnCours = _convois.where((c) => !c.estArrive).toList();
+    final groupesParId = {for (final g in _groupes) g.id: g};
+    final groupesOuverts = _groupes.where((g) => g.statut == 'OUVERT').length;
+
     return Scaffold(
       backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
@@ -36,35 +94,30 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
         title: ValueListenableBuilder<UtilisateurProfil?>(
           valueListenable: AuthService.instance.profilNotifier,
           builder: (context, user, _) {
-            final nom = user?.nomComplet.isNotEmpty == true ? user!.nomComplet : "Courtier Partenaire";
-            final structure = user?.structure?.isNotEmpty == true ? user!.structure! : "Transit & Logistique SARL • Certifié";
+            final nom = user?.nomComplet.isNotEmpty == true ? user!.nomComplet : "";
+            final structure = user?.structure;
             final bool aPhoto = user?.photoUrl != null && user!.photoUrl!.isNotEmpty;
 
             return Row(
               children: [
                 CircleAvatar(
                   radius: 17,
-                  backgroundColor: AppTheme.primary,
-                  backgroundImage: aPhoto
-                      ? NetworkImage(ApiConfig.resolutionImageUrl(user.photoUrl))
-                      : null,
-                  child: !aPhoto
-                      ? const Icon(Icons.person, color: Colors.white, size: 20)
-                      : null,
+                  backgroundColor: AppTheme.rose,
+                  backgroundImage: aPhoto ? imageReseauDimensionnee(context, user.photoUrl!, 34) : null,
+                  child: !aPhoto ? const Icon(Icons.person, color: AppTheme.terre, size: 20) : null,
                 ),
                 const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      nom,
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context)),
-                    ),
-                    Text(
-                      structure,
-                      style: const TextStyle(fontSize: 11.5, color: AppTheme.success, fontWeight: FontWeight.w600),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(nom, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.couleurTexte(context))),
+                      if (structure != null && structure.isNotEmpty)
+                        Text(structure, maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 11.5, color: AppTheme.couleurSucces(context), fontWeight: FontWeight.w600)),
+                    ],
+                  ),
                 ),
               ],
             );
@@ -73,15 +126,13 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
         actions: [
           const BoutonBasculeTheme(compact: true),
           IconButton(
-            icon: Icon(Icons.notifications_none_rounded, color: AppTheme.couleurTexte(context)),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Aucune nouvelle notification."),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
+            tooltip: "Notifications",
+            icon: Badge.count(
+              count: _nonLues,
+              isLabelVisible: _nonLues > 0,
+              child: Icon(Icons.notifications_none_rounded, color: AppTheme.couleurTexte(context)),
+            ),
+            onPressed: () => _ouvrir(const NotificationsCourtierScreen()),
           ),
           const SizedBox(width: 8),
         ],
@@ -92,18 +143,18 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
               onTap: (index) {
                 setState(() => _bottomIndex = index);
                 if (index == 1) {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const GestionConvoiScreen()));
+                  _ouvrir(const GestionConvoiScreen());
                 } else if (index == 2) {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CreerGroupeCourtierScreen()));
+                  _ouvrir(const CreerGroupeCourtierScreen());
                 } else if (index == 3) {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ScannerRetraitScreen()));
+                  _ouvrir(const ScannerRetraitScreen());
                 } else if (index == 4) {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PortefeuilleCourtierScreen()));
+                  _ouvrir(const PortefeuilleCourtierScreen());
                 }
               },
               type: BottomNavigationBarType.fixed,
-              selectedItemColor: AppTheme.primary,
-              unselectedItemColor: AppTheme.textMuted,
+              selectedItemColor: AppTheme.couleurAccent(context),
+              unselectedItemColor: AppTheme.couleurTexteAttenue(context),
               selectedFontSize: 11,
               unselectedFontSize: 11,
               items: const [
@@ -122,153 +173,145 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
               ],
             )
           : null,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- ZONE PORTEFEUILLE NEUMORPHIQUE SOFT 3D (Style Maquette) ---
-            ZonePortefeuilleNeumorphic(
-              compact: true,
-              titre: "Portefeuille Commissions",
-              sousTitre: "Commissions de transit & convois",
-              montantSolde: "0 FCFA",
-              infoSequestre: "Garantie Séquestre Karavan • Versements Orange / Moov",
-              iconeInfo: Icons.security_rounded,
-              texteBoutonAction: "Gérer & Retirer mes Fonds",
-              onTapAction: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const PortefeuilleCourtierScreen()),
-                );
-              },
-              couleurBouton: const [
-                Color(0xFFC07A3E),
-                Color(0xFF9E5C23),
-                Color(0xFF7A4012),
-              ],
-              couleurEmbleme: const [
-                Color(0xFFFFFFFF),
-                Color(0xFFE5A100),
-                Color(0xFF9E5C23),
-              ],
-            ),
+      body: RefreshIndicator(
+        onRefresh: _charger,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ZonePortefeuilleNeumorphic(
+                compact: true,
+                titre: "Portefeuille Commissions",
+                sousTitre: "Commissions de transit & convois",
+                montantSolde: _portefeuille == null
+                    ? (_charge ? "Indisponible" : "…")
+                    : formaterFcfa(_portefeuille!.soldeDisponible),
+                infoSequestre: _portefeuille == null
+                    ? "Vos commissions sont versées à la livraison des colis"
+                    : "En séquestre : ${formaterFcfa(_portefeuille!.soldeBloque)} • débloqués à la livraison",
+                iconeInfo: Icons.security_rounded,
+                texteBoutonAction: "Gérer & Retirer mes Fonds",
+                onTapAction: () => _ouvrir(const PortefeuilleCourtierScreen()),
+                couleurBouton: const [AppTheme.bissap, AppTheme.bissapProfond, AppTheme.bissapProfond],
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // --- CARTE D'ACTION RAPIDE : CRÉER UN GROUPE / CONVOI ---
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const CreerGroupeCourtierScreen()));
-              },
-              child: Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primary.withValues(alpha: 0.35),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
+              // --- ACTION : CRÉER UN GROUPE (texte selon l'activité réelle du courtier) ---
+              GestureDetector(
+                onTap: () => _ouvrir(const CreerGroupeCourtierScreen()),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppTheme.couleurSucces(context),
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(color: AppTheme.olive.withValues(alpha: 0.30), blurRadius: 15, offset: const Offset(0, 6)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+                        child: Icon(Icons.group_add_rounded, color: AppTheme.texteSur(AppTheme.couleurSucces(context)), size: 26),
                       ),
-                      child: const Icon(Icons.group_add_rounded, color: Colors.white, size: 26),
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Créer votre 1er groupe de clients",
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14.5),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            "Fédéralisez vos commerçants locaux sans avance de trésorerie.",
-                            style: TextStyle(color: Color(0xFFF3EAE2), fontSize: 11.5),
-                          ),
-                        ],
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _groupes.isEmpty ? "Créer votre 1er groupe d'achat" : "Créer un nouveau groupe d'achat",
+                              style: TextStyle(color: AppTheme.texteSur(AppTheme.couleurSucces(context)), fontWeight: FontWeight.w800, fontSize: 14.5),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _groupes.isEmpty
+                                  ? "Fédérez vos commerçants locaux sans avance de trésorerie."
+                                  : "${_groupes.length} groupe${_groupes.length > 1 ? 's' : ''} au total • "
+                                      "$groupesOuverts ouvert${groupesOuverts > 1 ? 's' : ''}",
+                              style: TextStyle(color: AppTheme.texteSur(AppTheme.couleurSucces(context)).withValues(alpha: 0.86), fontSize: 11.5),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
-                  ],
+                      Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.texteSur(AppTheme.couleurSucces(context)), size: 16),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // --- CONVOI EN COURS (ISTANBUL -> BAMAKO) ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Convois & Expéditions en Transit",
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.couleurTexte(context)),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const GestionConvoiScreen()));
-                  },
-                  child: const Text("Gérer", style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                ),
-              ],
-            ),
-
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-              decoration: BoxDecoration(
-                color: AppTheme.couleurCarte(context),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.couleurBordure(context)),
-              ),
-              child: Column(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.local_shipping_outlined, size: 36, color: AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.5)),
-                  const SizedBox(height: 10),
-                  Text(
-                    "Aucun convoi en cours",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Créez ou prenez en charge un convoi pour démarrer le groupage.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
-                  ),
-                  const SizedBox(height: 14),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ScannerRetraitScreen()));
-                    },
-                    icon: const Icon(Icons.qr_code_scanner, size: 18),
-                    label: const Text("Scanner un QR Code au retrait", maxLines: 1, overflow: TextOverflow.ellipsis),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.primary,
-                      side: const BorderSide(color: AppTheme.primary),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      minimumSize: const Size(double.infinity, 48),
-                      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  Expanded(
+                    child: Text(
+                      "Convois en cours",
+                      style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.couleurTexte(context)),
                     ),
                   ),
+                  TextButton(onPressed: () => _ouvrir(const GestionConvoiScreen()), child: const Text("Gérer")),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 30),
-          ],
+              if (!_charge)
+                const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()))
+              else if (convoisEnCours.isEmpty)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                    child: Column(
+                      children: [
+                        Icon(Icons.local_shipping_outlined, size: 36, color: AppTheme.couleurTexteAttenue(context)),
+                        const SizedBox(height: 10),
+                        Text("Aucun convoi en cours", style: AppTheme.styleTitrePetit(context)),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Un convoi s'ouvre dès qu'un de vos groupes atteint son objectif.",
+                          textAlign: TextAlign.center,
+                          style: AppTheme.styleCorpsAttenue(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                for (final c in convoisEnCours.take(3))
+                  Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: ListTile(
+                      onTap: () => _ouvrir(const GestionConvoiScreen()),
+                      leading: const Icon(Icons.local_shipping_rounded),
+                      title: Text(
+                        groupesParId[c.groupeId]?.produitNom ?? "Groupe #${c.groupeId}",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        [c.libelleStatut, if (c.dernierEvenement != null) c.dernierEvenement!.localisation].join(" • "),
+                      ),
+                      trailing: Text(
+                        dateRelative(c.dernierEvenement?.date),
+                        style: AppTheme.styleCorpsAttenue(context, taille: 11),
+                      ),
+                    ),
+                  ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                onPressed: () => _ouvrir(const ScannerRetraitScreen()),
+                icon: const Icon(Icons.qr_code_scanner, size: 18),
+                label: const Text("Scanner un QR Code au retrait", maxLines: 1, overflow: TextOverflow.ellipsis),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

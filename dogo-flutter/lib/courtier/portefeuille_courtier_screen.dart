@@ -13,7 +13,7 @@ class PortefeuilleCourtierScreen extends StatefulWidget {
 }
 
 class _PortefeuilleCourtierScreenState extends State<PortefeuilleCourtierScreen> {
-  static const Color _accent = Color(0xFF9E5C23);
+  static const Color _accent = AppTheme.bissapProfond;
 
   DonneesPortefeuillePro _donnees = const DonneesPortefeuillePro();
   bool _chargement = true;
@@ -63,7 +63,7 @@ class _PortefeuilleCourtierScreenState extends State<PortefeuilleCourtierScreen>
             }
           },
         ),
-        title: Text("Portefeuille Courtier", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        title: Text("Portefeuille Courtier", style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.couleurTexte(context))),
         backgroundColor: Colors.transparent,
         foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
@@ -92,21 +92,16 @@ class _PortefeuilleCourtierScreenState extends State<PortefeuilleCourtierScreen>
                 texteBoutonAction: "Retirer vers Mobile Money",
                 onTapAction: info == null ? null : _retirer,
                 couleurBouton: const [
-                  Color(0xFFC07A3E),
-                  Color(0xFF9E5C23),
-                  Color(0xFF7A4012),
-                ],
-                couleurEmbleme: const [
-                  Color(0xFFFFFFFF),
-                  Color(0xFFE5A100),
-                  Color(0xFF9E5C23),
+                  AppTheme.bissap,
+                  AppTheme.bissapProfond,
+                  AppTheme.bissapProfond,
                 ],
               ),
               if (!_chargement && info == null) ...[
                 const SizedBox(height: 12),
                 const Text(
                   "Portefeuille injoignable : vérifiez votre connexion puis tirez pour actualiser.",
-                  style: TextStyle(fontSize: 12.5, color: Color(0xFFC0392B)),
+                  style: TextStyle(fontSize: 12.5, color: AppTheme.danger),
                 ),
               ],
 

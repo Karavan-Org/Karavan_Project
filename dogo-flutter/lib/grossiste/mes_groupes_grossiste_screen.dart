@@ -8,6 +8,7 @@ import '../widgets/app_popups.dart';
 import '../widgets/carte_groupe.dart';
 import '../widgets/partage_groupe.dart';
 import 'suivi_colis_grossiste_screen.dart';
+import '../services/visibilite_ecran.dart';
 
 /// Groupes d'achat montés sur les produits du Grossiste (GET /api/groupes/du-grossiste) : ceux qu'il a créés
 /// lui-même (il les partage et signale les étapes de leur acheminement à dɔgɔ), et ceux des courtiers,
@@ -38,7 +39,7 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
     _charger();
     // Actualisation dynamique en direct de la jauge et des réservations
     _timerActualisation = Timer.periodic(const Duration(seconds: 3), (_) {
-      _actualiserSilencieux();
+      if (mounted && ecranVisible(context)) _actualiserSilencieux();
     });
   }
 
@@ -128,7 +129,7 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e is ApiException ? e.messageComplet : 'Confirmation impossible : $e'),
-          backgroundColor: const Color(0xFFC0392B),
+          backgroundColor: AppTheme.danger,
         ),
       );
     } finally {
@@ -184,10 +185,10 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
           ),
           Expanded(
             child: RefreshIndicator(
-              color: AppTheme.primary,
+              color: AppTheme.olive,
               onRefresh: _charger,
               child: _chargement
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                  ? const Center(child: CircularProgressIndicator(color: AppTheme.olive))
                   : _erreur != null
                       ? _etat(Icons.cloud_off_outlined, "Chargement impossible", _erreur!)
                       : groupes.isEmpty
@@ -300,17 +301,17 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
                   )
                 : OutlinedButton.icon(
                     onPressed: () => _bloquerSuiviIncomplet(g),
-                    icon: const Icon(Icons.lock_outline_rounded, size: 16, color: Color(0xFF8C7E74)),
+                    icon: Icon(Icons.lock_outline_rounded, size: 16, color: AppTheme.couleurTexteAttenue(context)),
                     label: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
                         "Suivi (${g.pourcentageProgression}%)",
-                        style: const TextStyle(color: Color(0xFF8C7E74), fontWeight: FontWeight.w700, fontSize: 12),
+                        style: TextStyle(color: AppTheme.couleurTexteAttenue(context), fontWeight: FontWeight.w700, fontSize: 12),
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFD7CCC8)),
-                      backgroundColor: const Color(0xFFF5EFEA),
+                      side: BorderSide(color: AppTheme.couleurBordureForte(context)),
+                      backgroundColor: AppTheme.couleurSurfaceDouce(context),
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       minimumSize: const Size(0, 42),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
@@ -348,9 +349,9 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: actif ? const Color(0xFF9E6738) : AppTheme.couleurCarte(context),
+          color: actif ? AppTheme.bissap : AppTheme.couleurCarte(context),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: actif ? const Color(0xFF9E6738) : AppTheme.couleurBordure(context)),
+          border: Border.all(color: actif ? AppTheme.bissap : AppTheme.couleurBordure(context)),
         ),
         child: Text(
           nombre > 0 ? "$label ($nombre)" : label,

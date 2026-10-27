@@ -89,11 +89,6 @@ public class ParticipationService {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-27",
                     "La quantité doit être un entier positif d'au moins " + g.quantiteMinParCommercant());
         }
-        long plafond = Math.max(g.quantiteMinParCommercant(), (long) Math.ceil(g.quantiteCible() * 0.50));
-        if (g.quantiteCible() > 2 && quantite > plafond) {
-            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-27",
-                    "La quantité demandée (" + quantite + ") dépasse le plafond autorisé de 50% de la cible (" + plafond + ")");
-        }
         if (participations.existsByGroupeIdAndCommercantIdAndVarianteIdAndStatutIn(groupeId, commercantId, varianteId, ACTIVES)) {
             throw new ErreurMetier(CodeErreur.CONFLIT, "RG-26",
                     "Vous participez déjà à ce groupe avec cette variante : annulez d'abord votre participation");

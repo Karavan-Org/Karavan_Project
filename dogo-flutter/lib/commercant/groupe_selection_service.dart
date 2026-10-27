@@ -4,7 +4,7 @@ import 'favoris_service.dart';
 
 /// Service centralisé de gestion du groupe actuellement sélectionné par le Commerçant.
 /// Permet au Commerçant de sélectionner n'importe quel groupe affiché en arrière-plan,
-/// puis d'appuyer sur (+) > REJOINDRE pour passer directement à l'écran de paiement séquestre.
+/// puis d'appuyer sur (+) > REJOINDRE pour consulter sa fiche avant la réservation.
 class GroupeSelectionService {
   GroupeSelectionService._internal();
   static final GroupeSelectionService instance = GroupeSelectionService._internal();

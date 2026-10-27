@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/commercant/campagne_model.dart';
+import 'package:dogo_app/models/campagne_model.dart';
 
 void main() {
   // JSON conforme à GroupeService.GroupeVue côté Spring Boot
@@ -44,7 +44,7 @@ void main() {
     expect(g.tempsRestant, '3 jours restants');
   });
 
-  test('variantes, minimum et plafond RG-27 viennent du backend', () {
+  test('variantes, minimum et capacité restante viennent du backend', () {
     final g = GroupeCampagneModel.fromJson(groupeVue);
 
     expect(g.variantes.map((v) => v.id), [11, 12]);
@@ -52,7 +52,7 @@ void main() {
     expect(g.variantes.first.qteDisponible, isNull);
     expect(g.varianteId, 11);
     expect(g.quantiteMinParCommercant, 2);
-    // plafond = max(min, ceil(50 % de 20)) = 10, borné par la quantité restante (7)
+    // La capacité disponible est la cible moins les quantités déjà confirmées ou réservées.
     expect(g.quantiteMaxParCommercant, 7);
   });
 

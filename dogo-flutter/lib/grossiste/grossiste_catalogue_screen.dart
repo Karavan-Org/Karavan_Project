@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import '../widgets/tab_navigation_scope.dart';
 import 'package:flutter/material.dart';
 import '../services/api/api_config.dart';
@@ -82,17 +83,24 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
   Widget _buildImageProduit(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {
       return const Center(
-        child: Icon(Icons.inventory_2_rounded, color: AppTheme.primary, size: 32),
+        child: Icon(Icons.inventory_2_rounded, color: AppTheme.textePale, size: 32),
       );
     }
 
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('/api/')) {
       final fullUrl = ApiConfig.resolutionImageUrl(imagePath);
-      return Image.network(
+      // Vignette de grille : décodée à sa taille d'affichage, pas aux 2000 px de la photo d'origine
+      return LayoutBuilder(
+        builder: (context, contraintes) => Image.network(
         fullUrl,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => const Center(
-          child: Icon(Icons.broken_image_outlined, color: Colors.grey, size: 32),
+        cacheWidth: contraintes.hasBoundedWidth && contraintes.maxWidth > 0
+            ? (math.max(contraintes.maxWidth, contraintes.hasBoundedHeight ? contraintes.maxHeight * 1.5 : 0) *
+                    MediaQuery.devicePixelRatioOf(context))
+                .ceil()
+            : null,
+        errorBuilder: (context, error, stackTrace) => Center(
+          child: Icon(Icons.broken_image_outlined, color: AppTheme.couleurTexteAttenue(context), size: 32),
         ),
         loadingBuilder: (context, child, progress) {
           if (progress == null) return child;
@@ -100,10 +108,11 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
             child: SizedBox(
               width: 22,
               height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.olive),
             ),
           );
         },
+        ),
       );
     }
 
@@ -111,7 +120,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
       imagePath,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => const Center(
-        child: Icon(Icons.inventory_2_rounded, color: AppTheme.primary, size: 32),
+        child: Icon(Icons.inventory_2_rounded, color: AppTheme.textePale, size: 32),
       ),
     );
   }
@@ -141,7 +150,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
         centerTitle: false,
         title: Text(
           "Mon Catalogue Grossiste",
-          style: TextStyle(
+          style: TextStyle(fontFamily: AppTheme.policeTitre, 
             fontWeight: FontWeight.w800,
             fontSize: 18,
             color: AppTheme.couleurTexte(context),
@@ -202,7 +211,8 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                     onSelected: (val) {
                       if (val) setState(() => _selectedCategory = cat);
                     },
-                    selectedColor: AppTheme.primary,
+                    selectedColor: AppTheme.couleurBandeauNavigation(context),
+                    checkmarkColor: Colors.white,
                     backgroundColor: AppTheme.couleurCarte(context),
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
@@ -212,7 +222,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                        color: isSelected ? AppTheme.primary : AppTheme.couleurBordure(context),
+                        color: isSelected ? AppTheme.couleurBandeauNavigation(context) : AppTheme.couleurBordure(context),
                       ),
                     ),
                   ),
@@ -224,7 +234,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
           // Liste des articles
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                ? const Center(child: CircularProgressIndicator(color: AppTheme.olive))
                 : filtered.isEmpty
                     ? Center(
                         child: Padding(
@@ -241,13 +251,13 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                 child: const Icon(
                                   Icons.inventory_2_outlined,
                                   size: 52,
-                                  color: AppTheme.primary,
+                                  color: AppTheme.textePale,
                                 ),
                               ),
                               const SizedBox(height: 18),
                               Text(
                                 "Aucun article dans le catalogue",
-                                style: TextStyle(
+                                style: TextStyle(fontFamily: AppTheme.policeTitre, 
                                   fontWeight: FontWeight.w800,
                                   fontSize: 16.5,
                                   color: AppTheme.couleurTexte(context),
@@ -333,15 +343,15 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: AppTheme.tertiary.withValues(alpha: 0.5),
+                                              color: AppTheme.ocreClair,
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: Text(
                                               item["origine"] as String,
-                                              style: TextStyle(
+                                              style: const TextStyle(
                                                 fontSize: 11.5,
                                                 fontWeight: FontWeight.w600,
-                                                color: AppTheme.primary,
+                                                color: AppTheme.ocreProfond,
                                               ),
                                             ),
                                           ),
@@ -357,7 +367,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                                 style: TextStyle(
                                                   fontSize: 11.5,
                                                   fontWeight: FontWeight.w700,
-                                                  color: AppTheme.success,
+                                                  color: AppTheme.oliveProfond,
                                                 ),
                                               ),
                                             ),
@@ -382,7 +392,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                             style: TextStyle(
                                               fontWeight: FontWeight.w800,
                                               fontSize: 14.5,
-                                              color: AppTheme.primary,
+                                              color: AppTheme.couleurTexte(context),
                                             ),
                                           ),
                                           const SizedBox(width: 8),
@@ -398,9 +408,9 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                       const SizedBox(height: 4),
                                       Text(
                                         item["resume"] as String,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 11.5,
-                                          color: AppTheme.secondary,
+                                          color: AppTheme.ocreProfond,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -417,7 +427,7 @@ class _GrossisteCatalogueScreenState extends State<GrossisteCatalogueScreen> {
                                           ),
                                           icon: const Icon(Icons.group_add_rounded, size: 18),
                                           label: const Text("Créer un groupe"),
-                                          style: TextButton.styleFrom(foregroundColor: AppTheme.primary),
+                                          style: TextButton.styleFrom(foregroundColor: AppTheme.oliveProfond),
                                         ),
                                       ),
                                     ],

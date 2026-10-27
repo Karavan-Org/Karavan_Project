@@ -19,36 +19,41 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 100));
 
-    // Étape 1 : Le but de l'application
-    expect(find.text('Bienvenue sur Karavan Vendeur !'), findsOneWidget);
-    expect(find.text("LE BUT DE L'APPLICATION"), findsOneWidget);
-    expect(find.text('ÉTAPE 1 / 5'), findsOneWidget);
+    // Étape 1 : tableau de bord et chiffres clés
+    expect(find.text('Tableau de Bord & Chiffres Clés'), findsOneWidget);
+    expect(find.text('TABLEAU DE BORD : STATISTIQUES'), findsOneWidget);
+    expect(find.text('ÉTAPE 1 / 6'), findsOneWidget);
     expect(find.text('Suivant'), findsOneWidget);
 
-    // Clic sur Suivant -> Étape 2 : Catalogue
-    await tester.tap(find.text('Suivant'));
-    await tester.pump(const Duration(milliseconds: 100));
+    Future<void> suivant() async {
+      await tester.tap(find.text('Suivant'));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
-    expect(find.text('Votre Catalogue & Variantes'), findsOneWidget);
-    expect(find.text('FONCTIONNALITÉ 1 : PRODUITS'), findsOneWidget);
-    expect(find.text('ÉTAPE 2 / 5'), findsOneWidget);
+    // Étape 2 : catalogue actif
+    await suivant();
+    expect(find.text('Mon Catalogue Actif & Ajout'), findsOneWidget);
+    expect(find.text('VOS PRODUITS & STOCKS'), findsOneWidget);
+    expect(find.text('ÉTAPE 2 / 6'), findsOneWidget);
     expect(find.text('Précédent'), findsOneWidget);
 
-    // Clic sur Suivant -> Étape 3 : Bouton (+)
-    await tester.tap(find.text('Suivant'));
-    await tester.pump(const Duration(milliseconds: 100));
+    // Étape 3 : bouton (+)
+    await suivant();
     expect(find.text("Créer un Groupe d'Achat"), findsOneWidget);
     expect(find.text('FONCTIONNALITÉ 2 : LE BOUTON (+)'), findsOneWidget);
 
-    // Clic sur Suivant -> Étape 4 : Commandes
-    await tester.tap(find.text('Suivant'));
-    await tester.pump(const Duration(milliseconds: 100));
+    // Étape 4 : validation et expédition
+    await suivant();
     expect(find.text('Validation & Expédition'), findsOneWidget);
 
-    // Clic sur Suivant -> Étape 5 : Portefeuille
-    await tester.tap(find.text('Suivant'));
-    await tester.pump(const Duration(milliseconds: 100));
+    // Étape 5 : portefeuille
+    await suivant();
     expect(find.text('Portefeuille & Séquestre Garanti'), findsOneWidget);
+
+    // Étape 6 : en-tête personnel, dernière étape
+    await suivant();
+    expect(find.text('Menu, Paramètres & Mode Sombre'), findsOneWidget);
+    expect(find.text('ÉTAPE 6 / 6'), findsOneWidget);
     expect(find.text('Terminer'), findsOneWidget);
 
     // Clic sur Terminer

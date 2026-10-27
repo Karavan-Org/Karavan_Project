@@ -6,6 +6,7 @@ import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/carte_groupe.dart';
 import 'creer_groupe_courtier_screen.dart';
+import '../services/visibilite_ecran.dart';
 
 /// Groupes d'achat créés par le Courtier (GET /api/groupes/mes-groupes). Un brouillon peut être envoyé au
 /// grossiste pour confirmation du stock (BROUILLON → EN_VALIDATION, RG-18).
@@ -28,7 +29,7 @@ class _MesGroupesCourtierScreenState extends State<MesGroupesCourtierScreen> {
     super.initState();
     _charger();
     _timerActualisation = Timer.periodic(const Duration(seconds: 4), (_) {
-      _actualiserSilencieux();
+      if (mounted && ecranVisible(context)) _actualiserSilencieux();
     });
   }
 
@@ -91,7 +92,7 @@ class _MesGroupesCourtierScreenState extends State<MesGroupesCourtierScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e is ApiException ? e.messageComplet : 'Envoi impossible : $e'),
-          backgroundColor: const Color(0xFFC0392B),
+          backgroundColor: AppTheme.danger,
         ),
       );
     } finally {
@@ -119,11 +120,11 @@ class _MesGroupesCourtierScreenState extends State<MesGroupesCourtierScreen> {
         ),
         title: Text(
           "Mes groupes d'achat",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF9E6738)),
+            icon: const Icon(Icons.add_circle_outline_rounded, color: AppTheme.bissap),
             tooltip: "Nouveau groupe",
             onPressed: _creer,
           ),
@@ -131,10 +132,10 @@ class _MesGroupesCourtierScreenState extends State<MesGroupesCourtierScreen> {
         ],
       ),
       body: RefreshIndicator(
-        color: AppTheme.primary,
+        color: AppTheme.olive,
         onRefresh: _charger,
         child: _chargement
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.olive))
             : _groupes.isEmpty
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),

@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
+import '../models/role_acteur.dart';
 import '../services/kyc_api_service.dart';
 import '../theme/app_theme.dart';
 import 'grossiste_dossier_examen_screen.dart';
 import 'grossiste_onboarding_widgets.dart';
 import 'selecteur_piece.dart';
 
-/// Dépôt du dossier de vérification du Grossiste (maquette Figma « Soumettre mes documents »).
+/// Dépôt du dossier de vérification (maquette Figma « Soumettre mes documents ») d'un Grossiste ou d'un
+/// Courtier : leur compte reste en attente, sans accès à leur espace, tant que le dossier n'est pas approuvé.
 /// Chaque pièce peut être photographiée ou importée ; l'envoi part en un seul POST /api/kyc.
 class GrossisteDocumentsKycScreen extends StatefulWidget {
-  /// Motif du rejet précédent, affiché pour que le grossiste corrige son dossier
+  /// Motif du rejet précédent, affiché pour que l'acteur corrige son dossier
   final String? motifRejet;
 
-  const GrossisteDocumentsKycScreen({super.key, this.motifRejet});
+  /// Grossiste ou Courtier : fixe les pièces demandées (TypeDocument.obligatoiresPour côté backend)
+  final RoleActeur role;
+
+  const GrossisteDocumentsKycScreen({super.key, this.motifRejet, this.role = RoleActeur.grossiste});
 
   @override
   State<GrossisteDocumentsKycScreen> createState() => _GrossisteDocumentsKycScreenState();
@@ -28,7 +33,7 @@ class _EmplacementPiece {
 }
 
 class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScreen> {
-  static const _emplacements = [
+  static const _emplacementsGrossiste = [
     _EmplacementPiece(TypeDocumentKyc.pieceIdentite, "Pièce d'identité / Passeport", Icons.badge_outlined,
         obligatoire: true),
     _EmplacementPiece(TypeDocumentKyc.registreCommerce, "Justificatif d'activité (extrait, registre)",
@@ -38,6 +43,19 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
     _EmplacementPiece(TypeDocumentKyc.releveBancaire, "Relevé bancaire", Icons.shield_outlined),
     _EmplacementPiece(TypeDocumentKyc.autre, "Autres documents (optionnel)", Icons.workspace_premium_outlined),
   ];
+
+  static const _emplacementsCourtier = [
+    _EmplacementPiece(TypeDocumentKyc.pieceIdentite, "Pièce d'identité / Passeport", Icons.badge_outlined,
+        obligatoire: true),
+    _EmplacementPiece(TypeDocumentKyc.licenceTransit, "Licence de transitaire / commissionnaire",
+        Icons.local_shipping_outlined,
+        obligatoire: true),
+    _EmplacementPiece(TypeDocumentKyc.releveBancaire, "Relevé bancaire", Icons.shield_outlined),
+    _EmplacementPiece(TypeDocumentKyc.autre, "Autres documents (optionnel)", Icons.workspace_premium_outlined),
+  ];
+
+  List<_EmplacementPiece> get _emplacements =>
+      widget.role == RoleActeur.courtier ? _emplacementsCourtier : _emplacementsGrossiste;
 
   /// Une pièce par emplacement, plus les documents ajoutés via « Ajouter un document »
   final Map<TypeDocumentKyc, FichierChoisi> _pieces = {};
@@ -72,7 +90,7 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
       final dossier = await KycApiService.instance.soumettre(pieces);
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => GrossisteDossierExamenScreen(dossier: dossier)),
+        MaterialPageRoute(builder: (_) => GrossisteDossierExamenScreen(dossier: dossier, role: widget.role)),
         (route) => route.isFirst,
       );
     } catch (e) {
@@ -87,7 +105,7 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
         if (!mounted) return;
         if (dossierExistant != null) {
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => GrossisteDossierExamenScreen(dossier: dossierExistant)),
+            MaterialPageRoute(builder: (_) => GrossisteDossierExamenScreen(dossier: dossierExistant, role: widget.role)),
             (route) => route.isFirst,
           );
           return;
@@ -123,7 +141,7 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
                   Expanded(
                     child: Text(
                       "Soumettre mes documents",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context)),
+                      style: TextStyle(fontFamily: AppTheme.policeTitre, fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context)),
                     ),
                   ),
                 ],
@@ -139,13 +157,13 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFDECEA),
+                    color: AppTheme.dangerClair,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFF5B7B1)),
+                    border: Border.all(color: AppTheme.dangerBordure),
                   ),
                   child: Text(
                     "Dossier précédent refusé : ${widget.motifRejet}",
-                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF922B21), fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontSize: 12.5, color: AppTheme.dangerProfond, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -177,7 +195,7 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
                     height: 86,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFFAF5),
+                      color: AppTheme.creme,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Column(
@@ -253,7 +271,7 @@ class _CartePiece extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      f == null ? "PDF, JPG, PNG (max 5 Mo)" : "${f.nom} • $ko Ko",
+                      f == null ? "PDF, image, Word, Excel, texte (max 5 Mo)" : "${f.nom} • $ko Ko",
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

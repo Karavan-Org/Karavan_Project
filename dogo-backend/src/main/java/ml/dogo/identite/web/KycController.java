@@ -100,13 +100,29 @@ public class KycController {
                                            @PathVariable long dossierId, @PathVariable long documentId) {
         KycService.FichierVue f = kyc.lireDocument(moi.id(), dossierId, documentId);
         String nom = f.nom().toLowerCase(java.util.Locale.ROOT);
-        MediaType type = nom.endsWith(".pdf") ? MediaType.APPLICATION_PDF
-                : nom.endsWith(".png") ? MediaType.IMAGE_PNG
-                : nom.endsWith(".jpg") || nom.endsWith(".jpeg") ? MediaType.IMAGE_JPEG
-                : MediaType.APPLICATION_OCTET_STREAM;
+        String extension = nom.contains(".") ? nom.substring(nom.lastIndexOf('.')) : "";
+        MediaType type = switch (extension) {
+            case ".pdf" -> MediaType.APPLICATION_PDF;
+            case ".png" -> MediaType.IMAGE_PNG;
+            case ".jpg", ".jpeg" -> MediaType.IMAGE_JPEG;
+            case ".txt" -> new MediaType("text", "plain", java.nio.charset.StandardCharsets.UTF_8);
+            case ".csv" -> new MediaType("text", "csv", java.nio.charset.StandardCharsets.UTF_8);
+            case ".rtf" -> MediaType.parseMediaType("application/rtf");
+            case ".doc" -> MediaType.parseMediaType("application/msword");
+            case ".docx" -> MediaType.parseMediaType(
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            case ".xls" -> MediaType.parseMediaType("application/vnd.ms-excel");
+            case ".xlsx" -> MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            case ".odt" -> MediaType.parseMediaType("application/vnd.oasis.opendocument.text");
+            case ".ods" -> MediaType.parseMediaType("application/vnd.oasis.opendocument.spreadsheet");
+            default -> MediaType.APPLICATION_OCTET_STREAM;
+        };
+        // Images, PDF et texte s'affichent dans la console ; les fichiers bureautiques se téléchargent
+        boolean apercu = type.getType().equals("image") || type.getType().equals("text")
+                || type.equals(MediaType.APPLICATION_PDF);
         return ResponseEntity.ok().contentType(type)
                 .header("X-Content-Type-Options", "nosniff")
-                .header("Content-Disposition", "inline; filename=\"" + f.nom() + "\"")
+                .header("Content-Disposition", (apercu ? "inline" : "attachment") + "; filename=\"" + f.nom() + "\"")
                 .body(f.contenu());
     }
 }

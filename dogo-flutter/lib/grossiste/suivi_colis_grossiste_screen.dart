@@ -5,6 +5,7 @@ import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_popups.dart';
 import '../widgets/image_produit.dart';
+import '../services/visibilite_ecran.dart';
 
 /// Suivi du colis des groupes que le grossiste achemine lui-même : il valide chaque étape dans l'ordre,
 /// chaque validation est notifiée immédiatement aux administrateurs dɔgɔ, qui mettent à jour le suivi
@@ -41,7 +42,7 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
     _charger();
     // Actualisation automatique en temps réel
     _timerActualisation = Timer.periodic(const Duration(seconds: 4), (_) {
-      _actualiserSilencieux();
+      if (mounted && ecranVisible(context)) _actualiserSilencieux();
     });
   }
 
@@ -119,7 +120,7 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
       context: context,
       titre: "Suivi non encore ouvert par l'administrateur",
       message: "Vous ne pouvez pas valider d'étape de suivi tant que l'administrateur n'a pas accepté et officiellement ouvert le suivi de ce colis.",
-      detail: "L'Admin Logistique (+22370000005) ou l'Admin Technique doit d'abord ouvrir le suivi du colis depuis la console Admin.",
+      detail: "L'équipe logistique Karavan doit d'abord ouvrir le suivi de ce colis ; vous serez notifié dès que ce sera fait.",
     );
   }
 
@@ -190,7 +191,7 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e is ApiException ? e.messageComplet : 'Envoi impossible : $e'),
-          backgroundColor: const Color(0xFFC0392B),
+          backgroundColor: AppTheme.danger,
         ),
       );
     } finally {
@@ -207,17 +208,17 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
           icon: Icon(Icons.arrow_back_rounded, color: AppTheme.couleurTexte(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text("Suivi des colis", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context))),
+        title: Text("Suivi des colis", style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context))),
         backgroundColor: AppTheme.couleurCarte(context),
         foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
         actions: [IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _charger)],
       ),
       body: RefreshIndicator(
-        color: AppTheme.primary,
+        color: AppTheme.olive,
         onRefresh: _charger,
         child: _chargement
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.olive))
             : _erreur != null
                 ? _message(Icons.cloud_off_outlined, "Chargement impossible", _erreur!)
                 : _groupes.isEmpty
@@ -280,16 +281,16 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: suiviOuvert ? AppTheme.tertiary.withValues(alpha: 0.35) : const Color(0xFFFFF3E0),
+              color: suiviOuvert ? AppTheme.tertiary.withValues(alpha: 0.35) : AppTheme.ocreClair,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: suiviOuvert ? Colors.transparent : const Color(0xFFFFB74D)),
+              border: Border.all(color: suiviOuvert ? Colors.transparent : AppTheme.ocreBordure),
             ),
             child: Row(
               children: [
                 Icon(
                   suiviOuvert ? Icons.local_shipping_outlined : Icons.hourglass_top_rounded,
                   size: 16,
-                  color: suiviOuvert ? AppTheme.textDark : const Color(0xFFE65100),
+                  color: suiviOuvert ? AppTheme.textDark : AppTheme.ocreProfond,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -300,7 +301,7 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: suiviOuvert ? AppTheme.textDark : const Color(0xFFB71C1C),
+                      color: suiviOuvert ? AppTheme.textDark : AppTheme.dangerProfond,
                     ),
                   ),
                 ),
@@ -313,18 +314,18 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
               margin: const EdgeInsets.only(top: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF3E0),
+                color: AppTheme.ocreClair,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFFB74D)),
+                border: Border.all(color: AppTheme.ocreBordure),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.lock_outline_rounded, color: Color(0xFFE65100), size: 20),
+                  const Icon(Icons.lock_outline_rounded, color: AppTheme.ocreProfond, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       "Suivi verrouillé (${g.pourcentageProgression}%) : Ce groupe doit atteindre 100% de ses réservations (${g.quantiteProgression}/${g.quantiteCible}) avant que les étapes d'acheminement ne puissent être initiées.",
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFB71C1C)),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.dangerProfond),
                     ),
                   ),
                 ],
@@ -336,18 +337,18 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
                 margin: const EdgeInsets.only(top: 8, bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF8E1),
+                  color: AppTheme.ocreClair,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFFD54F)),
+                  border: Border.all(color: AppTheme.ocre),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.lock_clock_outlined, color: Color(0xFFE65100), size: 20),
+                    Icon(Icons.lock_clock_outlined, color: AppTheme.ocreProfond, size: 20),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         "L'objectif de 100% est atteint. Les étapes d'acheminement ne peuvent pas être validées tant que l'administrateur n'a pas accepté et ouvert le suivi du colis.",
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF5D4037)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.terreDouce),
                       ),
                     ),
                   ],
@@ -359,7 +360,7 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
               const Padding(
                 padding: EdgeInsets.only(top: 6),
                 child: Text("Toutes les étapes sont validées.",
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.success)),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.oliveProfond)),
               ),
           ],
         ],
@@ -378,7 +379,7 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
           Icon(
             faite ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
             size: 22,
-            color: faite ? AppTheme.success : const Color(0xFFC7B8AA),
+            color: faite ? AppTheme.oliveProfond : AppTheme.textePale,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -406,16 +407,16 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
             if (!suiviOuvert)
               OutlinedButton.icon(
                 onPressed: () => _bloquerSuiviNonOuvert(g),
-                icon: const Icon(Icons.lock_outline_rounded, size: 14, color: Color(0xFFE65100)),
+                icon: const Icon(Icons.lock_outline_rounded, size: 14, color: AppTheme.ocreProfond),
                 label: const FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
                     "En attente admin",
-                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFE65100)),
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppTheme.ocreProfond),
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFFFB74D)),
+                  side: const BorderSide(color: AppTheme.ocreBordure),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   minimumSize: const Size(0, 34),

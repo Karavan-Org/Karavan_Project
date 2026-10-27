@@ -83,5 +83,69 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(termine, isTrue);
   });
+
+  testWidgets('DidacticielGuideOverlay pour Grossiste navigation complète (Tableau de bord, Catalogue, FAB, Tabs & Menu)', (tester) async {
+    bool termine = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DidacticielGuideOverlay(
+            role: RoleActeur.grossiste,
+            onTermine: () {
+              termine = true;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Étape 1 : Tableau de bord & Chiffres clés (KPI)
+    expect(find.text('Tableau de Bord & Chiffres Clés'), findsOneWidget);
+    expect(find.text('TABLEAU DE BORD : STATISTIQUES'), findsOneWidget);
+    expect(find.text('ÉTAPE 1 / 6'), findsOneWidget);
+
+    // Clic Suivant -> Étape 2 : Mon Catalogue Actif
+    await tester.tap(find.text('Suivant'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Mon Catalogue Actif & Ajout'), findsOneWidget);
+    expect(find.text('VOS PRODUITS & STOCKS'), findsOneWidget);
+    expect(find.text('ÉTAPE 2 / 6'), findsOneWidget);
+
+    // Clic Suivant -> Étape 3 : Créer un groupe (+)
+    await tester.tap(find.text('Suivant'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text("Créer un Groupe d'Achat"), findsOneWidget);
+    expect(find.text('FONCTIONNALITÉ 2 : LE BOUTON (+)'), findsOneWidget);
+    expect(find.text('ÉTAPE 3 / 6'), findsOneWidget);
+
+    // Clic Suivant -> Étape 4 : Validation & Expédition (Commandes)
+    await tester.tap(find.text('Suivant'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Validation & Expédition'), findsOneWidget);
+    expect(find.text('FONCTIONNALITÉ 3 : COMMANDES & STOCKS'), findsOneWidget);
+    expect(find.text('ÉTAPE 4 / 6'), findsOneWidget);
+
+    // Clic Suivant -> Étape 5 : Portefeuille & Séquestre
+    await tester.tap(find.text('Suivant'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Portefeuille & Séquestre Garanti'), findsOneWidget);
+    expect(find.text('FONCTIONNALITÉ 4 : PAIEMENTS & VIREMENTS'), findsOneWidget);
+    expect(find.text('ÉTAPE 5 / 6'), findsOneWidget);
+
+    // Clic Suivant -> Étape 6 : Menu, Paramètres & Mode Sombre (En-tête)
+    await tester.tap(find.text('Suivant'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Menu, Paramètres & Mode Sombre'), findsOneWidget);
+    expect(find.text('VOTRE EN-TÊTE PERSONNEL'), findsOneWidget);
+    expect(find.text('ÉTAPE 6 / 6'), findsOneWidget);
+    expect(find.text('Terminer'), findsOneWidget);
+
+    // Terminer
+    await tester.tap(find.text('Terminer'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(termine, isTrue);
+  });
 }
 

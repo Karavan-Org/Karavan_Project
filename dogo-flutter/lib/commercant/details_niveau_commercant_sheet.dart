@@ -75,7 +75,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
               children: [
                 Text(
                   "Niveau Commerçant",
-                  style: TextStyle(
+                  style: TextStyle(fontFamily: AppTheme.policeTitre, 
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.couleurTexte(context),
@@ -110,7 +110,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                       border: Border.all(color: AppTheme.couleurBordure(context)),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x0A46321E),
+                          color: Color(0x0A2C241E),
                           blurRadius: 16,
                           offset: Offset(0, 4),
                         ),
@@ -310,7 +310,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                     context: context,
                     niveau: NiveauCommercant.niveau1,
                     estActuel: niveau == NiveauCommercant.niveau1,
-                    fourchette: "1 à 4 commandes",
+                    fourchette: _fourchette(NiveauCommercant.niveau1),
                     resume: "Débutant • Découverte des prix usine et sécurisation séquestre",
                   ),
 
@@ -320,7 +320,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                     context: context,
                     niveau: NiveauCommercant.niveau2,
                     estActuel: niveau == NiveauCommercant.niveau2,
-                    fourchette: "5 à 19 commandes",
+                    fourchette: _fourchette(NiveauCommercant.niveau2),
                     resume: "Régulier • Badge vérifié & priorité sur les arrivages",
                   ),
 
@@ -330,7 +330,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                     context: context,
                     niveau: NiveauCommercant.niveau3,
                     estActuel: niveau == NiveauCommercant.niveau3,
-                    fourchette: "20 commandes et +",
+                    fourchette: _fourchette(NiveauCommercant.niveau3),
                     resume: "VIP • Sourcing sur-mesure d'usines & facilités de règlement",
                   ),
 
@@ -428,6 +428,11 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
   }
 
   /// Tuile d'un palier
+  /// Tranche de commandes d'un palier, lue dans les seuils de [NiveauCommercant] (même règle que le profil)
+  static String _fourchette(NiveauCommercant n) => n.seuilSuivant == null
+      ? "${n.seuilMin} commandes et +"
+      : "${n.seuilMin} à ${n.seuilSuivant! - 1} commandes";
+
   Widget _buildPalierTile({
     required BuildContext context,
     required NiveauCommercant niveau,
@@ -487,7 +492,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
+                          color: AppTheme.olive.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
@@ -495,7 +500,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF2E7D32),
+                            color: AppTheme.oliveProfond,
                           ),
                         ),
                       ),
@@ -533,7 +538,7 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
           Icon(
             debloque ? Icons.check_circle_rounded : Icons.lock_outline_rounded,
             size: 18,
-            color: debloque ? const Color(0xFF2E7D32) : AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.4),
+            color: debloque ? AppTheme.oliveProfond : AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.4),
           ),
           const SizedBox(width: 10),
           Expanded(

@@ -125,7 +125,7 @@ class _OuvrirGroupeScreenState extends State<OuvrirGroupeScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: _message == null
-              ? const CircularProgressIndicator(color: AppTheme.primary)
+              ? const CircularProgressIndicator(color: AppTheme.olive)
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

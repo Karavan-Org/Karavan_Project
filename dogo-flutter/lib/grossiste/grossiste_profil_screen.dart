@@ -39,7 +39,7 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         title: Text(
           "Déconnexion",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         content: Text(
           "Êtes-vous sûr de vouloir vous déconnecter de votre espace Grossiste ?",
@@ -60,7 +60,7 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE53935),
+              backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -124,7 +124,7 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
                     top: -10,
                     child: CustomPaint(
                       painter: _GrossisteOrganicBackgroundPainter(),
-                      child: const SizedBox(width: 320, height: 160),
+                      child: SizedBox(width: (MediaQuery.sizeOf(context).width - 40).clamp(0.0, 320.0).toDouble(), height: 160),
                     ),
                   ),
 
@@ -168,14 +168,14 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.business_outlined, size: 14, color: AppTheme.couleurAccent(context)),
+                                Icon(Icons.business_outlined, size: 14, color: AppTheme.couleurAttention(context)),
                                 const SizedBox(width: 5),
                                 Text(
                                   entreprise,
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.couleurAccent(context),
+                                    color: AppTheme.couleurAttention(context),
                                   ),
                                 ),
                               ],
@@ -204,7 +204,7 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1E2832),
+                                  color: AppTheme.terre,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: const Text(
@@ -222,9 +222,9 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF9E6),
+                                  color: AppTheme.ocreClair,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFFE5A100).withValues(alpha: 0.35)),
+                                  border: Border.all(color: AppTheme.ocre.withValues(alpha: 0.35)),
                                 ),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -232,13 +232,13 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
                                     Icon(
                                       Icons.verified_rounded,
                                       size: 13,
-                                      color: Color(0xFFD48800),
+                                      color: AppTheme.ocreProfond,
                                     ),
                                     SizedBox(width: 5),
                                     Text(
                                       "Compte vérifié",
                                       style: TextStyle(
-                                        color: Color(0xFFB37400),
+                                        color: AppTheme.ocreProfond,
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -262,10 +262,10 @@ class _GrossisteProfilScreenState extends State<GrossisteProfilScreen> {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFFEFE9E0)),
+                  border: Border.all(color: AppTheme.bordure),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x0846321E),
+                      color: Color(0x082C241E),
                       blurRadius: 14,
                       offset: Offset(0, 4),
                     ),
@@ -436,11 +436,11 @@ class _GrossisteOrganicBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint1 = Paint()
-      ..color = const Color(0xFFF4ECE3).withValues(alpha: 0.85)
+      ..color = AppTheme.surfaceDouce.withValues(alpha: 0.85)
       ..style = PaintingStyle.fill;
 
     final paint2 = Paint()
-      ..color = const Color(0xFFEEDFCF).withValues(alpha: 0.60)
+      ..color = AppTheme.bordureForte.withValues(alpha: 0.60)
       ..style = PaintingStyle.fill;
 
     final pathLeft = Path()
@@ -470,11 +470,11 @@ class _GrossisteAvatarPainter extends CustomPainter {
     final h = size.height;
 
     // Fond chaud
-    final bgPaint = Paint()..color = const Color(0xFFE8DCCF);
+    final bgPaint = Paint()..color = AppTheme.bordureForte;
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), bgPaint);
 
     // Vêtement (Haut jaune moutarde chaud d'après la maquette Aliou Traoré)
-    final clothesPaint = Paint()..color = const Color(0xFFE5A100);
+    final clothesPaint = Paint()..color = AppTheme.ocre;
     final clothesPath = Path()
       ..moveTo(w * 0.15, h)
       ..quadraticBezierTo(w * 0.25, h * 0.68, w * 0.5, h * 0.68)

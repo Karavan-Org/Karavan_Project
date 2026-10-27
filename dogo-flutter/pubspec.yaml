@@ -9,9 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8
   webview_flutter: ^4.10.0
-  google_fonts: ^6.2.1
   flutter_svg: ^2.3.0
   http: ^1.2.0
   file_picker: ^13.1.0
@@ -39,13 +37,11 @@ flutter:
   assets:
     - assets/images/
     - assets/images/grossiste/
+    - assets/images/karavan/
     - assets/icons/
-    - assets/logo/
     - assets/html/
-    - assets/three.min.js
 
-  # Inter embarquée (licence OFL, assets/fonts/Inter-OFL.txt) : chaque graisse a son fichier,
-  # donc les TextStyle(fontWeight: …) des écrans sont rendus fidèlement, même hors ligne.
+  # Inter, police officielle DoGo (assets/fonts/Inter-OFL.txt).
   fonts:
     - family: Inter
       fonts:

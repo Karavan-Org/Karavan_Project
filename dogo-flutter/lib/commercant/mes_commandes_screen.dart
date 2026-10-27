@@ -1,5 +1,6 @@
 import '../widgets/tab_navigation_scope.dart';
 import 'package:flutter/material.dart';
+import '../models/element_commande.dart';
 import '../models/participation_model.dart';
 import '../models/remboursement_model.dart';
 import '../services/groupe_api_service.dart';
@@ -7,201 +8,9 @@ import '../services/logistique_api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_popups.dart';
 import 'code_retrait_commercant_screen.dart';
+import '../services/visibilite_ecran.dart';
 
-/// Modèle unifié pour l'affichage d'une commande ou participation de commerçant
-class ElementCommande {
-  final int id;
-  final bool estParticipation;
-  final int? participationId;
-  final int? commandeId;
-  final String titre;
-  final String details;
-  final String numero;
-  final String statutBrut;
-  final String statutLibelle;
-  final double montant;
-  final int quantite;
-  final String? photoUrl;
-  final String imageLocale;
-  final int etapeActive;
-  final String origine;
-  final String destination;
-  final String arriveeEstimee;
-  final bool annulable;
-  final bool payee;
-  final bool annulee;
-  final RemboursementModel? remboursement;
-  final DateTime? dateCreation;
-
-  ElementCommande({
-    required this.id,
-    required this.estParticipation,
-    this.participationId,
-    this.commandeId,
-    required this.titre,
-    required this.details,
-    required this.numero,
-    required this.statutBrut,
-    required this.statutLibelle,
-    required this.montant,
-    required this.quantite,
-    this.photoUrl,
-    required this.imageLocale,
-    required this.etapeActive,
-    this.origine = 'Chine (Yiwu)',
-    this.destination = 'Bamako (Mali)',
-    this.arriveeEstimee = 'En attente d\'expédition',
-    required this.annulable,
-    required this.payee,
-    required this.annulee,
-    this.remboursement,
-    this.dateCreation,
-  });
-
-  static String _imagePourProduit(String nom) {
-    final lower = nom.toLowerCase();
-    if (lower.contains('sac') || lower.contains('maroquinerie') || lower.contains('portefeuille')) {
-      return 'assets/images/wallet.jpg';
-    }
-    if (lower.contains('chaussure') || lower.contains('basket') || lower.contains('sneaker')) {
-      return 'assets/images/Nike_Joyride-removebg-preview.png';
-    }
-    if (lower.contains('montre') || lower.contains('accessoire')) {
-      return 'assets/images/logo_karavan.png';
-    }
-    return 'assets/images/Nike_Joyride-removebg-preview.png';
-  }
-
-  factory ElementCommande.fromParticipation(ParticipationModel p, {RemboursementModel? remboursement}) {
-    final parts = <String>[];
-    if (p.detailsVariante.isNotEmpty) parts.add(p.detailsVariante);
-    if (p.montant > 0) parts.add('${p.montant.toStringAsFixed(0)} FCFA');
-
-    int etape = 0;
-    String arrivee = 'En attente de regroupement';
-    String statutLibelle = p.libelleStatut;
-
-    if (p.statut == 'CONFIRMEE') {
-      arrivee = 'Fonds en séquestre • En attente clôture groupe';
-    } else if (p.statut == 'ANNULEE') {
-      if (remboursement != null) {
-        if (remboursement.statut == 'DEMANDE') {
-          statutLibelle = 'Remboursement en traitement';
-          arrivee = 'En cours d\'examen par l\'administrateur';
-        } else if (remboursement.statut == 'APPROUVE') {
-          statutLibelle = 'Remboursement approuvé';
-          arrivee = 'Virement vers votre Mobile Money en cours';
-        } else if (remboursement.statut == 'EXECUTE') {
-          statutLibelle = 'Remboursé sur Mobile Money';
-          arrivee = 'Montant de ${remboursement.montant.toStringAsFixed(0)} FCFA restitué';
-        } else if (remboursement.statut == 'REJETE') {
-          statutLibelle = 'Demande de remboursement rejetée';
-          arrivee = 'Veuillez contacter le support Karavan';
-        }
-      } else {
-        arrivee = 'Participation annulée • Remboursement';
-      }
-    } else if (p.statut == 'RESERVEE') {
-      arrivee = 'Réservé • En attente de paiement';
-    }
-
-    return ElementCommande(
-      id: p.id,
-      estParticipation: true,
-      participationId: p.id,
-      titre: p.produit,
-      details: parts.join(' • '),
-      numero: 'Participation #${p.id}',
-      statutBrut: p.statut,
-      statutLibelle: statutLibelle,
-      montant: p.montant,
-      quantite: p.quantite,
-      imageLocale: _imagePourProduit(p.produit),
-      etapeActive: etape,
-      arriveeEstimee: arrivee,
-      annulable: p.estAnnulable,
-      payee: p.estPayee,
-      annulee: p.estAnnulee,
-      remboursement: remboursement,
-      dateCreation: p.dateCreation,
-    );
-  }
-
-  factory ElementCommande.fromCommande(Map<String, dynamic> c) {
-    final id = (c['id'] as num?)?.toInt() ?? 1;
-    final partId = (c['participationId'] as num?)?.toInt();
-    final produit = c['produit']?.toString() ?? 'Commande groupée';
-    final qte = (c['quantite'] as num?)?.toInt() ?? 1;
-    final statut = c['statut']?.toString() ?? 'CREEE';
-
-    final parts = <String>[];
-    if (c['taille'] != null && c['taille'].toString().isNotEmpty) {
-      parts.add('Taille ${c['taille']}');
-    }
-    if (c['couleur'] != null && c['couleur'].toString().isNotEmpty) {
-      parts.add('${c['couleur']}');
-    }
-    parts.add('Qté: $qte');
-
-    int etape = 1;
-    String libelle = 'En cours';
-    String arrivee = 'En cours de préparation';
-
-    switch (statut) {
-      case 'CREEE':
-        etape = 0;
-        libelle = 'Commande confirmée';
-        arrivee = 'Regroupement finalisé';
-        break;
-      case 'EN_PREPARATION':
-        etape = 1;
-        libelle = 'Chez le transitaire';
-        arrivee = 'Préparation en cours';
-        break;
-      case 'EXPEDIEE':
-        etape = 2;
-        libelle = 'En transit maritime/aérien';
-        arrivee = 'Arrivée estimée : sous 10 à 15 jours';
-        break;
-      case 'ARRIVEE':
-        etape = 3;
-        libelle = 'Arrivée à Bamako';
-        arrivee = 'Au centre de tri';
-        break;
-      case 'EN_ATTENTE_RETRAIT':
-        etape = 4;
-        libelle = 'Disponible au retrait';
-        arrivee = 'Prêt au point de retrait';
-        break;
-      case 'COLLECTEE':
-        etape = 4;
-        libelle = 'Colis retiré';
-        arrivee = 'Retrait effectué';
-        break;
-    }
-
-    return ElementCommande(
-      id: id,
-      estParticipation: false,
-      commandeId: id,
-      participationId: partId,
-      titre: produit,
-      details: parts.join(' • '),
-      numero: 'Commande #$id',
-      statutBrut: statut,
-      statutLibelle: libelle,
-      montant: 0.0,
-      quantite: qte,
-      imageLocale: _imagePourProduit(produit),
-      etapeActive: etape,
-      arriveeEstimee: arrivee,
-      annulable: false, // Une fois en commande logistique, l'annulation libre n'est plus permise (RG-31)
-      payee: true,
-      annulee: false,
-      dateCreation: DateTime.tryParse(c['dateCreation']?.toString() ?? ''),
-    );
-  }
-}
+export '../models/element_commande.dart';
 
 /// Écran "Mes commandes" conforme au modèle Figma exact
 /// Présente :
@@ -216,24 +25,33 @@ class MesCommandesScreen extends StatefulWidget {
   State<MesCommandesScreen> createState() => _MesCommandesScreenState();
 }
 
-class _MesCommandesScreenState extends State<MesCommandesScreen> {
+class _MesCommandesScreenState extends State<MesCommandesScreen> with ActualisationAutomatique<MesCommandesScreen> {
   int _selectedOrderIndex = 0;
   bool _isLoading = true;
   bool _annulationEnCours = false;
   String? _errorMessage;
   final List<ElementCommande> _commandes = [];
 
+  /// Données vivantes : relues en arrière-plan tant que l'écran est affiché
+  @override
+  Future<void> actualiserEnSilence() async {
+    await _chargerDonnees(silencieux: true);
+  }
+
   @override
   void initState() {
     super.initState();
+    demarrerActualisation();
     _chargerDonnees();
   }
 
-  Future<void> _chargerDonnees() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+  Future<void> _chargerDonnees({bool silencieux = false}) async {
+    if (!silencieux) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final futures = await Future.wait([
@@ -294,6 +112,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
         });
       }
     } catch (e) {
+      if (silencieux) return;
       if (mounted) {
         setState(() {
           _errorMessage = "Impossible de charger vos commandes : $e";
@@ -311,17 +130,17 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
     final bool? confirmer = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.couleurCarte(ctx),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFEBEE),
+                color: AppTheme.dangerClair,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.cancel_outlined, color: Color(0xFFE53935), size: 22),
+              child: const Icon(Icons.cancel_outlined, color: AppTheme.danger, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -338,16 +157,16 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
           children: [
             Text(
               "Souhaitez-vous annuler votre participation à « ${item.titre} » (${item.quantite} unité${item.quantite > 1 ? 's' : ''}) ?",
-              style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary, height: 1.4),
+              style: TextStyle(fontSize: 13, color: AppTheme.couleurTexte(ctx), height: 1.4),
             ),
             const SizedBox(height: 14),
             if (estPaye)
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
+                  color: AppTheme.oliveClair,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                  border: Border.all(color: AppTheme.oliveBordure),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,14 +174,14 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                     const Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.security, color: Color(0xFF16A34A), size: 18),
+                        Icon(Icons.security, color: AppTheme.oliveProfond, size: 18),
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             "Sécurité & Garantie Karavan (RG-31) :",
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF166534),
+                              color: AppTheme.oliveProfond,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -376,7 +195,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                       "• Le montant intégral de $montantTexte sera restitué sur votre compte Mobile Money dès validation.",
                       style: const TextStyle(
                         fontSize: 11.5,
-                        color: Color(0xFF14532D),
+                        color: AppTheme.oliveProfond,
                         height: 1.4,
                       ),
                     ),
@@ -387,20 +206,20 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E0),
+                  color: AppTheme.ocreClair,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFFE0B2)),
+                  border: Border.all(color: AppTheme.ocreBordure),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.info_outline, color: Color(0xFFE65100), size: 20),
+                    Icon(Icons.info_outline, color: AppTheme.ocreProfond, size: 20),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         "Votre réservation de quota sera immédiatement libérée pour les autres commerçants.",
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFFBF360C),
+                          color: AppTheme.ocreProfond,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -413,12 +232,12 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Retour", style: TextStyle(color: AppTheme.textMuted)),
+            child: Text("Retour", style: TextStyle(color: AppTheme.couleurTexteAttenue(ctx))),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE53935),
+              backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -448,8 +267,8 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
               ? "Dès validation par l'administration Karavan, les fonds seront automatiquement recrédités sur votre Portefeuille Achats."
               : null,
           icone: Icons.check_circle_outline_rounded,
-          couleurIcone: const Color(0xFF2E7D32),
-          couleurFondIcone: const Color(0xFFE8F5E9),
+          couleurIcone: AppTheme.olive,
+          couleurFondIcone: AppTheme.oliveClair,
           boutonTexte: "Fermer et continuer",
           onFermer: () => _chargerDonnees(),
         );
@@ -474,7 +293,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5), // Fond doux Design System
+      backgroundColor: AppTheme.creme, // Fond doux Design System
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -491,20 +310,20 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
           },
         ),
         titleSpacing: 0,
-        title: const Text(
+        title: Text(
           "Mes commandes",
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
+          style: TextStyle(fontFamily: AppTheme.policeTitre,
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF1A1A1A),
+            color: AppTheme.couleurTexte(context),
             letterSpacing: -0.4,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Color(0xFF1E1E1E), size: 22),
+            icon: Icon(Icons.refresh, color: AppTheme.couleurTexte(context), size: 22),
             onPressed: _isLoading ? null : _chargerDonnees,
             tooltip: "Actualiser",
           ),
@@ -517,7 +336,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
   Widget _buildBody() {
     if (_isLoading && _commandes.isEmpty) {
       return const Center(
-        child: CircularProgressIndicator(color: AppTheme.primary),
+        child: CircularProgressIndicator(color: AppTheme.olive),
       );
     }
 
@@ -528,12 +347,12 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
+              const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
               const SizedBox(height: 16),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                style: TextStyle(color: AppTheme.couleurTexteAttenue(context), fontSize: 14),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -554,7 +373,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
     if (_commandes.isEmpty) {
       return RefreshIndicator(
         onRefresh: _chargerDonnees,
-        color: AppTheme.primary,
+        color: AppTheme.olive,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
@@ -569,31 +388,31 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                       width: 90,
                       height: 90,
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        color: AppTheme.couleurSurfaceDouce(context),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.shopping_bag_outlined,
                         size: 46,
-                        color: AppTheme.primary,
+                        color: AppTheme.couleurTexteAttenue(context),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       "Aucune commande active",
-                      style: TextStyle(
+                      style: TextStyle(fontFamily: AppTheme.policeTitre, 
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.couleurTexte(context),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       "Rejoignez un groupe d'achat pour passer votre première commande groupée.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.textMuted,
+                        color: AppTheme.couleurTexteAttenue(context),
                         height: 1.4,
                       ),
                     ),
@@ -610,7 +429,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
 
     return RefreshIndicator(
       onRefresh: _chargerDonnees,
-      color: AppTheme.primary,
+      color: AppTheme.olive,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -630,12 +449,12 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.couleurCarte(context),
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFEFE8DD), width: 1.2),
+                border: Border.all(color: AppTheme.couleurBordure(context), width: 1.2),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x0A46321E),
+                    color: Color(0x0A2C241E),
                     blurRadius: 14,
                     offset: Offset(0, 4),
                   ),
@@ -713,9 +532,9 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
               width: double.infinity,
               height: 110,
               decoration: BoxDecoration(
-                color: const Color(0xFFE9F2F8), // Fond bleu ciel doux Figma
+                color: AppTheme.roseClair, // Fond bleu ciel doux Figma
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFD4E6F2), width: 1.2),
+                border: Border.all(color: AppTheme.rose, width: 1.2),
               ),
               child: CustomPaint(
                 painter: _MaritimeRoutePainter(
@@ -750,21 +569,21 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                 decoration: BoxDecoration(
                   color: activeCmd.annulee
                       ? (activeCmd.remboursement?.execute == true
-                          ? const Color(0xFF16A34A)
+                          ? AppTheme.oliveProfond
                           : (activeCmd.remboursement?.enTraitement == true
-                              ? const Color(0xFFD97706)
-                              : const Color(0xFFC0392B)))
-                      : (activeCmd.etapeActive >= 4 ? const Color(0xFF1EB980) : const Color(0xFF9E6E4B)),
+                              ? AppTheme.ocreProfond
+                              : AppTheme.danger))
+                      : (activeCmd.etapeActive >= 4 ? AppTheme.olive : AppTheme.ocre),
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
                       color: (activeCmd.annulee
                               ? (activeCmd.remboursement?.execute == true
-                                  ? const Color(0xFF16A34A)
+                                  ? AppTheme.oliveProfond
                                   : (activeCmd.remboursement?.enTraitement == true
-                                      ? const Color(0xFFD97706)
-                                      : const Color(0xFFC0392B)))
-                              : (activeCmd.etapeActive >= 4 ? const Color(0xFF1EB980) : const Color(0xFF9E6E4B)))
+                                      ? AppTheme.ocreProfond
+                                      : AppTheme.danger))
+                              : (activeCmd.etapeActive >= 4 ? AppTheme.olive : AppTheme.ocre))
                           .withValues(alpha: 0.28),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
@@ -805,9 +624,9 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                       style: TextStyle(
                         color: activeCmd.annulee
                             ? (activeCmd.remboursement?.enTraitement == true
-                                ? const Color(0xFFFEF3C7)
+                                ? AppTheme.ocreClair
                                 : Colors.white70)
-                            : const Color(0xFFFFDFA6),
+                            : AppTheme.ocreBordure,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -837,15 +656,15 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.couleurCarte(context),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? const Color(0xFF9E6E4B) : const Color(0xFFEFE8DD),
+            color: isSelected ? AppTheme.couleurSucces(context) : AppTheme.couleurBordure(context),
             width: isSelected ? 1.6 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? const Color(0x1A9E6E4B) : const Color(0x0846321E),
+              color: isSelected ? const Color(0x1AAC7F5E) : const Color(0x082C241E),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -859,7 +678,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
               child: Container(
                 width: 62,
                 height: 62,
-                color: const Color(0xFFF6F0E6),
+                color: AppTheme.couleurSurfaceDouce(context),
                 padding: const EdgeInsets.all(5),
                 child: Image.asset(
                   cmd.imageLocale,
@@ -867,7 +686,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                   errorBuilder: (_, __, ___) => const Icon(
                     Icons.inventory_2_outlined,
                     size: 30,
-                    color: Color(0xFF9E6E4B),
+                    color: AppTheme.textePale,
                   ),
                 ),
               ),
@@ -886,10 +705,10 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                           cmd.titre,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 14.5,
-                            color: Color(0xFF1E1E1E),
+                            color: AppTheme.couleurTexte(context),
                           ),
                         ),
                       ),
@@ -900,9 +719,9 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                     cmd.details,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF7A7A7A),
+                      color: AppTheme.couleurTexteAttenue(context),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -914,9 +733,9 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                     children: [
                       Text(
                         cmd.numero,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF9E9E9E),
+                          color: AppTheme.couleurTexteAttenue(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -951,10 +770,10 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: cmd.remboursement?.enTraitement == true
-                        ? const Color(0xFFFEF3C7)
+                        ? AppTheme.ocreClair
                         : (cmd.remboursement?.execute == true
-                            ? const Color(0xFFE8F5E9)
-                            : const Color(0xFFFFEBEE)),
+                            ? AppTheme.oliveClair
+                            : AppTheme.dangerClair),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -968,10 +787,10 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                                 : "Annulé"),
                         style: TextStyle(
                           color: cmd.remboursement?.enTraitement == true
-                              ? const Color(0xFFB45309)
+                              ? AppTheme.ocreProfond
                               : (cmd.remboursement?.execute == true
-                                  ? const Color(0xFF2E7D32)
-                                  : const Color(0xFFE53935)),
+                                  ? AppTheme.olive
+                                  : AppTheme.danger),
                           fontSize: 11.5,
                           fontWeight: FontWeight.w800,
                         ),
@@ -981,10 +800,10 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                         Icons.info_outline,
                         size: 13,
                         color: cmd.remboursement?.enTraitement == true
-                            ? const Color(0xFFB45309)
+                            ? AppTheme.ocreProfond
                             : (cmd.remboursement?.execute == true
-                                ? const Color(0xFF2E7D32)
-                                : const Color(0xFFE53935)),
+                                ? AppTheme.olive
+                                : AppTheme.danger),
                       ),
                     ],
                   ),
@@ -994,7 +813,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
               TextButton(
                 onPressed: _annulationEnCours ? null : () => _annulerCommande(cmd),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFE53935),
+                  foregroundColor: AppTheme.danger,
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -1003,12 +822,12 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                     ? const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE53935)),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.danger),
                       )
                     : const Text(
                         "Annuler",
                         style: TextStyle(
-                          color: Color(0xFFE53935),
+                          color: AppTheme.danger,
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
                         ),
@@ -1029,22 +848,22 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
+                    color: AppTheme.couleurSurfaceDouce(context),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         "En convoi",
                         style: TextStyle(
-                          color: AppTheme.textMuted,
+                          color: AppTheme.couleurTexteAttenue(context),
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      SizedBox(width: 3),
-                      Icon(Icons.lock_outline, size: 12, color: AppTheme.textMuted),
+                      const SizedBox(width: 3),
+                      Icon(Icons.lock_outline, size: 12, color: AppTheme.couleurTexteAttenue(context)),
                     ],
                   ),
                 ),
@@ -1053,13 +872,13 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: AppTheme.oliveClair,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
                   "À retirer",
                   style: TextStyle(
-                    color: Color(0xFF2E7D32),
+                    color: AppTheme.oliveProfond,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
                   ),
@@ -1078,36 +897,36 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
             decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
+              color: AppTheme.ocreClair,
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
               "En traitement",
-              style: TextStyle(color: Color(0xFFB45309), fontSize: 9.5, fontWeight: FontWeight.w700),
+              style: TextStyle(color: AppTheme.ocreProfond, fontSize: 9.5, fontWeight: FontWeight.w700),
             ),
           );
         } else if (cmd.remboursement!.execute) {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
+              color: AppTheme.oliveClair,
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
               "Remboursé",
-              style: TextStyle(color: Color(0xFF2E7D32), fontSize: 9.5, fontWeight: FontWeight.w700),
+              style: TextStyle(color: AppTheme.oliveProfond, fontSize: 9.5, fontWeight: FontWeight.w700),
             ),
           );
         } else if (cmd.remboursement!.rejete) {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFEBEE),
+              color: AppTheme.dangerClair,
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
               "Rejeté",
-              style: TextStyle(color: Color(0xFFC0392B), fontSize: 9.5, fontWeight: FontWeight.w700),
+              style: TextStyle(color: AppTheme.danger, fontSize: 9.5, fontWeight: FontWeight.w700),
             ),
           );
         }
@@ -1115,12 +934,12 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFEBEE),
+          color: AppTheme.dangerClair,
           borderRadius: BorderRadius.circular(6),
         ),
         child: const Text(
           "Annulé",
-          style: TextStyle(color: Color(0xFFC0392B), fontSize: 9.5, fontWeight: FontWeight.w700),
+          style: TextStyle(color: AppTheme.danger, fontSize: 9.5, fontWeight: FontWeight.w700),
         ),
       );
     }
@@ -1128,24 +947,24 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
         decoration: BoxDecoration(
-          color: const Color(0xFFE8F5E9),
+          color: AppTheme.oliveClair,
           borderRadius: BorderRadius.circular(6),
         ),
         child: const Text(
           "Séquestre actif",
-          style: TextStyle(color: Color(0xFF2E7D32), fontSize: 9.5, fontWeight: FontWeight.w700),
+          style: TextStyle(color: AppTheme.oliveProfond, fontSize: 9.5, fontWeight: FontWeight.w700),
         ),
       );
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E0),
+        color: AppTheme.ocreClair,
         borderRadius: BorderRadius.circular(6),
       ),
       child: const Text(
         "Réservé",
-        style: TextStyle(color: Color(0xFFE65100), fontSize: 9.5, fontWeight: FontWeight.w700),
+        style: TextStyle(color: AppTheme.ocreProfond, fontSize: 9.5, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -1183,10 +1002,10 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                   fontSize: 13.5,
                   fontWeight: (isActiveStep || isCompleted) ? FontWeight.w800 : FontWeight.w600,
                   color: isAnnulee
-                      ? const Color(0xFFC0392B)
+                      ? AppTheme.danger
                       : (isActiveStep
-                          ? const Color(0xFF9E6E4B)
-                          : (isCompleted ? const Color(0xFF1E1E1E) : const Color(0xFF6B6B6B))),
+                          ? AppTheme.couleurTexte(context)
+                          : (isCompleted ? AppTheme.couleurTexte(context) : AppTheme.couleurTexteAttenue(context))),
                 ),
               ),
               if (dateOrSubtitle != null) ...[
@@ -1196,8 +1015,8 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
                   style: TextStyle(
                     fontSize: 11,
                     color: isAnnulee
-                        ? const Color(0xFFE53935)
-                        : (isActiveStep ? const Color(0xFF8C5F3E) : const Color(0xFF888888)),
+                        ? AppTheme.danger
+                        : (isActiveStep ? AppTheme.couleurAttention(context) : AppTheme.couleurTexteAttenue(context)),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1211,7 +1030,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
           const Icon(
             Icons.chevron_right,
             size: 20,
-            color: Color(0xFFB0B0B0),
+            color: AppTheme.textePale,
           ),
       ],
     );
@@ -1223,7 +1042,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
         width: 28,
         height: 28,
         decoration: const BoxDecoration(
-          color: Color(0xFFE53935),
+          color: AppTheme.danger,
           shape: BoxShape.circle,
         ),
         child: const Icon(Icons.close, size: 17, color: Colors.white),
@@ -1235,7 +1054,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
         width: 28,
         height: 28,
         decoration: const BoxDecoration(
-          color: Color(0xFF1EB980),
+          color: AppTheme.olive,
           shape: BoxShape.circle,
         ),
         child: const Icon(Icons.check, size: 17, color: Colors.white),
@@ -1246,17 +1065,17 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
         width: 30,
         height: 30,
         decoration: BoxDecoration(
-          color: const Color(0xFF9E6E4B),
+          color: AppTheme.ocre,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF9E6E4B).withValues(alpha: 0.35),
+              color: AppTheme.ocre.withValues(alpha: 0.45),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: const Icon(Icons.directions_boat_filled, size: 16, color: Colors.white),
+        child: const Icon(Icons.directions_boat_filled, size: 16, color: AppTheme.terre),
       );
     } else {
       // Pastille grise avec point central bleu
@@ -1264,16 +1083,16 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
         width: 26,
         height: 26,
         decoration: BoxDecoration(
-          color: const Color(0xFFEDF1F5),
+        color: AppTheme.couleurSurfaceDouce(context),
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFDCE2E8), width: 1.2),
+          border: Border.all(color: AppTheme.couleurBordureForte(context), width: 1.2),
         ),
         child: Center(
           child: Container(
             width: 7,
             height: 7,
             decoration: const BoxDecoration(
-              color: Color(0xFF5B92D1),
+              color: AppTheme.textePale,
               shape: BoxShape.circle,
             ),
           ),
@@ -1291,11 +1110,11 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> {
       child: isDashed
           ? CustomPaint(
               painter: _DashedLinePainter(
-                color: const Color(0xFFBAC4CE),
+                color: AppTheme.textePale,
               ),
             )
           : Container(
-              color: isPassed ? const Color(0xFF1EB980) : const Color(0xFFBAC4CE),
+              color: isPassed ? AppTheme.olive : AppTheme.textePale,
             ),
     );
   }
@@ -1356,7 +1175,7 @@ class _MaritimeRoutePainter extends CustomPainter {
 
     // Dessin de la ligne pointillée bleue
     final routePaint = Paint()
-      ..color = const Color(0xFF4A8AC4)
+      ..color = AppTheme.ocreProfond
       ..strokeWidth = 2.2
       ..style = PaintingStyle.stroke;
 
@@ -1372,7 +1191,7 @@ class _MaritimeRoutePainter extends CustomPainter {
     }
 
     // 1. Point de départ (Chine) : Pin rouge
-    final redPinPaint = Paint()..color = const Color(0xFFE53935);
+    final redPinPaint = Paint()..color = AppTheme.danger;
     canvas.drawCircle(Offset(pDepart.dx, pDepart.dy - 10), 6.5, redPinPaint);
     canvas.drawCircle(Offset(pDepart.dx, pDepart.dy - 10), 2.5, Paint()..color = Colors.white);
     final textPainterDepart = TextPainter(
@@ -1381,7 +1200,7 @@ class _MaritimeRoutePainter extends CustomPainter {
         style: const TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF333333),
+          color: AppTheme.terre,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -1390,7 +1209,7 @@ class _MaritimeRoutePainter extends CustomPainter {
     textPainterDepart.paint(canvas, Offset(pDepart.dx - (textPainterDepart.width / 2), pDepart.dy + 3));
 
     // 2. Point d'arrivée (Bamako) : Pin bleu
-    final bluePinPaint = Paint()..color = const Color(0xFF1E88E5);
+    final bluePinPaint = Paint()..color = AppTheme.olive;
     canvas.drawCircle(Offset(pArrivee.dx, pArrivee.dy - 10), 6.5, bluePinPaint);
     canvas.drawCircle(Offset(pArrivee.dx, pArrivee.dy - 10), 2.5, Paint()..color = Colors.white);
     final textPainterArrivee = TextPainter(
@@ -1399,7 +1218,7 @@ class _MaritimeRoutePainter extends CustomPainter {
         style: const TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF333333),
+          color: AppTheme.terre,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -1417,20 +1236,20 @@ class _MaritimeRoutePainter extends CustomPainter {
       ..lineTo(shipCenter.dx + 10, shipCenter.dy + 9)
       ..lineTo(shipCenter.dx - 11, shipCenter.dy + 9)
       ..close();
-    canvas.drawPath(hullPath, Paint()..color = const Color(0xFF1E3A5F));
+    canvas.drawPath(hullPath, Paint()..color = AppTheme.terre);
 
     // Conteneurs colorés sur le pont
     canvas.drawRect(
       Rect.fromLTWH(shipCenter.dx - 9, shipCenter.dy - 4, 6, 6),
-      Paint()..color = const Color(0xFFEEA823),
+      Paint()..color = AppTheme.ocre,
     );
     canvas.drawRect(
       Rect.fromLTWH(shipCenter.dx - 2, shipCenter.dy - 4, 6, 6),
-      Paint()..color = const Color(0xFF1EB980),
+      Paint()..color = AppTheme.olive,
     );
     canvas.drawRect(
       Rect.fromLTWH(shipCenter.dx + 5, shipCenter.dy - 2, 5, 4),
-      Paint()..color = const Color(0xFFE53935),
+      Paint()..color = AppTheme.danger,
     );
 
     // Cabine blanche

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../grossiste/camera_helper.dart';
+import '../services/camera/camera_helper.dart';
 import '../services/api/api_config.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
@@ -36,11 +36,12 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
   Uint8List? _previewOctets;
 
   Future<void> _ouvrirSelecteurPhoto() async {
+    final theme = Theme.of(context);
     final String? choix = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.rayonXL)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -54,7 +55,7 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
                   width: 42,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: Theme.of(ctx).colorScheme.outline,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -62,12 +63,12 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
               const SizedBox(height: 16),
               const Text(
                 "Photo de profil",
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Color(0xFF2C241E)),
+                style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 17),
               ),
               const SizedBox(height: 4),
               const Text(
                 "Personnalisez votre photo de profil visible par vos partenaires et l'administrateur.",
-                style: TextStyle(color: Color(0xFF7C6E65), fontSize: 12.5),
+                style: TextStyle(fontSize: 12.5),
               ),
               const SizedBox(height: 16),
               ListTile(
@@ -76,13 +77,13 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5E8D3),
+                    color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.photo_camera_rounded, color: AppTheme.primary),
+                  child: Icon(Icons.photo_camera_rounded, color: Theme.of(ctx).colorScheme.primary),
                 ),
                 title: const Text("Prendre une photo", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-                subtitle: const Text("Caméra ou webcam en direct", style: TextStyle(fontSize: 12, color: Color(0xFF9C8E84))),
+                subtitle: const Text("Caméra ou webcam en direct", style: TextStyle(fontSize: 12)),
                 onTap: () => Navigator.pop(ctx, 'camera'),
               ),
               ListTile(
@@ -91,13 +92,13 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5E8D3),
+                    color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.photo_library_rounded, color: AppTheme.primary),
+                  child: Icon(Icons.photo_library_rounded, color: Theme.of(ctx).colorScheme.primary),
                 ),
                 title: const Text("Choisir dans la galerie", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-                subtitle: const Text("Importer une image enregistrée", style: TextStyle(fontSize: 12, color: Color(0xFF9C8E84))),
+                subtitle: const Text("Importer une image enregistrée", style: TextStyle(fontSize: 12)),
                 onTap: () => Navigator.pop(ctx, 'galerie'),
               ),
               if ((widget.photoUrl != null && widget.photoUrl!.isNotEmpty) || _previewOctets != null)
@@ -107,13 +108,13 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEE2E2),
+                      color: Theme.of(ctx).colorScheme.errorContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626)),
+                    child: Icon(Icons.delete_outline_rounded, color: Theme.of(ctx).colorScheme.error),
                   ),
-                  title: const Text("Supprimer la photo", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Color(0xFFDC2626))),
-                  subtitle: const Text("Revenir à l'avatar par défaut", style: TextStyle(fontSize: 12, color: Color(0xFF9C8E84))),
+                  title: Text("Supprimer la photo", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Theme.of(ctx).colorScheme.error)),
+                  subtitle: const Text("Revenir à l'avatar par défaut", style: TextStyle(fontSize: 12)),
                   onTap: () => Navigator.pop(ctx, 'supprimer'),
                 ),
             ],
@@ -153,9 +154,9 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
           } else {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Accès à la caméra refusé. Vous pouvez choisir une image dans la galerie."),
-                  backgroundColor: Color(0xFFDC2626),
+                SnackBar(
+                  content: const Text("Accès à la caméra refusé. Vous pouvez choisir une image dans la galerie."),
+                  backgroundColor: Theme.of(context).colorScheme.error,
                 ),
               );
             }
@@ -188,9 +189,9 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
 
       if (octets.lengthInBytes > 5 * 1024 * 1024) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("L'image est trop volumineuse. La taille maximale est de 5 Mo."),
-            backgroundColor: Color(0xFFDC2626),
+          SnackBar(
+            content: const Text("L'image est trop volumineuse. La taille maximale est de 5 Mo."),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
         return;
@@ -208,9 +209,9 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
           _enChargement = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Photo de profil mise à jour avec succès !"),
-            backgroundColor: Color(0xFF166534),
+          SnackBar(
+            content: const Text("Photo de profil mise à jour avec succès !"),
+            backgroundColor: AppTheme.couleurSucces(context),
           ),
         );
         widget.onPhotoChangee?.call();
@@ -223,7 +224,7 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Erreur lors de la mise à jour de la photo : $e"),
-            backgroundColor: const Color(0xFFDC2626),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -242,9 +243,9 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
           _previewOctets = null;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Photo de profil supprimée."),
-            backgroundColor: Color(0xFF166534),
+          SnackBar(
+            content: const Text("Photo de profil supprimée."),
+            backgroundColor: AppTheme.couleurSucces(context),
           ),
         );
         widget.onPhotoChangee?.call();
@@ -257,7 +258,7 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Erreur lors de la suppression : $e"),
-            backgroundColor: const Color(0xFFDC2626),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -266,6 +267,7 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final double badgeSize = (widget.taille * 0.32).clamp(24.0, 32.0);
     final String? url = widget.photoUrl;
     final bool aPhotoServeur = url != null && url.isNotEmpty;
@@ -282,25 +284,25 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
             height: widget.taille,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFEBDDCE),
-              border: Border.all(color: Colors.white, width: 3.5),
-              boxShadow: const [
+              color: colorScheme.surfaceContainerHighest,
+              border: Border.all(color: colorScheme.surface, width: 3.5),
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x1846321E),
+                  color: colorScheme.shadow.withValues(alpha: 0.09),
                   blurRadius: 14,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: ClipOval(
               child: _enChargement
                   ? Container(
-                      color: const Color(0xFFEBDDCE),
-                      child: const Center(
+                      color: colorScheme.surfaceContainerHighest,
+                      child: Center(
                         child: SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.primary),
+                          child: CircularProgressIndicator(strokeWidth: 2.5, color: colorScheme.primary),
                         ),
                       ),
                     )
@@ -317,6 +319,7 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
                               fit: BoxFit.cover,
                               width: widget.taille,
                               height: widget.taille,
+                              cacheWidth: (widget.taille * MediaQuery.devicePixelRatioOf(context)).ceil(),
                               errorBuilder: (_, __, ___) => CustomPaint(
                                 painter: widget.customPainterDefaut,
                                 child: const SizedBox.expand(),
@@ -342,20 +345,20 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
                 height: badgeSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppTheme.primary,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: const [
+                  color: colorScheme.primary,
+                  border: Border.all(color: colorScheme.surface, width: 2),
+                  boxShadow: [
                     BoxShadow(
-                      color: Color(0x28000000),
+                      color: colorScheme.shadow.withValues(alpha: 0.16),
                       blurRadius: 6,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Icon(
                   Icons.camera_alt_rounded,
                   size: badgeSize * 0.55,
-                  color: Colors.white,
+                  color: colorScheme.onPrimary,
                 ),
               ),
             ),

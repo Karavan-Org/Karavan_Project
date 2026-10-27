@@ -149,7 +149,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: const Color(0xFFC0392B),
+          backgroundColor: AppTheme.danger,
         ),
       );
     } finally {
@@ -175,7 +175,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Un nouveau code SMS (valable 2 min) vous a été envoyé."),
-            backgroundColor: Color(0xFFA67954),
+            backgroundColor: AppTheme.bissap,
           ),
         );
       }
@@ -185,7 +185,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
-            backgroundColor: const Color(0xFFC0392B),
+            backgroundColor: AppTheme.danger,
           ),
         );
       }
@@ -196,7 +196,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const camelColor = Color(0xFFA67954);
+    const camelColor = AppTheme.bissap;
 
     final timerText = "00:${_secondesRestantes.toString().padLeft(2, '0')}";
 
@@ -233,7 +233,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                     Icon(
                       Icons.shield,
                       size: 74,
-                      color: Color(0xFF9E6E4B),
+                      color: AppTheme.bissap,
                     ),
                     Positioned(
                       top: 20,
@@ -253,7 +253,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
               Text(
                 "Vérification du compte",
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: TextStyle(fontFamily: AppTheme.policeTitre, 
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.couleurTexte(context),
@@ -285,7 +285,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFA67954),
+                        color: AppTheme.bissap,
                       ),
                     ),
                   ],
@@ -299,14 +299,14 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: AppTheme.oliveClair,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFA5D6A7)),
+                  border: Border.all(color: AppTheme.oliveBordure),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.verified_outlined, color: Color(0xFF2E7D32), size: 20),
+                    const Icon(Icons.verified_outlined, color: AppTheme.oliveProfond, size: 20),
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
@@ -314,7 +314,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1B5E20),
+                          color: AppTheme.oliveProfond,
                         ),
                       ),
                     ),
@@ -338,7 +338,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                       border: Border.all(color: AppTheme.couleurBordure(context), width: 1.4),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x0846321E),
+                          color: Color(0x082C241E),
                           blurRadius: 10,
                           offset: Offset(0, 3),
                         ),
@@ -425,7 +425,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: _secondesRestantes > 0 ? const Color(0xFFC7844D) : camelColor,
+                    color: _secondesRestantes > 0 ? AppTheme.bissap : camelColor,
                   ),
                 ),
               ),

@@ -42,11 +42,11 @@
       top: 12px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(172, 127, 94, 0.15);
+      background: rgba(168, 32, 75, 0.10);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(172, 127, 94, 0.25);
-      color: #7D553A;
+      border: 1px solid rgba(168, 32, 75, 0.22);
+      color: #84173A;
       font-size: 11px;
       font-weight: 500;
       padding: 5px 14px;
@@ -64,23 +64,23 @@
   <div class="interaction-hint">Faites glisser pour explorer le globe 3D</div>
 
   <script>
-    // --- PALETTE DE COULEURS DE LA CHARTE DOGO ---
+    // --- PALETTE DƆGƆ (bissap, olive, rose poudre, ocre, terre) ---
     const COLORS = {
-      primary: 0xAC7F5E,     // Marron Camel emblématique
-      primaryDark: 0x825A3B,
-      secondary: 0xE6A823,   // Jaune moutarde / doré
-      tertiary: 0xF5E8D3,    // Crème / beige clair
+      primary: 0xA8204B,     // Rouge bissap
+      primaryDark: 0x84173A,
+      secondary: 0xE7C66A,   // Ocre doré
+      tertiary: 0xF8E6EC,    // Rose poudre clair
       ocean: 0x2A7F96,       // Océan lagon profond
       oceanShallow: 0x48A6BE,
       continent: 0xD8C4A7,   // Terres chaudes
-      continentGreen: 0x4E9A66, // Végétation (vert #34C759 adouci)
+      continentGreen: 0x6F792A, // Végétation (olive riche)
       clouds: 0xFFFFFF,
-      shipHull: 0x3D291D,
-      shipDeck: 0xF8F5EE,
-      shipRed: 0xBE4034,
+      shipHull: 0x392824,     // Terre sombre
+      shipDeck: 0xFBF4EE,
+      shipRed: 0xA8204B,
       planeWhite: 0xF8FAFC,
       cardboard: 0xB5885C,   // Boîte kraft
-      cardboardTape: 0xE6A823
+      cardboardTape: 0xE7C66A
     };
 
     const container = document.getElementById('canvas-container');
@@ -130,7 +130,7 @@
     scene.add(sunLight);
 
     // Lumière d'ambiance chaude depuis le bas (contre-jour camel)
-    const rimLight = new THREE.DirectionalLight(0xAC7F5E, 0.6);
+    const rimLight = new THREE.DirectionalLight(0xE9B7C7, 0.6);
     rimLight.position.set(-15, -10, -10);
     scene.add(rimLight);
 
@@ -217,7 +217,7 @@
           trunk.position.y = hexHeight / 2 + 0.1;
 
           const foliageGeo = new THREE.ConeGeometry(0.18, 0.35, 5);
-          const foliageMat = new THREE.MeshLambertMaterial({ color: 0x2E7D32 });
+          const foliageMat = new THREE.MeshLambertMaterial({ color: 0x6F792A });
           const foliage = new THREE.Mesh(foliageGeo, foliageMat);
           foliage.position.y = 0.22;
           trunk.add(foliage);

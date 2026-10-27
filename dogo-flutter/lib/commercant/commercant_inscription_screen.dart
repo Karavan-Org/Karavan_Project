@@ -145,7 +145,7 @@ class _CommercantInscriptionScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: const Color(0xFFC0392B),
+          backgroundColor: AppTheme.danger,
           duration: const Duration(seconds: 4),
         ),
       );
@@ -156,8 +156,8 @@ class _CommercantInscriptionScreenState
 
   @override
   Widget build(BuildContext context) {
-    const camelColor = Color(0xFFA67954);
-    const borderColor = Color(0xFFDFCABA);
+    const camelColor = AppTheme.bissap;
+    const borderColor = AppTheme.bordureForte;
 
     return Scaffold(
       backgroundColor: AppTheme.couleurFond(context),
@@ -190,7 +190,7 @@ class _CommercantInscriptionScreenState
               // 1. TITRE PRINCIPAL FIGMA
               Text(
                 "Inscription",
-                style: TextStyle(
+                style: TextStyle(fontFamily: AppTheme.policeTitre, 
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.couleurTexte(context),

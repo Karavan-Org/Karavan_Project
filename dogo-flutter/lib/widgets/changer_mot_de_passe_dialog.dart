@@ -114,7 +114,7 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final camelColor = AppTheme.estSombre(context) ? AppTheme.darkPrimary : const Color(0xFFA67954);
+    final camelColor = AppTheme.estSombre(context) ? AppTheme.darkPrimary : AppTheme.bissap;
     final borderColor = AppTheme.couleurBordure(context);
 
     return Container(
@@ -127,7 +127,7 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
       decoration: BoxDecoration(
         color: AppTheme.couleurSurface(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
               color: Color(0x1F2C241E), blurRadius: 20, offset: Offset(0, -4)),
         ],
@@ -143,7 +143,7 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
                 width: 44,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD6CBC0),
+                  color: AppTheme.bordureForte,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -170,7 +170,7 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
                     children: [
                       Text(
                         "Modifier le mot de passe",
-                        style: TextStyle(
+                        style: TextStyle(fontFamily: AppTheme.policeTitre, 
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: AppTheme.couleurTexte(context)),
@@ -200,21 +200,21 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFDEDEC),
+                  color: AppTheme.dangerClair,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFF5B7B1)),
+                  border: Border.all(color: AppTheme.dangerBordure),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.error_outline_rounded,
-                        color: Color(0xFFC0392B), size: 18),
+                        color: AppTheme.danger, size: 18),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         _erreurGlobale!,
                         style: const TextStyle(
                             fontSize: 12.5,
-                            color: Color(0xFFC0392B),
+                            color: AppTheme.danger,
                             fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -278,13 +278,13 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
                         _chargement ? null : () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Color(0xFFDFCABA)),
+                      side: const BorderSide(color: AppTheme.bordureForte),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
                     ),
                     child: const Text("Annuler",
                         style: TextStyle(
-                            color: Color(0xFF7C6E65),
+                            color: AppTheme.textMuted,
                             fontWeight: FontWeight.w700)),
                   ),
                 ),
@@ -444,7 +444,7 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
               ? Icons.check_circle_rounded
               : Icons.radio_button_unchecked_rounded,
           size: 14,
-          color: valide ? AppTheme.success : const Color(0xFFAFA79F),
+          color: valide ? AppTheme.oliveProfond : AppTheme.textePale,
         ),
         const SizedBox(width: 6),
         Text(
@@ -452,7 +452,7 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: valide ? FontWeight.w700 : FontWeight.w500,
-            color: valide ? AppTheme.success : AppTheme.couleurTexteAttenue(context),
+            color: valide ? AppTheme.oliveProfond : AppTheme.couleurTexteAttenue(context),
           ),
         ),
       ],

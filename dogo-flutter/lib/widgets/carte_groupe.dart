@@ -13,13 +13,14 @@ class CarteGroupe extends StatelessWidget {
 
   const CarteGroupe({super.key, required this.groupe, required this.partenaire, this.action});
 
+  /// Palette Dɔgɔ : bissap = actif, ocre = point d'attention, olive = progression / étape terminée.
   static Color couleurStatut(String statut) => switch (statut) {
-        'BROUILLON' => const Color(0xFF8C7E74),
-        'EN_VALIDATION' => const Color(0xFFE6A823),
-        'OUVERT' => const Color(0xFF2E7D32),
-        'OBJECTIF_ATTEINT' || 'EN_EXPEDITION' || 'LIVRE' => const Color(0xFF1976D2),
-        'ANNULE' || 'ECHOUE' => const Color(0xFFC0392B),
-        _ => const Color(0xFF5A493B),
+        'BROUILLON' => AppTheme.textMuted,
+        'EN_VALIDATION' => AppTheme.ocreProfond,
+        'OUVERT' => AppTheme.primary,
+        'OBJECTIF_ATTEINT' || 'EN_EXPEDITION' || 'LIVRE' || 'TERMINE' => AppTheme.oliveProfond,
+        'ANNULE' || 'ECHOUE' => AppTheme.danger,
+        _ => AppTheme.terreDouce,
       };
 
   @override
@@ -36,7 +37,7 @@ class CarteGroupe extends StatelessWidget {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-        boxShadow: const [BoxShadow(color: Color(0x0646321E), blurRadius: 10, offset: Offset(0, 3))],
+        boxShadow: const [BoxShadow(color: Color(0x062C241E), blurRadius: 10, offset: Offset(0, 3))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +126,7 @@ class CarteGroupe extends StatelessWidget {
               minHeight: 7,
               backgroundColor: AppTheme.couleurBordure(context),
               valueColor: AlwaysStoppedAnimation<Color>(
-                groupe.aAtteint100 ? const Color(0xFF2E7D32) : couleur,
+                groupe.aAtteint100 ? AppTheme.olive : couleur,
               ),
             ),
           ),

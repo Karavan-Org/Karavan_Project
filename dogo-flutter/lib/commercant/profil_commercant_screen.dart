@@ -14,6 +14,10 @@ import 'details_niveau_commercant_sheet.dart';
 import 'favoris_service.dart';
 import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/avatar_profil_interactif.dart';
+import '../services/notification_api_service.dart';
+import '../utils/format.dart';
+import '../models/participation_model.dart';
+import '../services/groupe_api_service.dart';
 
 /// Écran du Profil Commerçant fidèle à la maquette Figma Dogo (Frame "profil")
 /// Nom & Téléphone : issus de la session connectée (repli Hawa Dagno)
@@ -28,7 +32,16 @@ class ProfilCommercantScreen extends StatefulWidget {
 }
 
 class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
-  int _nbCommandes = 12; // Valeur par défaut fidèle à la maquette Figma
+  /// Commandes réelles du commerçant : 0 pour un nouveau compte (Niveau 1), jamais une valeur de maquette
+  int _nbCommandes = 0;
+
+  /// Notifications non lues, lues sur le serveur (un nouveau compte n'a que celle de bienvenue)
+  int _nonLues = 0;
+
+  Future<void> _chargerNonLues() async {
+    final n = await NotificationApiService.instance.nombreNonLues();
+    if (mounted) setState(() => _nonLues = n);
+  }
 
   @override
   void initState() {
@@ -36,6 +49,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
     AuthService.instance.profilNotifier.addListener(_surProfilChange);
     AuthService.instance.rechargerProfil();
     _chargerCommandes();
+    _chargerNonLues();
   }
 
   @override
@@ -48,26 +62,27 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
     if (mounted) setState(() {});
   }
 
+  /// Total réellement payé : participations confirmées (le séquestre est constitué), lues sur le serveur
+  double _totalAchats = 0;
+
   Future<void> _chargerCommandes() async {
     try {
-      final commandes = await LogistiqueApiService.instance.mesCommandes();
+      final resultats = await Future.wait<Object>([
+        LogistiqueApiService.instance.mesCommandes(),
+        GroupeApiService.instance.mesParticipations(),
+      ]);
       if (!mounted) return;
-      if (commandes.isNotEmpty) {
-        setState(() {
-          _nbCommandes = commandes.length;
-        });
-      }
+      final commandes = resultats[0] as List;
+      final participations = resultats[1] as List<ParticipationModel>;
+      setState(() {
+        _nbCommandes = commandes.length;
+        _totalAchats = participations
+            .where((p) => p.statut == 'CONFIRMEE')
+            .fold<double>(0, (s, p) => s + p.montant);
+      });
     } catch (_) {
-      // Repli sur le profil par défaut en mode hors-ligne
+      // Hors ligne : les compteurs restent à leur dernière valeur connue
     }
-  }
-
-  String _formaterEconomies(int nbCmd) {
-    if (nbCmd == 12) return "248 500 F";
-    final int montant = nbCmd * 20700;
-    final str = montant.toString();
-    final regex = RegExp(r'\B(?=(\d{3})+(?!\d))');
-    return '${str.replaceAll(regex, ' ')} F';
   }
 
   void _onClose(BuildContext context) {
@@ -85,7 +100,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         title: Text(
           "Déconnexion",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         content: Text(
           "Êtes-vous sûr de vouloir vous déconnecter de votre espace Commerçant ?",
@@ -106,7 +121,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE53935),
+              backgroundColor: AppTheme.danger,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -170,7 +185,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                     top: -10,
                     child: CustomPaint(
                       painter: _OrganicBackgroundPainter(),
-                      child: const SizedBox(width: 320, height: 160),
+                      child: SizedBox(width: (MediaQuery.sizeOf(context).width - 40).clamp(0.0, 320.0).toDouble(), height: 160),
                     ),
                   ),
 
@@ -218,14 +233,14 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.storefront_outlined, size: 14, color: AppTheme.couleurAccent(context)),
+                                Icon(Icons.storefront_outlined, size: 14, color: AppTheme.couleurAttention(context)),
                                 const SizedBox(width: 5),
                                 Text(
                                   boutique,
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.couleurAccent(context),
+                                    color: AppTheme.couleurAttention(context),
                                   ),
                                 ),
                               ],
@@ -257,7 +272,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1E2832),
+                                  color: AppTheme.terre,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: const Text(
@@ -346,7 +361,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                   border: Border.all(color: AppTheme.couleurBordure(context)),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x0846321E),
+                      color: Color(0x082C241E),
                       blurRadius: 14,
                       offset: Offset(0, 4),
                     ),
@@ -411,7 +426,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                           child: Column(
                             children: [
                               Text(
-                                _formaterEconomies(_nbCommandes),
+                                formaterFcfa(_totalAchats),
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
@@ -420,7 +435,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                "économisés",
+                                "d'achats payés",
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: AppTheme.couleurTexteAttenue(context),
@@ -446,7 +461,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                   border: Border.all(color: AppTheme.couleurBordure(context)),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x0846321E),
+                      color: Color(0x082C241E),
                       blurRadius: 14,
                       offset: Offset(0, 4),
                     ),
@@ -490,16 +505,16 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                       },
                     ),
 
-                    // Item 4 : Notifications avec badge '3'
+                    // Item 4 : Notifications, avec le nombre réel de non lues
                     _buildFigmaMenuItem(
                       context: context,
                       icon: Icons.notifications_none_rounded,
                       label: "Notifications",
-                      badgeText: "3",
+                      badgeText: _nonLues > 0 ? "$_nonLues" : null,
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const NotificationsCommercantScreen()),
-                        );
+                        Navigator.of(context)
+                            .push(MaterialPageRoute(builder: (_) => const NotificationsCommercantScreen()))
+                            .then((_) => _chargerNonLues());
                       },
                     ),
 
@@ -608,7 +623,7 @@ class _ProfilCommercantScreenState extends State<ProfilCommercantScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFE53935),
+                    color: AppTheme.danger,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
@@ -647,11 +662,11 @@ class _OrganicBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint1 = Paint()
-      ..color = const Color(0xFFF4ECE3).withValues(alpha: 0.85)
+      ..color = AppTheme.surfaceDouce.withValues(alpha: 0.85)
       ..style = PaintingStyle.fill;
 
     final paint2 = Paint()
-      ..color = const Color(0xFFEEDFCF).withValues(alpha: 0.60)
+      ..color = AppTheme.bordureForte.withValues(alpha: 0.60)
       ..style = PaintingStyle.fill;
 
     // Pétale / Forme douce gauche
@@ -683,11 +698,11 @@ class _MerchantAvatarPainter extends CustomPainter {
     final h = size.height;
 
     // Fond chaud
-    final bgPaint = Paint()..color = const Color(0xFFE8DCCF);
+    final bgPaint = Paint()..color = AppTheme.bordureForte;
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), bgPaint);
 
     // Buste / Vêtement (Boubou marron chaud)
-    final clothesPaint = Paint()..color = const Color(0xFF9E6738);
+    final clothesPaint = Paint()..color = AppTheme.bissap;
     final clothesPath = Path()
       ..moveTo(w * 0.15, h)
       ..quadraticBezierTo(w * 0.25, h * 0.68, w * 0.5, h * 0.68)

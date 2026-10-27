@@ -4,6 +4,7 @@ import '../services/api/api_exception.dart';
 import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/carte_groupe.dart';
+import '../services/visibilite_ecran.dart';
 
 /// Lots du Grossiste : groupes dont l'objectif est atteint, avec les commandes à préparer
 /// (GET /api/groupes/{id}/commandes ; l'identité des acheteurs n'est pas transmise au grossiste, RG-71).
@@ -14,7 +15,7 @@ class GrossisteCommandesScreen extends StatefulWidget {
   State<GrossisteCommandesScreen> createState() => _GrossisteCommandesScreenState();
 }
 
-class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> with SingleTickerProviderStateMixin {
+class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> with SingleTickerProviderStateMixin, ActualisationAutomatique<GrossisteCommandesScreen> {
   static const _aPreparer = ['OBJECTIF_ATTEINT'];
   static const _expedies = ['EN_EXPEDITION', 'LIVRE', 'TERMINE'];
 
@@ -24,9 +25,16 @@ class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> wit
   bool _chargement = true;
   String? _erreur;
 
+  /// Données vivantes : relues en arrière-plan tant que l'écran est affiché
+  @override
+  Future<void> actualiserEnSilence() async {
+    await _charger(silencieux: true);
+  }
+
   @override
   void initState() {
     super.initState();
+    demarrerActualisation();
     _charger();
   }
 
@@ -36,11 +44,13 @@ class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> wit
     super.dispose();
   }
 
-  Future<void> _charger() async {
-    setState(() {
-      _chargement = true;
-      _erreur = null;
-    });
+  Future<void> _charger({bool silencieux = false}) async {
+    if (!silencieux) {
+      setState(() {
+        _chargement = true;
+        _erreur = null;
+      });
+    }
     try {
       final groupes = (await GroupeApiService.instance.groupesDuGrossiste())
           .where((g) => _aPreparer.contains(g.statut) || _expedies.contains(g.statut))
@@ -55,6 +65,7 @@ class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> wit
         _chargement = false;
       });
     } catch (e) {
+      if (silencieux) return;
       if (!mounted) return;
       setState(() {
         _erreur = e is ApiException ? e.messageComplet : '$e';
@@ -86,7 +97,7 @@ class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> wit
         centerTitle: false,
         title: Text(
           "Lots & commandes",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.couleurTexte(context)),
         ),
         bottom: TabBar(
           controller: _onglets,
@@ -101,7 +112,7 @@ class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> wit
         ),
       ),
       body: _chargement
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.olive))
           : TabBarView(
               controller: _onglets,
               children: [_liste(aPreparer), _liste(expedies)],
@@ -111,7 +122,7 @@ class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> wit
 
   Widget _liste(List<GroupeResume> groupes) {
     return RefreshIndicator(
-      color: AppTheme.primary,
+      color: AppTheme.olive,
       onRefresh: _charger,
       child: groupes.isEmpty
           ? ListView(
@@ -119,12 +130,12 @@ class _GrossisteCommandesScreenState extends State<GrossisteCommandesScreen> wit
               padding: const EdgeInsets.all(32),
               children: [
                 const SizedBox(height: 40),
-                Icon(Icons.inbox_outlined, size: 48, color: AppTheme.textMuted.withValues(alpha: 0.5)),
+                Icon(Icons.inbox_outlined, size: 48, color: AppTheme.couleurTexteAttenue(context).withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
                 Text(
                   _erreur ?? "Aucun lot ici. Un lot apparaît quand un groupe monté sur vos produits atteint son objectif.",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                  style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context)),
                 ),
               ],
             )

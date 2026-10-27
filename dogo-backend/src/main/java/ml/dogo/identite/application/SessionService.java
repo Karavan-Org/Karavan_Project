@@ -7,6 +7,7 @@ import ml.dogo.identite.persistence.SessionUtilisateur;
 import ml.dogo.identite.persistence.SessionUtilisateurRepository;
 import ml.dogo.identite.persistence.UtilisateurRepository;
 import ml.dogo.shared.config.DogoProperties;
+import ml.dogo.shared.security.EtatSession;
 import ml.dogo.shared.security.VerificateurSession;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -31,18 +32,19 @@ public class SessionService implements VerificateurSession {
 
     @Override
     @Transactional
-    public boolean verifierEtProlonger(long sessionId, long utilisateurId) {
+    public EtatSession verifierEtProlonger(long sessionId, long utilisateurId) {
         Instant maintenant = horloge.instant();
         SessionUtilisateur session = sessions.findById(sessionId).orElse(null);
         if (session == null || !session.getUtilisateurId().equals(utilisateurId) || !session.estValide(maintenant)) {
-            return false;
+            return EtatSession.INVALIDE;
         }
+        // Le statut est relu à chaque requête : une validation, une suspension ou un rejet s'applique immédiatement
         StatutCompte statut = utilisateurs.statutDe(utilisateurId).orElse(null);
         if (statut == null || !statut.peutSAuthentifier()) {
-            return false;
+            return EtatSession.INVALIDE;
         }
         session.prolonger(maintenant, maintenant.plus(proprietes.session().inactivite()));
-        return true;
+        return statut == StatutCompte.EN_ATTENTE ? EtatSession.EN_ATTENTE : EtatSession.ACTIF;
     }
 
     @Transactional

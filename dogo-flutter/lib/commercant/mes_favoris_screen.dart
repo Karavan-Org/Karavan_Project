@@ -17,12 +17,12 @@ class MesFavorisScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           "Mes Groupes Favoris",
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+          style: TextStyle(fontFamily: AppTheme.policeTitre, fontWeight: FontWeight.w800, fontSize: 18),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.couleurCarte(context),
         elevation: 0,
-        foregroundColor: AppTheme.textPrimary,
+        foregroundColor: AppTheme.couleurTexte(context),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.of(context).pop(),
@@ -47,36 +47,36 @@ class MesFavorisScreen extends StatelessWidget {
                       width: 90,
                       height: 90,
                       decoration: BoxDecoration(
-                        color: AppTheme.tertiary.withValues(alpha: 0.4),
+                        color: AppTheme.couleurSurfaceDouce(context),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                    child: Icon(
                         Icons.favorite_border,
                         size: 46,
-                        color: AppTheme.primary,
+                      color: AppTheme.couleurAccent(context),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       "Aucun groupe en favori",
-                      style: TextStyle(
+                      style: TextStyle(fontFamily: AppTheme.policeTitre,
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.couleurTexte(context),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       "Ajoutez des groupes pour suivre leur progression.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: AppTheme.textMuted, height: 1.4),
+                      style: TextStyle(fontSize: 13, color: AppTheme.couleurTexteAttenue(context), height: 1.4),
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppTheme.couleurAccent(context),
+                        foregroundColor: AppTheme.texteSur(AppTheme.couleurAccent(context)),
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
@@ -111,11 +111,11 @@ class MesFavorisScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(22),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A46321E),
+            color: Color(0x0A2C241E),
             blurRadius: 16,
             offset: Offset(0, 4),
           ),
@@ -133,7 +133,7 @@ class MesFavorisScreen extends StatelessWidget {
                 child: Container(
                   width: 75,
                   height: 75,
-                  color: const Color(0xFFF7F2EB),
+                  color: AppTheme.couleurSurfaceDouce(context),
                   child: imageProduit(
                     groupe.imagePath,
                     fit: BoxFit.contain,
@@ -154,21 +154,21 @@ class MesFavorisScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppTheme.secondary.withValues(alpha: 0.15),
+                            color: AppTheme.estSombre(context) ? AppTheme.darkOcreSurface : AppTheme.ocreClair,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             groupe.tempsRestant,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF996B00),
+                              color: AppTheme.couleurAttention(context),
                             ),
                           ),
                         ),
                         // Bouton Supprimer des favoris
                         IconButton(
-                          icon: const Icon(Icons.favorite, color: Colors.redAccent, size: 22),
+                          icon: Icon(Icons.favorite, color: AppTheme.couleurDanger(context), size: 22),
                           visualDensity: VisualDensity.compact,
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -182,12 +182,12 @@ class MesFavorisScreen extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       groupe.titre,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.couleurTexte(context)),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       groupe.sousTitre,
-                      style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+                      style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -196,18 +196,18 @@ class MesFavorisScreen extends StatelessWidget {
                       children: [
                         Text(
                           "${groupe.prixGroupe} FCFA",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.primary,
+                            color: AppTheme.couleurAccent(context),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           "${groupe.prixPublic} FCFA",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppTheme.textMuted,
+                            color: AppTheme.couleurTexteAttenue(context),
                             decoration: TextDecoration.lineThrough,
                           ),
                         ),
@@ -220,7 +220,7 @@ class MesFavorisScreen extends StatelessWidget {
           ),
 
           const SizedBox(height: 12),
-          const Divider(color: Color(0xFFF1EAE2)),
+          Divider(color: AppTheme.couleurBordure(context)),
           const SizedBox(height: 8),
 
           // Jauge de progression
@@ -229,14 +229,14 @@ class MesFavorisScreen extends StatelessWidget {
             children: [
               Text(
                 "Progression du lot : ${groupe.quantiteActuelle}/${groupe.quantiteObjectif}",
-                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.couleurTexte(context)),
               ),
               Text(
                 "${(groupe.ratio * 100).toInt()}%",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
+                  color: AppTheme.couleurAccent(context),
                 ),
               ),
             ],
@@ -247,8 +247,8 @@ class MesFavorisScreen extends StatelessWidget {
             child: LinearProgressIndicator(
               value: groupe.ratio,
               minHeight: 6,
-              backgroundColor: const Color(0xFFF1EAE2),
-              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
+              backgroundColor: AppTheme.couleurBordure(context),
+              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.couleurSucces(context)),
             ),
           ),
 
@@ -279,8 +279,8 @@ class MesFavorisScreen extends StatelessWidget {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.couleurAccent(context),
+              foregroundColor: AppTheme.texteSur(AppTheme.couleurAccent(context)),
               minimumSize: const Size(double.infinity, 42),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),

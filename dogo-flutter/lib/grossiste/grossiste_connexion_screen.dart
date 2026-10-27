@@ -134,7 +134,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                   Text(
                     "Bienvenue Grossiste !",
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: TextStyle(fontFamily: AppTheme.policeTitre, 
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.couleurTexte(context)),
@@ -228,13 +228,13 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                     child: Text.rich(
                       TextSpan(
                         style:
-                            TextStyle(fontSize: 13.5, color: AppTheme.primary),
+                            const TextStyle(fontSize: 13.5, color: AppTheme.primary),
                         children: [
                           TextSpan(text: "Pas encore de compte ? ", style: TextStyle(color: AppTheme.couleurTexteAttenue(context))),
-                          TextSpan(
+                          const TextSpan(
                               text: " | ",
-                              style: TextStyle(color: Color(0xFFCBD5E1))),
-                          TextSpan(
+                              style: TextStyle(color: AppTheme.bordureForte)),
+                          const TextSpan(
                             text: "S'inscrire",
                             style: TextStyle(
                                 fontWeight: FontWeight.w700,
