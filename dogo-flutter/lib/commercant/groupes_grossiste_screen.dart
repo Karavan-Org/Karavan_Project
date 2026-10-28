@@ -49,27 +49,35 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final estSombre = AppTheme.estSombre(context);
+    final couleurFond = AppTheme.couleurFond(context);
+    final couleurCarte = AppTheme.couleurCarte(context);
+    final couleurTexte = AppTheme.couleurTexte(context);
+    final couleurAttenue = AppTheme.couleurTexteAttenue(context);
+    final couleurBordure = AppTheme.couleurBordure(context);
+    final couleurSurfaceDouce = AppTheme.couleurSurfaceDouce(context);
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: couleurFond,
       appBar: AppBar(
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               "Groupes des Grossistes",
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: couleurTexte),
             ),
             Text(
               "Rejoignez un convoi actif et divisez vos coûts",
-              style: TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+              style: TextStyle(fontSize: 11.5, color: couleurAttenue),
             ),
           ],
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.textPrimary,
+        backgroundColor: couleurCarte,
+        foregroundColor: couleurTexte,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textDark, size: 24),
+          icon: Icon(Icons.arrow_back_rounded, color: couleurTexte, size: 24),
           tooltip: "Retour",
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -129,15 +137,15 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                             )
                           : null,
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: couleurSurfaceDouce,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFFE8DFD7)),
+                        borderSide: BorderSide(color: couleurBordure),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFFE8DFD7)),
+                        borderSide: BorderSide(color: couleurBordure),
                       ),
                     ),
                   ),
@@ -149,15 +157,15 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                       child: Row(
                         children: [
-                          Icon(Icons.storefront, size: 16, color: AppTheme.primary),
-                          SizedBox(width: 6),
+                          const Icon(Icons.storefront, size: 16, color: AppTheme.primary),
+                          const SizedBox(width: 6),
                           Text(
                             "Grossistes importateurs :",
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: couleurTexte),
                           ),
                         ],
                       ),
@@ -176,17 +184,17 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                               label: Text(label),
                               selected: isSelected,
                               onSelected: (_) => setState(() => _grossisteFiltre = grossiste),
-                              backgroundColor: Colors.white,
+                              backgroundColor: couleurSurfaceDouce,
                               selectedColor: AppTheme.primary,
                               labelStyle: TextStyle(
                                 fontSize: 12,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                color: isSelected ? Colors.white : couleurTexte,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                                 side: BorderSide(
-                                  color: isSelected ? AppTheme.primary : const Color(0xFFE0D5CB),
+                                  color: isSelected ? AppTheme.primary : couleurBordure,
                                 ),
                               ),
                             ),
@@ -212,17 +220,17 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                           label: Text(cat),
                           selected: isSelected,
                           onSelected: (_) => setState(() => _categorieFiltre = cat),
-                          backgroundColor: Colors.white,
+                          backgroundColor: couleurSurfaceDouce,
                           selectedColor: AppTheme.primary.withValues(alpha: 0.15),
                           labelStyle: TextStyle(
                             fontSize: 11.5,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                            color: isSelected ? AppTheme.primary : AppTheme.textMuted,
+                            color: isSelected ? AppTheme.primary : couleurAttenue,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: BorderSide(
-                              color: isSelected ? AppTheme.primary : const Color(0xFFEADFD6),
+                              color: isSelected ? AppTheme.primary : couleurBordure,
                             ),
                           ),
                         ),
@@ -277,13 +285,14 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: couleurCarte,
                             borderRadius: BorderRadius.circular(24),
-                            boxShadow: const [
+                            border: Border.all(color: couleurBordure, width: 1.1),
+                            boxShadow: [
                               BoxShadow(
-                                color: Color(0x0C46321E),
+                                color: Colors.black.withValues(alpha: estSombre ? 0.25 : 0.05),
                                 blurRadius: 16,
-                                offset: Offset(0, 4),
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
@@ -314,10 +323,10 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                               Flexible(
                                                 child: Text(
                                                   groupe.grossisteNom,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.w800,
-                                                    color: AppTheme.textPrimary,
+                                                    color: couleurTexte,
                                                   ),
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
@@ -329,9 +338,9 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                           const SizedBox(height: 1),
                                           Text(
                                             "Origine : ${groupe.paysOrigine}",
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 11.5,
-                                              color: AppTheme.textMuted,
+                                              color: couleurAttenue,
                                             ),
                                           ),
                                         ],
@@ -340,7 +349,7 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                     IconButton(
                                       icon: Icon(
                                         isFav ? Icons.favorite : Icons.favorite_border,
-                                        color: isFav ? Colors.redAccent : AppTheme.textMuted,
+                                        color: isFav ? Colors.redAccent : couleurAttenue,
                                       ),
                                       onPressed: () => FavorisService.instance.toggleFavori(groupe, context),
                                     ),
@@ -348,7 +357,7 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                 ),
                               ),
 
-                              const Divider(height: 1, color: Color(0xFFF2ECE6)),
+                              Divider(height: 1, color: couleurBordure),
 
                               // Détail produit (Image + Titre + Prix)
                               Padding(
@@ -366,8 +375,8 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                         errorBuilder: (_, __, ___) => Container(
                                           width: 88,
                                           height: 88,
-                                          color: const Color(0xFFF5EFEB),
-                                          child: const Icon(Icons.image_not_supported, color: AppTheme.textMuted),
+                                          color: couleurSurfaceDouce,
+                                          child: Icon(Icons.image_not_supported, color: couleurAttenue),
                                         ),
                                       ),
                                     ),
@@ -378,16 +387,16 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                         children: [
                                           Text(
                                             groupe.titre,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 15,
                                               fontWeight: FontWeight.w800,
-                                              color: AppTheme.textPrimary,
+                                              color: couleurTexte,
                                             ),
                                           ),
                                           const SizedBox(height: 3),
                                           Text(
                                             groupe.sousTitre,
-                                            style: const TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+                                            style: TextStyle(fontSize: 11.5, color: couleurAttenue),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -408,10 +417,10 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                                 const SizedBox(width: 8),
                                                 Text(
                                                 "${groupe.prixPublic} F",
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 12,
                                                   decoration: TextDecoration.lineThrough,
-                                                  color: AppTheme.textMuted,
+                                                  color: couleurAttenue,
                                                 ),
                                                 ),
                                               ],
@@ -420,15 +429,15 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                                 Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFFE8F5E9),
+                                                  color: estSombre ? AppTheme.darkOliveSurface : const Color(0xFFE8F5E9),
                                                   borderRadius: BorderRadius.circular(8),
                                                 ),
                                                 child: Text(
                                                   "-${groupe.pourcentageEconomie}%",
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 11.5,
                                                     fontWeight: FontWeight.w800,
-                                                    color: AppTheme.success,
+                                                    color: AppTheme.couleurSucces(context),
                                                   ),
                                                 ),
                                                 ),
@@ -452,10 +461,10 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                       children: [
                                         Text(
                                           "Remplissage : ${groupe.quantiteActuelle} / ${groupe.quantiteObjectif} pièces",
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
-                                            color: AppTheme.textPrimary,
+                                            color: couleurTexte,
                                           ),
                                         ),
                                         Text(
@@ -474,7 +483,7 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                       child: LinearProgressIndicator(
                                         value: groupe.ratio,
                                         minHeight: 8,
-                                        backgroundColor: const Color(0xFFEFE8E1),
+                                        backgroundColor: couleurSurfaceDouce,
                                         valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
                                       ),
                                     ),
@@ -517,8 +526,8 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                         );
                                       },
                                       style: OutlinedButton.styleFrom(
-                                        foregroundColor: AppTheme.textPrimary,
-                                        side: const BorderSide(color: Color(0xFFDCD2C7)),
+                                        foregroundColor: couleurTexte,
+                                        side: BorderSide(color: couleurBordure),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(16),
                                         ),

@@ -13,3 +13,4 @@ ALTER TABLE grossiste
 ALTER TABLE courtier
     ADD COLUMN latitude DOUBLE NULL,
     ADD COLUMN longitude DOUBLE NULL;
+

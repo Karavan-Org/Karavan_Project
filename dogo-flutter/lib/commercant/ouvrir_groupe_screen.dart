@@ -117,7 +117,7 @@ class _OuvrirGroupeScreenState extends State<OuvrirGroupeScreen> {
         ),
         title: Text("Groupe ${LienGroupe.code(widget.groupeId)}",
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
-        backgroundColor: AppTheme.surface,
+        backgroundColor: AppTheme.couleurCarte(context),
         foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
       ),
@@ -131,7 +131,7 @@ class _OuvrirGroupeScreenState extends State<OuvrirGroupeScreen> {
                   children: [
                     const Icon(Icons.groups_rounded, size: 52, color: AppTheme.primary),
                     const SizedBox(height: 14),
-                    Text(_message!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14)),
+                    Text(_message!, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: AppTheme.couleurTexte(context))),
                     const SizedBox(height: 18),
                     TextButton(onPressed: () => Navigator.of(context).maybePop(), child: const Text("Fermer")),
                   ],

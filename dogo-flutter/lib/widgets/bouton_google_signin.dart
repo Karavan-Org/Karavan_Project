@@ -59,8 +59,9 @@ class BoutonGoogleSignIn extends StatelessWidget {
       }
 
       final res = await AuthService.instance.authentifierGoogle(idToken);
-      final statut = res['statut'] as String?;
-      final bool estConnecte = statut == 'CONNECTE' || (res['jeton'] != null && (res['jeton'] as String).isNotEmpty);
+      final statut = res['statut']?.toString();
+      final String? jeton = res['jeton'] as String?;
+      final bool estConnecte = statut == 'CONNECTE' || (jeton != null && jeton.isNotEmpty);
       if (estConnecte) {
         final route = switch (role) {
           RoleActeur.grossiste => '/grossiste',
@@ -72,12 +73,12 @@ class BoutonGoogleSignIn extends StatelessWidget {
         nav.push(
           MaterialPageRoute(
             builder: (_) => GoogleCompleterProfilScreen(
-              jetonInscription: res['jetonInscription'] as String? ?? '',
-              sub: res['sub'] as String?,
-              email: res['email'] as String? ?? account.email,
-              emailVerified: res['emailVerified'] as bool? ?? true,
-              nom: res['nom'] as String? ?? account.displayName,
-              photoUrl: res['photoUrl'] as String? ?? account.photoUrl,
+              jetonInscription: res['jetonInscription']?.toString() ?? '',
+              sub: res['sub']?.toString(),
+              email: res['email']?.toString() ?? account.email,
+              emailVerified: res['emailVerified'] == true,
+              nom: res['nom']?.toString() ?? account.displayName,
+              photoUrl: res['photoUrl']?.toString() ?? account.photoUrl,
               roleParDefaut: role,
             ),
           ),
@@ -290,8 +291,9 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
 
       if (!mounted) return;
 
-      final statut = res['statut'] as String?;
-      final bool estConnecte = statut == 'CONNECTE' || (res['jeton'] != null && (res['jeton'] as String).isNotEmpty);
+      final statut = res['statut']?.toString();
+      final String? jeton = res['jeton'] as String?;
+      final bool estConnecte = statut == 'CONNECTE' || (jeton != null && jeton.isNotEmpty);
 
       if (estConnecte) {
         nav.pop(); // Fermer la modale
@@ -306,12 +308,12 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
         nav.push(
           MaterialPageRoute(
             builder: (_) => GoogleCompleterProfilScreen(
-              jetonInscription: res['jetonInscription'] as String? ?? '',
-              sub: res['sub'] as String?,
-              email: res['email'] as String? ?? _emailGoogle,
-              emailVerified: res['emailVerified'] as bool? ?? true,
-              nom: res['nom'] as String? ?? _nomGoogle,
-              photoUrl: res['photoUrl'] as String?,
+              jetonInscription: res['jetonInscription']?.toString() ?? '',
+              sub: res['sub']?.toString(),
+              email: res['email']?.toString() ?? _emailGoogle,
+              emailVerified: res['emailVerified'] == true,
+              nom: res['nom']?.toString() ?? _nomGoogle,
+              photoUrl: res['photoUrl']?.toString(),
               roleParDefaut: widget.role,
             ),
           ),

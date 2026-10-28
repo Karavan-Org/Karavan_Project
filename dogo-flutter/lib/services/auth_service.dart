@@ -274,11 +274,12 @@ class AuthService {
       );
     }
 
-    final estConnecte = response['statut'] == 'CONNECTE' ||
-        (response['jeton'] is String && (response['jeton'] as String).isNotEmpty);
+    final String? jeton = response['jeton'] as String?;
+    final statut = response['statut']?.toString();
+    final bool estConnecte = (jeton != null && jeton.isNotEmpty) ||
+        (statut == 'CONNECTE' && jeton != null && jeton.isNotEmpty);
 
-    if (estConnecte) {
-      final jeton = response['jeton'] as String;
+    if (jeton != null && estConnecte) {
       ApiClient.instance.definirJeton(jeton);
       final profil = UtilisateurProfil.fromJson(
           response['profil'] as Map<String, dynamic>? ?? {});

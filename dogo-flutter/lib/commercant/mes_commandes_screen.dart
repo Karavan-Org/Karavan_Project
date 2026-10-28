@@ -321,7 +321,7 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> with Actualisat
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.creme, // Fond doux Design System
+      backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -560,14 +560,19 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> with Actualisat
               width: double.infinity,
               height: 110,
               decoration: BoxDecoration(
-                color: AppTheme.roseClair, // Fond bleu ciel doux Figma
+                color: AppTheme.estSombre(context) ? AppTheme.couleurCarte(context) : AppTheme.roseClair,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.rose, width: 1.2),
+                border: Border.all(
+                  color: AppTheme.estSombre(context) ? AppTheme.couleurBordure(context) : AppTheme.rose,
+                  width: 1.2,
+                ),
               ),
               child: CustomPaint(
                 painter: _MaritimeRoutePainter(
                   departLabel: activeCmd.origine,
                   arriveeLabel: activeCmd.destination,
+                  labelColor: AppTheme.couleurTexte(context),
+                  shipColor: AppTheme.estSombre(context) ? AppTheme.doreKaravan : AppTheme.terre,
                 ),
               ),
             ),
@@ -681,19 +686,28 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> with Actualisat
                     ),
                   );
                 },
-                icon: const Icon(Icons.public_rounded, size: 20, color: Color(0xFF7B4026)),
-                label: const Text(
+                icon: Icon(
+                  Icons.public_rounded,
+                  size: 20,
+                  color: AppTheme.estSombre(context) ? AppTheme.doreKaravan : const Color(0xFF7B4026),
+                ),
+                label: Text(
                   "Suivi international détaillé (10 phases) →",
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF7B4026),
+                    color: AppTheme.estSombre(context) ? AppTheme.doreKaravan : const Color(0xFF7B4026),
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF7B4026), width: 1.4),
+                  side: BorderSide(
+                    color: AppTheme.estSombre(context) ? AppTheme.doreKaravan : const Color(0xFF7B4026),
+                    width: 1.4,
+                  ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  backgroundColor: const Color(0xFF7B4026).withValues(alpha: 0.05),
+                  backgroundColor: AppTheme.estSombre(context)
+                      ? AppTheme.doreKaravan.withValues(alpha: 0.12)
+                      : const Color(0xFF7B4026).withValues(alpha: 0.05),
                 ),
               ),
             ),
@@ -1210,10 +1224,14 @@ class _DashedLinePainter extends CustomPainter {
 class _MaritimeRoutePainter extends CustomPainter {
   final String departLabel;
   final String arriveeLabel;
+  final Color labelColor;
+  final Color shipColor;
 
   _MaritimeRoutePainter({
     required this.departLabel,
     required this.arriveeLabel,
+    this.labelColor = AppTheme.terre,
+    this.shipColor = AppTheme.terre,
   });
 
   @override
@@ -1261,10 +1279,10 @@ class _MaritimeRoutePainter extends CustomPainter {
     final textPainterDepart = TextPainter(
       text: TextSpan(
         text: departLabel,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: AppTheme.terre,
+          color: labelColor,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -1279,10 +1297,10 @@ class _MaritimeRoutePainter extends CustomPainter {
     final textPainterArrivee = TextPainter(
       text: TextSpan(
         text: arriveeLabel,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: AppTheme.terre,
+          color: labelColor,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -1300,7 +1318,7 @@ class _MaritimeRoutePainter extends CustomPainter {
       ..lineTo(shipCenter.dx + 10, shipCenter.dy + 9)
       ..lineTo(shipCenter.dx - 11, shipCenter.dy + 9)
       ..close();
-    canvas.drawPath(hullPath, Paint()..color = AppTheme.terre);
+    canvas.drawPath(hullPath, Paint()..color = shipColor);
 
     // Conteneurs colorés sur le pont
     canvas.drawRect(

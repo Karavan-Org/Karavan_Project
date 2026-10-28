@@ -1068,9 +1068,9 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 11),
                                   alignment: Alignment.center,
-                                  decoration: const BoxDecoration(
-                                    color: AppTheme.creme,
-                                    borderRadius: BorderRadius.vertical(
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.couleurSurfaceDouce(context),
+                                    borderRadius: const BorderRadius.vertical(
                                         bottom: Radius.circular(20)),
                                   ),
                                   child: const Row(
