@@ -4,10 +4,12 @@ import {
   Component,
   OnInit,
   ViewChild,
+  computed,
   inject,
   signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import jsPDF from 'jspdf';
@@ -15,6 +17,7 @@ import autoTable from 'jspdf-autotable';
 import { AdminApiService, Convoi, DossierKyc } from '../../core/services/admin-api.service';
 import { AuthService } from '../../core/services/auth.service';
 import {
+  ActiviteRecenteVue,
   GroupeCadranVue,
   GroupeDetailVue,
   PaysReference,
@@ -23,7 +26,6 @@ import {
 } from './tableau-de-bord.service';
 import { Globe3dComponent } from './globe-3d/globe-3d.component';
 import { CadranGroupesComponent } from './cadran-groupes/cadran-groupes.component';
-import { StatistiquesDroiteComponent } from './statistiques-droite/statistiques-droite.component';
 import { DetailTiroirComponent } from './detail-tiroir/detail-tiroir.component';
 import { ModalAssignerPaysComponent } from './modal-assigner-pays/modal-assigner-pays.component';
 
@@ -32,10 +34,10 @@ import { ModalAssignerPaysComponent } from './modal-assigner-pays/modal-assigner
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatIconModule,
     Globe3dComponent,
     CadranGroupesComponent,
-    StatistiquesDroiteComponent,
     DetailTiroirComponent,
     ModalAssignerPaysComponent
   ],
@@ -45,6 +47,7 @@ import { ModalAssignerPaysComponent } from './modal-assigner-pays/modal-assigner
 })
 export class TableauDeBordComponent implements OnInit {
   @ViewChild(Globe3dComponent) globe3d?: Globe3dComponent;
+  @ViewChild(CadranGroupesComponent) cadranGroupes?: CadranGroupesComponent;
 
   private readonly tbService = inject(TableauDeBordService);
   private readonly adminApi = inject(AdminApiService);
@@ -57,6 +60,22 @@ export class TableauDeBordComponent implements OnInit {
   readonly listePays = signal<PaysReference[]>([]);
   readonly paysFiltre = signal<string | null>(null);
   readonly groupeDetail = signal<GroupeDetailVue | null>(null);
+
+  /** Le panneau Statistiques Générales est FERMÉ par défaut, s'ouvre au clic et se ferme avec une croix */
+  readonly panneauStatsOuvert = this.tbService.panneauStatsOuvert;
+  readonly rechercheTexte = signal<string>('');
+
+  readonly groupesAffiches = computed(() => {
+    const q = this.rechercheTexte().toLowerCase().trim();
+    const liste = this.groupes();
+    if (!q) return liste;
+    return liste.filter(g =>
+      g.titre.toLowerCase().includes(q) ||
+      g.paysOrigine?.nomFr?.toLowerCase().includes(q) ||
+      g.grossiste?.nom?.toLowerCase().includes(q) ||
+      g.id.toString().includes(q)
+    );
+  });
 
   modalRattrapageOuverte = false;
   chargement = false;
@@ -86,7 +105,7 @@ export class TableauDeBordComponent implements OnInit {
         this.resume.set(r);
         this.cdr.markForCheck();
       },
-      error: err => {
+      error: () => {
         this.erreur = 'Impossible de charger le résumé du tableau de bord.';
         this.cdr.markForCheck();
       }
@@ -136,8 +155,26 @@ export class TableauDeBordComponent implements OnInit {
     });
   }
 
+  ouvrirPanneauStats(): void {
+    this.tbService.ouvrirPanneauStats();
+    this.cdr.markForCheck();
+  }
+
+  fermerPanneauStats(): void {
+    this.tbService.fermerPanneauStats();
+    this.cdr.markForCheck();
+  }
+
+  basculerPanneauStats(): void {
+    this.tbService.basculerPanneauStats();
+    this.cdr.markForCheck();
+  }
+
   onPaysChoisi(codeIso: string | null): void {
     this.paysFiltre.set(codeIso);
+    if (codeIso) {
+      this.globe3d?.focaliserSurPays(codeIso);
+    }
     this.cdr.markForCheck();
   }
 
@@ -171,7 +208,7 @@ export class TableauDeBordComponent implements OnInit {
           courtier: g.courtier,
           produitNom: g.titre,
           produitDescription: '',
-          produitPhotoUrl: null,
+          produitPhotoUrl: g.produitPhotoUrl || null,
           categorieNom: g.categorieNom,
           prixMarchandise: 0,
           transport: 0,
@@ -206,6 +243,22 @@ export class TableauDeBordComponent implements OnInit {
 
   apresAssignationPays(): void {
     this.chargerTout();
+  }
+
+  formatTempsEcoule(dateStr?: string | null): string {
+    if (!dateStr) return 'Récemment';
+    try {
+      const diffMs = Date.now() - new Date(dateStr).getTime();
+      const diffMin = Math.floor(diffMs / 60000);
+      if (diffMin < 1) return "À l'instant";
+      if (diffMin < 60) return `Il y a ${diffMin} min`;
+      const diffH = Math.floor(diffMin / 60);
+      if (diffH < 24) return `Il y a ${diffH} h`;
+      const diffJ = Math.floor(diffH / 24);
+      return `Il y a ${diffJ} j`;
+    } catch {
+      return 'Récemment';
+    }
   }
 
   telechargerRapport(): void {

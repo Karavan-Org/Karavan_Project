@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/admin/tableau-de-bord")
-@PreAuthorize("hasRole('ADMINISTRATEUR')")
+@PreAuthorize("hasRole('ADMINISTRATEUR') or hasAuthority('ROLE_ADMINISTRATEUR') or hasAuthority('AUDIT_LIRE')")
 public class TableauDeBordAdminController {
 
     public record PaysAssignationRequete(

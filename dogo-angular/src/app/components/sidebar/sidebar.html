@@ -34,7 +34,8 @@
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: true }"
             class="nav-item"
-            [attr.aria-label]="item.label">
+            [attr.aria-label]="item.label"
+            (click)="onItemClick(item)">
 
             <mat-icon class="nav-icon">
               {{ item.icon }}

@@ -8,6 +8,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { AdminSecuriteService } from '../../core/services/admin-securite.service';
 import { PERMISSIONS_PAGES } from '../../core/permissions';
 
+import { TableauDeBordService } from '../../pages/tableau-de-bord/tableau-de-bord.service';
+
 interface MenuItem {
   label: string;
   icon: string;
@@ -38,6 +40,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private readonly api = inject(AdminApiService);
   private readonly notifications = inject(NotificationService);
   readonly securite = inject(AdminSecuriteService);
+  private readonly tbService = inject(TableauDeBordService);
   private minuterie?: ReturnType<typeof setInterval>;
 
   /** Dossiers KYC et groupes en attente de décision (badges du menu), relus chaque minute */
@@ -95,6 +98,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   parRoute(_: number, item: MenuItem): string {
     return item.route;
+  }
+
+  onItemClick(item: MenuItem): void {
+    if (item.route === '/admin' && this.router.url === '/admin') {
+      this.tbService.basculerPanneauStats();
+    }
   }
 
   private readonly menu: MenuSection[] = [

@@ -1,283 +1,190 @@
-<div class="tableau-de-bord-page">
-  <!-- 1. EN-TÊTE PRINCIPAL KARAVAN -->
-  <header class="tb-header">
-    <div class="header-titre-bloc">
-      <div class="logo-pill">
-        <span class="dot"></span>
-        <span>Karavan Supervision</span>
+<div class="supervision-dashboard-container">
+  <!-- 1. EN-TÊTE SUPÉRIEUR DU TABLEAU DE BORD -->
+  <header class="dashboard-topbar">
+    <div class="topbar-titre-bloc">
+      <div class="titre-avec-badge">
+        <h1 class="main-titre">Groupes lancés</h1>
+        <span class="badge-compteur">{{ resume()?.totalGroupes ?? groupes().length }}</span>
       </div>
-      <h2>Tableau de Bord — Flux d'Achats Groupés Internationaux</h2>
-      <p class="date-locale">
-        <mat-icon>calendar_today</mat-icon>
-        {{ dateDuJour }} • Hub central : <strong>Bamako, Mali</strong>
+      <p class="sous-titre-cadran">
+        Faites tourner le cadran pour voir les différents groupes et leurs emplacements.
       </p>
     </div>
 
-    <!-- Actions d'en-tête -->
-    <div class="header-actions">
-      <button
-        type="button"
-        class="btn-action btn-secondaire"
-        (click)="chargerTout()"
-        title="Rafraîchir les données en temps réel"
-      >
-        <mat-icon [class.spin]="chargement">sync</mat-icon>
-        Actualiser
-      </button>
+    <!-- Côté droit : Barre de recherche + Notifications + Profil + Bouton Stats -->
+    <div class="topbar-droite-actions">
+      <!-- Bouton d'ouverture du volet Statistiques générales (si fermé) -->
+      @if (!panneauStatsOuvert()) {
+        <button
+          type="button"
+          class="btn-toggle-stats"
+          (click)="ouvrirPanneauStats()"
+          title="Ouvrir les statistiques générales"
+        >
+          <mat-icon>insights</mat-icon>
+          <span>Statistiques</span>
+        </button>
+      }
 
-      <button
-        type="button"
-        class="btn-action btn-primaire"
-        (click)="telechargerRapport()"
-        title="Exporter le rapport d'audit et de supervision au format PDF"
-      >
-        <mat-icon>picture_as_pdf</mat-icon>
-        Rapport PDF
-      </button>
+      <!-- Barre de recherche -->
+      <div class="recherche-champ-box">
+        <mat-icon class="search-ico">search</mat-icon>
+        <input
+          type="search"
+          placeholder="Rechercher un groupe, un utilisateur..."
+          [ngModel]="rechercheTexte()"
+          (ngModelChange)="rechercheTexte.set($event)"
+        />
+      </div>
+
+      <!-- Cloche de notification -->
+      <div class="notif-bell-wrapper">
+        <button type="button" class="notif-btn" title="Notifications Karavan">
+          <mat-icon>notifications_none</mat-icon>
+          <span class="notif-point-rouge"></span>
+        </button>
+      </div>
+
+      <!-- Avatar administrateur connecté -->
+      <div class="admin-avatar-pill">
+        <div class="avatar-cercle">AD</div>
+        <mat-icon class="avatar-chevron">keyboard_arrow_down</mat-icon>
+      </div>
     </div>
   </header>
 
-  <!-- 2. SCÈNE MAJEURE : TABLEAU DE BORD DE GAUCHE + SCÈNE CENTRALE (BARILLET REVOLVER + GLOBE GÉANT 3D + STATS DROITE) -->
-  <div class="tb-scene-panoramique">
-    <!-- COLONNE GAUCHE (TOUT À GAUCHE) : LE TABLEAU DE BORD SELON L'IMAGE DE RÉFÉRENCE -->
-    <aside class="colonne-tableau-gauche">
-      <!-- 2.1 Bloc Statistiques Générales & Activité Actuelle -->
-      <section class="carte-generale">
-        <div class="section-titre-ligne">
-          <h3 class="titre-principal">Statistiques générales</h3>
+  <!-- 2. SCÈNE CENTRALE 3D (AVEC TIROIR DES STATISTIQUES GAUCHE COLLAPSIBLE) -->
+  <div class="scene-principale-wrapper">
+    <!-- TIROIR LATÉRAL GAUCHE : STATISTIQUES GÉNÉRALES (FERMÉ PAR DÉFAUT, FERMETURE PAR CROIX) -->
+    @if (panneauStatsOuvert()) {
+      <aside class="tiroir-stats-gauche">
+        <div class="stats-header-bar">
+          <div class="stats-titre-group">
+            <h2 class="stats-titre">Statistiques générales</h2>
+            <p class="stats-sous-titre">Vue d'ensemble de la plateforme</p>
+          </div>
+          <button
+            type="button"
+            class="btn-fermer-stats"
+            (click)="fermerPanneauStats()"
+            title="Fermer les statistiques"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
         </div>
 
-        <div class="kpi-utilisateurs-bloc">
-          <div class="sous-label-ligne">
-            <span class="sous-lbl">Volume global d'achats</span>
-            <span class="lien-detail">Détails <mat-icon>chevron_right</mat-icon></span>
-          </div>
-          <div class="chiffre-majeur">
-            {{ totalSequestre > 0 ? totalSequestre.toLocaleString('fr-FR') : '7 541 390' }} <small>FCFA</small>
-          </div>
-        </div>
-
-        <!-- Activité actuelle -->
-        <div class="activite-bloc">
-          <span class="activite-titre">Activité actuelle</span>
-
-          <!-- Barre segmentée multicolore -->
-          <div class="barre-activite-segmentee">
-            <div class="segment segment-vert" style="width: 55%;" title="Chine 55%"></div>
-            <div class="segment segment-violet" style="width: 25%;" title="France 25%"></div>
-            <div class="segment segment-corail" style="width: 15%;" title="Émirats 15%"></div>
-            <div class="segment segment-ambre" style="width: 15%;" title="Turquie 15%"></div>
-          </div>
-
-          <!-- Liste des pays avec points de couleur, valeurs et pourcentages -->
-          <div class="liste-pays-activite">
-            <div class="ligne-pays-item" (click)="onPaysChoisi('CN')">
-              <span class="point-couleur point-vert"></span>
-              <span class="nom-pays">Chine</span>
-              <span class="valeur-pays">4 504 210</span>
-              <span class="pct-pays">55%</span>
+        <!-- 2 Cartes KPIs principales : Utilisateurs totaux + Groupes lancés -->
+        <div class="kpis-cartes-colonne">
+          <!-- Carte 1 : Utilisateurs totaux -->
+          <div class="kpi-stat-card">
+            <div class="kpi-icon-rond bleu-clair">
+              <mat-icon>people_outline</mat-icon>
             </div>
-
-            <div class="ligne-pays-item" (click)="onPaysChoisi('FR')">
-              <span class="point-couleur point-violet"></span>
-              <span class="nom-pays">France</span>
-              <span class="valeur-pays">2 100 950</span>
-              <span class="pct-pays">25%</span>
-            </div>
-
-            <div class="ligne-pays-item" (click)="onPaysChoisi('AE')">
-              <span class="point-couleur point-corail"></span>
-              <span class="nom-pays">Émirats Arabes Unis</span>
-              <span class="valeur-pays">1 980 240</span>
-              <span class="pct-pays">15%</span>
-            </div>
-
-            <div class="ligne-pays-item" (click)="onPaysChoisi('TR')">
-              <span class="point-couleur point-ambre"></span>
-              <span class="nom-pays">Turquie</span>
-              <span class="valeur-pays">1 504 210</span>
-              <span class="pct-pays">15%</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 2.2 Trois Cartes Flottantes (comme sur la capture de référence) -->
-      <section class="grille-trois-cartes">
-        <!-- Carte 1 : Total revenus / Séquestre avec Histogramme Égaliseur -->
-        <div class="carte-kpi-flottante carte-total-earning">
-          <span class="carte-titre">Total revenus / Séquestre</span>
-          <div class="chiffre-avec-badge">
-            <span class="valeur-kpi">87%</span>
-            <span class="badge-hausse badge-vert">
-              <mat-icon>arrow_drop_up</mat-icon> 12%
-            </span>
-          </div>
-          <span class="sous-texte-kpi">Par rapport au mois dernier</span>
-
-          <!-- Égaliseur / Histogramme à barres arrondies bicolores -->
-          <div class="egaliseur-histogramme">
-            <div class="barre-egaliseur h-50 violet"></div>
-            <div class="barre-egaliseur h-75 corail"></div>
-            <div class="barre-egaliseur h-40 violet"></div>
-            <div class="barre-egaliseur h-85 corail"></div>
-            <div class="barre-egaliseur h-65 vert"></div>
-            <div class="barre-egaliseur h-90 corail"></div>
-            <div class="barre-egaliseur h-55 violet"></div>
-            <div class="barre-egaliseur h-70 ambre"></div>
-            <div class="barre-egaliseur h-45 corail"></div>
-            <div class="barre-egaliseur h-80 violet"></div>
-            <div class="barre-egaliseur h-60 vert"></div>
-            <div class="barre-egaliseur h-75 ambre"></div>
-          </div>
-
-          <!-- Tableau récapitulatif fret & douane -->
-          <div class="mini-tableau-fret">
-            <div class="ligne-fret">
-              <span class="lbl-fret">Fret maritime</span>
-              <span class="val-fret-1">760</span>
-              <span class="val-fret-2">2 540 <mat-icon class="hausse">arrow_drop_up</mat-icon></span>
-            </div>
-            <div class="ligne-fret">
-              <span class="lbl-fret">Fret aérien</span>
-              <span class="val-fret-1">650</span>
-              <span class="val-fret-2">2 304 <mat-icon class="baisse">arrow_drop_down</mat-icon></span>
-            </div>
-            <div class="ligne-fret">
-              <span class="lbl-fret">Douane & Transit</span>
-              <span class="val-fret-1">612</span>
-              <span class="val-fret-2">2 140 <mat-icon class="hausse">arrow_drop_up</mat-icon></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Deux cartes empilées à droite : Tendance & Couverture globale -->
-        <div class="colonne-deux-cartes">
-          <!-- Carte 2 : Tendance avec Courbes de Bézier ondulées -->
-          <div class="carte-kpi-flottante carte-tendance">
-            <div class="tendance-entete">
-              <div>
-                <span class="carte-titre">Tendance</span>
-                <span class="sous-texte-kpi">Par rapport à 12% l'an passé</span>
+            <div class="kpi-info-bloc">
+              <span class="kpi-label">Utilisateurs totaux</span>
+              <div class="kpi-chiffre-ligne">
+                <span class="kpi-valeur">
+                  {{ (resume()?.utilisateurs?.total || 12).toLocaleString('fr-FR') }}
+                </span>
+                <span class="kpi-badge-evolution positif">
+                  ↑ +12% <small>vs mois dernier</small>
+                </span>
               </div>
-              <span class="valeur-kpi-droite">92 980</span>
-            </div>
-
-            <!-- Graphique Courbe SVG fluide -->
-            <div class="graphique-courbe-svg">
-              <svg viewBox="0 0 200 65" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="grad-or" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#EEA823" stop-opacity="0.35" />
-                    <stop offset="100%" stop-color="#EEA823" stop-opacity="0" />
-                  </linearGradient>
-                  <linearGradient id="grad-bleu" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.3" />
-                    <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0" />
-                  </linearGradient>
-                </defs>
-                <!-- Surface & Ligne 1 : Camel / Or -->
-                <path
-                  d="M 0,55 Q 35,45 60,25 T 120,20 T 170,45 T 200,50 L 200,65 L 0,65 Z"
-                  fill="url(#grad-or)"
-                />
-                <path
-                  d="M 0,55 Q 35,45 60,25 T 120,20 T 170,45 T 200,50"
-                  fill="none"
-                  stroke="#EEA823"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                />
-
-                <!-- Surface & Ligne 2 : Violet / Indigo -->
-                <path
-                  d="M 0,58 Q 45,50 80,15 T 140,35 T 180,50 T 200,55 L 200,65 L 0,65 Z"
-                  fill="url(#grad-bleu)"
-                />
-                <path
-                  d="M 0,58 Q 45,50 80,15 T 140,35 T 180,50 T 200,55"
-                  fill="none"
-                  stroke="#8B5CF6"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                />
-              </svg>
             </div>
           </div>
 
-          <!-- Carte 3 : Couverture globale avec Donut Progressif -->
-          <div class="carte-kpi-flottante carte-couverture">
-            <!-- Jauge Donut SVG 23% -->
-            <div class="donut-wrapper">
-              <svg viewBox="0 0 40 40" class="donut-svg">
-                <circle
-                  class="donut-piste"
-                  cx="20"
-                  cy="20"
-                  r="16"
-                />
-                <circle
-                  class="donut-progression"
-                  cx="20"
-                  cy="20"
-                  r="16"
-                  stroke-dasharray="100.53"
-                  stroke-dashoffset="77.41"
-                />
-              </svg>
-              <span class="donut-pct">23%</span>
+          <!-- Carte 2 : Groupes lancés -->
+          <div class="kpi-stat-card">
+            <div class="kpi-icon-rond bleu-nuit">
+              <mat-icon>shopping_bag</mat-icon>
             </div>
-
-            <div class="couverture-details">
-              <span class="carte-titre">Couverture globale</span>
-              <span class="valeur-kpi">53 430 001 <small>FCFA</small></span>
-              <span class="sous-texte-kpi">Objectif annuel sécurisé</span>
+            <div class="kpi-info-bloc">
+              <span class="kpi-label">Groupes lancés</span>
+              <div class="kpi-chiffre-ligne">
+                <span class="kpi-valeur">
+                  {{ (resume()?.totalGroupes || 7).toLocaleString('fr-FR') }}
+                </span>
+                <span class="kpi-badge-evolution positif">
+                  ↑ +8% <small>vs mois dernier</small>
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </section>
-    </aside>
 
-    <!-- SCÈNE CENTRALE ET DROITE : LE BARILLET REVOLVER + LA PLANÈTE GÉANTE 3D + LES STATS DROITE -->
-    <main class="scene-globe-et-barillet">
-      <!-- LE CADRAN EN BARILLET DE REVOLVER (DEMI-CERCLE À GAUCHE DE LA PLANÈTE) -->
-      <div class="barillet-flottant-gauche">
-        <app-cadran-groupes
-          [groupes]="groupes()"
-          [filtrePays]="paysFiltre()"
-          (groupeSelectionne)="onGroupeSelectionne($event)"
-        ></app-cadran-groupes>
-      </div>
+        <!-- Section Activité Récente (Derniers groupes et utilisateurs) -->
+        <div class="activite-recente-section">
+          <div class="section-titre-box">
+            <h3 class="sec-titre">Activité récente</h3>
+            <span class="sec-sous-titre">Derniers groupes et utilisateurs</span>
+          </div>
 
-      <!-- LA PLANÈTE 3D GÉANTE (AU CENTRE) -->
-      <div class="globe-centre-geolocalise">
+          <div class="activite-flux-liste">
+            @for (act of resume()?.activiteRecente || []; track act.id + '-' + act.type) {
+              <div class="activite-flux-item">
+                <!-- Visuel : Drapeau pour groupe, avatar pour utilisateur -->
+                <div class="activite-visuel">
+                  @if (act.type === 'GROUPE') {
+                    <span class="drapeau-pastille">{{ act.drapeau || '🌐' }}</span>
+                  } @else {
+                    <div class="avatar-pastille">
+                      <mat-icon>person</mat-icon>
+                    </div>
+                  }
+                </div>
+
+                <!-- Informations textuelles -->
+                <div class="activite-corps">
+                  <span class="activite-titre-texte">{{ act.titre }}</span>
+                  <span class="activite-sous-texte">{{ act.sousTitre }}</span>
+                </div>
+
+                <!-- Temps relatif & indicateur en direct -->
+                <div class="activite-meta">
+                  <span class="temps-relatif">{{ formatTempsEcoule(act.date) }}</span>
+                  <span class="point-en-ligne"></span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </aside>
+    }
+
+    <!-- ZONE DE RENDU GLOBE TERRESTRE 3D GÉANT & CADRAN EN FAÇADE -->
+    <main class="globe-cadran-stage" [class.stage-retracte]="panneauStatsOuvert()">
+      <!-- 1. Le Globe 3D réaliste WebGL (Globe.gl / Three.js) -->
+      <div class="globe-3d-scene-container">
         <app-globe-3d
+          [groupes]="groupesAffiches()"
           [repartitionPays]="resume()?.repartitionPays || []"
           [paysFiltre]="paysFiltre()"
           (paysChoisi)="onPaysChoisi($event)"
         ></app-globe-3d>
       </div>
 
-      <!-- LES PANNEAUX STATISTIQUES FLOTTANTS (À DROITE DU GLOBE) -->
-      <div class="stats-flottantes-droite">
-        <app-statistiques-droite
-          [resume]="resume()"
-          [volumeSequestre]="totalSequestre"
-          [paysSelectionne]="paysFiltre()"
-          (onPaysClic)="onPaysChoisi($event)"
-          (onOuvrirRattrapage)="ouvrirModalRattrapage()"
-        ></app-statistiques-droite>
+      <!-- 2. Le Cadran rotatif 3D horizontal des groupes en arc cylindrique en bas du globe -->
+      <div class="cadran-horizontal-overlay">
+        <app-cadran-groupes
+          [groupes]="groupesAffiches()"
+          [paysFiltre]="paysFiltre()"
+          [groupeSelectionneId]="groupeDetail()?.id || null"
+          (groupeSelectionne)="onGroupeSelectionne($event)"
+        ></app-cadran-groupes>
       </div>
     </main>
   </div>
 
-  <!-- TIROIR LATÉRAL COULISSANT DU GROUPE SÉLECTIONNÉ -->
-  <app-detail-tiroir
-    [groupe]="groupeDetail()"
-    (onFermer)="fermerDetail()"
-  ></app-detail-tiroir>
+  <!-- TIROIR LATÉRAL DROIT : FICHE DE DÉTAIL D'UN GROUPE -->
+  @if (groupeDetail()) {
+    <app-detail-tiroir
+      [groupe]="groupeDetail()!"
+      (fermer)="fermerDetail()"
+      (assignerPays)="ouvrirModalRattrapage()"
+    ></app-detail-tiroir>
+  }
 
-  <!-- MODALE DE RATTRAPAGE PAYS D'ORIGINE -->
+  <!-- MODAL D'ASSIGNATION DE PAYS D'ORIGINE POUR RATTRAPAGE -->
   @if (modalRattrapageOuverte) {
     <app-modal-assigner-pays
       [listePays]="listePays()"

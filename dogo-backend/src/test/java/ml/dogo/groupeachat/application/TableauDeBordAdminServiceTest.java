@@ -38,13 +38,14 @@ class TableauDeBordAdminServiceTest {
     private final IdentiteApi identite = mock(IdentiteApi.class);
     private final GroupeService groupeService = mock(GroupeService.class);
     private final Clock horloge = Clock.fixed(Instant.parse("2026-10-28T12:00:00Z"), ZoneId.of("UTC"));
+    private final org.springframework.jdbc.core.JdbcTemplate jdbc = mock(org.springframework.jdbc.core.JdbcTemplate.class);
 
     private TableauDeBordAdminService service;
 
     @BeforeEach
     void setUp() {
         service = new TableauDeBordAdminService(
-                groupes, paysRepository, etapes, grilles, conditions, catalogue, identite, groupeService, horloge);
+                groupes, paysRepository, etapes, grilles, conditions, catalogue, identite, groupeService, horloge, jdbc);
     }
 
     @Test

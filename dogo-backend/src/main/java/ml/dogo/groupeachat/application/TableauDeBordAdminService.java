@@ -51,6 +51,18 @@ public class TableauDeBordAdminService {
     public record UtilisateursResume(long clients, long grossistes, long courtiers, long total) {
     }
 
+    public record ActiviteRecenteVue(
+            String type,
+            Long id,
+            String titre,
+            String sousTitre,
+            String paysCode,
+            String paysNom,
+            String drapeau,
+            Instant date
+    ) {
+    }
+
     public record ResumeVue(
             UtilisateursResume utilisateurs,
             long totalGroupes,
@@ -60,7 +72,8 @@ public class TableauDeBordAdminService {
             long groupesLancesMois,
             double progressionMoyenne,
             long groupesComplets,
-            long retardsSuivi
+            long retardsSuivi,
+            List<ActiviteRecenteVue> activiteRecente
     ) {
     }
 
@@ -72,6 +85,7 @@ public class TableauDeBordAdminService {
             String titre,
             String statut,
             PaysVue paysOrigine,
+            String drapeau,
             int quantiteCible,
             int quantiteConfirmee,
             int quantiteReservee,
@@ -82,7 +96,8 @@ public class TableauDeBordAdminService {
             ActeurVue grossiste,
             ActeurVue courtier,
             String etapeSuivi,
-            String categorieNom
+            String categorieNom,
+            String produitPhotoUrl
     ) {
     }
 
@@ -136,6 +151,7 @@ public class TableauDeBordAdminService {
     private final IdentiteApi identite;
     private final GroupeService groupeService;
     private final Clock horloge;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     public TableauDeBordAdminService(GroupeAchatRepository groupes,
                                      PaysRepository paysRepository,
@@ -145,7 +161,8 @@ public class TableauDeBordAdminService {
                                      CatalogueApi catalogue,
                                      IdentiteApi identite,
                                      GroupeService groupeService,
-                                     Clock horloge) {
+                                     Clock horloge,
+                                     org.springframework.jdbc.core.JdbcTemplate jdbc) {
         this.groupes = groupes;
         this.paysRepository = paysRepository;
         this.etapes = etapes;
@@ -155,6 +172,7 @@ public class TableauDeBordAdminService {
         this.identite = identite;
         this.groupeService = groupeService;
         this.horloge = horloge;
+        this.jdbc = jdbc;
     }
 
     /**
@@ -258,6 +276,63 @@ public class TableauDeBordAdminService {
         // 7. Retards de suivi
         long retardsSuivi = 0;
 
+        // 8. Activité récente en temps réel
+        List<ActiviteRecenteVue> activite = new ArrayList<>();
+        Map<String, Pays> paysMap = new HashMap<>();
+        paysRepository.findAll().forEach(p -> paysMap.put(p.getCodeIso().toUpperCase(), p));
+
+        // Groupes récents
+        org.springframework.data.domain.Page<GroupeAchat> pageRecents = groupes.findAll(
+                PageRequest.of(0, 6, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"))
+        );
+        List<GroupeAchat> recentsGroupes = pageRecents != null ? pageRecents.getContent() : Collections.emptyList();
+        for (GroupeAchat g : recentsGroupes) {
+            String pCode = g.getPaysOrigineCode();
+            String pNom = "Mali";
+            String drapeau = "🇲🇱";
+            if (pCode != null && paysMap.containsKey(pCode.toUpperCase())) {
+                Pays p = paysMap.get(pCode.toUpperCase());
+                pNom = p.getNomFr();
+                drapeau = obtenirDrapeau(p.getCodeIso());
+            }
+            String grossisteNom = identite.acteur(g.getGrossisteId()).map(IdentiteApi.ActeurInfo::nom).orElse("Grossiste #" + g.getGrossisteId());
+            activite.add(new ActiviteRecenteVue(
+                    "GROUPE",
+                    g.getId(),
+                    "Groupe #" + g.getId(),
+                    "Grossiste : " + grossisteNom + " • " + pNom,
+                    pCode != null ? pCode : "ML",
+                    pNom,
+                    drapeau,
+                    g.getDateOuverture()
+            ));
+        }
+
+        // Utilisateurs récents
+        try {
+            jdbc.query(
+                "SELECT id, nom, date_creation, type_acteur FROM utilisateur ORDER BY date_creation DESC LIMIT 4",
+                rs -> {
+                    long uid = rs.getLong("id");
+                    String uNom = rs.getString("nom");
+                    java.sql.Timestamp ts = rs.getTimestamp("date_creation");
+                    Instant uDate = ts != null ? ts.toInstant() : horloge.instant();
+                    activite.add(new ActiviteRecenteVue(
+                            "UTILISATEUR",
+                            uid,
+                            "Nouvel utilisateur",
+                            uNom != null ? uNom : "Utilisateur #" + uid,
+                            "ML",
+                            "Mali",
+                            "🇲🇱",
+                            uDate
+                    ));
+                }
+            );
+        } catch (Exception ignored) {
+        }
+        activite.sort((a, b) -> b.date().compareTo(a.date()));
+
         ResumeVue vue = new ResumeVue(
                 uResume,
                 totalGroupes,
@@ -267,11 +342,20 @@ public class TableauDeBordAdminService {
                 groupesLancesMois,
                 progressionMoyenne,
                 complets,
-                retardsSuivi
+                retardsSuivi,
+                activite
         );
 
         cacheResume = new CacheEntree(vue, maintenantMs);
         return vue;
+    }
+
+    public static String obtenirDrapeau(String codeIso) {
+        if (codeIso == null || codeIso.length() != 2) return "🌍";
+        String code = codeIso.toUpperCase();
+        int premier = 0x1F1E6 + (code.charAt(0) - 'A');
+        int second = 0x1F1E6 + (code.charAt(1) - 'A');
+        return new String(Character.toChars(premier)) + new String(Character.toChars(second));
     }
 
     /**
@@ -330,11 +414,26 @@ public class TableauDeBordAdminService {
                 titre = catalogue.produit(g.getProduitId()).map(CatalogueApi.ProduitInfo::nom).orElse("Groupe #" + g.getId());
             }
 
+            String photoUrl = null;
+            Optional<CatalogueApi.ProduitInfo> prodInfo = catalogue.produit(g.getProduitId());
+            if (prodInfo.isPresent()) {
+                photoUrl = prodInfo.get().photoUrl();
+                if (pVue == null && prodInfo.get().paysOrigine() != null) {
+                    Pays p = paysCache.get(prodInfo.get().paysOrigine().trim().toUpperCase());
+                    if (p != null) {
+                        pVue = PaysVue.de(p);
+                    }
+                }
+            }
+
+            String drapeau = (pVue != null) ? obtenirDrapeau(pVue.codeIso()) : "🌍";
+
             resultats.add(new GroupeCadranVue(
                     g.getId(),
                     titre,
                     g.getStatut().name(),
                     pVue,
+                    drapeau,
                     g.getQuantiteCible(),
                     g.getQuantiteConfirmee(),
                     g.getQuantiteReservee(),
@@ -345,7 +444,8 @@ public class TableauDeBordAdminService {
                     grossisteVue,
                     courtierVue,
                     derniereEtape,
-                    categorieNom
+                    categorieNom,
+                    photoUrl
             ));
         }
 

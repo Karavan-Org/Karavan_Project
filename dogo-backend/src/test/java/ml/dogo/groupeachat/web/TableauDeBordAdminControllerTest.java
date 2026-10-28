@@ -41,7 +41,8 @@ class TableauDeBordAdminControllerTest {
                 5,
                 65.4,
                 8,
-                0
+                0,
+                List.of()
         );
 
         when(service.resume()).thenReturn(mockVue);

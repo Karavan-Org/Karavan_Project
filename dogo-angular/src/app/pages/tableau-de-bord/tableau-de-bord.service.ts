@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_URL } from '../../core/api';
@@ -27,6 +27,17 @@ export interface UtilisateursResume {
   total: number;
 }
 
+export interface ActiviteRecenteVue {
+  type: string;
+  id: number;
+  titre: string;
+  sousTitre: string;
+  paysCode?: string | null;
+  paysNom?: string | null;
+  drapeau?: string | null;
+  date: string;
+}
+
 export interface ResumeTableauDeBord {
   utilisateurs: UtilisateursResume;
   totalGroupes: number;
@@ -37,6 +48,7 @@ export interface ResumeTableauDeBord {
   progressionMoyenne: number;
   groupesComplets: number;
   retardsSuivi: number;
+  activiteRecente?: ActiviteRecenteVue[];
 }
 
 export interface ActeurVue {
@@ -49,6 +61,8 @@ export interface GroupeCadranVue {
   titre: string;
   statut: string;
   paysOrigine?: PaysVue | null;
+  drapeau?: string;
+  produitPhotoUrl?: string;
   quantiteCible: number;
   quantiteConfirmee: number;
   quantiteReservee: number;
@@ -116,6 +130,21 @@ export interface PaysReference {
 export class TableauDeBordService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${API_URL}/admin/tableau-de-bord`;
+
+  /** État d'ouverture du volet Statistiques générales (fermé par défaut) */
+  readonly panneauStatsOuvert = signal<boolean>(false);
+
+  ouvrirPanneauStats(): void {
+    this.panneauStatsOuvert.set(true);
+  }
+
+  fermerPanneauStats(): void {
+    this.panneauStatsOuvert.set(false);
+  }
+
+  basculerPanneauStats(): void {
+    this.panneauStatsOuvert.update(v => !v);
+  }
 
   getResume(): Observable<ResumeTableauDeBord> {
     return this.http.get<ResumeTableauDeBord>(`${this.baseUrl}/resume`);

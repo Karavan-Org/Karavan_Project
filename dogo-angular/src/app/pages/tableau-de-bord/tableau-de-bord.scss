@@ -1,656 +1,547 @@
-.tableau-de-bord-page {
+// ==============================================================================
+// TABLEAU DE BORD ADMINISTRATEUR KARAVAN (GLOBE 3D + CADRAN HORIZONTAL DES GROUPES)
+// ==============================================================================
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.supervision-dashboard-container {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: calc(100vh - 48px);
   gap: 16px;
-  padding: 20px 24px;
-  background: #FAF8F5;
-  min-height: calc(100vh - 64px);
+  position: relative;
+  overflow: hidden;
   box-sizing: border-box;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: #2D231C;
 }
 
-// 1. EN-TÊTE COMPACT & ÉLÉGANT
-.tb-header {
+// ------------------------------------------------------------------------------
+// 1. EN-TÊTE SUPÉRIEUR
+// ------------------------------------------------------------------------------
+.dashboard-topbar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  background: #FFFFFF;
-  padding: 14px 22px;
-  border-radius: 18px;
-  border: 1px solid rgba(143, 98, 67, 0.12);
-  box-shadow: 0 4px 18px rgba(45, 35, 28, 0.04);
-
-  .header-titre-bloc {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-
-    .logo-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #FAF8F5;
-      border: 1px solid rgba(143, 98, 67, 0.2);
-      padding: 4px 10px;
-      border-radius: 14px;
-      font-size: 11px;
-      font-weight: 800;
-      color: #8F6243;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-
-      .dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #EEA823;
-        box-shadow: 0 0 6px #EEA823;
-      }
-    }
-
-    h2 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 900;
-      color: #2D231C;
-      letter-spacing: -0.3px;
-    }
-
-    .date-locale {
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: #8C7E74;
-
-      mat-icon {
-        font-size: 15px;
-        width: 15px;
-        height: 15px;
-        color: #8F6243;
-      }
-
-      strong {
-        color: #2D231C;
-      }
-    }
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 10px;
-  }
-}
-
-.btn-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
-  mat-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-  }
-
-  &.btn-secondaire {
-    background: #FAF8F5;
-    color: #2D231C;
-    border: 1px solid rgba(45, 35, 28, 0.14);
-
-    &:hover {
-      background: rgba(143, 98, 67, 0.1);
-      border-color: #8F6243;
-    }
-  }
-
-  &.btn-primaire {
-    background: #8F6243;
-    color: #FFFFFF;
-
-    &:hover {
-      background: #734c31;
-      box-shadow: 0 4px 14px rgba(143, 98, 67, 0.25);
-    }
-  }
-}
-
-// 2. SCÈNE MAJEURE PANORAMIQUE (TABLEAU GAUCHE + SCÈNE CENTRALE GLOBE / BARILLET)
-.tb-scene-panoramique {
-  display: flex;
-  gap: 18px;
-  align-items: stretch;
-  min-height: calc(100vh - 170px);
-
-  @media (max-width: 1200px) {
-    flex-direction: column;
-  }
-}
-
-// -------------------------------------------------------------
-// COLONNE GAUCHE : LE TABLEAU DE BORD (SELON LA CAPTURE DE RÉFÉRENCE)
-// -------------------------------------------------------------
-.colonne-tableau-gauche {
-  width: 440px;
-  min-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-
-  @media (max-width: 1400px) {
-    width: 400px;
-    min-width: 380px;
-  }
-
-  @media (max-width: 1200px) {
-    width: 100%;
-    min-width: 100%;
-  }
-}
-
-// 2.1 Carte Générale (General Statistics)
-.carte-generale {
-  background: #FFFFFF;
-  border-radius: 22px;
-  padding: 20px 22px;
-  box-shadow: 0 4px 20px rgba(45, 35, 28, 0.05);
-  border: 1px solid rgba(143, 98, 67, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-
-  .section-titre-ligne {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    .titre-principal {
-      margin: 0;
-      font-size: 17px;
-      font-weight: 800;
-      color: #2D231C;
-      letter-spacing: -0.3px;
-    }
-  }
-
-  .kpi-utilisateurs-bloc {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    .sous-label-ligne {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      .sous-lbl {
-        font-size: 12px;
-        font-weight: 600;
-        color: #8C7E74;
-      }
-
-      .lien-detail {
-        display: inline-flex;
-        align-items: center;
-        gap: 2px;
-        font-size: 11px;
-        font-weight: 700;
-        color: #8F6243;
-        cursor: pointer;
-
-        mat-icon {
-          font-size: 14px;
-          width: 14px;
-          height: 14px;
-        }
-
-        &:hover {
-          text-decoration: underline;
-        }
-      }
-    }
-
-    .chiffre-majeur {
-      font-size: 34px;
-      font-weight: 900;
-      color: #2D231C;
-      letter-spacing: -0.8px;
-      line-height: 1.1;
-
-      small {
-        font-size: 14px;
-        font-weight: 800;
-        color: #EEA823;
-        letter-spacing: 0;
-      }
-    }
-  }
-
-  // Activité actuelle
-  .activite-bloc {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(143, 98, 67, 0.08);
-
-    .activite-titre {
-      font-size: 12.5px;
-      font-weight: 700;
-      color: #2D231C;
-    }
-
-    .barre-activite-segmentee {
-      display: flex;
-      height: 8px;
-      border-radius: 6px;
-      overflow: hidden;
-      background: #FAF8F5;
-      gap: 2px;
-
-      .segment {
-        height: 100%;
-        transition: width 0.4s ease;
-
-        &.segment-vert { background: #10B981; }
-        &.segment-violet { background: #8B5CF6; }
-        &.segment-corail { background: #F43F5E; }
-        &.segment-ambre { background: #EEA823; }
-      }
-    }
-
-    .liste-pays-activite {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 2px;
-
-      .ligne-pays-item {
-        display: grid;
-        grid-template-columns: 14px 1fr auto auto;
-        align-items: center;
-        gap: 10px;
-        font-size: 12px;
-        cursor: pointer;
-        padding: 4px 6px;
-        border-radius: 8px;
-        transition: background 0.15s ease;
-
-        &:hover {
-          background: #FAF8F5;
-        }
-
-        .point-couleur {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-
-          &.point-vert { background: #10B981; }
-          &.point-violet { background: #8B5CF6; }
-          &.point-corail { background: #F43F5E; }
-          &.point-ambre { background: #EEA823; }
-        }
-
-        .nom-pays {
-          font-weight: 600;
-          color: #2D231C;
-        }
-
-        .valeur-pays {
-          font-weight: 700;
-          color: #8C7E74;
-          font-size: 11.5px;
-        }
-
-        .pct-pays {
-          font-weight: 800;
-          color: #2D231C;
-          width: 32px;
-          text-align: right;
-        }
-      }
-    }
-  }
-}
-
-// 2.2 Grille des 3 Cartes Flottantes
-.grille-trois-cartes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.carte-kpi-flottante {
-  background: #FFFFFF;
-  border-radius: 20px;
-  padding: 16px;
-  box-shadow: 0 4px 20px rgba(45, 35, 28, 0.05);
-  border: 1px solid rgba(143, 98, 67, 0.12);
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(45, 35, 28, 0.09);
-  }
-
-  .carte-titre {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #8C7E74;
-    margin-bottom: 4px;
-  }
-
-  .valeur-kpi {
-    font-size: 19px;
-    font-weight: 900;
-    color: #2D231C;
-    line-height: 1.1;
-
-    small {
-      font-size: 10px;
-      color: #EEA823;
-    }
-  }
-
-  .sous-texte-kpi {
-    font-size: 9.5px;
-    color: #A3968C;
-  }
-}
-
-// Carte 1 : Total Earning / Égaliseur
-.carte-total-earning {
-  gap: 6px;
-
-  .chiffre-avec-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .badge-hausse {
-    display: inline-flex;
-    align-items: center;
-    font-size: 10px;
-    font-weight: 800;
-    padding: 1px 4px;
-    border-radius: 6px;
-
-    mat-icon {
-      font-size: 13px;
-      width: 13px;
-      height: 13px;
-    }
-
-    &.badge-vert {
-      color: #10B981;
-      background: rgba(16, 185, 129, 0.1);
-    }
-  }
-
-  // Égaliseur à barres verticales
-  .egaliseur-histogramme {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    height: 52px;
-    padding: 6px 0;
-    gap: 3px;
-
-    .barre-egaliseur {
-      flex: 1;
-      border-radius: 4px;
-      transition: height 0.3s ease;
-
-      &.h-40 { height: 40%; }
-      &.h-45 { height: 45%; }
-      &.h-50 { height: 50%; }
-      &.h-55 { height: 55%; }
-      &.h-60 { height: 60%; }
-      &.h-65 { height: 65%; }
-      &.h-70 { height: 70%; }
-      &.h-75 { height: 75%; }
-      &.h-80 { height: 80%; }
-      &.h-85 { height: 85%; }
-      &.h-90 { height: 90%; }
-
-      &.violet { background: linear-gradient(180deg, #8B5CF6, #A78BFA); }
-      &.corail { background: linear-gradient(180deg, #F43F5E, #FB7185); }
-      &.vert   { background: linear-gradient(180deg, #10B981, #34D399); }
-      &.ambre  { background: linear-gradient(180deg, #EEA823, #FBBF24); }
-    }
-  }
-
-  // Mini-tableau fret
-  .mini-tableau-fret {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 4px;
-    padding-top: 6px;
-    border-top: 1px solid rgba(143, 98, 67, 0.08);
-
-    .ligne-fret {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 10px;
-
-      .lbl-fret {
-        color: #8C7E74;
-        font-weight: 600;
-      }
-
-      .val-fret-1 {
-        color: #8C7E74;
-        font-weight: 700;
-      }
-
-      .val-fret-2 {
-        font-weight: 800;
-        color: #2D231C;
-        display: inline-flex;
-        align-items: center;
-
-        mat-icon {
-          font-size: 12px;
-          width: 12px;
-          height: 12px;
-
-          &.hausse { color: #10B981; }
-          &.baisse { color: #F43F5E; }
-        }
-      }
-    }
-  }
-}
-
-// Colonne avec les 2 autres cartes
-.colonne-deux-cartes {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-// Carte 2 : Tendance
-.carte-tendance {
-  .tendance-entete {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 6px;
-
-    .valeur-kpi-droite {
-      font-size: 16px;
-      font-weight: 900;
-      color: #2D231C;
-    }
-  }
-
-  .graphique-courbe-svg {
-    width: 100%;
-    height: 52px;
-
-    svg {
-      width: 100%;
-      height: 100%;
-    }
-  }
-}
-
-// Carte 3 : Couverture globale avec Donut
-.carte-couverture {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-
-  .donut-wrapper {
-    position: relative;
-    width: 52px;
-    height: 52px;
-    flex-shrink: 0;
-
-    .donut-svg {
-      width: 100%;
-      height: 100%;
-      transform: rotate(-90deg);
-
-      .donut-piste {
-        fill: none;
-        stroke: #FAF8F5;
-        stroke-width: 4;
-      }
-
-      .donut-progression {
-        fill: none;
-        stroke: #8B5CF6;
-        stroke-width: 4;
-        stroke-linecap: round;
-        transition: stroke-dashoffset 0.5s ease;
-      }
-    }
-
-    .donut-pct {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 900;
-      color: #2D231C;
-    }
-  }
-
-  .couverture-details {
+  width: 100%;
+  padding: 4px 8px;
+  flex-shrink: 0;
+
+  .topbar-titre-bloc {
     display: flex;
     flex-direction: column;
     gap: 2px;
+
+    .titre-avec-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .main-titre {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0F172A;
+        letter-spacing: -0.4px;
+        margin: 0;
+      }
+
+      .badge-compteur {
+        background: #EEF2FF;
+        color: #3B82F6;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 2px 10px;
+        border-radius: 20px;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+    }
+
+    .sous-titre-cadran {
+      font-size: 13px;
+      color: #64748B;
+      margin: 0;
+    }
+  }
+
+  .topbar-droite-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    .btn-toggle-stats {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #3B82F6;
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 24px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #2563EB;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(59, 130, 246, 0.45);
+      }
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    .recherche-champ-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 24px;
+      padding: 7px 16px;
+      width: 270px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      transition: all 0.2s ease;
+
+      &:focus-within {
+        border-color: #3B82F6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        width: 310px;
+      }
+
+      .search-ico {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #94A3B8;
+      }
+
+      input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 13px;
+        color: #0F172A;
+        width: 100%;
+
+        &::placeholder {
+          color: #94A3B8;
+        }
+      }
+    }
+
+    .notif-bell-wrapper {
+      .notif-btn {
+        position: relative;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #475569;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #F8FAFC;
+          color: #0F172A;
+        }
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+
+        .notif-point-rouge {
+          position: absolute;
+          top: 8px;
+          right: 9px;
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #EF4444;
+          box-shadow: 0 0 4px #EF4444;
+        }
+      }
+    }
+
+    .admin-avatar-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+
+      .avatar-cercle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #0F172A;
+        color: #FFFFFF;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+      }
+
+      .avatar-chevron {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #64748B;
+      }
+    }
   }
 }
 
-// -------------------------------------------------------------
-// SCÈNE CENTRALE ET DROITE : LE BARILLET REVOLVER + GLOBE GÉANT 3D + STATS DROITE
-// -------------------------------------------------------------
-.scene-globe-et-barillet {
-  flex: 1;
-  position: relative;
+// ------------------------------------------------------------------------------
+// 2. SCÈNE PRINCIPALE (TIROIR GAUCHE + SCÈNE 3D)
+// ------------------------------------------------------------------------------
+.scene-principale-wrapper {
   display: flex;
-  align-items: stretch;
+  flex: 1;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  min-height: 520px;
+}
+
+// TIROIR LATÉRAL GAUCHE : STATISTIQUES GÉNÉRALES
+.tiroir-stats-gauche {
+  width: 320px;
+  min-width: 320px;
+  max-width: 320px;
   background: #FFFFFF;
-  border-radius: 24px;
-  padding: 14px;
-  border: 1px solid rgba(143, 98, 67, 0.14);
-  box-shadow: 0 4px 24px rgba(45, 35, 28, 0.06);
-  min-height: 560px;
-  overflow: hidden;
-
-  @media (max-width: 1200px) {
-    min-height: 600px;
-  }
-}
-
-// Barillet revolver (180° à gauche de la planète)
-.barillet-flottant-gauche {
-  position: absolute;
-  top: 14px;
-  bottom: 14px;
-  left: 14px;
-  width: 210px;
-  z-index: 15;
-  display: flex;
-  align-items: center;
-  pointer-events: auto;
-}
-
-// Globe 3D géant centré
-.globe-centre-geolocalise {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  min-height: 560px;
-  position: relative;
   border-radius: 20px;
-  overflow: hidden;
-}
-
-// Panneaux statistiques flottants (à droite du globe)
-.stats-flottantes-droite {
-  position: absolute;
-  top: 14px;
-  bottom: 14px;
-  right: 14px;
-  width: 270px;
-  z-index: 15;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  padding: 20px;
   display: flex;
-  align-items: center;
-  pointer-events: auto;
-}
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  z-index: 20;
+  animation: glisserGauche 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
-@media (max-width: 1350px) {
-  .scene-globe-et-barillet {
+  .stats-header-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    .stats-titre-group {
+      .stats-titre {
+        font-size: 17px;
+        font-weight: 800;
+        color: #0F172A;
+        margin: 0;
+      }
+
+      .stats-sous-titre {
+        font-size: 12px;
+        color: #64748B;
+        margin: 2px 0 0 0;
+      }
+    }
+
+    .btn-fermer-stats {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid #E2E8F0;
+      background: #F8FAFC;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #F1F5F9;
+        color: #0F172A;
+        transform: scale(1.08);
+      }
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  // Cartes KPI
+  .kpis-cartes-colonne {
+    display: flex;
     flex-direction: column;
-    min-height: auto;
-    gap: 16px;
+    gap: 12px;
   }
 
-  .barillet-flottant-gauche,
-  .stats-flottantes-droite {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    left: auto;
-    right: auto;
+  .kpi-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: #F8FAFC;
+    border: 1px solid #EDF2F7;
+    border-radius: 14px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+
+    .kpi-icon-rond {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      &.bleu-clair {
+        background: #EFF6FF;
+        color: #3B82F6;
+      }
+
+      &.bleu-nuit {
+        background: #EEF2FF;
+        color: #4F46E5;
+      }
+
+      mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    .kpi-info-bloc {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+
+      .kpi-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748B;
+      }
+
+      .kpi-chiffre-ligne {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 6px;
+        margin-top: 2px;
+
+        .kpi-valeur {
+          font-size: 20px;
+          font-weight: 800;
+          color: #0F172A;
+          letter-spacing: -0.4px;
+        }
+
+        .kpi-badge-evolution {
+          font-size: 11px;
+          font-weight: 700;
+
+          &.positif {
+            color: #16A34A;
+          }
+
+          small {
+            font-size: 9px;
+            font-weight: 500;
+            color: #94A3B8;
+            display: block;
+          }
+        }
+      }
+    }
+  }
+
+  // Activité Récente
+  .activite-recente-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+
+    .section-titre-box {
+      .sec-titre {
+        font-size: 14px;
+        font-weight: 800;
+        color: #0F172A;
+        margin: 0;
+      }
+
+      .sec-sous-titre {
+        font-size: 11px;
+        color: #94A3B8;
+      }
+    }
+
+    .activite-flux-liste {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      max-height: 380px;
+      padding-right: 4px;
+    }
+
+    .activite-flux-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: #F8FAFC;
+      border-radius: 12px;
+      border: 1px solid #F1F5F9;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #F1F5F9;
+      }
+
+      .activite-visuel {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        .drapeau-pastille {
+          font-size: 22px;
+          line-height: 1;
+        }
+
+        .avatar-pastille {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          background: #DBEAFE;
+          color: #2563EB;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+
+      .activite-corps {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        .activite-titre-texte {
+          font-size: 12px;
+          font-weight: 700;
+          color: #0F172A;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .activite-sous-texte {
+          font-size: 11px;
+          color: #64748B;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      .activite-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+
+        .temps-relatif {
+          font-size: 10px;
+          color: #94A3B8;
+        }
+
+        .point-en-ligne {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #22C55E;
+          box-shadow: 0 0 6px #22C55E;
+        }
+      }
+    }
+  }
+}
+
+// ------------------------------------------------------------------------------
+// 3. ZONE PRINCIPALE : GLOBE 3D + CADRAN HORIZONTAL
+// ------------------------------------------------------------------------------
+.globe-cadran-stage {
+  flex: 1;
+  position: relative;
+  background: radial-gradient(circle at 50% 45%, #19253d 0%, #0c1527 65%, #050a14 100%);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.35s ease;
+
+  .globe-3d-scene-container {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    justify-content: center;
+    height: 100%;
+    z-index: 10;
   }
 
-  .globe-centre-geolocalise {
-    min-height: 480px;
+  .cadran-horizontal-overlay {
+    position: absolute;
+    bottom: 16px;
+    left: 0;
+    right: 0;
+    z-index: 25;
+    pointer-events: none;
+
+    app-cadran-groupes {
+      pointer-events: auto;
+    }
   }
 }
 
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+// Animation du volet
+@keyframes glisserGauche {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
