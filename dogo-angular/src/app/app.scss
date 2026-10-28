@@ -16,6 +16,11 @@
       flex: 1;
       padding: 24px;
       overflow-y: auto;
+
+      &.dashboard-content-mode {
+        padding: 12px 18px 12px 6px;
+        overflow: hidden;
+      }
     }
   }
 }

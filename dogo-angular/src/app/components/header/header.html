@@ -1,4 +1,16 @@
 <header class="top-header">
+  <!-- Bouton Retour au Tableau de bord quand on est sur une autre page -->
+  <button
+    *ngIf="afficherBoutonRetour()"
+    type="button"
+    class="btn-retour-dashboard"
+    (click)="retournerAuDashboard()"
+    title="Retourner au Tableau de Bord Karavan"
+  >
+    <mat-icon>arrow_back</mat-icon>
+    <span>Tableau de bord</span>
+  </button>
+
   <!-- Barre de recherche globale -->
   <div class="search-wrapper">
     <div class="search-bar">

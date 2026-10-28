@@ -24,6 +24,7 @@ import { AuthService } from './core/services/auth.service';
 export class AppComponent implements OnInit {
   // Détection page de login et contrôle du code de sécurité
   isLoginPage = false;
+  isDashboardPage = false;
   private readonly router = inject(Router);
   private readonly securite = inject(AdminSecuriteService);
   private readonly auth = inject(AuthService);
@@ -33,7 +34,10 @@ export class AppComponent implements OnInit {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      this.isLoginPage = event.urlAfterRedirects.includes('/login');
+      const url = event.urlAfterRedirects || this.router.url;
+      this.isLoginPage = url.includes('/login');
+      this.isDashboardPage = url === '/admin' || url === '/' || url.startsWith('/admin?');
+
       if (!this.isLoginPage && this.auth.obtenirProfil()?.type === 'ADMINISTRATEUR') {
         this.securite.chargerStatut().subscribe({
           next: (st) => {
