@@ -12,6 +12,7 @@ import 'code_retrait_commercant_screen.dart';
 import 'suivi_colis_screen.dart';
 import 'favoris_service.dart';
 import '../services/visibilite_ecran.dart';
+import '../widgets/bouton_bascule_theme.dart';
 
 export '../models/element_commande.dart';
 
@@ -355,6 +356,8 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> with Actualisat
             onPressed: _isLoading ? null : _chargerDonnees,
             tooltip: "Actualiser",
           ),
+          const BoutonBasculeTheme(compact: true),
+          const SizedBox(width: 8),
         ],
       ),
       body: _buildBody(),

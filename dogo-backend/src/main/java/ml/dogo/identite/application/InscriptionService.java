@@ -153,12 +153,12 @@ public class InscriptionService {
         // Le numéro n'est pas vérifié (inscription non finalisée) : on remplace proprement le brouillon
         long ancienId = existant.getId();
         jdbcTemplate.update("UPDATE code_otp SET utilisateur_id = NULL WHERE utilisateur_id = ?", ancienId);
-        jdbcTemplate.update("DELETE FROM commercant WHERE utilisateur_id = ?", ancienId);
-        jdbcTemplate.update("DELETE FROM grossiste WHERE utilisateur_id = ?", ancienId);
-        jdbcTemplate.update("DELETE FROM courtier WHERE utilisateur_id = ?", ancienId);
         jdbcTemplate.update("DELETE FROM notification WHERE utilisateur_id = ?", ancienId);
         jdbcTemplate.update("DELETE FROM session_utilisateur WHERE utilisateur_id = ?", ancienId);
         jdbcTemplate.update("DELETE FROM refresh_token WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM compte_externe WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM moyen_paiement_utilisateur WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM dossier_kyc WHERE utilisateur_id = ?", ancienId);
         utilisateurs.delete(existant);
         utilisateurs.flush();
         audit.tracer(ancienId, "INSCRIPTION_NON_FINALISEE_REMPLACEE", null,
