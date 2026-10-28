@@ -463,17 +463,11 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   selectionnerPays(codeIso: string): void {
     this.paysChoisi.emit(codeIso);
-    const pays = this.repartitionPays.find(p => p.codeIso === codeIso);
-    if (pays && pays.latitude && pays.longitude && this.globeInstance) {
-      this.globeInstance.pointOfView(
-        {
-          lat: (pays.latitude + this.BAMAKO_LAT) / 2,
-          lng: (pays.longitude + this.BAMAKO_LNG) / 2,
-          altitude: 1.45
-        },
-        1200
-      );
-    }
+    this.animerCameraVersPays(codeIso);
+  }
+
+  focaliserSurPays(codeIso: string): void {
+    this.animerCameraVersPays(codeIso);
   }
 
   annulerFiltrePays(): void {
@@ -494,8 +488,18 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
   }
 
-  focaliserSurPays(codeIso: string): void {
-    this.selectionnerPays(codeIso);
+  private animerCameraVersPays(codeIso: string): void {
+    const pays = this.repartitionPays.find(p => p.codeIso === codeIso);
+    if (pays && pays.latitude && pays.longitude && this.globeInstance) {
+      this.globeInstance.pointOfView(
+        {
+          lat: (pays.latitude + this.BAMAKO_LAT) / 2,
+          lng: (pays.longitude + this.BAMAKO_LNG) / 2,
+          altitude: 1.45
+        },
+        1200
+      );
+    }
   }
 
   private drapeauParCode(codeIso?: string | null): string {

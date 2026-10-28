@@ -55,7 +55,7 @@ export interface CarteCadran3D {
           </div>
         } @else {
           <div class="cartes-arc-wrapper">
-            @for (item of cartesVisibles; track item.groupe.id) {
+            @for (item of cartesVisibles; track item.offset) {
               <div
                 class="carte-groupe-3d"
                 [class.carte-active]="item.estActive"
@@ -119,7 +119,7 @@ export interface CarteCadran3D {
       <div class="cadran-bas-actions">
         <!-- Points de pagination -->
         <div class="dots-pagination">
-          @for (g of groupesFiltres; track g.id; let idx = $index) {
+          @for (g of groupesFiltres; track (g.id + '_' + idx); let idx = $index) {
             <button
               type="button"
               class="dot-indicateur"
@@ -508,11 +508,33 @@ export class CadranGroupesComponent implements OnChanges {
       return;
     }
 
-    // Afficher jusqu'à 7 cartes réparties sur un arc semi-circulaire 3D
-    const cartes: CarteCadran3D[] = [];
-    const maxRayon = 3; // -3 à +3
+    // Déterminer la plage d'offsets selon le nombre de groupes disponibles
+    let minOffset = -3;
+    let maxOffset = 3;
 
-    for (let offset = -maxRayon; offset <= maxRayon; offset++) {
+    if (total === 1) {
+      minOffset = 0;
+      maxOffset = 0;
+    } else if (total === 2) {
+      minOffset = 0;
+      maxOffset = 1;
+    } else if (total === 3) {
+      minOffset = -1;
+      maxOffset = 1;
+    } else if (total === 4) {
+      minOffset = -1;
+      maxOffset = 2;
+    } else if (total === 5) {
+      minOffset = -2;
+      maxOffset = 2;
+    } else if (total === 6) {
+      minOffset = -2;
+      maxOffset = 3;
+    }
+
+    const cartes: CarteCadran3D[] = [];
+
+    for (let offset = minOffset; offset <= maxOffset; offset++) {
       let idx = (this.indexActif + offset) % total;
       if (idx < 0) idx += total;
 

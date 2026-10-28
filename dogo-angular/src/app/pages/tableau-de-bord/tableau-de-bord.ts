@@ -171,10 +171,8 @@ export class TableauDeBordComponent implements OnInit {
   }
 
   onPaysChoisi(codeIso: string | null): void {
+    if (this.paysFiltre() === codeIso) return;
     this.paysFiltre.set(codeIso);
-    if (codeIso) {
-      this.globe3d?.focaliserSurPays(codeIso);
-    }
     this.cdr.markForCheck();
   }
 

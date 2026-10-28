@@ -120,7 +120,7 @@
           </div>
 
           <div class="activite-flux-liste">
-            @for (act of resume()?.activiteRecente || []; track act.id + '-' + act.type) {
+            @for (act of resume()?.activiteRecente || []; track (act.type + '-' + act.id + '-' + $index)) {
               <div class="activite-flux-item">
                 <!-- Visuel : Drapeau pour groupe, avatar pour utilisateur -->
                 <div class="activite-visuel">
