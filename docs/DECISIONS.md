@@ -74,3 +74,30 @@ Pour prévenir les erreurs de manipulation et les compromissions de session acti
   - **Envois de notifications** (messages de support, notification d'arrivée au dépôt avec lien GPS).
   - **Création de nouveaux comptes administrateurs**.
 - Le backend valide cryptographiquement le code (`POST /api/admin/securite/verifier`). Si le code est invalide ou absent, l'action est rejetée avec le code d'erreur HTTP 403 `CODE_SECURITE_INVALIDE` (règle `RG-SEC-02`), et l'échec est tracé dans le journal d'audit.
+
+## ADR-023 : Nouveau Tableau de Bord Administrateur (Globe Terrestre 3D & Cadran des Groupes) et Pays d'Origine
+
+### Contexte
+La supervision des flux d'importation internationaux de Karavan nécessitait une refonte majeure de l'accueil administrateur pour offrir une vue spatiale 3D et interactive des importations vers le hub central de Bamako (Mali).
+
+### Décisions Prises
+
+#### 1. Modèle de Données & Migration V23
+- Table de référence `pays` : `code_iso` (PK, 2 lettres), `code_iso3`, `nom_fr`, `latitude`, `longitude` (centroïdes), `actif`.
+- Données initiales : pays plausibles pour l'import malien (Chine, Turquie, Émirats arabes unis, Inde, France, Maroc, Sénégal, Côte d'Ivoire, Ghana, Nigéria) et le Mali comme hub de convergence.
+- Colonne nullable `pays_origine_code` sur la table `groupe_achat` avec clé étrangère vers `pays(code_iso)`.
+- Migration Flyway `V23__pays_origine_groupes.sql` et script de rollback `rollback_V23__pays_origine_groupes.sql`.
+
+#### 2. Règle Métier RG-PAYS
+- Tout NOUVEAU groupe d'achat créé par un grossiste ou un courtier DOIT obligatoirement avoir son pays d'origine renseigné (`paysOrigineCode != null`).
+- La publication ou validation d'un groupe sans pays d'origine est systématiquement refusée par le backend (code `DONNEES_INVALIDES`, règle `RG-PAYS`).
+- Côté mobile/web Flutter, intégration d'un sélecteur dédié `SelecteurPays` avec recherche textuelle et drapeaux emojis dans les formulaires de création grossiste et courtier.
+
+#### 3. Remplacement du Tableau de Bord Administrateur Angular
+- L'ancien accueil `DashboardComponent` est supprimé au profit de `TableauDeBordComponent` chargé sur la route par défaut `/admin` (avec redirection rétro-compatible de `/dashboard`).
+- **Zone Centrale (A)** : Globe 3D interactif basé sur `globe.gl` et Three.js utilisant les contours GeoJSON locaux (`assets/geo/ne_110m_admin_0_countries.geojson`, 0 dépendance externe/payante). Arcs lumineux animés reliant chaque pays source à Bamako (lat 12.6392, lon -8.0029). Auto-rotation douce et recentrage interactif.
+- **Zone Gauche (B)** : Cadran rotatif circulaire des groupes avec jauge de progression, pilules de statut, navigation scroll/clavier et accroche magnétique.
+- **Zone Droite (C)** : Statistiques en temps réel (volume sous séquestre FCFA, barres de répartition par pays, alertes retards, encart de rattrapage en 1 clic pour anciens groupes sans pays).
+- **Tiroir Latéral Coulissant** : panneau détaillé sans quitter la page (décomposition des coûts, intervenants, chronologie logistique, bouton fiche complète).
+- Préservation intégrale des fonctionnalités antérieures, notamment la génération et le téléchargement du rapport PDF complet (`jsPDF` et `autoTable`).
+
