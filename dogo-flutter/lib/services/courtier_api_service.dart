@@ -164,6 +164,7 @@ class CourtierApiService {
     int? delaiLivraisonJours,
     String? politiqueAnnulation,
     int? quantiteMinParCommercant,
+    String? paysOrigineCode,
   }) async {
     final response = await _api.post(ApiConfig.groupes, body: {
       'produitId': produitId,
@@ -176,6 +177,7 @@ class CourtierApiService {
       if (delaiLivraisonJours != null) 'delaiLivraisonJours': delaiLivraisonJours,
       if (politiqueAnnulation != null && politiqueAnnulation.isNotEmpty) 'politiqueAnnulation': politiqueAnnulation,
       if (quantiteMinParCommercant != null) 'quantiteMinParCommercant': quantiteMinParCommercant,
+      if (paysOrigineCode != null && paysOrigineCode.isNotEmpty) 'paysOrigineCode': paysOrigineCode,
     });
     return GroupeCampagneModel.fromJson(_objet(response));
   }

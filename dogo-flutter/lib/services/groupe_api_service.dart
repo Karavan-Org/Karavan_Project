@@ -1,7 +1,8 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import '../models/campagne_model.dart';
 import '../models/participation_model.dart';
 import '../models/remboursement_model.dart';
+import '../models/pays_model.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
 import 'api/api_exception.dart';
@@ -127,6 +128,24 @@ class GroupeApiService {
 
   /// Crée un groupe en brouillon (courtier, ou grossiste sur ses propres produits).
   /// Les montants sont des coûts unitaires en FCFA.
+  /// Récupère la liste des pays de référence (GET /api/pays)
+  Future<List<PaysModel>> chargerPays() async {
+    try {
+      final response = await ApiClient.instance.get('/api/pays');
+      if (response is List) {
+        return response
+            .whereType<Map<String, dynamic>>()
+            .map(PaysModel.fromJson)
+            .where((p) => p.actif)
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('GroupeApiService.chargerPays - Erreur API : $e');
+      return [];
+    }
+  }
+
   Future<GroupeResume> creer({
     String? titre,
     required int produitId,
@@ -139,6 +158,7 @@ class GroupeApiService {
     int? delaiLivraisonJours,
     String? politiqueAnnulation,
     int? quantiteMinParCommercant,
+    String? paysOrigineCode,
   }) async {
     final response = await ApiClient.instance.post(ApiConfig.groupes, body: {
       if (titre != null && titre.trim().isNotEmpty) 'titre': titre.trim(),
@@ -152,6 +172,7 @@ class GroupeApiService {
       if (delaiLivraisonJours != null) 'delaiLivraisonJours': delaiLivraisonJours,
       if (politiqueAnnulation != null && politiqueAnnulation.isNotEmpty) 'politiqueAnnulation': politiqueAnnulation,
       if (quantiteMinParCommercant != null) 'quantiteMinParCommercant': quantiteMinParCommercant,
+      if (paysOrigineCode != null && paysOrigineCode.isNotEmpty) 'paysOrigineCode': paysOrigineCode,
     });
     return GroupeResume.fromJson(Map<String, dynamic>.from(response as Map));
   }

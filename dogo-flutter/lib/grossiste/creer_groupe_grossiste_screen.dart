@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api/api_exception.dart';
 import '../services/catalogue_api_service.dart';
@@ -6,6 +6,8 @@ import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/image_produit.dart';
 import '../widgets/partage_groupe.dart';
+import '../models/pays_model.dart';
+import '../widgets/selecteur_pays.dart';
 
 /// Création d'un groupe d'achat par le Grossiste sur l'un de ses produits, sans courtier :
 /// il achemine lui-même la marchandise. Le prix de gros et le stock du produit pré-remplissent le
@@ -43,10 +45,15 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
   String? _erreurChargement;
   bool _envoi = false;
   bool _fraisVisibles = false;
+  List<PaysModel> _listePays = [];
+  PaysModel? _paysSelectionne;
+  bool _chargementPays = false;
+  String? _erreurPays;
 
   @override
   void initState() {
     super.initState();
+    _chargerPays();
     if (widget.produit != null) {
       _choisir(widget.produit!);
     } else {
@@ -71,6 +78,33 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
     super.dispose();
   }
 
+  Future<void> _chargerPays() async {
+    setState(() => _chargementPays = true);
+    try {
+      final liste = await GroupeApiService.instance.chargerPays();
+      if (!mounted) return;
+      setState(() {
+        _listePays = liste;
+        _chargementPays = false;
+        _tenterPreselectionPays();
+      });
+    } catch (_) {
+      if (mounted) setState(() => _chargementPays = false);
+    }
+  }
+
+  void _tenterPreselectionPays() {
+    if (_produit == null || _listePays.isEmpty) return;
+    final brut = _produit!['paysOrigine']?.toString().trim();
+    if (brut == null || brut.isEmpty) return;
+    try {
+      final trouve = _listePays.firstWhere(
+        (p) => p.nomFr.toLowerCase() == brut.toLowerCase() || p.codeIso.toLowerCase() == brut.toLowerCase(),
+      );
+      _paysSelectionne = trouve;
+      _erreurPays = null;
+    } catch (_) {}
+  }
   Future<void> _chargerProduits() async {
     setState(() {
       _chargement = true;
@@ -98,6 +132,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
     _produit = p;
     final nom = p['nom']?.toString() ?? '';
     _titreController.text = nom.isEmpty ? '' : "Achat groupé $nom";
+    _tenterPreselectionPays();
     final stock = _stock(p);
     _quantiteController.text = stock > 0 ? '$stock' : '';
     final prix = p['prixGros'];
@@ -124,6 +159,11 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
       _erreur("Choisissez d'abord un produit");
       return;
     }
+    if (_paysSelectionne == null) {
+      setState(() => _erreurPays = "Le pays d'origine est obligatoire pour créer un groupe");
+      _erreur("Veuillez sélectionner le pays d'origine du produit");
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _envoi = true);
@@ -139,6 +179,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
         douane: _entier(_douaneController),
         autres: _entier(_autresController),
         delaiLivraisonJours: _entier(_delaiController),
+        paysOrigineCode: _paysSelectionne?.codeIso,
         quantiteMinParCommercant: _entier(_minimumController),
       );
       final groupe = await service.soumettre(brouillon.id);
@@ -218,6 +259,17 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
             if (produit != null) ...[
               const SizedBox(height: 22),
               _titre("Votre groupe"),
+              const SizedBox(height: 10),
+              SelecteurPays(
+                listePays: _listePays,
+                paysSelectionne: _paysSelectionne,
+                onPaysChoisi: (p) => setState(() {
+                  _paysSelectionne = p;
+                  _erreurPays = null;
+                }),
+                messageErreur: _erreurPays,
+                chargement: _chargementPays,
+              ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _titreController,

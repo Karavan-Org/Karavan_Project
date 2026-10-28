@@ -60,7 +60,8 @@ class BoutonGoogleSignIn extends StatelessWidget {
 
       final res = await AuthService.instance.authentifierGoogle(idToken);
       final statut = res['statut'] as String?;
-      if (statut == 'CONNECTE') {
+      final bool estConnecte = statut == 'CONNECTE' || (res['jeton'] != null && (res['jeton'] as String).isNotEmpty);
+      if (estConnecte) {
         final route = switch (role) {
           RoleActeur.grossiste => '/grossiste',
           RoleActeur.courtier => '/courtier',
@@ -288,10 +289,12 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
       final res = await AuthService.instance.authentifierGoogle(token);
 
       if (!mounted) return;
-      nav.pop(); // Fermer la modale
 
       final statut = res['statut'] as String?;
-      if (statut == 'CONNECTE') {
+      final bool estConnecte = statut == 'CONNECTE' || (res['jeton'] != null && (res['jeton'] as String).isNotEmpty);
+
+      if (estConnecte) {
+        nav.pop(); // Fermer la modale
         final route = switch (widget.role) {
           RoleActeur.grossiste => '/grossiste',
           RoleActeur.courtier => '/courtier',
@@ -299,6 +302,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
         };
         nav.pushReplacementNamed(route);
       } else if (statut == 'PROFIL_INCOMPLET') {
+        nav.pop(); // Fermer la modale
         nav.push(
           MaterialPageRoute(
             builder: (_) => GoogleCompleterProfilScreen(
@@ -315,7 +319,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
       } else {
         setState(() {
           _enCours = false;
-          _messageErreur = res['message']?.toString() ?? "Réponse inattendue";
+          _messageErreur = res['message']?.toString() ?? "Réponse inattendue lors de la connexion.";
         });
       }
     } on ApiException catch (e) {

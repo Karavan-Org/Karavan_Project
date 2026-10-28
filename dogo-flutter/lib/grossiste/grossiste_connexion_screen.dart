@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/mot_de_passe_oublie_modal.dart';
 import 'package:flutter/services.dart';
@@ -108,7 +108,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
       } else if (e is ApiException) {
         message = e.messageComplet;
       } else {
-        message = 'Erreur de connexion : $e';
+        message = 'Impossible de se connecter au serveur Karavan. Veuillez vérifier votre connexion internet et réessayer.';
       }
       afficherErreur(context, message);
     } finally {
