@@ -9,7 +9,7 @@ CREATE TABLE pays (
     longitude     DOUBLE       NOT NULL,
     actif         BOOLEAN      NOT NULL DEFAULT TRUE,
     CONSTRAINT uq_pays_code_iso_3 UNIQUE (code_iso_3)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+) ENGINE = InnoDB;
 
 -- Insertion des pays plausibles pour l'import et du Mali comme destination
 INSERT INTO pays (code_iso, code_iso_3, nom_fr, latitude, longitude, actif) VALUES
