@@ -1,0 +1,129 @@
+<div class="tableau-de-bord-page">
+  <!-- 1. EN-TÊTE PRINCIPAL KARAVAN -->
+  <header class="tb-header">
+    <div class="header-titre-bloc">
+      <div class="logo-pill">
+        <span class="dot"></span>
+        <span>Karavan Supervision</span>
+      </div>
+      <h2>Tableau de Bord — Flux d'Achats Groupés Internationaux</h2>
+      <p class="date-locale">
+        <mat-icon>calendar_today</mat-icon>
+        {{ dateDuJour }} • Fuseau horaire : <strong>Africa/Bamako</strong>
+      </p>
+    </div>
+
+    <!-- Actions d'en-tête -->
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-action btn-secondaire"
+        (click)="chargerTout()"
+        title="Rafraîchir les données en temps réel"
+      >
+        <mat-icon [class.spin]="chargement">sync</mat-icon>
+        Actualiser
+      </button>
+
+      <button
+        type="button"
+        class="btn-action btn-primaire"
+        (click)="telechargerRapport()"
+        title="Exporter le rapport d'audit et de supervision au format PDF"
+      >
+        <mat-icon>picture_as_pdf</mat-icon>
+        Rapport PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. RUBAN DE COMPTEURS RAPIDES -->
+  <section class="ruban-kpis">
+    <div class="kpi-card" routerLink="/groupes">
+      <div class="kpi-icon icon-groupes">
+        <mat-icon>groups</mat-icon>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Groupes Actifs</span>
+        <span class="kpi-value">{{ resume()?.totalGroupes ?? groupes().length }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card" routerLink="/finance">
+      <div class="kpi-icon icon-finance">
+        <mat-icon>savings</mat-icon>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Fonds Séquestre</span>
+        <span class="kpi-value">{{ totalSequestre.toLocaleString('fr-FR') }} <small>FCFA</small></span>
+      </div>
+    </div>
+
+    <div class="kpi-card" routerLink="/corridors">
+      <div class="kpi-icon icon-convois">
+        <mat-icon>local_shipping</mat-icon>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Expéditions / Convois</span>
+        <span class="kpi-value">{{ convoisTransit.length }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card" routerLink="/kyc-validation">
+      <div class="kpi-icon icon-kyc">
+        <mat-icon>verified_user</mat-icon>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Dossiers KYC en attente</span>
+        <span class="kpi-value">{{ kycEnAttente.length }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. ZONE PRINCIPALE : CADRAN GAUCHE (B), GLOBE CENTRE (A), STATS DROITE (C) -->
+  <main class="tb-grille-principale">
+    <!-- ZONE B : CADRAN CIRCULAIRE DES GROUPES -->
+    <div class="zone-cadran">
+      <app-cadran-groupes
+        [groupes]="groupes()"
+        [filtrePays]="paysFiltre()"
+        (groupeSelectionne)="onGroupeSelectionne($event)"
+      ></app-cadran-groupes>
+    </div>
+
+    <!-- ZONE A : GLOBE TERRESTRE 3D INTERACTIF -->
+    <div class="zone-globe">
+      <app-globe-3d
+        [repartitionPays]="resume()?.repartitionPays || []"
+        [paysFiltre]="paysFiltre()"
+        (paysChoisi)="onPaysChoisi($event)"
+      ></app-globe-3d>
+    </div>
+
+    <!-- ZONE C : STATISTIQUES EN TEMPS RÉEL ET ACTIONS -->
+    <div class="zone-statistiques">
+      <app-statistiques-droite
+        [resume]="resume()"
+        [volumeSequestre]="totalSequestre"
+        [paysSelectionne]="paysFiltre()"
+        (onPaysClic)="onPaysChoisi($event)"
+        (onOuvrirRattrapage)="ouvrirModalRattrapage()"
+      ></app-statistiques-droite>
+    </div>
+  </main>
+
+  <!-- 4. TIROIR LATÉRAL COULISSANT DU GROUPE SÉLECTIONNÉ -->
+  <app-detail-tiroir
+    [groupe]="groupeDetail()"
+    (onFermer)="fermerDetail()"
+  ></app-detail-tiroir>
+
+  <!-- 5. MODALE DE RATTRAPAGE PAYS D'ORIGINE -->
+  @if (modalRattrapageOuverte) {
+    <app-modal-assigner-pays
+      [listePays]="listePays()"
+      (onFermer)="fermerModalRattrapage()"
+      (onPaysAssigne)="apresAssignationPays()"
+    ></app-modal-assigner-pays>
+  }
+</div>

@@ -6,8 +6,8 @@ import { PERMISSIONS_PAGES } from './core/permissions';
 const protegee = (page: string) => ({ canActivate: [adminGuard], data: { permissions: PERMISSIONS_PAGES[page] ?? [] } });
 
 export const routes: Routes = [
-  // 1. Lancement : le tableau de bord si une session est ouverte (sinon le garde renvoie vers la connexion)
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  // 1. Lancement : le nouveau tableau de bord par défaut (/admin)
+  { path: '', redirectTo: 'admin', pathMatch: 'full' },
 
   // 2. Route de connexion (hors sidebar / plein écran)
   {
@@ -17,9 +17,14 @@ export const routes: Routes = [
 
   // 3. Pages internes de l'application
   {
+    path: 'admin',
+    ...protegee('admin'),
+    loadComponent: () => import('./pages/tableau-de-bord/tableau-de-bord').then(m => m.TableauDeBordComponent)
+  },
+  {
     path: 'dashboard',
-    ...protegee('dashboard'),
-    loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.DashboardComponent)
+    redirectTo: 'admin',
+    pathMatch: 'full'
   },
   {
     path: 'kyc-validation',

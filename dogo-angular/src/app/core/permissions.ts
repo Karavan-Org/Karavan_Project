@@ -10,6 +10,7 @@
  * Les autres administrateurs n'ont accès qu'à leur mission respective.
  */
 export const PERMISSIONS_PAGES: Record<string, string[]> = {
+  admin: [],
   dashboard: [],
   'kyc-validation': ['KYC_VALIDER'],
   groupes: ['GROUPE_PUBLICATION_VALIDER', 'COMMANDE_AVANCER'],

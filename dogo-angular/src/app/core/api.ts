@@ -4,7 +4,7 @@ export const API_URL = 'http://localhost:8080/api';
 /** Message lisible à partir d'une erreur HTTP du backend (ProblemDetail : detail, regle, erreurs). */
 export function messageErreur(erreur: any, defaut = 'Une erreur est survenue.'): string {
   if (erreur?.status === 0) {
-    return 'Impossible de joindre le serveur. Vérifie que le backend est démarré.';
+    return 'Impossible de joindre le serveur Karavan. Veuillez vérifier votre connexion internet.';
   }
   if (erreur?.status === 401) {
     return 'Session expirée. Reconnecte-toi.';

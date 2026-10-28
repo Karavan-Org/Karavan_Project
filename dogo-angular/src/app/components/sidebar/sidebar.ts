@@ -101,7 +101,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     {
       title: "VUE D'ENSEMBLE",
       items: [
-        { label: 'Supervision Réseau', icon: 'grid_view', route: '/dashboard' },
+        { label: 'Tableau de bord', icon: 'public', route: '/admin' },
         { label: 'Validations KYC', icon: 'verified_user', route: '/kyc-validation' },
         { label: "Groupes d'achat", icon: 'groups', route: '/groupes' },
         { label: 'Séquestre & Finance', icon: 'account_balance_wallet', route: '/finance' },

@@ -41,7 +41,9 @@
               "canvg",
               "raf",
               "rgbcolor",
-              "core-js"
+              "core-js",
+              "three",
+              "globe.gl"
             ]
           },
           "configurations": {
