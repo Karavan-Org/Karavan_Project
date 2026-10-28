@@ -1,11 +1,14 @@
-/* Variables de couleurs DoGo Design System */
-$primary: var(--primary);
-$primary-hover: var(--primary-hover);
-$bg-light: var(--bg-app);
-$text-dark: var(--text-main);
-$text-muted: var(--text-muted);
-$border-color: var(--border);
-$error-color: var(--danger);
+// Karavan Design System Tokens
+$camel-primary: #8F6243;
+$camel-hover: #734C31;
+$gold-karavan: #EEA823;
+$dark-bronze: #2D231C;
+$dark-night: #17110D;
+$sand-bg: #FAF8F5;
+$white: #FFFFFF;
+$text-muted: #8C7E74;
+$border-soft: rgba(143, 98, 67, 0.16);
+$error-danger: #DC2626;
 
 .login-container {
   min-height: 100vh;
@@ -13,243 +16,98 @@ $error-color: var(--danger);
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(ellipse at 15% 20%, rgba(172, 127, 94, 0.12) 0%, transparent 45%),
-    radial-gradient(ellipse at 85% 85%, rgba(238, 168, 35, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(24, 54, 48, 0.05) 0%, transparent 70%),
-    var(--bg-app);
+    radial-gradient(ellipse at 15% 15%, rgba(143, 98, 67, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 85%, rgba(238, 168, 35, 0.12) 0%, transparent 55%),
+    #FAF8F5;
   padding: 24px;
-  font-family: var(--font-texte);
-  position: relative;
-  overflow: hidden;
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: $dark-bronze;
 }
 
+// -------------------------------------------------------------
+// CARTE PRINCIPALE
+// -------------------------------------------------------------
 .login-card {
   display: flex;
   width: 100%;
-  max-width: 920px;
-  min-height: 540px;
-  background: #ffffff;
-  border-radius: 24px;
-  border: 1px solid rgba(172, 127, 94, 0.2);
+  max-width: 1060px;
+  min-height: 620px;
+  background: $white;
+  border-radius: 28px;
+  border: 1px solid rgba(143, 98, 67, 0.15);
   box-shadow:
-    0 25px 60px -12px rgba(57, 40, 36, 0.14),
-    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    0 24px 60px rgba(45, 35, 28, 0.12),
+    0 4px 16px rgba(45, 35, 28, 0.04);
   overflow: hidden;
-  animation: loginCardPop 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: cardFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 
-  @media (max-width: 768px) {
+  @media (max-width: 900px) {
     flex-direction: column;
+    max-width: 520px;
   }
 }
 
-/* --- Section Gauche (Formulaire) --- */
+// -------------------------------------------------------------
+// SECTION GAUCHE : FORMULAIRE
+// -------------------------------------------------------------
 .form-section {
   flex: 1;
-  padding: 45px 40px;
+  padding: 44px 48px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  background: $white;
+
+  @media (max-width: 500px) {
+    padding: 32px 24px;
+  }
 
   .form-header {
-    margin-bottom: 30px;
+    margin-bottom: 24px;
+
+    .pill-badge-admin {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: $sand-bg;
+      border: 1px solid rgba(143, 98, 67, 0.22);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      color: $camel-primary;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+
+      .dot-live {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: $gold-karavan;
+        box-shadow: 0 0 8px $gold-karavan;
+      }
+    }
 
     h2 {
-      font-size: 28px;
-      font-weight: 700;
-      color: $text-dark;
-      margin: 0 0 8px 0;
+      font-size: 25px;
+      font-weight: 900;
+      color: $dark-bronze;
+      margin: 0 0 6px 0;
+      letter-spacing: -0.4px;
     }
 
     .subtitle {
-      font-size: 14px;
+      font-size: 13.5px;
       color: $text-muted;
       margin: 0;
-    }
-  }
-
-  .login-form {
-    display: flex;
-    flex-direction: column;
-
-    .form-group {
-      margin-bottom: 20px;
-
-      .input-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-
-        .icon {
-          position: absolute;
-          left: 14px;
-          color: $text-muted;
-          display: flex;
-          align-items: center;
-          transition: all 0.22s ease;
-        }
-
-        input {
-          width: 100%;
-          padding: 13px 14px 13px 44px;
-          border: 1.5px solid $border-color;
-          border-radius: 10px;
-          font-size: 14px;
-          color: $text-dark;
-          outline: none;
-          transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
-          background-color: #ffffff;
-
-          &:focus {
-            border-color: $primary;
-            box-shadow: 0 4px 16px rgba(172, 127, 94, 0.15), 0 0 0 3px rgba(172, 127, 94, 0.16);
-          }
-
-          &.is-invalid {
-            border-color: $error-color;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
-          }
-        }
-
-        &:focus-within .icon {
-          color: $primary;
-          transform: scale(1.1);
-        }
-      }
-
-      .error-msg {
-        color: $error-color;
-        font-size: 12px;
-        margin-top: 5px;
-      }
-    }
-
-    .form-options {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 25px;
-
-      .forgot-link {
-        font-size: 13px;
-        color: $primary;
-        text-decoration: none;
-        font-weight: 500;
-
-        &:hover {
-          text-decoration: underline;
-          color: $primary-hover;
-        }
-      }
-    }
-
-    .server-error {
-      background-color: var(--danger-light);
-      color: $error-color;
-      padding: 10px;
-      border: 1px solid rgba(192,57,43, 0.2);
-      border-radius: 6px;
-      font-size: 13px;
-      margin-bottom: 15px;
-      text-align: center;
-    }
-
-    .btn-submit {
-      background: linear-gradient(135deg, $primary 0%, $primary-hover 100%);
-      color: #ffffff;
-      border: none;
-      padding: 14px;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(172, 127, 94, 0.28);
-      transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
-
-      &:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(172, 127, 94, 0.4);
-      }
-
-      &:active:not(:disabled) {
-        transform: scale(0.98) translateY(1px);
-      }
-
-      &:disabled {
-        opacity: 0.65;
-        cursor: not-allowed;
-      }
+      line-height: 1.4;
     }
   }
 }
 
-/* --- Section Droite (Illustration Vague) --- */
-.illustration-section {
-  flex: 1.1;
-  position: relative;
-  background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-dark-hover) 55%, var(--primary) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 30px;
-  overflow: hidden;
-
-  /* Effet de vague arrondie sur la gauche */
-  &::before {
-    content: '';
-    position: absolute;
-    top: -10%;
-    left: -15%;
-    width: 30%;
-    height: 120%;
-    background: #ffffff;
-    border-radius: 50%;
-    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.08);
-  }
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-
-  .illustration-content {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-
-    .hero-img {
-      max-width: 68%;
-      max-height: 280px;
-      padding: 24px;
-      background: #FAF6F0;
-      border-radius: 32px;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.2);
-      filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
-      animation: floatMascot 4.5s ease-in-out infinite;
-      object-fit: contain;
-    }
-  }
-}
-
-@keyframes loginCardPop {
-  0% {
-    opacity: 0;
-    transform: scale(0.96) translateY(16px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes floatMascot {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-10px) rotate(1deg);
-  }
-}
-
+// Bouton Google officiel Karavan
 .btn-google {
   display: flex;
   align-items: center;
@@ -257,20 +115,20 @@ $error-color: var(--danger);
   gap: 12px;
   width: 100%;
   padding: 13px 18px;
-  background-color: #ffffff;
-  color: #3c4043;
-  border: 1.5px solid #dadce0;
-  border-radius: 12px;
-  font-size: 14.5px;
-  font-weight: 600;
+  background-color: $white;
+  color: #3C4043;
+  border: 1.5px solid #D1D5DB;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover:not(:disabled) {
-    background-color: #f8fafd;
-    border-color: #c6c9ce;
-    box-shadow: 0 2px 6px rgba(60, 64, 67, 0.15);
+    background-color: #F8FAFC;
+    border-color: $camel-primary;
+    box-shadow: 0 4px 14px rgba(143, 98, 67, 0.16);
     transform: translateY(-1px);
   }
 
@@ -288,21 +146,22 @@ $error-color: var(--danger);
   }
 }
 
-.separator {
+// Séparateur moderne
+.separator-divider {
   display: flex;
   align-items: center;
   text-align: center;
-  margin: 18px 0;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  margin: 22px 0 20px 0;
+  color: $text-muted;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
 
   &::before,
   &::after {
     content: '';
     flex: 1;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(143, 98, 67, 0.14);
   }
 
   span {
@@ -310,22 +169,411 @@ $error-color: var(--danger);
   }
 }
 
+// Formulaire
+.login-form {
+  display: flex;
+  flex-direction: column;
+
+  .form-group {
+    margin-bottom: 16px;
+
+    .input-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: $dark-bronze;
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: $sand-bg;
+      border: 1.5px solid $border-soft;
+      border-radius: 14px;
+      transition: all 0.2s ease;
+
+      .icon {
+        position: absolute;
+        left: 14px;
+        color: $text-muted;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        transition: color 0.2s ease;
+      }
+
+      input {
+        width: 100%;
+        padding: 13px 44px 13px 44px;
+        border: none;
+        background: transparent;
+        font-size: 14px;
+        font-weight: 600;
+        color: $dark-bronze;
+        outline: none;
+        box-sizing: border-box;
+
+        &::placeholder {
+          color: #A3968C;
+          font-weight: 500;
+        }
+
+        // Élimine l'ignoble bleu clair par défaut de l'autofill navigateur
+        &:-webkit-autofill,
+        &:-webkit-autofill:hover,
+        &:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0px 1000px $sand-bg inset !important;
+          -webkit-text-fill-color: $dark-bronze !important;
+          font-weight: 600 !important;
+        }
+      }
+
+      .btn-toggle-eye {
+        position: absolute;
+        right: 10px;
+        background: transparent;
+        border: none;
+        color: $text-muted;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        padding: 4px;
+        transition: color 0.2s ease;
+
+        mat-icon {
+          font-size: 19px;
+          width: 19px;
+          height: 19px;
+        }
+
+        &:hover {
+          color: $camel-primary;
+        }
+      }
+
+      &:focus-within {
+        border-color: $camel-primary;
+        background: $white;
+        box-shadow: 0 0 0 3px rgba(143, 98, 67, 0.16);
+
+        .icon {
+          color: $camel-primary;
+        }
+      }
+
+      &.has-error {
+        border-color: $error-danger;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+      }
+    }
+
+    .error-msg {
+      color: $error-danger;
+      font-size: 11.5px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+  }
+
+  .form-options {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0 18px 0;
+    font-size: 11.5px;
+    color: $text-muted;
+    line-height: 1.4;
+
+    .info-mini {
+      font-size: 15px;
+      width: 15px;
+      height: 15px;
+      color: $camel-primary;
+      flex-shrink: 0;
+    }
+  }
+
+  .server-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #FEF2F2;
+    color: $error-danger;
+    padding: 10px 14px;
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 16px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+  }
+
+  .btn-submit {
+    background: linear-gradient(135deg, $camel-primary 0%, $camel-hover 100%);
+    color: $white;
+    border: none;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 14.5px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(143, 98, 67, 0.35);
+    transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(143, 98, 67, 0.45);
+      background: linear-gradient(135deg, #9C6C4C 0%, #7E5336 100%);
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .spinner-chargement {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+}
+
+// -------------------------------------------------------------
+// SECTION DROITE : IDENTITÉ VISUELLE KARAVAN
+// -------------------------------------------------------------
+.illustration-section {
+  flex: 1.15;
+  position: relative;
+  background:
+    radial-gradient(circle at 80% 15%, rgba(238, 168, 35, 0.16) 0%, transparent 55%),
+    radial-gradient(circle at 20% 85%, rgba(143, 98, 67, 0.22) 0%, transparent 60%),
+    linear-gradient(145deg, #261D17 0%, #17110D 60%, #0F0B09 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 40px;
+  overflow: hidden;
+  color: #FAF8F5;
+
+  @media (max-width: 900px) {
+    display: none;
+  }
+
+  // Halos cosmiques d'arrière-plan (sans casser la géométrie)
+  .halo-cosmique {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+
+    &.halo-1 {
+      width: 480px;
+      height: 480px;
+      top: -120px;
+      right: -120px;
+      border: 1px solid rgba(238, 168, 35, 0.12);
+      box-shadow: 0 0 60px rgba(238, 168, 35, 0.06);
+    }
+
+    &.halo-2 {
+      width: 650px;
+      height: 650px;
+      bottom: -180px;
+      left: -180px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    &.halo-3 {
+      width: 320px;
+      height: 320px;
+      top: 30%;
+      right: 15%;
+      border: 1px dashed rgba(238, 168, 35, 0.1);
+    }
+  }
+
+  .illustration-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    width: 100%;
+    max-width: 440px;
+
+    .badge-hub {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(8px);
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(238, 168, 35, 0.35);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: $gold-karavan;
+      letter-spacing: 0.4px;
+
+      .pulsing-hub-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: $gold-karavan;
+        box-shadow: 0 0 8px $gold-karavan;
+      }
+    }
+
+    .brand-showcase {
+      .karavan-brand-titre {
+        font-size: 34px;
+        font-weight: 900;
+        color: #FAF8F5;
+        margin: 0 0 6px 0;
+        letter-spacing: 1.5px;
+      }
+
+      .karavan-brand-tagline {
+        font-size: 15px;
+        font-weight: 700;
+        color: $gold-karavan;
+        margin: 0 0 10px 0;
+      }
+
+      .karavan-brand-desc {
+        font-size: 12.5px;
+        color: rgba(250, 248, 245, 0.75);
+        line-height: 1.55;
+        margin: 0;
+      }
+    }
+
+    // Grille 3 fonctionnalités glassmorphism
+    .features-glass-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .feature-glass-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(238, 168, 35, 0.18);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(238, 168, 35, 0.4);
+        transform: translateX(4px);
+      }
+
+      .feature-icon-box {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: rgba(238, 168, 35, 0.14);
+        color: $gold-karavan;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+
+      .feature-text {
+        display: flex;
+        flex-direction: column;
+
+        strong {
+          font-size: 13px;
+          font-weight: 800;
+          color: #FAF8F5;
+        }
+
+        small {
+          font-size: 11px;
+          color: rgba(250, 248, 245, 0.65);
+          line-height: 1.35;
+        }
+      }
+    }
+
+    .security-footer-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: rgba(250, 248, 245, 0.6);
+      margin-top: 4px;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        color: $gold-karavan;
+      }
+
+      strong {
+        color: #FAF8F5;
+      }
+    }
+  }
+}
+
+// Mode Google Complétion
 .google-user-preview {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #f8f9fa;
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  background: $sand-bg;
+  border: 1px solid rgba(143, 98, 67, 0.18);
+  border-radius: 16px;
   padding: 12px 14px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 
   .google-avatar {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    background: #4285f4;
-    color: #ffffff;
+    background: #4285F4;
+    color: $white;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -341,28 +589,147 @@ $error-color: var(--danger);
   }
 
   .google-user-info {
+    flex: 1;
     display: flex;
     flex-direction: column;
 
     strong {
-      font-size: 14.5px;
-      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 800;
+      color: $dark-bronze;
     }
 
     small {
-      font-size: 12.5px;
-      color: var(--text-muted);
+      font-size: 12px;
+      color: $text-muted;
     }
+  }
+
+  .google-verif-icon {
+    color: #10B981;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
   }
 }
 
 .info-encart {
-  background: rgba(172, 127, 94, 0.10);
-  border: 1px solid rgba(172, 127, 94, 0.3);
-  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(238, 168, 35, 0.1);
+  border: 1px solid rgba(238, 168, 35, 0.35);
+  border-radius: 14px;
   padding: 12px 14px;
-  margin-bottom: 18px;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--text-main);
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: $dark-bronze;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: $gold-karavan;
+    flex-shrink: 0;
+  }
+}
+
+.input-otp-center {
+  text-align: center;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  letter-spacing: 12px;
+}
+
+.renvoi-ligne {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0 16px 0;
+  font-size: 12px;
+
+  .compte-rebours {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: $text-muted;
+
+    mat-icon {
+      font-size: 15px;
+      width: 15px;
+      height: 15px;
+    }
+  }
+
+  .btn-renvoi-sms {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: $camel-primary;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 12px;
+    padding: 0;
+
+    mat-icon {
+      font-size: 15px;
+      width: 15px;
+      height: 15px;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.retour-connexion-bloc {
+  margin-top: 14px;
+  text-align: center;
+
+  .btn-retour-lien {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: $text-muted;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+
+    mat-icon {
+      font-size: 15px;
+      width: 15px;
+      height: 15px;
+    }
+
+    &:hover {
+      color: $camel-primary;
+      text-decoration: underline;
+    }
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
