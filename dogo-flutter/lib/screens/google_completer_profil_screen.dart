@@ -195,9 +195,30 @@ class _GoogleCompleterProfilScreenState extends State<GoogleCompleterProfilScree
     return Scaffold(
       backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Complétez votre profil", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: couleurTexte, size: 22),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "Complétez votre profil",
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+          ),
+        ),
         centerTitle: true,
-        actions: const [BoutonBasculeTheme(), SizedBox(width: 8)],
+        actions: const [
+          Flexible(
+            fit: FlexFit.loose,
+            child: Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: BoutonBasculeTheme(compact: true),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Center(
         child: SingleChildScrollView(
