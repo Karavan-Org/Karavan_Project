@@ -54,17 +54,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   readonly groupesAModerer = signal(0);
 
   ngOnInit(): void {
-    try {
-      const stocke = localStorage.getItem('karavan_sidebar_reduite');
-      if (stocke !== null) {
-        this.estReduite.set(stocke === 'true');
-      } else {
-        // Par défaut : fermé en état miniature
-        this.estReduite.set(true);
-      }
-    } catch {
-      this.estReduite.set(true);
-    }
+    // Par défaut : TOUJOURS fermé en mode miniature (rail compact à icônes)
+    // S'ouvre uniquement au clic explicite de l'utilisateur.
+    this.estReduite.set(true);
 
     this.chargerBadges();
     this.minuterie = setInterval(() => this.chargerBadges(), 60_000);
@@ -75,28 +67,24 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   basculerReduite(): void {
-    const nv = !this.estReduite();
-    this.estReduite.set(nv);
-    try {
-      localStorage.setItem('karavan_sidebar_reduite', String(nv));
-    } catch {}
+    this.estReduite.set(!this.estReduite());
   }
 
   ouvrirSidebar(): void {
-    if (this.estReduite()) {
-      this.estReduite.set(false);
-      try {
-        localStorage.setItem('karavan_sidebar_reduite', 'false');
-      } catch {}
-    }
+    this.estReduite.set(false);
   }
 
   fermerSidebar(): void {
-    if (!this.estReduite()) {
-      this.estReduite.set(true);
-      try {
-        localStorage.setItem('karavan_sidebar_reduite', 'true');
-      } catch {}
+    this.estReduite.set(true);
+  }
+
+  onSidebarClick(event: MouseEvent): void {
+    if (this.estReduite()) {
+      const target = event.target as HTMLElement;
+      // Ne pas empêcher le clic direct sur une icône de navigation ou de déconnexion
+      if (!target.closest('.nav-item') && !target.closest('.logout-btn')) {
+        this.ouvrirSidebar();
+      }
     }
   }
 

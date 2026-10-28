@@ -121,19 +121,46 @@ export interface CarteCadran3D {
         <mat-icon>chevron_right</mat-icon>
       </button>
 
-      <!-- Zone inférieure : Pagination par points + Bouton Tourner le cadran -->
+      <!-- Zone inférieure : Barre de commandes (Précédent / Suivant + Points) + Bouton Tourner le cadran -->
       <div class="cadran-bas-actions">
-        <!-- Points de pagination -->
-        <div class="dots-pagination">
-          @for (g of groupesFiltres; track (g.id + '_' + idx); let idx = $index) {
-            <button
-              type="button"
-              class="dot-indicateur"
-              [class.dot-actif]="idx === indexActif"
-              (click)="choisirIndex(idx)"
-              [title]="g.paysOrigine?.nomFr ? (g.paysOrigine?.nomFr + ' - ' + g.titre) : g.titre"
-            ></button>
-          }
+        <!-- Barre de commandes complète sans aucun chevauchement avec les cartes -->
+        <div class="barre-commandes-row">
+          <button
+            type="button"
+            class="btn-nav-bas btn-prev"
+            (click)="tournerGauche()"
+            [disabled]="groupesFiltres.length === 0"
+            title="Groupe précédent (<)"
+            aria-label="Groupe précédent"
+          >
+            <mat-icon>chevron_left</mat-icon>
+            <span>Précédent</span>
+          </button>
+
+          <!-- Points de pagination -->
+          <div class="dots-pagination">
+            @for (g of groupesFiltres; track (g.id + '_' + idx); let idx = $index) {
+              <button
+                type="button"
+                class="dot-indicateur"
+                [class.dot-actif]="idx === indexActif"
+                (click)="choisirIndex(idx)"
+                [title]="g.paysOrigine?.nomFr ? (g.paysOrigine?.nomFr + ' - ' + g.titre) : g.titre"
+              ></button>
+            }
+          </div>
+
+          <button
+            type="button"
+            class="btn-nav-bas btn-next"
+            (click)="tournerDroite()"
+            [disabled]="groupesFiltres.length === 0"
+            title="Groupe suivant (>)"
+            aria-label="Groupe suivant"
+          >
+            <span>Suivant</span>
+            <mat-icon>chevron_right</mat-icon>
+          </button>
         </div>
 
         <!-- Bouton pillule d'action : Tourner le cadran -->
@@ -166,31 +193,31 @@ export interface CarteCadran3D {
       perspective: 1200px;
     }
 
-    // 1. Boutons flèches flottants
+    // 1. Boutons flèches flottants (dégagés en hauteur sur l'horizon du globe pour ne jamais toucher les cartes)
     .nav-cadran-btn {
       position: absolute;
-      top: 38%;
+      top: 15%;
       transform: translateY(-50%);
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(238, 168, 35, 0.35);
+      background: rgba(24, 54, 48, 0.85);
       backdrop-filter: blur(12px);
       color: #FFFFFF;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      z-index: 50;
+      z-index: 60;
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
 
       &:hover:not(:disabled) {
         background: #AC7F5E;
         border-color: #EEA823;
         box-shadow: 0 0 20px rgba(238, 168, 35, 0.6);
-        transform: translateY(-50%) scale(1.14);
+        transform: translateY(-50%) scale(1.12);
       }
 
       &:active:not(:disabled) {
@@ -203,17 +230,17 @@ export interface CarteCadran3D {
       }
 
       &.btn-gauche {
-        left: 24px;
+        left: 28px;
       }
 
       &.btn-droite {
-        right: 24px;
+        right: 28px;
       }
 
       mat-icon {
-        font-size: 28px;
-        width: 28px;
-        height: 28px;
+        font-size: 26px;
+        width: 26px;
+        height: 26px;
       }
     }
 
@@ -241,10 +268,10 @@ export interface CarteCadran3D {
     // 3. Carte individuelle sur l'arc 3D
     .carte-groupe-3d {
       position: absolute;
-      width: 124px;
-      height: 160px;
-      background: linear-gradient(145deg, rgba(20, 30, 55, 0.88) 0%, rgba(10, 16, 32, 0.94) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      width: 126px;
+      height: 164px;
+      background: linear-gradient(145deg, rgba(24, 54, 48, 0.94) 0%, rgba(14, 32, 28, 0.98) 100%);
+      border: 1.5px solid rgba(238, 168, 35, 0.25);
       border-radius: 16px;
       padding: 10px;
       display: flex;
@@ -252,7 +279,7 @@ export interface CarteCadran3D {
       justify-content: space-between;
       color: #FFFFFF;
       cursor: pointer;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(12px);
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
                   opacity 0.35s ease,
@@ -260,12 +287,12 @@ export interface CarteCadran3D {
                   border-color 0.3s ease;
       will-change: transform, opacity, box-shadow;
 
-      // Effet quand le curseur passe dessus : la carte bouge et s'avance vers le spectateur
+      // Effet quand le curseur passe dessus : la carte s'avance nettement vers le spectateur
       &.carte-survolee {
         border-color: #EEA823 !important;
-        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75),
-                    0 0 28px rgba(238, 168, 35, 0.65),
-                    inset 0 0 16px rgba(172, 127, 94, 0.45) !important;
+        box-shadow: 0 28px 60px rgba(0, 0, 0, 0.8),
+                    0 0 32px rgba(238, 168, 35, 0.75),
+                    inset 0 0 18px rgba(172, 127, 94, 0.5) !important;
         cursor: pointer;
       }
 
@@ -276,13 +303,13 @@ export interface CarteCadran3D {
 
       // Carte active mise en valeur avec halo chaleureux Karavan (Bissap & Ocre)
       &.carte-active {
-        width: 136px;
-        height: 174px;
+        width: 138px;
+        height: 176px;
         border: 2px solid #AC7F5E;
-        box-shadow: 0 0 28px rgba(172, 127, 94, 0.65),
-                    inset 0 0 14px rgba(238, 168, 35, 0.35),
-                    0 16px 36px rgba(0, 0, 0, 0.6);
-        background: linear-gradient(145deg, rgba(34, 48, 42, 0.96) 0%, rgba(18, 28, 25, 0.98) 100%);
+        box-shadow: 0 0 32px rgba(172, 127, 94, 0.7),
+                    inset 0 0 14px rgba(238, 168, 35, 0.4),
+                    0 18px 40px rgba(0, 0, 0, 0.6);
+        background: linear-gradient(145deg, rgba(34, 58, 52, 0.98) 0%, rgba(18, 34, 30, 0.99) 100%);
       }
     }
 
@@ -381,14 +408,57 @@ export interface CarteCadran3D {
       }
     }
 
-    // 4. Zone basse : points + bouton
+    // 4. Zone basse : commandes (Précédent / Points / Suivant) + bouton tourner
     .cadran-bas-actions {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
-      margin-top: 10px;
-      z-index: 30;
+      margin-top: 12px;
+      z-index: 40;
+    }
+
+    .barre-commandes-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(24, 54, 48, 0.85);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(238, 168, 35, 0.25);
+      border-radius: 30px;
+      padding: 6px 16px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+
+      .btn-nav-bas {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: transparent;
+        border: none;
+        color: #FAF8F5;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 14px;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          color: #EEA823;
+          background: rgba(238, 168, 35, 0.15);
+        }
+
+        &:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
     }
 
     .dots-pagination {
@@ -508,24 +578,24 @@ export class CadranGroupesComponent implements OnChanges {
 
   /**
    * Calcule la transformation 3D :
-   * Quand le curseur passe dessus, la carte s'avance vers le spectateur (translateZ + 65px),
-   * s'élève (translateY -18px), se redresse face caméra et grossit (scale * 1.18).
+   * Quand le curseur passe dessus, la carte s'avance franchement vers le spectateur (translateZ + 85px),
+   * s'élève au-dessus du rang (translateY -26px), se redresse face caméra et grossit (scale * 1.25).
    */
   obtenirTransformCarte(item: CarteCadran3D): string {
     if (this.survolOffset === item.offset) {
       const angleDeg = item.offset * 6; // redressement partiel face au regard
-      const translateX = item.offset * 142;
-      const translateZ = (-Math.abs(item.offset) * 42) + 65; // s'avance franchement vers l'avant
-      const translateY = -18; // monte au-dessus des autres cartes
-      const baseScale = item.offset === 0 ? 1.06 : Math.max(0.72, 1 - Math.abs(item.offset) * 0.09);
-      const scale = baseScale * 1.18;
+      const translateX = item.offset * 144;
+      const translateZ = (-Math.abs(item.offset) * 42) + 85; // s'avance franchement vers l'avant
+      const translateY = -26; // monte au-dessus des autres cartes
+      const baseScale = item.offset === 0 ? 1.08 : Math.max(0.72, 1 - Math.abs(item.offset) * 0.09);
+      const scale = baseScale * 1.25;
       return `translateX(${translateX}px) translateY(${translateY}px) translateZ(${translateZ}px) rotateY(${angleDeg}deg) scale(${scale})`;
     }
     return item.transform;
   }
 
   obtenirZIndexCarte(item: CarteCadran3D): number {
-    if (this.survolOffset === item.offset) return 90;
+    if (this.survolOffset === item.offset) return 99;
     return item.zIndex;
   }
 

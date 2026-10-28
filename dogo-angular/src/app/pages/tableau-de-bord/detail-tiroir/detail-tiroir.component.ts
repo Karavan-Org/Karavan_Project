@@ -3,6 +3,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnChanges,
   Output
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -38,8 +39,13 @@ import { GroupeDetailVue } from '../tableau-de-bord.service';
         <div class="tiroir-corps">
           <!-- Carte principale du produit -->
           <div class="carte-produit">
-            @if (groupe.produitPhotoUrl) {
-              <img [src]="groupe.produitPhotoUrl" [alt]="groupe.produitNom" class="photo-produit" />
+            @if (groupe.produitPhotoUrl && !photoErreur) {
+              <img
+                [src]="groupe.produitPhotoUrl"
+                [alt]="groupe.produitNom"
+                class="photo-produit"
+                (error)="onPhotoErreur()"
+              />
             } @else {
               <div class="photo-placeholder">
                 <mat-icon>inventory_2</mat-icon>
@@ -252,28 +258,46 @@ import { GroupeDetailVue } from '../tableau-de-bord.service';
 
     .carte-produit {
       display: flex;
-      gap: 14px;
-      background: #FAF8F5;
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(45, 35, 28, 0.08);
+      align-items: center;
+      gap: 16px;
+      background: #FFFFFF;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(172, 127, 94, 0.2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
       .photo-produit {
-        width: 72px;
-        height: 72px;
-        border-radius: 10px;
+        width: 76px;
+        height: 76px;
+        min-width: 76px;
+        max-width: 76px;
+        flex-shrink: 0;
+        border-radius: 12px;
         object-fit: cover;
+        display: block;
+        background: #F1EBE4;
+        border: 1px solid rgba(172, 127, 94, 0.2);
       }
 
       .photo-placeholder {
-        width: 72px;
-        height: 72px;
-        border-radius: 10px;
-        background: rgba(143, 98, 67, 0.12);
+        width: 76px;
+        height: 76px;
+        min-width: 76px;
+        max-width: 76px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        background: rgba(172, 127, 94, 0.12);
+        border: 1px solid rgba(172, 127, 94, 0.2);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #8F6243;
+        color: #AC7F5E;
+
+        mat-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+        }
       }
 
       .produit-details {
@@ -515,10 +539,20 @@ import { GroupeDetailVue } from '../tableau-de-bord.service';
     }
   `]
 })
-export class DetailTiroirComponent {
+export class DetailTiroirComponent implements OnChanges {
   @Input() groupe: GroupeDetailVue | null = null;
   @Output() fermer = new EventEmitter<void>();
   @Output() onFermer = new EventEmitter<void>();
+
+  photoErreur = false;
+
+  ngOnChanges(): void {
+    this.photoErreur = false;
+  }
+
+  onPhotoErreur(): void {
+    this.photoErreur = true;
+  }
 
   fermerTiroir(): void {
     this.fermer.emit();

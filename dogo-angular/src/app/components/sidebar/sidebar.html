@@ -1,4 +1,8 @@
-<aside class="sidebar" [class.sidebar-reduite]="estReduite()">
+<aside
+  class="sidebar"
+  [class.sidebar-reduite]="estReduite()"
+  (click)="onSidebarClick($event)"
+>
 
   <!-- 1. En-tête : Logo et Identité Karavan (cliquer dessus bascule l'état ouvert/fermé) -->
   <div

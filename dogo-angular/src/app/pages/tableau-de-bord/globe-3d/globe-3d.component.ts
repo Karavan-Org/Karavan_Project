@@ -118,8 +118,8 @@ interface ArcData {
       &.ring-1 {
         width: 480px;
         height: 480px;
-        border: 1.5px solid rgba(59, 130, 246, 0.22);
-        box-shadow: 0 0 50px rgba(59, 130, 246, 0.15);
+        border: 1.5px solid rgba(238, 168, 35, 0.22);
+        box-shadow: 0 0 50px rgba(238, 168, 35, 0.15);
       }
 
       &.ring-2 {
@@ -150,7 +150,7 @@ interface ArcData {
     .globe-overlay-top {
       position: absolute;
       top: 16px;
-      left: 18px;
+      left: 74px; // Dégagement strict pour ne jamais chevaucher le déclencheur de statistiques
       right: 18px;
       display: flex;
       justify-content: space-between;
@@ -163,30 +163,30 @@ interface ArcData {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(8px);
-      padding: 8px 16px;
+      background: rgba(24, 54, 48, 0.88);
+      backdrop-filter: blur(10px);
+      padding: 7px 15px;
       border-radius: 30px;
-      border: 1px solid rgba(59, 130, 246, 0.35);
+      border: 1px solid rgba(238, 168, 35, 0.3);
       color: #FAF8F5;
-      font-size: 13px;
+      font-size: 12.5px;
       pointer-events: auto;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
     }
 
     .pulsing-dot {
-      width: 10px;
-      height: 10px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
-      background: #10B981;
-      box-shadow: 0 0 10px #10B981;
+      background: #34C759; // Olive Karavan
+      box-shadow: 0 0 10px #34C759;
       animation: pulse 1.8s infinite;
     }
 
     @keyframes pulse {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
-      70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.8); }
+      70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(52, 199, 89, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
     }
 
     .globe-actions {
@@ -199,46 +199,51 @@ interface ArcData {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(24, 54, 48, 0.85);
       backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(238, 168, 35, 0.25);
       color: #FAF8F5;
-      font-size: 12.5px;
+      font-size: 12px;
       font-weight: 600;
-      padding: 7px 14px;
+      padding: 6px 13px;
       border-radius: 20px;
       cursor: pointer;
       transition: all 0.2s ease;
 
       mat-icon {
-        font-size: 17px;
-        width: 17px;
-        height: 17px;
-        color: #3B82F6;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        color: #EEA823;
       }
 
       &:hover {
-        background: #2563EB;
-        border-color: #3B82F6;
+        background: #AC7F5E;
+        border-color: #EEA823;
+        color: #FFFFFF;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(172, 127, 94, 0.4);
       }
 
       &.active {
-        border-color: #3B82F6;
-        background: rgba(59, 130, 246, 0.3);
+        border-color: #EEA823;
+        background: rgba(172, 127, 94, 0.35);
+        color: #EEA823;
       }
     }
 
     .filtre-actif-pill {
       position: absolute;
-      top: 66px;
-      left: 18px;
+      top: 58px;
+      left: 74px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #2563EB;
+      background: #AC7F5E;
+      border: 1px solid #EEA823;
       color: #FAF8F5;
-      font-size: 12.5px;
-      padding: 6px 14px;
+      font-size: 12px;
+      padding: 5px 12px;
       border-radius: 20px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
       z-index: 10;
@@ -312,8 +317,8 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         .height(hauteur)
         .backgroundColor('rgba(0, 0, 0, 0)')
         .showAtmosphere(true)
-        .atmosphereColor('#3B82F6')
-        .atmosphereAltitude(0.22)
+        .atmosphereColor('#EEA823')
+        .atmosphereAltitude(0.18)
         .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
         .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
         .arcStartLat('startLat')
@@ -336,23 +341,24 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
           if (d.isHub) {
             el.innerHTML = `
               <div style="display:flex; flex-direction:column; align-items:center;">
-                <div style="background:#10B981; color:#FFFFFF; padding:4px 8px; border-radius:12px; font-size:10px; font-weight:700; box-shadow:0 0 16px rgba(16,185,129,0.8); border:1px solid #FFFFFF; white-space:nowrap;">
-                  🇲🇱 Bamako
+                <div style="background:#183630; color:#FFFFFF; padding:4px 9px; border-radius:14px; font-size:11px; font-weight:800; box-shadow:0 0 16px rgba(52,199,89,0.8); border:1.5px solid #34C759; white-space:nowrap; display:flex; align-items:center; gap:5px;">
+                  <span>🇲🇱</span>
+                  <span>Hub Bamako</span>
                 </div>
-                <div style="width:2px; height:8px; background:#10B981;"></div>
-                <div style="width:8px; height:8px; border-radius:50%; background:#10B981; border:2px solid #FFF;"></div>
+                <div style="width:2px; height:8px; background:#34C759;"></div>
+                <div style="width:6px; height:6px; border-radius:50%; background:#34C759; box-shadow:0 0 8px #34C759;"></div>
               </div>
             `;
           } else {
-            const couleur = d.couleur || '#3B82F6';
+            const couleur = d.couleur || '#EEA823';
             el.innerHTML = `
-              <div style="display:flex; flex-direction:column; align-items:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
-                <div style="background:${couleur}; color:#FFFFFF; padding:3px 8px; border-radius:14px; font-size:11px; font-weight:700; box-shadow:0 0 12px ${couleur}, 0 4px 8px rgba(0,0,0,0.5); border:1.5px solid #FFFFFF; white-space:nowrap; display:flex; align-items:center; gap:4px;">
-                  <span>${d.drapeau || '📍'}</span>
+              <div style="display:flex; flex-direction:column; align-items:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="background:rgba(24, 54, 48, 0.94); color:#FFFFFF; padding:3px 8px; border-radius:14px; font-size:11px; font-weight:700; box-shadow:0 0 14px ${couleur}, 0 4px 10px rgba(0,0,0,0.5); border:1.5px solid ${couleur}; white-space:nowrap; display:flex; align-items:center; gap:5px;">
+                  <span style="font-size:13px;">${d.drapeau || '📍'}</span>
                   <span>${d.name}</span>
                 </div>
-                <div style="width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid ${couleur}; margin-top:-1px;"></div>
-                <div style="width:6px; height:6px; border-radius:50%; background:${couleur}; box-shadow:0 0 8px ${couleur}; margin-top:1px;"></div>
+                <div style="width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid ${couleur}; margin-top:-1px;"></div>
+                <div style="width:5px; height:5px; border-radius:50%; background:${couleur}; box-shadow:0 0 6px ${couleur}; margin-top:1px;"></div>
               </div>
             `;
             el.onclick = () => this.selectionnerPays(d.codeIso);
@@ -360,8 +366,8 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
           return el;
         });
 
-      // Vue initiale centrée sur l'Afrique / corridors d'importation
-      this.globeInstance.pointOfView({ lat: 14, lng: 2, altitude: 1.55 }, 1000);
+      // Vue initiale centrée au-dessus de l'Afrique et surélevée (altitude 1.82) pour dégager les pins des cartes
+      this.globeInstance.pointOfView({ lat: 18, lng: 4, altitude: 1.82 }, 1000);
 
       const controls = this.globeInstance.controls();
       controls.autoRotate = true;
@@ -396,9 +402,9 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
           .hexPolygonMargin(0.3)
           .hexPolygonColor((d: any) => {
             const code = d.properties?.ISO_A2 || d.properties?.ADM0_A3;
-            if (code === 'MLI' || code === 'ML') return '#10B981';
+            if (code === 'MLI' || code === 'ML') return '#34C759'; // Mali : Olive officiel Karavan
             const aDesGroupes = this.repartitionPays.some(p => p.codeIso === code);
-            return aDesGroupes ? '#3B82F6' : 'rgba(255, 255, 255, 0.08)';
+            return aDesGroupes ? '#EEA823' : 'rgba(255, 255, 255, 0.08)'; // Ocre Karavan
           });
       },
       error: () => {}
@@ -419,25 +425,25 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     ];
 
     const paletteCouleurs: Record<string, string> = {
-      CI: '#F59E0B',
-      SN: '#8B5CF6',
-      MA: '#EF4444',
-      GH: '#EAB308',
-      CN: '#EC4899',
-      TR: '#F97316',
-      BR: '#3B82F6',
-      FR: '#6366F1'
+      CI: '#EEA823', // Ocre Karavan
+      SN: '#AC7F5E', // Bissap Karavan
+      MA: '#D97706', // Ocre terre
+      GH: '#F59E0B', // Ambre doré
+      CN: '#E11D48', // Rouge grenat
+      TR: '#EA580C', // Terre d'Orient
+      BR: '#34C759', // Vert olive
+      FR: '#64748B'  // Ardoise neutre
     };
 
     for (const pays of this.repartitionPays) {
       if (pays.latitude && pays.longitude) {
-        const couleur = paletteCouleurs[pays.codeIso] || '#3B82F6';
+        const couleur = paletteCouleurs[pays.codeIso] || '#EEA823';
         arcs.push({
           startLat: pays.latitude,
           startLng: pays.longitude,
           endLat: this.BAMAKO_LAT,
           endLng: this.BAMAKO_LNG,
-          color: [couleur, '#10B981'],
+          color: [couleur, '#34C759'],
           name: pays.nomFr,
           codeIso: pays.codeIso,
           nombreGroupes: pays.nombreGroupes,
@@ -477,7 +483,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   reinitialiserVue(): void {
     if (!this.globeInstance) return;
-    this.globeInstance.pointOfView({ lat: 14, lng: 2, altitude: 1.55 }, 1200);
+    this.globeInstance.pointOfView({ lat: 18, lng: 4, altitude: 1.82 }, 1200);
   }
 
   basculerRotation(): void {
@@ -495,7 +501,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         {
           lat: (pays.latitude + this.BAMAKO_LAT) / 2,
           lng: (pays.longitude + this.BAMAKO_LNG) / 2,
-          altitude: 1.45
+          altitude: 1.62
         },
         1200
       );
