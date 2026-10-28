@@ -137,3 +137,25 @@ Afin de fluidifier l'expérience d'inscription des utilisateurs (Commerçants, G
   - Commerçant : ajout d'une étape dédiée invitant à configurer sa boutique et son emplacement GPS dans l'onglet Paramètres.
   - Grossiste : mise à jour de l'étape de l'en-tête pour mettre en valeur la localisation sur la carte.
   - Courtier : mise à jour de l'étape de profil pour guider la localisation du dépôt de transit.
+
+
+## ADR-022 : Tableau de Bord Administrateur Karavan — Globe Terrestre 3D & Cadran Horizontal des Groupes
+
+### Contexte
+L'interface d'administration Karavan nécessitait une refonte complète de sa page d'accueil (`/admin`) pour offrir une supervision immersive des flux d'achats groupés internationaux convergeant vers le hub de Bamako (Mali).
+La maquette cible (image Figma de référence) présente :
+- Un Globe terrestre 3D réaliste (Three.js / Globe.gl) avec texture Blue Marble, atmosphère bleue et anneaux orbitaux.
+- Des marqueurs géographiques dynamiques pour chaque pays d'origine de convoi (avec drapeaux et coordonnées réelles).
+- Un Cadran rotatif 3D horizontal des groupes (demi-cylindre mécanique en perspective) enveloppant la partie inférieure de la planète avec drapeaux ISO, identifiants `#ID`, pays, visuels des produits et prix.
+- Un panneau rétractable « Statistiques générales » (fermé par défaut, ouverture au clic sur le bouton de l'en-tête ou depuis la barre latérale, et fermeture via une croix `✕`).
+
+### Décisions Prises
+
+#### 1. Persistance et dynamique des données
+- Aucune donnée statique dans l'interface d'administration : tous les compteurs, groupes, flux d'activité récente et drapeaux proviennent des endpoints Spring Boot `/api/admin/tableau-de-bord/resume` et `/api/admin/tableau-de-bord/groupes`.
+- Amorçage au démarrage (`AmorcageGroupesDemo.java`) : si la table des groupes d'achats est vide, amorçage automatique de convois actifs représentatifs des corridors réels (Côte d'Ivoire, Sénégal, Maroc, Ghana, Chine, Turquie, Brésil) avec leurs grossistes, produits, photos et prix unitaires.
+
+#### 2. Expérience Utilisateur et Interactivité
+- **Globe 3D interactif** : au clic sur une carte du cadran ou lors de la rotation (`[ Tourner le cadran ]`, flèches `<` / `>`), la caméra du globe WebGL pivote automatiquement pour centrer le pays d'origine sélectionné.
+- **Tiroir Statistiques Générales** : fermé par défaut conformément aux consignes. L'administrateur peut l'ouvrir d'un clic sur `[ Statistiques ]` dans l'en-tête ou en cliquant sur « Tableau de bord » dans la barre latérale, et le refermer d'un clic sur la croix `✕`.
+- **Fiche de détail d'un groupe** : tiroir latéral droit s'ouvrant à la sélection d'un groupe pour visualiser le détail complet du convoi.
