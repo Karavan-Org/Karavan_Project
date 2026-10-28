@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../commercant/commercant_main_nav.dart';
 import '../courtier/courtier_main_nav.dart';
 import '../models/role_acteur.dart';
@@ -78,11 +79,22 @@ class _GardeCompteActifState extends State<GardeCompteActif> {
 
   void _renvoyerVersSonEspace() {
     if (!mounted) return;
-    final route = switch (AuthService.instance.profilActuel?.roleActeur) {
+    final profil = AuthService.instance.profilActuel;
+    final roleEffectif = profil?.roleActeur ?? RoleActeur.commercant;
+    final route = switch (roleEffectif) {
       RoleActeur.grossiste => '/grossiste',
       RoleActeur.courtier => '/courtier',
       _ => '/commercant',
     };
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "Espace ${widget.role.libelle} : votre compte est enregistré en tant que ${roleEffectif.libelle}. Redirection vers votre espace dédié...",
+        ),
+        backgroundColor: AppTheme.primary,
+        duration: const Duration(seconds: 4),
+      ),
+    );
     Navigator.of(context).pushNamedAndRemoveUntil(route, (r) => false);
   }
 
