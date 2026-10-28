@@ -1,285 +1,200 @@
 <div class="login-container">
-  <!-- Carte Principale Karavan -->
-  <div class="login-card">
+    <!-- Card principale de connexion -->
+    <div class="login-card">
 
-    <!-- ========================================== -->
-    <!-- SECTION GAUCHE : FORMULAIRE D'ACCÈS        -->
-    <!-- ========================================== -->
-    <div class="form-section">
-      <!-- En-tête du formulaire -->
-      <div class="form-header">
-        <div class="pill-badge-admin">
-          <span class="dot-live"></span>
-          <span>Supervision Sécurisée • Karavan</span>
+        <!-- Section Formulaire (Gauche) -->
+        <div class="form-section">
+            <div class="form-header">
+                <h2>{{ modeGoogleCompletion ? 'Complétez votre profil' : 'Connexion' }}</h2>
+                <p class="subtitle">{{ modeGoogleCompletion ? 'Confirmez votre numéro malien pour finaliser l\'accès console' : 'Bienvenue sur Karavan - Plateforme d\'achats groupés' }}</p>
+            </div>
+
+            <!-- VUE 1 : Formulaire classique Karavan (identique à la capture) -->
+            <ng-container *ngIf="!modeGoogleCompletion">
+                <!-- Encart Identifiants Démo -->
+                <div class="encart-admin-info">
+                    <span class="encart-titre">💡 Espace Administration Karavan :</span><br/>
+                    Téléphone : <b>+22370000001</b> (pré-rempli)<br/>
+                    Mot de passe : <b>Dogo2026!</b>
+                </div>
+
+                <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+
+                    <!-- Identifiant / Téléphone -->
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <span class="icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </span>
+                            <input type="tel" formControlName="telephone" placeholder="Numéro de téléphone (ex: +22370000001)"
+                                autocomplete="off"
+                                [class.is-invalid]="loginForm.get('telephone')?.touched && loginForm.get('telephone')?.invalid" />
+                        </div>
+
+                        <div class="error-msg"
+                            *ngIf="loginForm.get('telephone')?.touched && loginForm.get('telephone')?.invalid">
+                            Numéro de téléphone requis
+                        </div>
+                    </div>
+
+                    <!-- Mot de passe -->
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <span class="icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                            </span>
+
+                            <input [type]="afficherMotDePasse ? 'text' : 'password'" formControlName="motDePasse" placeholder="Mot de passe"
+                                autocomplete="off"
+                                [class.is-invalid]="loginForm.get('motDePasse')?.touched && loginForm.get('motDePasse')?.invalid" />
+
+                            <button type="button" class="btn-toggle-mdp" (click)="afficherMotDePasse = !afficherMotDePasse" tabindex="-1" title="Afficher/masquer le mot de passe" style="background:none;border:none;cursor:pointer;padding:0 8px;display:flex;align-items:center;">
+                                <span class="icon" style="color:var(--text-muted);position:static;">
+                                    <svg *ngIf="!afficherMotDePasse" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <svg *ngIf="afficherMotDePasse" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                </span>
+                            </button>
+                        </div>
+
+                        <div class="error-msg" *ngIf="loginForm.get('motDePasse')?.touched && loginForm.get('motDePasse')?.invalid">
+                            Mot de passe requis (ex: Dogo2026!)
+                        </div>
+                    </div>
+
+                    <p class="form-options">
+                        Mot de passe oublié ? Contactez l'administrateur de la plateforme pour récupérer votre accès.
+                    </p>
+
+                    <!-- Message d'erreur serveur -->
+                    <div class="server-error" *ngIf="errorMessage">
+                        {{ errorMessage }}
+                    </div>
+
+                    <!-- Bouton Submit Se connecter -->
+                    <button type="submit" class="btn-submit" [disabled]="isLoading">
+                        <span *ngIf="!isLoading">Se connecter</span>
+                        <span *ngIf="isLoading" class="spinner">Connexion en cours...</span>
+                    </button>
+
+                    <!-- Bouton Démo (+22370000001) -->
+                    <div class="raccourci-demo-bloc">
+                        <button type="button" class="btn-demo-pill" (click)="remplirDemo()">
+                            🔑 Remplir les identifiants Admin Démo (+22370000001)
+                        </button>
+                    </div>
+
+                    <!-- Option Google Sign-In élégante -->
+                    <div class="google-signin-wrapper">
+                        <button type="button" class="btn-google" (click)="declencherGoogleSignIn()" [disabled]="isLoading">
+                            <svg class="google-icon" width="18" height="18" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3h3.88c2.27-2.09 3.66-5.17 3.66-9.09z"/>
+                                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.1C3.28 21.43 7.37 24 12 24z"/>
+                                <path fill="#FBBC05" d="M5.28 14.32c-.25-.72-.38-1.49-.38-2.32s.13-1.6.38-2.32V6.57H1.25C.45 8.16 0 9.98 0 12c0 2.02.45 3.84 1.25 5.43l4.03-3.11z"/>
+                                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.37 0 3.28 2.57 1.25 6.57l4.03 3.11c.95-2.83 3.6-4.93 6.72-4.93z"/>
+                            </svg>
+                            <span>Continuer avec Google</span>
+                        </button>
+                    </div>
+
+                </form>
+            </ng-container>
+
+            <!-- VUE 2 : Complétion Profil Google (Numéro + Code OTP) -->
+            <ng-container *ngIf="modeGoogleCompletion">
+                <div class="google-user-preview">
+                    <div class="google-avatar">
+                        <img *ngIf="donneesGoogle?.photoUrl" [src]="donneesGoogle?.photoUrl" alt="Google Avatar" />
+                        <span *ngIf="!donneesGoogle?.photoUrl">{{ (donneesGoogle?.nom || 'G').charAt(0) }}</span>
+                    </div>
+                    <div class="google-user-info">
+                        <strong>{{ donneesGoogle?.nom || 'Compte Google' }}</strong>
+                        <small>{{ donneesGoogle?.email }}</small>
+                    </div>
+                </div>
+
+                <div class="info-encart">
+                    ℹ️ <b>Sécurité :</b> Veuillez renseigner votre numéro malien (+223) pour recevoir votre code OTP de confirmation par SMS.
+                </div>
+
+                <form [formGroup]="completionForm" class="login-form">
+
+                    <!-- Numéro de téléphone -->
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <span class="icon">📱</span>
+                            <input type="tel" formControlName="telephone" [readonly]="otpEnvoye" placeholder="+223 70 00 00 00" />
+                        </div>
+                    </div>
+
+                    <!-- Étape 1 : Demande OTP -->
+                    <button *ngIf="!otpEnvoye" type="button" class="btn-submit" (click)="demanderOtpGoogle()" [disabled]="isLoading">
+                        <span *ngIf="!isLoading">Recevoir le code de vérification SMS</span>
+                        <span *ngIf="isLoading">Envoi en cours...</span>
+                    </button>
+
+                    <!-- Étape 2 : Saisie OTP -->
+                    <ng-container *ngIf="otpEnvoye">
+                        <div class="form-group" style="margin-top: 14px;">
+                            <div class="input-wrapper">
+                                <span class="icon">🔢</span>
+                                <input type="text" formControlName="codeOtp" maxlength="4" placeholder="Code à 4 chiffres" style="letter-spacing: 6px; font-weight: 800; font-size: 18px; text-align: center;" />
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 12.5px;">
+                            <span *ngIf="secondesRestantes > 0" style="color: var(--text-muted);">
+                                Renvoyer le code dans {{ secondesRestantes }} s
+                            </span>
+                            <button *ngIf="secondesRestantes === 0" type="button" (click)="demanderOtpGoogle()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-weight:700;padding:0;">
+                                🔄 Renvoyer le code SMS
+                            </button>
+                        </div>
+
+                        <button type="button" class="btn-submit" (click)="validerOtpGoogle()" [disabled]="isLoading">
+                            <span *ngIf="!isLoading">Valider et ouvrir la session</span>
+                            <span *ngIf="isLoading">Validation en cours...</span>
+                        </button>
+                    </ng-container>
+
+                    <!-- Message d'erreur -->
+                    <div class="server-error" *ngIf="errorMessage" style="margin-top: 14px;">
+                        {{ errorMessage }}
+                    </div>
+
+                    <div style="margin-top: 14px; text-align: center;">
+                        <button type="button" (click)="annulerCompletionGoogle()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; text-decoration: underline;">
+                            ← Retour à la connexion
+                        </button>
+                    </div>
+
+                </form>
+            </ng-container>
+
         </div>
-        <h2>{{ modeGoogleCompletion ? 'Complétez votre profil' : 'Connexion Administrateur' }}</h2>
-        <p class="subtitle">
-          {{ modeGoogleCompletion 
-            ? 'Confirmez votre numéro malien (+223) pour finaliser votre accès console' 
-            : 'Accédez à la console de supervision des flux et achats groupés' }}
-        </p>
-      </div>
 
-      <!-- VUE 1 : Formulaire classique & Bouton Google -->
-      <ng-container *ngIf="!modeGoogleCompletion">
-        <!-- Bouton Officiel Google Sign-In -->
-        <button
-          type="button"
-          class="btn-google"
-          (click)="declencherGoogleSignIn()"
-          [disabled]="isLoading"
-        >
-          <svg class="google-icon" width="20" height="20" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3h3.88c2.27-2.09 3.66-5.17 3.66-9.09z"/>
-            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.1C3.28 21.43 7.37 24 12 24z"/>
-            <path fill="#FBBC05" d="M5.28 14.32c-.25-.72-.38-1.49-.38-2.32s.13-1.6.38-2.32V6.57H1.25C.45 8.16 0 9.98 0 12c0 2.02.45 3.84 1.25 5.43l4.03-3.11z"/>
-            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.37 0 3.28 2.57 1.25 6.57l4.03 3.11c.95-2.83 3.6-4.93 6.72-4.93z"/>
-          </svg>
-          <span>Continuer avec Google</span>
-        </button>
-
-        <div class="separator-divider">
-          <span>OU IDENTIFIANTS ADMINISTRATEUR</span>
+        <!-- Section Illustration / Visual (Droite avec la mascotte officielle Karavan) -->
+        <div class="illustration-section">
+            <div class="illustration-content">
+                <!-- Illustration officielle Karavan sur carte flottante -->
+                <img src="assets/logo_karavan.png" alt="Karavan Achats Groupés" class="hero-img" />
+            </div>
         </div>
 
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-
-          <!-- Numéro de téléphone -->
-          <div class="form-group">
-            <label class="input-label">Numéro de téléphone</label>
-            <div class="input-wrapper" [class.has-error]="loginForm.get('telephone')?.touched && loginForm.get('telephone')?.invalid">
-              <mat-icon class="icon">phone_android</mat-icon>
-              <input
-                type="tel"
-                formControlName="telephone"
-                placeholder="+223 70 00 00 01"
-                autocomplete="username"
-              />
-            </div>
-            <div class="error-msg" *ngIf="loginForm.get('telephone')?.touched && loginForm.get('telephone')?.invalid">
-              Numéro de téléphone requis (+223)
-            </div>
-          </div>
-
-          <!-- Mot de passe -->
-          <div class="form-group">
-            <label class="input-label">Mot de passe</label>
-            <div class="input-wrapper" [class.has-error]="loginForm.get('motDePasse')?.touched && loginForm.get('motDePasse')?.invalid">
-              <mat-icon class="icon">lock_outline</mat-icon>
-              <input
-                [type]="afficherMotDePasse ? 'text' : 'password'"
-                formControlName="motDePasse"
-                placeholder="Votre mot de passe"
-                autocomplete="current-password"
-              />
-              <button
-                type="button"
-                class="btn-toggle-eye"
-                (click)="afficherMotDePasse = !afficherMotDePasse"
-                tabindex="-1"
-                [title]="afficherMotDePasse ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
-              >
-                <mat-icon>{{ afficherMotDePasse ? 'visibility_off' : 'visibility' }}</mat-icon>
-              </button>
-            </div>
-            <div class="error-msg" *ngIf="loginForm.get('motDePasse')?.touched && loginForm.get('motDePasse')?.invalid">
-              Mot de passe requis
-            </div>
-          </div>
-
-          <!-- Indication de sécurité -->
-          <p class="form-options">
-            <mat-icon class="info-mini">info_outline</mat-icon>
-            <span>Mot de passe oublié ? Utilisez « Continuer avec Google » ou contactez l'équipe support.</span>
-          </p>
-
-          <!-- Message d'erreur serveur -->
-          <div class="server-error" *ngIf="errorMessage">
-            <mat-icon>error_outline</mat-icon>
-            <span>{{ errorMessage }}</span>
-          </div>
-
-          <!-- Bouton de connexion principal -->
-          <button type="submit" class="btn-submit" [disabled]="isLoading">
-            <span *ngIf="!isLoading">Se connecter à la console</span>
-            <span *ngIf="isLoading" class="spinner-chargement">
-              <mat-icon class="spin">sync</mat-icon> Connexion en cours...
-            </span>
-          </button>
-        </form>
-      </ng-container>
-
-      <!-- VUE 2 : Complétion Profil Google (Numéro + Code OTP) -->
-      <ng-container *ngIf="modeGoogleCompletion">
-        <div class="google-user-preview">
-          <div class="google-avatar">
-            <img *ngIf="donneesGoogle?.photoUrl" [src]="donneesGoogle?.photoUrl" alt="Google Avatar" />
-            <span *ngIf="!donneesGoogle?.photoUrl">{{ (donneesGoogle?.nom || 'G').charAt(0) }}</span>
-          </div>
-          <div class="google-user-info">
-            <strong>{{ donneesGoogle?.nom || 'Compte Google' }}</strong>
-            <small>{{ donneesGoogle?.email }}</small>
-          </div>
-          <mat-icon class="google-verif-icon">verified</mat-icon>
-        </div>
-
-        <div class="info-encart">
-          <mat-icon>security</mat-icon>
-          <span>Pour sécuriser votre compte administrateur Karavan, veuillez renseigner votre numéro malien (+223) pour recevoir votre code OTP par SMS.</span>
-        </div>
-
-        <form [formGroup]="completionForm" class="login-form">
-          <!-- Numéro de téléphone -->
-          <div class="form-group">
-            <label class="input-label">Numéro de téléphone malien (+223)</label>
-            <div class="input-wrapper">
-              <mat-icon class="icon">phone_android</mat-icon>
-              <input
-                type="tel"
-                formControlName="telephone"
-                [readonly]="otpEnvoye"
-                placeholder="+223 70 00 00 00"
-              />
-            </div>
-          </div>
-
-          <!-- Étape 1 : Demande OTP -->
-          <button
-            *ngIf="!otpEnvoye"
-            type="button"
-            class="btn-submit"
-            (click)="demanderOtpGoogle()"
-            [disabled]="isLoading"
-          >
-            <span *ngIf="!isLoading">Recevoir le code de vérification SMS</span>
-            <span *ngIf="isLoading" class="spinner-chargement">
-              <mat-icon class="spin">sync</mat-icon> Envoi en cours...
-            </span>
-          </button>
-
-          <!-- Étape 2 : Saisie OTP -->
-          <ng-container *ngIf="otpEnvoye">
-            <div class="form-group" style="margin-top: 14px;">
-              <label class="input-label" style="text-align: center;">Code SMS de vérification (4 chiffres)</label>
-              <div class="input-wrapper otp-wrapper">
-                <mat-icon class="icon">pin</mat-icon>
-                <input
-                  type="text"
-                  formControlName="codeOtp"
-                  maxlength="4"
-                  placeholder="• • • •"
-                  class="input-otp-center"
-                />
-              </div>
-            </div>
-
-            <div class="renvoi-ligne">
-              <span *ngIf="secondesRestantes > 0" class="compte-rebours">
-                <mat-icon>schedule</mat-icon> Renvoyer dans {{ secondesRestantes }} s
-              </span>
-              <button
-                *ngIf="secondesRestantes === 0"
-                type="button"
-                class="btn-renvoi-sms"
-                (click)="demanderOtpGoogle()"
-              >
-                <mat-icon>refresh</mat-icon> Renvoyer le code SMS
-              </button>
-            </div>
-
-            <button
-              type="button"
-              class="btn-submit"
-              (click)="validerOtpGoogle()"
-              [disabled]="isLoading"
-            >
-              <span *ngIf="!isLoading">Valider et ouvrir la console</span>
-              <span *ngIf="isLoading" class="spinner-chargement">
-                <mat-icon class="spin">sync</mat-icon> Validation en cours...
-              </span>
-            </button>
-          </ng-container>
-
-          <!-- Message d'erreur -->
-          <div class="server-error" *ngIf="errorMessage" style="margin-top: 14px;">
-            <mat-icon>error_outline</mat-icon>
-            <span>{{ errorMessage }}</span>
-          </div>
-
-          <div class="retour-connexion-bloc">
-            <button type="button" class="btn-retour-lien" (click)="annulerCompletionGoogle()">
-              <mat-icon>arrow_back</mat-icon> Retour à la connexion
-            </button>
-          </div>
-        </form>
-      </ng-container>
     </div>
-
-    <!-- ========================================== -->
-    <!-- SECTION DROITE : IDENTITÉ DE MARQUE KARAVAN -->
-    <!-- ========================================== -->
-    <div class="illustration-section">
-      <!-- Ondulations d'ambiance et halos d'arrière-plan -->
-      <div class="halo-cosmique halo-1"></div>
-      <div class="halo-cosmique halo-2"></div>
-      <div class="halo-cosmique halo-3"></div>
-
-      <div class="illustration-content">
-        <!-- Badge officiel -->
-        <div class="badge-hub">
-          <span class="pulsing-hub-dot"></span>
-          <span>Plateforme Nationale B2B • Mali</span>
-        </div>
-
-        <!-- Titre & Logotype Karavan -->
-        <div class="brand-showcase">
-          <h1 class="karavan-brand-titre">KARAVAN</h1>
-          <p class="karavan-brand-tagline">Achats Groupés Internationaux & Transit Sécurisé</p>
-          <p class="karavan-brand-desc">
-            Console administrative dédiée à la supervision des corridors d'importation, des fonds sous séquestre et de la traçabilité logistique vers Bamako.
-          </p>
-        </div>
-
-        <!-- 3 Cartes Avantages / Fonctionnalités en Glassmorphism -->
-        <div class="features-glass-grid">
-          <div class="feature-glass-card">
-            <div class="feature-icon-box">
-              <mat-icon>public</mat-icon>
-            </div>
-            <div class="feature-text">
-              <strong>Globe 3D & Corridors</strong>
-              <small>Traçabilité des flux maritimes et aériens depuis la Chine, Turquie, Émirats.</small>
-            </div>
-          </div>
-
-          <div class="feature-glass-card">
-            <div class="feature-icon-box">
-              <mat-icon>account_balance_wallet</mat-icon>
-            </div>
-            <div class="feature-text">
-              <strong>Séquestre Financier</strong>
-              <small>Fonds commerçants protégés à 100% jusqu'à livraison physique à Bamako.</small>
-            </div>
-          </div>
-
-          <div class="feature-glass-card">
-            <div class="feature-icon-box">
-              <mat-icon>verified_user</mat-icon>
-            </div>
-            <div class="feature-text">
-              <strong>Conformité & KYC</strong>
-              <small>Validation stricte et audit des grossistes, courtiers et expéditions.</small>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bas de carte de droite -->
-        <div class="security-footer-note">
-          <mat-icon>shield</mat-icon>
-          <span>Chiffrement certifié • Fuseau horaire : <strong>Africa/Bamako</strong></span>
-        </div>
-      </div>
-    </div>
-
-  </div>
 </div>

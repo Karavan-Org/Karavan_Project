@@ -53,8 +53,8 @@ export class LoginComponent implements OnInit, OnDestroy {
     }
 
     this.loginForm = this.fb.group({
-      telephone: ['', [Validators.required]],
-      motDePasse: ['', [Validators.required]]
+      telephone: ['+22370000001', [Validators.required]],
+      motDePasse: ['Dogo2026!', [Validators.required]]
     });
 
     this.completionForm = this.fb.group({
