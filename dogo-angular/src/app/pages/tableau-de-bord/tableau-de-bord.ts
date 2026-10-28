@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -61,7 +61,11 @@ export class TableauDeBordComponent implements OnInit {
   readonly paysFiltre = signal<string | null>(null);
   readonly groupeDetail = signal<GroupeDetailVue | null>(null);
 
-  /** Le panneau Statistiques Générales est FERMÉ par défaut, s'ouvre au clic et se ferme avec une croix */
+  /**
+   * Le panneau Statistiques Générales est situé À L'INTÉRIEUR de la scène 3D.
+   * Il est fermé par défaut (onglet miniature visible à gauche), s'ouvre au clic,
+   * et se referme via la croix (✕) pour revenir à l'état miniature.
+   */
   readonly panneauStatsOuvert = this.tbService.panneauStatsOuvert;
   readonly rechercheTexte = signal<string>('');
 
@@ -176,17 +180,28 @@ export class TableauDeBordComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  /**
+   * Quand un groupe est sélectionné dans le cadran (ou via rotation) :
+   * - Si le groupe est déjà affiché dans le tiroir de détail -> on le ferme (toggle)
+   * - Sinon -> on focalise la caméra du Globe 3D sur le pays du groupe et on charge son détail
+   */
   onGroupeSelectionne(g: GroupeCadranVue): void {
+    if (this.groupeDetail()?.id === g.id) {
+      this.fermerDetail();
+      return;
+    }
+
     if (g.paysOrigine?.codeIso) {
       this.globe3d?.focaliserSurPays(g.paysOrigine.codeIso);
     }
+
     this.tbService.getDetailGroupe(g.id).subscribe({
       next: detail => {
         this.groupeDetail.set(detail);
         this.cdr.markForCheck();
       },
       error: () => {
-        // En cas d'erreur de chargement du détail, affichage basique
+        // En cas d'erreur de chargement du détail, affichage de secours
         this.groupeDetail.set({
           id: g.id,
           titre: g.titre,

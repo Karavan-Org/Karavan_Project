@@ -208,301 +208,22 @@
 }
 
 // ------------------------------------------------------------------------------
-// 2. SCÈNE PRINCIPALE (TIROIR GAUCHE + SCÈNE 3D)
+// 2. SCÈNE PRINCIPALE 3D (AVEC PANNEAU STATS INTÉGRÉ À L'INTÉRIEUR)
 // ------------------------------------------------------------------------------
 .scene-principale-wrapper {
   display: flex;
   flex: 1;
-  gap: 16px;
   position: relative;
   overflow: hidden;
   min-height: 520px;
+  border-radius: 24px;
 }
 
-// TIROIR LATÉRAL GAUCHE : STATISTIQUES GÉNÉRALES
-.tiroir-stats-gauche {
-  width: 320px;
-  min-width: 320px;
-  max-width: 320px;
-  background: #FFFFFF;
-  border-radius: 20px;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  overflow-y: auto;
-  z-index: 20;
-  animation: glisserGauche 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-
-  .stats-header-bar {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-
-    .stats-titre-group {
-      .stats-titre {
-        font-size: 17px;
-        font-weight: 800;
-        color: #0F172A;
-        margin: 0;
-      }
-
-      .stats-sous-titre {
-        font-size: 12px;
-        color: #64748B;
-        margin: 2px 0 0 0;
-      }
-    }
-
-    .btn-fermer-stats {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 1px solid #E2E8F0;
-      background: #F8FAFC;
-      color: #64748B;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: #F1F5F9;
-        color: #0F172A;
-        transform: scale(1.08);
-      }
-
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-      }
-    }
-  }
-
-  // Cartes KPI
-  .kpis-cartes-colonne {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .kpi-stat-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    background: #F8FAFC;
-    border: 1px solid #EDF2F7;
-    border-radius: 14px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-    }
-
-    .kpi-icon-rond {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-
-      &.bleu-clair {
-        background: #EFF6FF;
-        color: #3B82F6;
-      }
-
-      &.bleu-nuit {
-        background: #EEF2FF;
-        color: #4F46E5;
-      }
-
-      mat-icon {
-        font-size: 22px;
-        width: 22px;
-        height: 22px;
-      }
-    }
-
-    .kpi-info-bloc {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-
-      .kpi-label {
-        font-size: 12px;
-        font-weight: 600;
-        color: #64748B;
-      }
-
-      .kpi-chiffre-ligne {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 6px;
-        margin-top: 2px;
-
-        .kpi-valeur {
-          font-size: 20px;
-          font-weight: 800;
-          color: #0F172A;
-          letter-spacing: -0.4px;
-        }
-
-        .kpi-badge-evolution {
-          font-size: 11px;
-          font-weight: 700;
-
-          &.positif {
-            color: #16A34A;
-          }
-
-          small {
-            font-size: 9px;
-            font-weight: 500;
-            color: #94A3B8;
-            display: block;
-          }
-        }
-      }
-    }
-  }
-
-  // Activité Récente
-  .activite-recente-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    flex: 1;
-
-    .section-titre-box {
-      .sec-titre {
-        font-size: 14px;
-        font-weight: 800;
-        color: #0F172A;
-        margin: 0;
-      }
-
-      .sec-sous-titre {
-        font-size: 11px;
-        color: #94A3B8;
-      }
-    }
-
-    .activite-flux-liste {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      overflow-y: auto;
-      max-height: 380px;
-      padding-right: 4px;
-    }
-
-    .activite-flux-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 10px;
-      background: #F8FAFC;
-      border-radius: 12px;
-      border: 1px solid #F1F5F9;
-      transition: background 0.2s ease;
-
-      &:hover {
-        background: #F1F5F9;
-      }
-
-      .activite-visuel {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-
-        .drapeau-pastille {
-          font-size: 22px;
-          line-height: 1;
-        }
-
-        .avatar-pastille {
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          background: #DBEAFE;
-          color: #2563EB;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          mat-icon {
-            font-size: 16px;
-            width: 16px;
-            height: 16px;
-          }
-        }
-      }
-
-      .activite-corps {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-
-        .activite-titre-texte {
-          font-size: 12px;
-          font-weight: 700;
-          color: #0F172A;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .activite-sous-texte {
-          font-size: 11px;
-          color: #64748B;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-      }
-
-      .activite-meta {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex-shrink: 0;
-
-        .temps-relatif {
-          font-size: 10px;
-          color: #94A3B8;
-        }
-
-        .point-en-ligne {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #22C55E;
-          box-shadow: 0 0 6px #22C55E;
-        }
-      }
-    }
-  }
-}
-
-// ------------------------------------------------------------------------------
-// 3. ZONE PRINCIPALE : GLOBE 3D + CADRAN HORIZONTAL
-// ------------------------------------------------------------------------------
 .globe-cadran-stage {
   flex: 1;
   position: relative;
+  width: 100%;
+  height: 100%;
   background: radial-gradient(circle at 50% 45%, #19253d 0%, #0c1527 65%, #050a14 100%);
   border-radius: 24px;
   overflow: hidden;
@@ -510,8 +231,8 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
-  transition: all 0.35s ease;
 
+  // Le Globe 3D réaliste WebGL occupe 100% de la scène en arrière-plan
   .globe-3d-scene-container {
     position: absolute;
     inset: 0;
@@ -520,6 +241,358 @@
     z-index: 10;
   }
 
+  // --------------------------------------------------------------------------
+  // B. ONGLET MINIATURE DU TABLEAU DE BORD (À L'INTÉRIEUR DU STAGE SUR LA GAUCHE)
+  // --------------------------------------------------------------------------
+  .mini-onglet-stats-stage {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    z-index: 45;
+    cursor: pointer;
+
+    .onglet-interieur-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 30px;
+      padding: 9px 18px;
+      color: #FFFFFF;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+      &:hover {
+        background: rgba(37, 99, 235, 0.92);
+        border-color: #60A5FA;
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 10px 28px rgba(37, 99, 235, 0.5);
+      }
+
+      &:active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      .onglet-ico {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #93C5FD;
+      }
+
+      .onglet-libelle {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: -0.2px;
+      }
+
+      .onglet-pastille {
+        background: #2563EB;
+        color: #FFFFFF;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 12px;
+      }
+
+      .onglet-chevron {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        opacity: 0.8;
+      }
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // C. PANNEAU FLOTTANT DU TABLEAU DE BORD À L'INTÉRIEUR (AVEC CROIX DE FERMETURE)
+  // --------------------------------------------------------------------------
+  .tiroir-stats-gauche {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    bottom: 20px;
+    width: 330px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    z-index: 45;
+    animation: glisserGaucheInterieur 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+
+    .stats-header-bar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+
+      .stats-titre-group {
+        .stats-titre {
+          font-size: 17px;
+          font-weight: 800;
+          color: #0F172A;
+          margin: 0;
+        }
+
+        .stats-sous-titre {
+          font-size: 12px;
+          color: #64748B;
+          margin: 2px 0 0 0;
+        }
+      }
+
+      .btn-fermer-stats {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid #E2E8F0;
+        background: #F8FAFC;
+        color: #64748B;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #0F172A;
+          color: #FFFFFF;
+          border-color: #0F172A;
+          transform: scale(1.08);
+        }
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+    }
+
+    // Cartes KPI
+    .kpis-cartes-colonne {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .kpi-stat-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #F8FAFC;
+      border: 1px solid #EDF2F7;
+      border-radius: 14px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+      }
+
+      .kpi-icon-rond {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        &.bleu-clair {
+          background: #EFF6FF;
+          color: #3B82F6;
+        }
+
+        &.bleu-nuit {
+          background: #EEF2FF;
+          color: #4F46E5;
+        }
+
+        mat-icon {
+          font-size: 22px;
+          width: 22px;
+          height: 22px;
+        }
+      }
+
+      .kpi-info-bloc {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+
+        .kpi-label {
+          font-size: 11.5px;
+          font-weight: 600;
+          color: #64748B;
+        }
+
+        .kpi-chiffre-ligne {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 6px;
+          margin-top: 2px;
+
+          .kpi-valeur {
+            font-size: 19px;
+            font-weight: 800;
+            color: #0F172A;
+            letter-spacing: -0.4px;
+          }
+
+          .kpi-badge-evolution {
+            font-size: 11px;
+            font-weight: 700;
+
+            &.positif {
+              color: #16A34A;
+            }
+
+            small {
+              font-size: 9px;
+              font-weight: 500;
+              color: #94A3B8;
+              display: block;
+            }
+          }
+        }
+      }
+    }
+
+    // Activité Récente
+    .activite-recente-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+
+      .section-titre-box {
+        .sec-titre {
+          font-size: 13.5px;
+          font-weight: 800;
+          color: #0F172A;
+          margin: 0;
+        }
+
+        .sec-sous-titre {
+          font-size: 11px;
+          color: #94A3B8;
+        }
+      }
+
+      .activite-flux-liste {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow-y: auto;
+        max-height: 340px;
+        padding-right: 4px;
+      }
+
+      .activite-flux-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        background: #F8FAFC;
+        border-radius: 12px;
+        border: 1px solid #F1F5F9;
+        transition: background 0.2s ease;
+
+        &:hover {
+          background: #F1F5F9;
+        }
+
+        .activite-visuel {
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+
+          .drapeau-pastille {
+            font-size: 20px;
+            line-height: 1;
+          }
+
+          .avatar-pastille {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #DBEAFE;
+            color: #2563EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+        }
+
+        .activite-corps {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+
+          .activite-titre-texte {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #0F172A;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .activite-sous-texte {
+            font-size: 10.5px;
+            color: #64748B;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+
+        .activite-meta {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+
+          .temps-relatif {
+            font-size: 10px;
+            color: #94A3B8;
+          }
+
+          .point-en-ligne {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22C55E;
+            box-shadow: 0 0 6px #22C55E;
+          }
+        }
+      }
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // D. CADRAN HORIZONTAL DES GROUPES EN ARC 3D
+  // --------------------------------------------------------------------------
   .cadran-horizontal-overlay {
     position: absolute;
     bottom: 16px;
@@ -534,14 +607,14 @@
   }
 }
 
-// Animation du volet
-@keyframes glisserGauche {
+// Animation fluide d'apparition du volet à l'intérieur du stage
+@keyframes glisserGaucheInterieur {
   from {
     opacity: 0;
-    transform: translateX(-40px);
+    transform: translateX(-30px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
   }
 }

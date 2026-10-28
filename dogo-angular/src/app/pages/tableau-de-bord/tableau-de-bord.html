@@ -11,18 +11,17 @@
       </p>
     </div>
 
-    <!-- Côté droit : Barre de recherche + Notifications + Profil + Bouton Stats -->
+    <!-- Côté droit : Bouton Tableau de bord (si fermé) + Barre de recherche + Notifications + Profil -->
     <div class="topbar-droite-actions">
-      <!-- Bouton d'ouverture du volet Statistiques générales (si fermé) -->
       @if (!panneauStatsOuvert()) {
         <button
           type="button"
           class="btn-toggle-stats"
           (click)="ouvrirPanneauStats()"
-          title="Ouvrir les statistiques générales"
+          title="Ouvrir le tableau de bord et statistiques"
         >
           <mat-icon>insights</mat-icon>
-          <span>Statistiques</span>
+          <span>Tableau de bord</span>
         </button>
       }
 
@@ -53,107 +52,10 @@
     </div>
   </header>
 
-  <!-- 2. SCÈNE CENTRALE 3D (AVEC TIROIR DES STATISTIQUES GAUCHE COLLAPSIBLE) -->
+  <!-- 2. SCÈNE PRINCIPALE 3D : LE TABLEAU DE BORD EST À L'INTÉRIEUR DU STAGE -->
   <div class="scene-principale-wrapper">
-    <!-- TIROIR LATÉRAL GAUCHE : STATISTIQUES GÉNÉRALES (FERMÉ PAR DÉFAUT, FERMETURE PAR CROIX) -->
-    @if (panneauStatsOuvert()) {
-      <aside class="tiroir-stats-gauche">
-        <div class="stats-header-bar">
-          <div class="stats-titre-group">
-            <h2 class="stats-titre">Statistiques générales</h2>
-            <p class="stats-sous-titre">Vue d'ensemble de la plateforme</p>
-          </div>
-          <button
-            type="button"
-            class="btn-fermer-stats"
-            (click)="fermerPanneauStats()"
-            title="Fermer les statistiques"
-          >
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-
-        <!-- 2 Cartes KPIs principales : Utilisateurs totaux + Groupes lancés -->
-        <div class="kpis-cartes-colonne">
-          <!-- Carte 1 : Utilisateurs totaux -->
-          <div class="kpi-stat-card">
-            <div class="kpi-icon-rond bleu-clair">
-              <mat-icon>people_outline</mat-icon>
-            </div>
-            <div class="kpi-info-bloc">
-              <span class="kpi-label">Utilisateurs totaux</span>
-              <div class="kpi-chiffre-ligne">
-                <span class="kpi-valeur">
-                  {{ (resume()?.utilisateurs?.total || 12).toLocaleString('fr-FR') }}
-                </span>
-                <span class="kpi-badge-evolution positif">
-                  ↑ +12% <small>vs mois dernier</small>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Carte 2 : Groupes lancés -->
-          <div class="kpi-stat-card">
-            <div class="kpi-icon-rond bleu-nuit">
-              <mat-icon>shopping_bag</mat-icon>
-            </div>
-            <div class="kpi-info-bloc">
-              <span class="kpi-label">Groupes lancés</span>
-              <div class="kpi-chiffre-ligne">
-                <span class="kpi-valeur">
-                  {{ (resume()?.totalGroupes || 7).toLocaleString('fr-FR') }}
-                </span>
-                <span class="kpi-badge-evolution positif">
-                  ↑ +8% <small>vs mois dernier</small>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section Activité Récente (Derniers groupes et utilisateurs) -->
-        <div class="activite-recente-section">
-          <div class="section-titre-box">
-            <h3 class="sec-titre">Activité récente</h3>
-            <span class="sec-sous-titre">Derniers groupes et utilisateurs</span>
-          </div>
-
-          <div class="activite-flux-liste">
-            @for (act of resume()?.activiteRecente || []; track (act.type + '-' + act.id + '-' + $index)) {
-              <div class="activite-flux-item">
-                <!-- Visuel : Drapeau pour groupe, avatar pour utilisateur -->
-                <div class="activite-visuel">
-                  @if (act.type === 'GROUPE') {
-                    <span class="drapeau-pastille">{{ act.drapeau || '🌐' }}</span>
-                  } @else {
-                    <div class="avatar-pastille">
-                      <mat-icon>person</mat-icon>
-                    </div>
-                  }
-                </div>
-
-                <!-- Informations textuelles -->
-                <div class="activite-corps">
-                  <span class="activite-titre-texte">{{ act.titre }}</span>
-                  <span class="activite-sous-texte">{{ act.sousTitre }}</span>
-                </div>
-
-                <!-- Temps relatif & indicateur en direct -->
-                <div class="activite-meta">
-                  <span class="temps-relatif">{{ formatTempsEcoule(act.date) }}</span>
-                  <span class="point-en-ligne"></span>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      </aside>
-    }
-
-    <!-- ZONE DE RENDU GLOBE TERRESTRE 3D GÉANT & CADRAN EN FAÇADE -->
-    <main class="globe-cadran-stage" [class.stage-retracte]="panneauStatsOuvert()">
-      <!-- 1. Le Globe 3D réaliste WebGL (Globe.gl / Three.js) -->
+    <main class="globe-cadran-stage">
+      <!-- A. Le Globe 3D réaliste WebGL (Globe.gl / Three.js) - Rendu fluide occupant tout le volume -->
       <div class="globe-3d-scene-container">
         <app-globe-3d
           [groupes]="groupesAffiches()"
@@ -163,28 +65,140 @@
         ></app-globe-3d>
       </div>
 
-      <!-- 2. Le Cadran rotatif 3D horizontal des groupes en arc cylindrique en bas du globe -->
+      <!-- B. LE TABLEAU DE BORD À L'INTÉRIEUR : ÉTAT MINIATURE (QUAND FERMÉ) -->
+      @if (!panneauStatsOuvert()) {
+        <div
+          class="mini-onglet-stats-stage"
+          (click)="ouvrirPanneauStats()"
+          title="Cliquer pour ouvrir le tableau de bord et statistiques"
+        >
+          <div class="onglet-interieur-pill">
+            <mat-icon class="onglet-ico">insights</mat-icon>
+            <span class="onglet-libelle">Tableau de bord</span>
+            <span class="onglet-pastille">{{ resume()?.totalGroupes ?? groupes().length }}</span>
+            <mat-icon class="onglet-chevron">chevron_right</mat-icon>
+          </div>
+        </div>
+      }
+
+      <!-- C. LE TABLEAU DE BORD À L'INTÉRIEUR : ÉTAT OUVERT (FLOTTANT À GAUCHE AVEC CROIX POUR FERMER) -->
+      @if (panneauStatsOuvert()) {
+        <aside class="tiroir-stats-gauche">
+          <div class="stats-header-bar">
+            <div class="stats-titre-group">
+              <h2 class="stats-titre">Statistiques générales</h2>
+              <p class="stats-sous-titre">Vue d'ensemble de la plateforme</p>
+            </div>
+            <button
+              type="button"
+              class="btn-fermer-stats"
+              (click)="fermerPanneauStats()"
+              title="Fermer le tableau de bord (retour à l'état miniature)"
+              aria-label="Fermer le tableau de bord"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <!-- 2 Cartes KPIs principales : Utilisateurs totaux + Groupes lancés -->
+          <div class="kpis-cartes-colonne">
+            <!-- Carte 1 : Utilisateurs totaux -->
+            <div class="kpi-stat-card">
+              <div class="kpi-icon-rond bleu-clair">
+                <mat-icon>people_outline</mat-icon>
+              </div>
+              <div class="kpi-info-bloc">
+                <span class="kpi-label">Utilisateurs totaux</span>
+                <div class="kpi-chiffre-ligne">
+                  <span class="kpi-valeur">
+                    {{ (resume()?.utilisateurs?.total || 12).toLocaleString('fr-FR') }}
+                  </span>
+                  <span class="kpi-badge-evolution positif">
+                    ↑ +12% <small>vs mois dernier</small>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carte 2 : Groupes lancés -->
+            <div class="kpi-stat-card">
+              <div class="kpi-icon-rond bleu-nuit">
+                <mat-icon>shopping_bag</mat-icon>
+              </div>
+              <div class="kpi-info-bloc">
+                <span class="kpi-label">Groupes lancés</span>
+                <div class="kpi-chiffre-ligne">
+                  <span class="kpi-valeur">
+                    {{ (resume()?.totalGroupes || 7).toLocaleString('fr-FR') }}
+                  </span>
+                  <span class="kpi-badge-evolution positif">
+                    ↑ +8% <small>vs mois dernier</small>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section Activité Récente (Derniers groupes et utilisateurs de la plateforme) -->
+          <div class="activite-recente-section">
+            <div class="section-titre-box">
+              <h3 class="sec-titre">Activité récente</h3>
+              <span class="sec-sous-titre">Derniers groupes et utilisateurs</span>
+            </div>
+
+            <div class="activite-flux-liste">
+              @for (act of resume()?.activiteRecente || []; track (act.type + '-' + act.id + '-' + $index)) {
+                <div class="activite-flux-item">
+                  <div class="activite-visuel">
+                    @if (act.type === 'GROUPE') {
+                      <span class="drapeau-pastille">{{ act.drapeau || '🌐' }}</span>
+                    } @else {
+                      <div class="avatar-pastille">
+                        <mat-icon>person</mat-icon>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="activite-corps">
+                    <span class="activite-titre-texte">{{ act.titre }}</span>
+                    <span class="activite-sous-texte">{{ act.sousTitre }}</span>
+                  </div>
+
+                  <div class="activite-meta">
+                    <span class="temps-relatif">{{ formatTempsEcoule(act.date) }}</span>
+                    <span class="point-en-ligne"></span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </aside>
+      }
+
+      <!-- D. Le Cadran rotatif 3D horizontal des groupes en arc cylindrique en bas du globe -->
       <div class="cadran-horizontal-overlay">
         <app-cadran-groupes
           [groupes]="groupesAffiches()"
           [paysFiltre]="paysFiltre()"
           [groupeSelectionneId]="groupeDetail()?.id || null"
           (groupeSelectionne)="onGroupeSelectionne($event)"
+          (groupeFerme)="fermerDetail()"
         ></app-cadran-groupes>
       </div>
     </main>
   </div>
 
-  <!-- TIROIR LATÉRAL DROIT : FICHE DE DÉTAIL D'UN GROUPE -->
+  <!-- 3. TIROIR LATÉRAL DROIT : FICHE DE DÉTAIL D'UN GROUPE -->
   @if (groupeDetail()) {
     <app-detail-tiroir
       [groupe]="groupeDetail()!"
       (fermer)="fermerDetail()"
+      (onFermer)="fermerDetail()"
       (assignerPays)="ouvrirModalRattrapage()"
     ></app-detail-tiroir>
   }
 
-  <!-- MODAL D'ASSIGNATION DE PAYS D'ORIGINE POUR RATTRAPAGE -->
+  <!-- 4. MODAL D'ASSIGNATION DE PAYS D'ORIGINE POUR RATTRAPAGE -->
   @if (modalRattrapageOuverte) {
     <app-modal-assigner-pays
       [listePays]="listePays()"
