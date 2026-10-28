@@ -504,3 +504,4 @@ export class DetailTiroirComponent {
   @Input() groupe: GroupeDetailVue | null = null;
   @Output() onFermer = new EventEmitter<void>();
 }
+

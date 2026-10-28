@@ -501,3 +501,4 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.selectionnerPays(codeIso);
   }
 }
+

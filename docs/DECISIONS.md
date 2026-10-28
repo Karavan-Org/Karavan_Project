@@ -101,3 +101,39 @@ La supervision des flux d'importation internationaux de Karavan nécessitait une
 - **Tiroir Latéral Coulissant** : panneau détaillé sans quitter la page (décomposition des coûts, intervenants, chronologie logistique, bouton fiche complète).
 - Préservation intégrale des fonctionnalités antérieures, notamment la génération et le téléchargement du rapport PDF complet (`jsPDF` et `autoTable`).
 
+
+
+## ADR-024 : Configuration Différée du Nom de Boutique/Société & Emplacement sur Carte/GPS dans les Paramètres
+
+### Contexte
+Afin de fluidifier l'expérience d'inscription des utilisateurs (Commerçants, Grossistes et Courtiers), le renseignement du nom de la boutique ou société ainsi que la localisation géographique précise (quartier, coordonnées GPS) ne doivent plus bloquer le formulaire d'inscription. Ces informations doivent être configurables et modifiables ultérieurement depuis l'écran **Paramètres**.
+
+### Décisions Prises
+
+#### 1. Modèle de Données & Migration V24
+- Ajout de colonnes géographiques et de localisation :
+  - `commercant` : `latitude DOUBLE NULL`, `longitude DOUBLE NULL`.
+  - `grossiste` : `latitude DOUBLE NULL`, `longitude DOUBLE NULL`, `quartier_marche VARCHAR(120) NULL`.
+  - `courtier` : `latitude DOUBLE NULL`, `longitude DOUBLE NULL`.
+- Migration additive Flyway `V24__coordonnees_emplacement_acteurs.sql` et script de retour arrière `rollback_V24__coordonnees_emplacement_acteurs.sql`.
+
+#### 2. Assouplissement de l'Inscription (Backend & Mobile)
+- Dans `InscriptionService.java` :
+  - `nomBoutique`, `nomBoutiqueMarche` et `nomSocieteImport` sont désormais optionnels lors de l'appel d'inscription.
+  - S'ils ne sont pas fournis, ils prennent automatiquement pour valeur par défaut `"Boutique " + nom` ou `"Société " + nom`.
+- Dans `commercant_inscription_screen.dart` :
+  - Suppression des champs préalables "Nom de la boutique", "Quartier", "Licence" et "Dépôt".
+  - Le formulaire d'inscription est allégé (Nom, Téléphone, Mot de passe, Confirmation) avec un encart explicatif informant que la structure et l'emplacement se configurent dans les Paramètres.
+
+#### 3. Gestion dans l'Écran Paramètres (`ParametresCompteScreen`)
+- Ajout d'une section dédiée **« BOUTIQUE & EMPLACEMENT »** (ou **« SOCIÉTÉ & DÉPÔT »** pour les courtiers) :
+  - **Modification du nom de la structure** : boîte de dialogue interactive pour modifier le nom de la boutique ou de la société de transit.
+  - **Localisation sur carte interactive** : ouverture de `SelecteurEmplacementCarteDialog` exploitant `flutter_map` et les tuiles OpenStreetMap avec un pointeur interactif (déplacement au toucher, calcul en temps réel des coordonnées GPS, recentrage sur Bamako).
+  - **Saisie directe des coordonnées** : boîte de dialogue `SaisieCoordonneesDialog` permettant la saisie manuelle de la latitude, de la longitude et du nom du quartier/repère.
+- Les modifications sont enregistrées via l'endpoint sécurisé `PATCH /api/moi`.
+
+#### 4. Didacticiel Guidé (`DidacticielGuideOverlay`)
+- Mise à jour des étapes du didacticiel pour les trois rôles :
+  - Commerçant : ajout d'une étape dédiée invitant à configurer sa boutique et son emplacement GPS dans l'onglet Paramètres.
+  - Grossiste : mise à jour de l'étape de l'en-tête pour mettre en valeur la localisation sur la carte.
+  - Courtier : mise à jour de l'étape de profil pour guider la localisation du dépôt de transit.

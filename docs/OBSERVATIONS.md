@@ -8,3 +8,4 @@ Ce document répertorie les points techniques ou éléments textuels relevés ho
    - La règle d'architecture ArchUnit interdit l'accès direct des classes du package `..web..` aux interfaces `..persistence..` ou se terminant par `Repository`. Tout nouveau contrôleur web doit impérativement transiter par une classe de service applicative du package `..application..`.
 3. **Globe 3D en environnement de test jsdom** :
    - Dans l'environnement de test automatisé Vitest/JSDom (où WebGL n'est pas émulé nativement), `Globe3dComponent` intercepte l'absence de contexte WebGL et bascule en repli silencieux sans lever d'erreur bloquante.
+

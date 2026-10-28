@@ -419,3 +419,4 @@ export class StatistiquesDroiteComponent {
     return String.fromCodePoint(p, s);
   }
 }
+
