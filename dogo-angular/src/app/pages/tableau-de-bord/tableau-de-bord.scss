@@ -13,14 +13,14 @@
   flex-direction: column;
   width: 100%;
   height: calc(100vh - 48px);
-  gap: 16px;
+  gap: 14px;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
 }
 
 // ------------------------------------------------------------------------------
-// 1. EN-TÊTE SUPÉRIEUR
+// 1. EN-TÊTE SUPÉRIEUR (AVEC MICRO-INDICATEURS SUBTILS ANIMÉS)
 // ------------------------------------------------------------------------------
 .dashboard-topbar {
   display: flex;
@@ -69,33 +69,104 @@
   .topbar-droite-actions {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
 
-    .btn-toggle-stats {
+    // --- Micro-capsules subtiles animées (Utilisateurs & Colis) ---
+    .micro-stat-capsule {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: #3B82F6;
-      color: #FFFFFF;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 8px 16px;
+      gap: 8px;
+      padding: 6px 14px;
       border-radius: 24px;
-      border: none;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+      user-select: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      }
+
+      &.capsule-utilisateurs:hover {
+        border-color: #93C5FD;
+        background: #F8FAFC;
+      }
+
+      &.capsule-colis:hover {
+        border-color: #FCD34D;
+        background: #FFFDF7;
+      }
+
+      .icone-animee {
+        font-size: 16px;
+        line-height: 1;
+        display: inline-block;
+
+        &.icone-pulse-users {
+          animation: pulseUsers 2.6s ease-in-out infinite;
+        }
+
+        &.icone-bounce-box {
+          animation: bounceParcel 2.4s ease-in-out infinite;
+        }
+      }
+
+      .capsule-chiffre-bloc {
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+
+        .valeur-chiffre {
+          font-size: 13px;
+          font-weight: 800;
+          color: #0F172A;
+          letter-spacing: -0.3px;
+        }
+
+        .libelle-texte {
+          font-size: 11px;
+          font-weight: 600;
+          color: #64748B;
+        }
+      }
+    }
+
+    // --- Bouton icône seule discret pour les statistiques ---
+    .btn-stats-icone-seule {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      color: #475569;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
       transition: all 0.2s ease;
 
       &:hover {
-        background: #2563EB;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(59, 130, 246, 0.45);
+        background: #EFF6FF;
+        color: #2563EB;
+        border-color: #3B82F6;
+        transform: scale(1.06);
       }
 
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
+      &.actif {
+        background: #2563EB;
+        color: #FFFFFF;
+        border-color: #2563EB;
+        box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+      }
+
+      .icon-analytics {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
     }
 
@@ -107,14 +178,14 @@
       border: 1px solid #E2E8F0;
       border-radius: 24px;
       padding: 7px 16px;
-      width: 270px;
+      width: 240px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
       transition: all 0.2s ease;
 
       &:focus-within {
         border-color: #3B82F6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-        width: 310px;
+        width: 280px;
       }
 
       .search-ico {
@@ -208,7 +279,7 @@
 }
 
 // ------------------------------------------------------------------------------
-// 2. SCÈNE PRINCIPALE 3D (AVEC PANNEAU STATS INTÉGRÉ À L'INTÉRIEUR)
+// 2. SCÈNE PRINCIPALE 3D (AVEC DÉCLENCHEUR DISCRET ET FLOTTANT)
 // ------------------------------------------------------------------------------
 .scene-principale-wrapper {
   display: flex;
@@ -232,7 +303,7 @@
   display: flex;
   flex-direction: column;
 
-  // Le Globe 3D réaliste WebGL occupe 100% de la scène en arrière-plan
+  // Le Globe 3D réaliste WebGL occupe tout le volume de la scène
   .globe-3d-scene-container {
     position: absolute;
     inset: 0;
@@ -242,72 +313,57 @@
   }
 
   // --------------------------------------------------------------------------
-  // B. ONGLET MINIATURE DU TABLEAU DE BORD (À L'INTÉRIEUR DU STAGE SUR LA GAUCHE)
+  // B. MINI-DÉCLENCHEUR FLOTTANT DISCRET (QUAND LES STATS SONT FERMÉES)
   // --------------------------------------------------------------------------
-  .mini-onglet-stats-stage {
+  .mini-capsule-stats-stage {
     position: absolute;
     left: 20px;
     top: 20px;
     z-index: 45;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 
-    .onglet-interieur-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      background: rgba(15, 23, 42, 0.82);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      border-radius: 30px;
-      padding: 9px 18px;
-      color: #FFFFFF;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    &:hover {
+      background: rgba(37, 99, 235, 0.9);
+      border-color: #60A5FA;
+      transform: scale(1.1);
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);
+    }
 
-      &:hover {
-        background: rgba(37, 99, 235, 0.92);
-        border-color: #60A5FA;
-        transform: translateY(-2px) scale(1.03);
-        box-shadow: 0 10px 28px rgba(37, 99, 235, 0.5);
-      }
+    &:active {
+      transform: scale(0.95);
+    }
 
-      &:active {
-        transform: translateY(0) scale(0.98);
-      }
+    .orb-icone {
+      font-size: 18px;
+      line-height: 1;
+    }
 
-      .onglet-ico {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-        color: #93C5FD;
-      }
-
-      .onglet-libelle {
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: -0.2px;
-      }
-
-      .onglet-pastille {
-        background: #2563EB;
-        color: #FFFFFF;
-        font-size: 11px;
-        font-weight: 800;
-        padding: 2px 8px;
-        border-radius: 12px;
-      }
-
-      .onglet-chevron {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-        opacity: 0.8;
-      }
+    .point-vert-pulse {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 6px #10B981;
+      animation: pulseGreen 2s infinite;
     }
   }
 
   // --------------------------------------------------------------------------
-  // C. PANNEAU FLOTTANT DU TABLEAU DE BORD À L'INTÉRIEUR (AVEC CROIX DE FERMETURE)
+  // C. PANNEAU FLOTTANT DES STATISTIQUES (QUAND OUVERT)
   // --------------------------------------------------------------------------
   .tiroir-stats-gauche {
     position: absolute;
@@ -607,7 +663,23 @@
   }
 }
 
-// Animation fluide d'apparition du volet à l'intérieur du stage
+// Animations fluides
+@keyframes pulseUsers {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+@keyframes bounceParcel {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes pulseGreen {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
+  70% { transform: scale(1.2); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
 @keyframes glisserGaucheInterieur {
   from {
     opacity: 0;

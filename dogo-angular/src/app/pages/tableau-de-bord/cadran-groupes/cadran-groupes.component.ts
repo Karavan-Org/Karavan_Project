@@ -35,7 +35,7 @@ export interface CarteCadran3D {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="cadran-horizontal-scene" (wheel)="onMolette($event)">
-      <!-- Flèche gauche de rotation (<) -->
+      <!-- Flèche gauche de rotation (<) : fait tourner le cadran SANS ouvrir le tiroir -->
       <button
         type="button"
         class="nav-cadran-btn btn-gauche"
@@ -64,7 +64,7 @@ export interface CarteCadran3D {
                 [style.opacity]="item.opacity"
                 [style.zIndex]="item.zIndex"
                 (click)="clicCarte(item)"
-                [title]="item.estActive && groupeSelectionneId === item.groupe.id ? 'Cliquer pour fermer le détail' : 'Cliquer pour voir ce groupe'"
+                [title]="item.estActive && groupeSelectionneId === item.groupe.id ? 'Cliquer pour fermer le détail' : 'Cliquer pour voir le détail de ce produit'"
               >
                 <!-- En-tête de la carte : Drapeau + #ID -->
                 <div class="carte-top-row">
@@ -106,7 +106,7 @@ export interface CarteCadran3D {
         }
       </div>
 
-      <!-- Flèche droite de rotation (>) -->
+      <!-- Flèche droite de rotation (>) : fait tourner le cadran SANS ouvrir le tiroir -->
       <button
         type="button"
         class="nav-cadran-btn btn-droite"
@@ -138,7 +138,7 @@ export interface CarteCadran3D {
           type="button"
           class="btn-tourner-cadran"
           (click)="tournerDroite()"
-          title="Faire tourner le cadran mécanique vers le groupe suivant"
+          title="Faire tourner le cadran vers le groupe suivant"
         >
           <mat-icon class="icon-spin-step">sync</mat-icon>
           <span>Tourner le cadran</span>
@@ -467,7 +467,13 @@ export class CadranGroupesComponent implements OnChanges {
   @Input() paysFiltre: string | null = null;
   @Input() groupeSelectionneId: number | null = null;
 
-  @Output() groupeSelectionne = new EventEmitter<GroupeCadranVue>();
+  /** Émis lors de la rotation (flèches < / >, molette, points) : oriente le Globe SANS ouvrir le tiroir */
+  @Output() rotationChange = new EventEmitter<GroupeCadranVue>();
+
+  /** Émis UNIQUEMENT lors du clic sur une carte pour ouvrir son détail */
+  @Output() groupeClique = new EventEmitter<GroupeCadranVue>();
+
+  /** Émis quand on clique sur la carte active pour fermer son détail */
   @Output() groupeFerme = new EventEmitter<void>();
 
   indexActif = 0;
@@ -489,11 +495,6 @@ export class CadranGroupesComponent implements OnChanges {
     }
   }
 
-  /**
-   * Important : On conserve TOUJOURS tous les groupes dans le revolver cadran,
-   * afin que les boutons flèches < et > et le carrousel puissent tourner librement.
-   * Si paysFiltre est fourni, on fait tourner le cadran vers le groupe correspondant.
-   */
   private appliquerFiltre(): void {
     this.groupesFiltres = [...this.groupes];
 
@@ -521,7 +522,6 @@ export class CadranGroupesComponent implements OnChanges {
       return;
     }
 
-    // Déterminer la plage d'offsets selon le nombre de groupes disponibles
     let minOffset = -3;
     let maxOffset = 3;
 
@@ -554,10 +554,9 @@ export class CadranGroupesComponent implements OnChanges {
       const groupe = this.groupesFiltres[idx];
       if (!groupe) continue;
 
-      // Paramètres géométriques 3D de l'arc cylindrique (façon barillet de revolver)
-      const angleDeg = offset * 14; // rotation Y en degrés
-      const translateX = offset * 142; // espacement horizontal
-      const translateZ = -Math.abs(offset) * 42; // profondeur
+      const angleDeg = offset * 14;
+      const translateX = offset * 142;
+      const translateZ = -Math.abs(offset) * 42;
       const scale = offset === 0 ? 1.05 : Math.max(0.72, 1 - Math.abs(offset) * 0.09);
       const opacity = offset === 0 ? 1 : Math.max(0.45, 1 - Math.abs(offset) * 0.18);
       const zIndex = 30 - Math.abs(offset);
@@ -584,59 +583,56 @@ export class CadranGroupesComponent implements OnChanges {
   }
 
   /**
-   * Fait tourner le cadran d'un pas vers la gauche (<)
+   * Rotation à gauche via la flèche (<) :
+   * Fait tourner le cadran et le globe SANS ouvrir le tiroir de détail
    */
   tournerGauche(): void {
     if (this.groupesFiltres.length === 0) return;
     this.indexActif = (this.indexActif - 1 + this.groupesFiltres.length) % this.groupesFiltres.length;
     this.recalculerCartes3D();
-    this.notifierSelection();
+    this.rotationChange.emit(this.groupesFiltres[this.indexActif]);
   }
 
   /**
-   * Fait tourner le cadran d'un pas vers la droite (>)
+   * Rotation à droite via la flèche (>) :
+   * Fait tourner le cadran et le globe SANS ouvrir le tiroir de détail
    */
   tournerDroite(): void {
     if (this.groupesFiltres.length === 0) return;
     this.indexActif = (this.indexActif + 1) % this.groupesFiltres.length;
     this.recalculerCartes3D();
-    this.notifierSelection();
+    this.rotationChange.emit(this.groupesFiltres[this.indexActif]);
   }
 
   /**
-   * Sélectionne directement un index (depuis les points de pagination ou la liste)
+   * Sélection via les points de pagination : fait tourner le cadran SANS forcer l'ouverture du tiroir
    */
   choisirIndex(index: number): void {
     if (index >= 0 && index < this.groupesFiltres.length) {
       this.indexActif = index;
       this.recalculerCartes3D();
-      this.notifierSelection();
+      this.rotationChange.emit(this.groupesFiltres[this.indexActif]);
     }
   }
 
   /**
-   * Clic sur une carte du cadran :
-   * - Si la carte est active au centre ET que son détail est déjà ouvert -> FERME LE DÉTAIL
-   * - Si la carte est active mais fermé -> OUVRE LE DÉTAIL
-   * - Si la carte est sur le côté -> FAIT TOURNER LE CADRAN pour la centrer et ouvrir son détail
+   * Clic explicite sur une carte :
+   * - Si la carte est active et son détail est ouvert -> le ferme
+   * - Si la carte est active et son détail est fermé -> l'ouvre
+   * - Si c'est une carte latérale -> fait tourner vers elle ET ouvre son détail
    */
   clicCarte(item: CarteCadran3D): void {
     if (item.estActive) {
       if (this.groupeSelectionneId === item.groupe.id) {
         this.groupeFerme.emit();
       } else {
-        this.groupeSelectionne.emit(item.groupe);
+        this.groupeClique.emit(item.groupe);
       }
     } else {
-      this.choisirIndex(item.indexOriginal);
-      this.groupeSelectionne.emit(item.groupe);
-    }
-  }
-
-  private notifierSelection(): void {
-    const actif = this.groupesFiltres[this.indexActif];
-    if (actif) {
-      this.groupeSelectionne.emit(actif);
+      this.indexActif = item.indexOriginal;
+      this.recalculerCartes3D();
+      this.rotationChange.emit(item.groupe);
+      this.groupeClique.emit(item.groupe);
     }
   }
 
