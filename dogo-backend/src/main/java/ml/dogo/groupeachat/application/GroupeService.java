@@ -12,6 +12,8 @@ import ml.dogo.groupeachat.persistence.ConditionCommerciale;
 import ml.dogo.groupeachat.persistence.ConditionCommercialeRepository;
 import ml.dogo.groupeachat.persistence.GrilleTarifaire;
 import ml.dogo.groupeachat.persistence.GrilleTarifaireRepository;
+import ml.dogo.groupeachat.persistence.Pays;
+import ml.dogo.groupeachat.persistence.PaysRepository;
 import ml.dogo.groupeachat.persistence.GroupeAchat;
 import ml.dogo.groupeachat.persistence.GroupeAchatRepository;
 import ml.dogo.groupeachat.persistence.EtapeAcheminement;
@@ -44,7 +46,7 @@ public class GroupeService {
 
     public record Demande(String titre, Long produitId, Integer quantiteCible, Instant dateLimite, BigDecimal marchandise,
                           BigDecimal transport, BigDecimal douane, BigDecimal autres, Integer delaiLivraisonJours,
-                          String politiqueAnnulation, Integer quantiteMinParCommercant) {
+                          String politiqueAnnulation, Integer quantiteMinParCommercant, String paysOrigineCode) {
     }
 
     public record VarianteVue(long id, String sku, String taille, String couleur) {
@@ -68,7 +70,7 @@ public class GroupeService {
     public record GroupeVue(long id, String titre, String statut, ProduitVue produit, ActeurVue courtier,
                             ActeurVue grossiste, boolean porteParGrossiste, int quantiteCible, int quantiteConfirmee, int quantiteReservee, int quantiteRestante,
                             BigDecimal prixUnitaire, GrilleVue grille, ConditionsVue conditions, Instant dateOuverture,
-                            Instant dateLimite, boolean disponibiliteValidee) {
+                            Instant dateLimite, boolean disponibiliteValidee, String paysOrigineCode, String paysOrigineNom) {
     }
 
     public record TransitionVue(String ancien, String nouveau, Instant date, String auteur) {
@@ -90,12 +92,14 @@ public class GroupeService {
     private final NotificationApi notifications;
     private final DogoProperties proprietes;
     private final Clock horloge;
+    private final PaysRepository paysRepository;
 
     public GroupeService(GroupeAchatRepository groupes, GrilleTarifaireRepository grilles,
                          ConditionCommercialeRepository conditions, TransitionStatutGroupeRepository transitions,
                          ValidationGroupeRepository validations, MoteurEtatsGroupe moteur, CatalogueApi catalogue,
                          IdentiteApi identite, AuditApi audit, NotificationApi notifications,
-                         DogoProperties proprietes, Clock horloge, EtapeAcheminementRepository etapes) {
+                         DogoProperties proprietes, Clock horloge, EtapeAcheminementRepository etapes,
+                         PaysRepository paysRepository) {
         this.groupes = groupes;
         this.etapes = etapes;
         this.grilles = grilles;
@@ -109,6 +113,7 @@ public class GroupeService {
         this.notifications = notifications;
         this.proprietes = proprietes;
         this.horloge = horloge;
+        this.paysRepository = paysRepository;
     }
 
     // ------------------------------------------------------------- création / modification
@@ -135,10 +140,22 @@ public class GroupeService {
             throw ErreurMetier.nonTrouve("Produit", d.produitId());
         }
         identite.exigerActif(produit.grossisteId());
+
+        String codePays = d.paysOrigineCode() != null && !d.paysOrigineCode().isBlank()
+                ? d.paysOrigineCode().trim().toUpperCase()
+                : (produit.paysOrigine() != null ? produit.paysOrigine().trim().toUpperCase() : null);
+        if (codePays == null || codePays.isBlank()) {
+            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS", "Le pays d'origine est obligatoire");
+        }
+        paysRepository.findById(codePays)
+                .filter(Pays::isActif)
+                .orElseThrow(() -> new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS",
+                        "Pays d'origine non reconnu ou inactif : " + codePays));
+
         Instant maintenant = horloge.instant();
         Calcul calcul = calculer(d, maintenant);
         GroupeAchat g = groupes.save(new GroupeAchat(parGrossiste ? null : acteurId, produit.grossisteId(),
-                produit.id(), titre(d), calcul.quantiteCible, calcul.prixUnitaire, maintenant, d.dateLimite()));
+                produit.id(), titre(d), codePays, calcul.quantiteCible, calcul.prixUnitaire, maintenant, d.dateLimite()));
         grilles.save(new GrilleTarifaire(g.getId(), calcul.composantes, proprietes.commission().taux()));
         conditions.save(new ConditionCommerciale(g.getId(), calcul.delai,
                 parGrossiste ? POLITIQUE_ANNULATION_PLATEFORME : d.politiqueAnnulation(), calcul.minimum));
@@ -154,8 +171,17 @@ public class GroupeService {
             throw new ErreurMetier(CodeErreur.CONFLIT, "RG-20",
                     "La grille tarifaire est figée : seul un brouillon peut être modifié");
         }
+        String codePays = d.paysOrigineCode() != null && !d.paysOrigineCode().isBlank()
+                ? d.paysOrigineCode().trim().toUpperCase()
+                : g.getPaysOrigineCode();
+        if (codePays != null) {
+            paysRepository.findById(codePays)
+                    .filter(Pays::isActif)
+                    .orElseThrow(() -> new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS",
+                            "Pays d'origine non reconnu ou inactif : " + codePays));
+        }
         Calcul calcul = calculer(d, horloge.instant());
-        g.modifierBrouillon(titre(d), calcul.quantiteCible, calcul.prixUnitaire, d.dateLimite());
+        g.modifierBrouillon(titre(d), codePays, calcul.quantiteCible, calcul.prixUnitaire, d.dateLimite());
         grilles.findByGroupeId(groupeId).orElseThrow().appliquer(calcul.composantes, proprietes.commission().taux());
         conditions.findByGroupeId(groupeId).orElseThrow().appliquer(calcul.delai,
                 g.estPorteParGrossiste() ? POLITIQUE_ANNULATION_PLATEFORME : d.politiqueAnnulation(), calcul.minimum);
@@ -215,6 +241,10 @@ public class GroupeService {
         Instant maintenant = horloge.instant();
         String decision = approuve ? "APPROUVE" : "REJETE";
         if (approuve) {
+            if (g.getPaysOrigineCode() == null || g.getPaysOrigineCode().isBlank()) {
+                throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS",
+                        "Le pays d'origine doit �tre renseign� avant de publier le groupe");
+            }
             if (!g.isDisponibiliteValidee()) {
                 throw new ErreurMetier(CodeErreur.CONFLIT, "RG-18",
                         "Le Grossiste n'a pas encore validé la disponibilité des marchandises");
@@ -401,7 +431,7 @@ public class GroupeService {
         return new GroupeVue(v.id(), v.titre(), v.statut(), v.produit(), v.courtier(),
                 null, v.porteParGrossiste(), v.quantiteCible(), v.quantiteConfirmee(), v.quantiteReservee(),
                 v.quantiteRestante(), v.prixUnitaire(), null, v.conditions(), v.dateOuverture(),
-                v.dateLimite(), v.disponibiliteValidee());
+                v.dateLimite(), v.disponibiliteValidee(), v.paysOrigineCode(), v.paysOrigineNom());
     }
 
     @Transactional(readOnly = true)
@@ -477,10 +507,33 @@ public class GroupeService {
         return new Calcul(d.quantiteCible(), c, CalculPrix.totalUnitaire(c), delai, minimum);
     }
 
+        @Transactional
+    public GroupeVue assignerPaysOrigine(long adminId, long groupeId, String paysCode) {
+        if (paysCode == null || paysCode.isBlank()) {
+            throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS", "Le pays d'origine est obligatoire");
+        }
+        String code = paysCode.trim().toUpperCase();
+        paysRepository.findById(code)
+                .filter(Pays::isActif)
+                .orElseThrow(() -> new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS",
+                        "Pays d'origine non reconnu ou inactif : " + code));
+        GroupeAchat g = groupes.findById(groupeId)
+                .orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
+        g.assignerPaysOrigine(code);
+        groupes.save(g);
+        audit.tracer(adminId, "GROUPE_PAYS_ASSIGNE", "groupe=" + groupeId, "pays=" + code);
+        return vue(g);
+    }
+
     GroupeVue vue(GroupeAchat g) {
         CatalogueApi.ProduitInfo p = catalogue.produit(g.getProduitId()).orElseThrow();
         GrilleTarifaire grille = grilles.findByGroupeId(g.getId()).orElseThrow();
         ConditionCommerciale cond = conditions.findByGroupeId(g.getId()).orElseThrow();
+        String codePays = g.getPaysOrigineCode();
+        String nomPays = null;
+        if (codePays != null) {
+            nomPays = paysRepository.findById(codePays).map(Pays::getNomFr).orElse(codePays);
+        }
         return new GroupeVue(g.getId(), g.getTitre() != null ? g.getTitre() : p.nom(), g.getStatut().name(),
                 new ProduitVue(p.id(), p.nom(), p.description(), p.paysOrigine(), p.categorie(), p.photoUrl(),
                         p.variantes().stream().map(v -> new VarianteVue(v.id(), v.sku(), v.taille(), v.couleur())).toList()),
@@ -493,7 +546,8 @@ public class GroupeService {
                         grille.getDouane(), grille.getAutres(), grille.getDevise()),
                 new ConditionsVue(cond.getDelaiLivraisonJours(), cond.getPolitiqueAnnulation(),
                         cond.getQuantiteMinParCommercant()),
-                g.getDateOuverture(), g.getDateLimite(), g.isDisponibiliteValidee());
+                g.getDateOuverture(), g.getDateLimite(), g.isDisponibiliteValidee(),
+                codePays, nomPays);
     }
 
     private ActeurVue acteur(long id) {

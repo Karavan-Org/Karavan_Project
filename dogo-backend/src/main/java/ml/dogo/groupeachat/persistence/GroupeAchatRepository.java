@@ -19,6 +19,28 @@ public interface GroupeAchatRepository extends JpaRepository<GroupeAchat, Long> 
     List<GroupeAchat> findByGrossisteIdOrderByIdDesc(Long grossisteId);
 
     boolean existsByProduitIdAndStatut(Long produitId, StatutGroupe statut);
+    @Query("SELECT g.statut, COUNT(g) FROM GroupeAchat g GROUP BY g.statut")
+    List<Object[]> compterParStatut();
+
+    @Query("SELECT g.paysOrigineCode, COUNT(g) FROM GroupeAchat g WHERE g.paysOrigineCode IS NOT NULL GROUP BY g.paysOrigineCode")
+    List<Object[]> compterParPaysOrigine();
+
+    @Query("SELECT COUNT(g) FROM GroupeAchat g WHERE g.paysOrigineCode IS NULL")
+    long compterGroupesSansPays();
+
+    @Query("SELECT COUNT(g) FROM GroupeAchat g WHERE g.dateOuverture >= :debut")
+    long compterLancesApres(@Param("debut") Instant debut);
+
+    @Query("SELECT g FROM GroupeAchat g WHERE "
+            + "(:statut IS NULL OR g.statut = :statut) AND "
+            + "(:pays IS NULL OR g.paysOrigineCode = :pays) AND "
+            + "(:recherche IS NULL OR LOWER(g.titre) LIKE LOWER(CONCAT('%', :recherche, '%'))) "
+            + "ORDER BY g.dateOuverture DESC")
+    List<GroupeAchat> rechercherPourCadran(@Param("statut") StatutGroupe statut,
+                                          @Param("pays") String pays,
+                                          @Param("recherche") String recherche,
+                                          org.springframework.data.domain.Pageable pageable);
+
 
     /** Lecture directe en base du statut (les colonnes de statut ne sont jamais écrites par l'entité). */
     @Query("select g.statut from GroupeAchat g where g.id = :id")

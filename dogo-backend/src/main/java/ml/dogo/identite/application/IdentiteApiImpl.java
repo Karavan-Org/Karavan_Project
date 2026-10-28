@@ -61,6 +61,16 @@ public class IdentiteApiImpl implements IdentiteApi {
         return utilisateurs.identifiantsAdministrateursActifs();
     }
 
+    @Override
+    public SupervisionStats statistiquesSupervision() {
+        return new SupervisionStats(
+                utilisateurs.nombreCommercants(),
+                utilisateurs.nombreGrossistes(),
+                utilisateurs.nombreCourtiers(),
+                utilisateurs.nombreAdministrateurs()
+        );
+    }
+
     private static MoyenPaiementInfo info(MoyenPaiementUtilisateur m) {
         return new MoyenPaiementInfo(m.getId(), m.getUtilisateurId(), m.getNumeroMobileMoney(), m.getOperateur().name());
     }
