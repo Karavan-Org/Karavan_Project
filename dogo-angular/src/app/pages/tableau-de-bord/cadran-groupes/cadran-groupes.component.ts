@@ -60,9 +60,12 @@ export interface CarteCadran3D {
               <div
                 class="carte-groupe-3d"
                 [class.carte-active]="item.estActive"
-                [style.transform]="item.transform"
-                [style.opacity]="item.opacity"
-                [style.zIndex]="item.zIndex"
+                [class.carte-survolee]="survolOffset === item.offset"
+                [style.transform]="obtenirTransformCarte(item)"
+                [style.opacity]="obtenirOpaciteCarte(item)"
+                [style.zIndex]="obtenirZIndexCarte(item)"
+                (mouseenter)="onSurvolCarte(item.offset)"
+                (mouseleave)="onQuitterSurvol()"
                 (click)="clicCarte(item)"
                 [title]="item.estActive && groupeSelectionneId === item.groupe.id ? 'Cliquer pour fermer le détail' : 'Cliquer pour voir le détail de ce produit'"
               >
@@ -251,13 +254,22 @@ export interface CarteCadran3D {
       cursor: pointer;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(12px);
-      transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
-                  opacity 0.45s ease,
-                  box-shadow 0.35s ease,
-                  border-color 0.35s ease;
-      will-change: transform, opacity;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  opacity 0.35s ease,
+                  box-shadow 0.3s ease,
+                  border-color 0.3s ease;
+      will-change: transform, opacity, box-shadow;
 
-      &:hover:not(.carte-active) {
+      // Effet quand le curseur passe dessus : la carte bouge et s'avance vers le spectateur
+      &.carte-survolee {
+        border-color: #EEA823 !important;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75),
+                    0 0 28px rgba(238, 168, 35, 0.65),
+                    inset 0 0 16px rgba(172, 127, 94, 0.45) !important;
+        cursor: pointer;
+      }
+
+      &:hover:not(.carte-active):not(.carte-survolee) {
         border-color: rgba(238, 168, 35, 0.6);
         box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 12px rgba(172, 127, 94, 0.3);
       }
@@ -478,10 +490,49 @@ export class CadranGroupesComponent implements OnChanges {
   @Output() groupeFerme = new EventEmitter<void>();
 
   indexActif = 0;
+  survolOffset: number | null = null;
   groupesFiltres: GroupeCadranVue[] = [];
   cartesVisibles: CarteCadran3D[] = [];
 
   constructor(private readonly cdr: ChangeDetectorRef) {}
+
+  onSurvolCarte(offset: number): void {
+    this.survolOffset = offset;
+    this.cdr.markForCheck();
+  }
+
+  onQuitterSurvol(): void {
+    this.survolOffset = null;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Calcule la transformation 3D :
+   * Quand le curseur passe dessus, la carte s'avance vers le spectateur (translateZ + 65px),
+   * s'élève (translateY -18px), se redresse face caméra et grossit (scale * 1.18).
+   */
+  obtenirTransformCarte(item: CarteCadran3D): string {
+    if (this.survolOffset === item.offset) {
+      const angleDeg = item.offset * 6; // redressement partiel face au regard
+      const translateX = item.offset * 142;
+      const translateZ = (-Math.abs(item.offset) * 42) + 65; // s'avance franchement vers l'avant
+      const translateY = -18; // monte au-dessus des autres cartes
+      const baseScale = item.offset === 0 ? 1.06 : Math.max(0.72, 1 - Math.abs(item.offset) * 0.09);
+      const scale = baseScale * 1.18;
+      return `translateX(${translateX}px) translateY(${translateY}px) translateZ(${translateZ}px) rotateY(${angleDeg}deg) scale(${scale})`;
+    }
+    return item.transform;
+  }
+
+  obtenirZIndexCarte(item: CarteCadran3D): number {
+    if (this.survolOffset === item.offset) return 90;
+    return item.zIndex;
+  }
+
+  obtenirOpaciteCarte(item: CarteCadran3D): number {
+    if (this.survolOffset === item.offset) return 1;
+    return item.opacity;
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['groupes'] || changes['paysFiltre']) {
