@@ -1,33 +1,33 @@
+<aside class="sidebar" [class.sidebar-reduite]="estReduite()">
 
-<aside class="sidebar">
-
-  <!-- Identité Karavan -->
-  <div class="brand-header">
+  <!-- 1. En-tête : Logo et Identité Karavan -->
+  <div class="brand-header" (click)="estReduite() ? basculerReduite() : null" [title]="estReduite() ? 'Agrandir la barre latérale' : ''">
     <img
       src="assets/logo_karavan.png"
       alt="Logo Karavan"
       class="brand-logo"
     />
 
-    <div class="brand-info">
+    <div class="brand-info" *ngIf="!estReduite()">
       <span class="brand-name">Karavan</span>
       <span class="brand-tag">ADMINISTRATION</span>
     </div>
   </div>
 
-  <div class="sidebar-divider"></div>
+  <div class="sidebar-divider" *ngIf="!estReduite()"></div>
 
-  <!-- Navigation -->
+  <!-- 2. Navigation principale -->
   <nav class="nav-container" aria-label="Navigation principale">
 
     <div *ngFor="let section of sections(); trackBy: parTitre" class="nav-section">
 
-      <h2 class="section-title">
+      <!-- Titre de section visible uniquement en mode étendu -->
+      <h2 class="section-title" *ngIf="!estReduite()">
         {{ section.title }}
       </h2>
 
-      <ul>
-        <li *ngFor="let item of section.items; trackBy: parRoute">
+      <ul class="nav-list">
+        <li *ngFor="let item of section.items; trackBy: parRoute" class="nav-list-item">
 
           <a
             [routerLink]="item.route"
@@ -41,14 +41,22 @@
               {{ item.icon }}
             </mat-icon>
 
-            <span class="nav-label">
+            <!-- Libellé visible en mode étendu -->
+            <span class="nav-label" *ngIf="!estReduite()">
               {{ item.label }}
             </span>
 
+            <!-- Badge numérique -->
             <span
               *ngIf="item.badge"
-              class="nav-badge">
+              class="nav-badge"
+              [class.mini-badge]="estReduite()">
               {{ item.badge }}
+            </span>
+
+            <!-- Tooltip flottant au survol en mode miniature (style maquette Figma) -->
+            <span class="floating-tooltip" *ngIf="estReduite()">
+              {{ item.label }}
             </span>
 
           </a>
@@ -60,49 +68,64 @@
 
   </nav>
 
-  <!-- Bouton configuration Code de Sécurité 4 chiffres -->
-  <div class="security-pin-bar">
-    <button
-      type="button"
-      class="security-pin-btn"
-      (click)="securite.ouvrirConfiguration()"
-      title="Code de sécurité à 4 chiffres (requis pour chaque validation)">
-      <span class="sec-icon">🔒</span>
-      <span class="sec-text">Code sécurité :</span>
-      <span class="sec-badge" [class.sec-badge-ok]="securite.statut()?.configure">
-        {{ securite.statut()?.configure ? 'Actif (4 chiffres)' : 'À configurer' }}
-      </span>
-    </button>
+  <!-- 3. Pied de barre latérale -->
+  <div class="sidebar-footer">
+    <!-- Bouton sécurité PIN 4 chiffres (en mode étendu) -->
+    <div class="security-pin-bar" *ngIf="!estReduite()">
+      <button
+        type="button"
+        class="security-pin-btn"
+        (click)="securite.ouvrirConfiguration()"
+        title="Code de sécurité à 4 chiffres (requis pour chaque validation)">
+        <span class="sec-icon">🔒</span>
+        <span class="sec-text">Code sécurité :</span>
+        <span class="sec-badge" [class.sec-badge-ok]="securite.statut()?.configure">
+          {{ securite.statut()?.configure ? 'Actif' : 'À configurer' }}
+        </span>
+      </button>
+    </div>
+
+    <!-- Bouton de bascule Réduire / Agrandir la barre latérale (conforme à l'image) -->
+    <div class="toggle-collapse-bar">
+      <button
+        type="button"
+        class="collapse-btn"
+        (click)="basculerReduite()"
+        [title]="estReduite() ? 'Agrandir la barre latérale' : 'Réduire la barre latérale'"
+      >
+        <mat-icon class="collapse-icon">
+          {{ estReduite() ? 'chevron_right' : 'chevron_left' }}
+        </mat-icon>
+        <span class="collapse-label" *ngIf="!estReduite()">
+          Réduire la barre
+        </span>
+      </button>
+    </div>
+
+    <!-- Profil administrateur connecté -->
+    <div class="user-footer" [class.user-footer-mini]="estReduite()">
+      <div class="avatar" [title]="adminProfile.name">
+        {{ adminProfile.initials }}
+      </div>
+
+      <div class="user-details" *ngIf="!estReduite()">
+        <span class="user-name">
+          {{ adminProfile.name }}
+        </span>
+        <span class="user-role">
+          {{ adminProfile.role }}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        class="logout-btn"
+        aria-label="Déconnexion"
+        title="Déconnexion"
+        (click)="deconnecter()">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
   </div>
-
-  <!-- Profil administrateur -->
-  <footer class="user-footer">
-
-    <div class="avatar">
-      {{ adminProfile.initials }}
-    </div>
-
-    <div class="user-details">
-      <span class="user-name">
-        {{ adminProfile.name }}
-      </span>
-
-      <span class="user-role">
-        {{ adminProfile.role }}
-      </span>
-    </div>
-
-    <button
-      type="button"
-      class="logout-btn"
-      aria-label="Déconnexion"
-      title="Déconnexion"
-      (click)="deconnecter()">
-
-      <mat-icon>logout</mat-icon>
-
-    </button>
-
-  </footer>
 
 </aside>
