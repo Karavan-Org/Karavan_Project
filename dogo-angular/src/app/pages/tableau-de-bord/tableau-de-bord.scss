@@ -49,13 +49,13 @@
       }
 
       .badge-compteur {
-        background: #EEF2FF;
-        color: #3B82F6;
+        background: #FAF3EC;
+        color: #AC7F5E;
         font-size: 13px;
         font-weight: 700;
         padding: 2px 10px;
         border-radius: 20px;
-        border: 1px solid rgba(59, 130, 246, 0.2);
+        border: 1px solid rgba(172, 127, 94, 0.25);
       }
     }
 
@@ -91,12 +91,12 @@
       }
 
       &.capsule-utilisateurs:hover {
-        border-color: #93C5FD;
-        background: #F8FAFC;
+        border-color: #AC7F5E;
+        background: #FAF8F5;
       }
 
       &.capsule-colis:hover {
-        border-color: #FCD34D;
+        border-color: #EEA823;
         background: #FFFDF7;
       }
 
@@ -150,17 +150,17 @@
       transition: all 0.2s ease;
 
       &:hover {
-        background: #EFF6FF;
-        color: #2563EB;
-        border-color: #3B82F6;
+        background: #FAF3EC;
+        color: #AC7F5E;
+        border-color: #AC7F5E;
         transform: scale(1.06);
       }
 
       &.actif {
-        background: #2563EB;
+        background: #AC7F5E;
         color: #FFFFFF;
-        border-color: #2563EB;
-        box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+        border-color: #AC7F5E;
+        box-shadow: 0 0 12px rgba(172, 127, 94, 0.45);
       }
 
       .icon-analytics {
@@ -183,8 +183,8 @@
       transition: all 0.2s ease;
 
       &:focus-within {
-        border-color: #3B82F6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        border-color: #AC7F5E;
+        box-shadow: 0 0 0 3px rgba(172, 127, 94, 0.15);
         width: 280px;
       }
 
@@ -295,11 +295,11 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 50% 45%, #19253d 0%, #0c1527 65%, #050a14 100%);
+  background: radial-gradient(circle at 50% 45%, #183630 0%, #112621 65%, #081412 100%);
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(238, 168, 35, 0.12);
   display: flex;
   flex-direction: column;
 
@@ -323,9 +323,9 @@
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: rgba(15, 23, 42, 0.75);
+    background: rgba(24, 54, 48, 0.85);
     backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(238, 168, 35, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -334,10 +334,10 @@
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 
     &:hover {
-      background: rgba(37, 99, 235, 0.9);
-      border-color: #60A5FA;
+      background: #AC7F5E;
+      border-color: #EEA823;
       transform: scale(1.1);
-      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);
+      box-shadow: 0 8px 24px rgba(172, 127, 94, 0.5);
     }
 
     &:active {
@@ -356,8 +356,8 @@
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: #10B981;
-      box-shadow: 0 0 6px #10B981;
+      background: #34C759; // Olive Karavan
+      box-shadow: 0 0 6px #34C759;
       animation: pulseGreen 2s infinite;
     }
   }
@@ -418,9 +418,9 @@
         transition: all 0.2s ease;
 
         &:hover {
-          background: #0F172A;
+          background: #AC7F5E;
           color: #FFFFFF;
-          border-color: #0F172A;
+          border-color: #EEA823;
           transform: scale(1.08);
         }
 
@@ -464,13 +464,13 @@
         flex-shrink: 0;
 
         &.bleu-clair {
-          background: #EFF6FF;
-          color: #3B82F6;
+          background: #FAF3EC;
+          color: #AC7F5E;
         }
 
         &.bleu-nuit {
-          background: #EEF2FF;
-          color: #4F46E5;
+          background: #FFFDF7;
+          color: #EEA823;
         }
 
         mat-icon {
@@ -585,8 +585,8 @@
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            background: #DBEAFE;
-            color: #2563EB;
+            background: #FAF3EC;
+            color: #AC7F5E;
             display: flex;
             align-items: center;
             justify-content: center;

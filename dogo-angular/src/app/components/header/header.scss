@@ -26,9 +26,9 @@
     flex-shrink: 0;
 
     &:hover {
-      background: #2563EB;
-      border-color: #3B82F6;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+      background: var(--primary, #AC7F5E);
+      border-color: var(--secondary, #EEA823);
+      box-shadow: 0 4px 14px rgba(172, 127, 94, 0.35);
       transform: translateX(-2px);
     }
 

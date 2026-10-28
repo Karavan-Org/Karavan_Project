@@ -184,9 +184,9 @@ export interface CarteCadran3D {
       box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
 
       &:hover:not(:disabled) {
-        background: #2563EB;
-        border-color: #60A5FA;
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.75);
+        background: #AC7F5E;
+        border-color: #EEA823;
+        box-shadow: 0 0 20px rgba(238, 168, 35, 0.6);
         transform: translateY(-50%) scale(1.14);
       }
 
@@ -258,19 +258,19 @@ export interface CarteCadran3D {
       will-change: transform, opacity;
 
       &:hover:not(.carte-active) {
-        border-color: rgba(96, 165, 250, 0.6);
-        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 12px rgba(59, 130, 246, 0.3);
+        border-color: rgba(238, 168, 35, 0.6);
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 12px rgba(172, 127, 94, 0.3);
       }
 
-      // Carte active mise en valeur avec halo néon bleu cyan
+      // Carte active mise en valeur avec halo chaleureux Karavan (Bissap & Ocre)
       &.carte-active {
         width: 136px;
         height: 174px;
-        border: 2px solid #3B82F6;
-        box-shadow: 0 0 28px rgba(59, 130, 246, 0.65),
-                    inset 0 0 14px rgba(59, 130, 246, 0.35),
+        border: 2px solid #AC7F5E;
+        box-shadow: 0 0 28px rgba(172, 127, 94, 0.65),
+                    inset 0 0 14px rgba(238, 168, 35, 0.35),
                     0 16px 36px rgba(0, 0, 0, 0.6);
-        background: linear-gradient(145deg, rgba(30, 48, 88, 0.94) 0%, rgba(15, 25, 48, 0.98) 100%);
+        background: linear-gradient(145deg, rgba(34, 48, 42, 0.96) 0%, rgba(18, 28, 25, 0.98) 100%);
       }
     }
 
@@ -288,7 +288,7 @@ export interface CarteCadran3D {
       }
 
       .carte-id {
-        color: #93C5FD;
+        color: #EEA823;
         letter-spacing: 0.5px;
         font-size: 11px;
       }
@@ -350,7 +350,7 @@ export interface CarteCadran3D {
 
         small {
           font-size: 9px;
-          color: #93C5FD;
+          color: #EEA823;
         }
       }
 
@@ -363,7 +363,7 @@ export interface CarteCadran3D {
 
         .jauge-remplie {
           height: 100%;
-          background: #3B82F6;
+          background: linear-gradient(90deg, #AC7F5E, #EEA823);
           border-radius: 2px;
         }
       }
@@ -402,8 +402,8 @@ export interface CarteCadran3D {
         &.dot-actif {
           width: 12px;
           height: 12px;
-          background: #2563EB;
-          box-shadow: 0 0 12px #3B82F6;
+          background: #EEA823;
+          box-shadow: 0 0 12px #EEA823;
         }
       }
     }
@@ -424,9 +424,10 @@ export interface CarteCadran3D {
       transition: all 0.25s ease;
 
       &:hover {
-        background: #F1F5F9;
+        background: #FDFBF8;
+        border-color: #EEA823;
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 8px 24px rgba(172, 127, 94, 0.25);
 
         .icon-spin-step {
           transform: rotate(180deg);
@@ -441,7 +442,7 @@ export interface CarteCadran3D {
         font-size: 18px;
         width: 18px;
         height: 18px;
-        color: #2563EB;
+        color: #AC7F5E;
         transition: transform 0.4s ease;
       }
     }

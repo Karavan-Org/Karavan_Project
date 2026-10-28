@@ -1,6 +1,10 @@
 // ==============================================================================
-// BARRE LATÉRALE KARAVAN (EXPANDED & MINIATURE COLLAPSIBLE)
-// Conforme à la capture de référence Figma (Mode étendu & mode miniature à icônes)
+// BARRE LATÉRALE KARAVAN (DESIGN SYSTEM OFFICIEL & MODE MINIATURE COLLAPSIBLE)
+// Palette officielle Karavan :
+// - Vert Forêt / Brand Dark : #183630
+// - Bissap / Cuir Camel : #AC7F5E & #8E6445
+// - Ocre Sahélien Doré : #EEA823
+// - Olive Validation : #34C759
 // ==============================================================================
 
 .sidebar {
@@ -10,8 +14,8 @@
   width: 240px;
   height: calc(100vh - 24px);
   margin: 12px 0 12px 12px;
-  background: #0B111E;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, #183630 0%, #112621 55%, #0B1A17 100%);
+  border: 1px solid rgba(238, 168, 35, 0.12);
   border-radius: 24px;
   color: #F8FAFC;
   font-family: var(--font-texte, system-ui, -apple-system, sans-serif);
@@ -20,11 +24,11 @@
               padding 0.3s ease,
               transform 0.3s ease;
   position: relative;
-  overflow: visible; // Permet aux tooltips de flotter à droite
+  overflow: visible; // Permet aux tooltips de flotter à droite en mode miniature
   z-index: 100;
 
   // ----------------------------------------------------------------------------
-  // MODE MINIATURE RÉDUIT
+  // MODE MINIATURE RÉDUIT (FERMÉ PAR DÉFAUT)
   // ----------------------------------------------------------------------------
   &.sidebar-reduite {
     width: 72px;
@@ -62,8 +66,9 @@
         border-radius: 14px;
 
         &.active {
-          background: #2563EB;
-          box-shadow: 0 0 16px rgba(37, 99, 235, 0.6);
+          background: linear-gradient(135deg, #AC7F5E 0%, #8E6445 100%);
+          border: 1px solid rgba(238, 168, 35, 0.4);
+          box-shadow: 0 0 16px rgba(172, 127, 94, 0.55);
         }
 
         .nav-icon {
@@ -98,6 +103,8 @@
     gap: 12px;
     padding: 20px 18px 14px;
     flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
 
     .brand-logo {
       width: 42px;
@@ -105,7 +112,7 @@
       object-fit: contain;
       flex-shrink: 0;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.06);
       padding: 4px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       transition: transform 0.25s ease;
@@ -118,73 +125,106 @@
     .brand-info {
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      min-width: 0;
+      flex: 1;
 
       .brand-name {
-        color: #FFFFFF;
         font-size: 19px;
         font-weight: 800;
+        color: #FAF8F5;
         letter-spacing: -0.3px;
-        line-height: 1.1;
       }
 
       .brand-tag {
-        color: #64748B;
-        font-size: 9px;
-        font-weight: 800;
-        letter-spacing: 1.2px;
+        font-size: 9.5px;
+        font-weight: 700;
+        color: #EEA823; // Ocre Karavan
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-top: 1px;
+      }
+    }
+
+    .btn-mini-close-top {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94A3B8;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #AC7F5E;
+        color: #FFFFFF;
+        border-color: #EEA823;
+        transform: scale(1.1);
+      }
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
       }
     }
   }
 
   .sidebar-divider {
     height: 1px;
-    background: rgba(255, 255, 255, 0.06);
-    margin: 4px 16px 8px;
+    background: linear-gradient(90deg, rgba(238, 168, 35, 0.3) 0%, rgba(255, 255, 255, 0.05) 100%);
+    margin: 0 16px 8px;
   }
 
   // ----------------------------------------------------------------------------
-  // 2. NAVIGATION
+  // 2. NAVIGATION PRINCIPALE
   // ----------------------------------------------------------------------------
   .nav-container {
     flex: 1;
-    min-height: 0;
     overflow-y: auto;
     overflow-x: visible;
     padding: 10px 12px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
 
-    scrollbar-width: none;
     &::-webkit-scrollbar {
-      display: none;
+      width: 4px;
     }
-
-    .nav-section {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-
-      .section-title {
-        font-size: 10px;
-        font-weight: 700;
-        color: #475569;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        padding: 4px 10px;
-        margin: 0;
-      }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(238, 168, 35, 0.2);
+      border-radius: 4px;
     }
+  }
 
-    .nav-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
+  .nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .section-title {
+      font-size: 10px;
+      font-weight: 800;
+      color: #8C9E98;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 0 8px;
+      margin: 0 0 2px 0;
+    }
+  }
+
+  .nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .nav-list-item {
+      position: relative;
     }
 
     .nav-item {
@@ -194,7 +234,7 @@
       gap: 12px;
       padding: 9px 12px;
       border-radius: 12px;
-      color: #94A3B8;
+      color: #D1DBD7;
       text-decoration: none;
       font-size: 13px;
       font-weight: 600;
@@ -202,8 +242,12 @@
       cursor: pointer;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.06);
-        color: #FFFFFF;
+        background: rgba(172, 127, 94, 0.16);
+        color: #FAF8F5;
+
+        .nav-icon {
+          color: #EEA823;
+        }
 
         .floating-tooltip {
           opacity: 1;
@@ -212,18 +256,21 @@
         }
       }
 
+      // --- ITEM ACTIF : DESIGN SYSTEM KARAVAN (Bissap & Ocre) ---
       &.active {
-        background: #2563EB;
+        background: linear-gradient(135deg, #AC7F5E 0%, #8E6445 100%);
         color: #FFFFFF;
-        box-shadow: 0 0 16px rgba(37, 99, 235, 0.45);
+        border: 1px solid rgba(238, 168, 35, 0.35);
+        box-shadow: 0 4px 16px rgba(172, 127, 94, 0.45);
 
         .nav-icon {
           color: #FFFFFF;
         }
 
         .nav-badge {
-          background: #FFFFFF;
-          color: #2563EB;
+          background: #EEA823;
+          color: #183630;
+          font-weight: 800;
         }
       }
 
@@ -232,7 +279,7 @@
         width: 20px;
         height: 20px;
         flex-shrink: 0;
-        color: #94A3B8;
+        color: #A3B5AF;
         transition: color 0.2s ease;
       }
 
@@ -246,55 +293,41 @@
       .nav-badge {
         font-size: 11px;
         font-weight: 800;
-        background: #EF4444;
-        color: #FFFFFF;
-        padding: 1px 7px;
+        background: #EEA823;
+        color: #183630;
+        padding: 2px 7px;
         border-radius: 10px;
         margin-left: auto;
 
         &.mini-badge {
           position: absolute;
-          top: 6px;
-          right: 6px;
-          padding: 2px 4px;
+          top: 4px;
+          right: 4px;
+          padding: 1px 5px;
           font-size: 9px;
-          border-radius: 8px;
         }
       }
 
-      // Tooltip flottant au survol en mode miniature (comme sur la capture Figma)
+      // --- TOOLTIP FLOTTANT EN MODE MINIATURE (Design System Karavan) ---
       .floating-tooltip {
         position: absolute;
-        left: 56px;
+        left: 54px;
         top: 50%;
-        transform: translateY(-50%) translateX(0);
-        background: #1E293B;
-        color: #FFFFFF;
+        transform: translateY(-50%) translateX(0px);
+        background: #183630;
+        color: #FAF8F5;
+        border: 1px solid rgba(238, 168, 35, 0.35);
+        border-radius: 8px;
+        padding: 6px 12px;
         font-size: 12px;
         font-weight: 700;
-        padding: 6px 14px;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
         white-space: nowrap;
         pointer-events: none;
         opacity: 0;
         visibility: hidden;
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        transition: opacity 0.2s ease, transform 0.2s ease;
         z-index: 1000;
-
-        &::before {
-          content: '';
-          position: absolute;
-          left: -5px;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 0;
-          height: 0;
-          border-top: 5px solid transparent;
-          border-bottom: 5px solid transparent;
-          border-right: 5px solid #1E293B;
-        }
       }
     }
   }
@@ -306,179 +339,171 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 10px 12px 14px;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.15);
     border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0 0 24px 24px;
     flex-shrink: 0;
-  }
 
-  // Code sécurité PIN
-  .security-pin-bar {
-    .security-pin-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      padding: 7px 10px;
-      color: #94A3B8;
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: #FFFFFF;
-      }
-
-      .sec-icon {
-        font-size: 13px;
-      }
-
-      .sec-text {
+    .security-pin-bar {
+      .security-pin-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(238, 168, 35, 0.15);
+        border-radius: 12px;
+        color: #D1DBD7;
+        font-size: 11.5px;
         font-weight: 600;
-      }
+        cursor: pointer;
+        transition: all 0.2s ease;
 
-      .sec-badge {
-        font-size: 10px;
-        font-weight: 700;
-        background: #F59E0B;
-        color: #0F172A;
-        padding: 1px 6px;
-        border-radius: 6px;
-        margin-left: auto;
+        &:hover {
+          background: rgba(172, 127, 94, 0.2);
+          border-color: #EEA823;
+        }
 
-        &.sec-badge-ok {
-          background: #10B981;
-          color: #FFFFFF;
+        .sec-icon {
+          font-size: 13px;
+        }
+
+        .sec-text {
+          flex: 1;
+          text-align: left;
+        }
+
+        .sec-badge {
+          font-size: 10px;
+          font-weight: 700;
+          padding: 2px 6px;
+          border-radius: 6px;
+          background: rgba(255, 255, 255, 0.1);
+          color: #94A3B8;
+
+          &.sec-badge-ok {
+            background: rgba(52, 199, 89, 0.18);
+            color: #34C759; // Olive Karavan
+            border: 1px solid rgba(52, 199, 89, 0.4);
+          }
         }
       }
     }
-  }
 
-  // Bouton de bascule Réduire / Agrandir
-  .toggle-collapse-bar {
-    display: flex;
-    width: 100%;
+    .toggle-collapse-bar {
+      display: flex;
+      align-items: center;
 
-    .collapse-btn {
+      .collapse-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        color: #D1DBD7;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: rgba(172, 127, 94, 0.25);
+          color: #EEA823;
+          border-color: #EEA823;
+        }
+
+        .collapse-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+
+        .collapse-label {
+          white-space: nowrap;
+        }
+      }
+    }
+
+    .user-footer {
       display: flex;
       align-items: center;
       gap: 10px;
-      width: 100%;
-      padding: 8px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(255, 255, 255, 0.03);
-      color: #94A3B8;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      padding: 6px 2px;
 
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: #FFFFFF;
-        border-color: rgba(255, 255, 255, 0.2);
+      &.user-footer-mini {
+        justify-content: center;
 
-        .collapse-icon {
-          color: #3B82F6;
-          transform: scale(1.15);
+        .avatar {
+          cursor: pointer;
         }
       }
 
-      .collapse-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-        transition: transform 0.2s ease;
-      }
-
-      .collapse-label {
-        white-space: nowrap;
-      }
-    }
-  }
-
-  // Profil administrateur
-  .user-footer {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-
-    &.user-footer-mini {
-      flex-direction: column;
-      padding: 6px;
-      background: transparent;
-      border: none;
-      gap: 6px;
-    }
-
-    .avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: #2563EB;
-      color: #FFFFFF;
-      font-size: 12px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
-    }
-
-    .user-details {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      flex: 1;
-
-      .user-name {
-        font-size: 12px;
-        font-weight: 700;
+      .avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #AC7F5E 0%, #8E6445 100%);
         color: #FFFFFF;
-        white-space: nowrap;
+        border: 1.5px solid #EEA823;
+        font-size: 12px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .user-details {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
         overflow: hidden;
-        text-overflow: ellipsis;
+
+        .user-name {
+          font-size: 12.5px;
+          font-weight: 700;
+          color: #FAF8F5;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .user-role {
+          font-size: 10.5px;
+          color: #A3B5AF;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
       }
 
-      .user-role {
-        font-size: 10.5px;
-        color: #64748B;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
+      .logout-btn {
+        background: transparent;
+        border: none;
+        color: #8C9E98;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
 
-    .logout-btn {
-      background: transparent;
-      border: none;
-      color: #94A3B8;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
-      border-radius: 8px;
-      transition: all 0.2s ease;
+        &:hover {
+          color: #EF4444;
+          background: rgba(239, 68, 68, 0.12);
+        }
 
-      &:hover {
-        background: rgba(239, 68, 68, 0.15);
-        color: #EF4444;
-      }
-
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
       }
     }
   }

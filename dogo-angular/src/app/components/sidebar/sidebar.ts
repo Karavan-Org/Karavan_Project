@@ -42,10 +42,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private readonly tbService = inject(TableauDeBordService);
   private minuterie?: ReturnType<typeof setInterval>;
 
-  /** Mode miniature/réduit (conforme à la capture de référence) */
-  readonly estReduite = signal<boolean>(false);
+  /**
+   * Mode miniature/réduit : FERMÉ PAR DÉFAUT conformément à la demande utilisateur.
+   * La barre apparaît/s'agrandit uniquement lorsque l'on clique dessus,
+   * et se referme en mode miniature lorsqu'on la ferme.
+   */
+  readonly estReduite = signal<boolean>(true);
 
-  /** Dossiers KYC et groupes en attente de décision (badges du menu), relus chaque minute */
+  /** Compteurs de badges (relus périodiquement) */
   readonly kycEnAttente = signal(0);
   readonly groupesAModerer = signal(0);
 
@@ -54,8 +58,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
       const stocke = localStorage.getItem('karavan_sidebar_reduite');
       if (stocke !== null) {
         this.estReduite.set(stocke === 'true');
+      } else {
+        // Par défaut : fermé en état miniature
+        this.estReduite.set(true);
       }
-    } catch {}
+    } catch {
+      this.estReduite.set(true);
+    }
 
     this.chargerBadges();
     this.minuterie = setInterval(() => this.chargerBadges(), 60_000);
@@ -73,8 +82,25 @@ export class SidebarComponent implements OnInit, OnDestroy {
     } catch {}
   }
 
+  ouvrirSidebar(): void {
+    if (this.estReduite()) {
+      this.estReduite.set(false);
+      try {
+        localStorage.setItem('karavan_sidebar_reduite', 'false');
+      } catch {}
+    }
+  }
+
+  fermerSidebar(): void {
+    if (!this.estReduite()) {
+      this.estReduite.set(true);
+      try {
+        localStorage.setItem('karavan_sidebar_reduite', 'true');
+      } catch {}
+    }
+  }
+
   private chargerBadges(): void {
-    // Seuls les rôles qui peuvent décider voient le compteur (sinon le backend répond 403)
     if (this.authService.peut('KYC_VALIDER')) {
       this.api.dossiersKyc().subscribe({
         next: dossiers => this.kycEnAttente.set(dossiers?.length ?? 0),
@@ -89,11 +115,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Menu limité aux pages que le rôle administratif peut ouvrir. Signal calculé (et non getter) : les objets ne
-   * changent que si un badge change, sinon *ngFor recréerait chaque lien à chaque détection et routerLinkActive
-   * relancerait la détection sans fin (NG0103), notamment pendant la redirection vers /login sur un 401.
-   */
   readonly sections = computed<MenuSection[]>(() => {
     const badges: Record<string, number> = {
       '/kyc-validation': this.kycEnAttente(),
@@ -156,7 +177,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   get adminProfile() {
     const profil = this.authService.obtenirProfil();
 
-    const name = profil?.nom || 'Utilisateur connecté';
+    const name = profil?.nom || 'Admin Karavan';
     const initials = name
       .trim()
       .split(/\s+/)
@@ -172,7 +193,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     };
   }
 
-  /** Le profil de connexion ne porte que les permissions : on en déduit le rôle administratif affiché */
   private roleAdministratif(p: string[]): string {
     if (p.includes('ADMIN_CREER')) return 'Admin Technique';
     if (p.includes('KYC_VALIDER')) return 'Admin Validation';
