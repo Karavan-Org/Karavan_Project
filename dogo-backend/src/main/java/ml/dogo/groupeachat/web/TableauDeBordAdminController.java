@@ -82,3 +82,4 @@ public class TableauDeBordAdminController {
         return service.assignerPays(moi.id(), id, r.paysOrigineCode());
     }
 }
+

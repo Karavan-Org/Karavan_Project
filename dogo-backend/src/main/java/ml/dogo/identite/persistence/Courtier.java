@@ -27,6 +27,12 @@ public class Courtier extends Utilisateur {
     @Column(name = "note_fiabilite", nullable = false)
     private BigDecimal noteFiabilite = BigDecimal.ZERO;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     protected Courtier() {
     }
 
@@ -44,7 +50,17 @@ public class Courtier extends Utilisateur {
     }
 
     public String getNomSocieteImport() { return nomSocieteImport; }
+    public void setNomSocieteImport(String nomSocieteImport) { this.nomSocieteImport = nomSocieteImport; }
+
     public String getLicenceTransit() { return licenceTransit; }
     public String getAdresseDepot() { return adresseDepot; }
+    public void setAdresseDepot(String adresseDepot) { this.adresseDepot = adresseDepot; }
+
     public BigDecimal getNoteFiabilite() { return noteFiabilite; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

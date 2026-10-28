@@ -27,6 +27,15 @@ public class Grossiste extends Utilisateur {
     @Column(name = "note_fiabilite", nullable = false)
     private BigDecimal noteFiabilite = BigDecimal.ZERO;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "quartier_marche")
+    private String quartierMarche;
+
     protected Grossiste() {
     }
 
@@ -44,7 +53,18 @@ public class Grossiste extends Utilisateur {
     }
 
     public String getNomBoutiqueMarche() { return nomBoutiqueMarche; }
+    public void setNomBoutiqueMarche(String nomBoutiqueMarche) { this.nomBoutiqueMarche = nomBoutiqueMarche; }
+
     public String getNumeroNif() { return numeroNif; }
     public String getRegistreCommerce() { return registreCommerce; }
     public BigDecimal getNoteFiabilite() { return noteFiabilite; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
+
+    public String getQuartierMarche() { return quartierMarche; }
+    public void setQuartierMarche(String quartierMarche) { this.quartierMarche = quartierMarche; }
 }

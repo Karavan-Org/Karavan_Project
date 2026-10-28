@@ -78,13 +78,23 @@ public class InscriptionService {
         String nom = d.nom().strip();
         var maintenant = horloge.instant();
 
+        String nomBoutique = (d.nomBoutique() != null && !d.nomBoutique().isBlank())
+                ? d.nomBoutique().strip()
+                : "Boutique " + nom;
+        String nomBoutiqueMarche = (d.nomBoutiqueMarche() != null && !d.nomBoutiqueMarche().isBlank())
+                ? d.nomBoutiqueMarche().strip()
+                : "Boutique " + nom;
+        String nomSociete = (d.nomSocieteImport() != null && !d.nomSocieteImport().isBlank())
+                ? d.nomSocieteImport().strip()
+                : "Société " + nom;
+
         Utilisateur u = switch (d.type()) {
             case COMMERCANT -> new Commercant(telephone, nom, pinHash, role, maintenant,
-                    exiger(d.nomBoutique(), "nomBoutique"), d.adresseLivraison(), d.quartierBamako(), d.canalVente());
+                    nomBoutique, d.adresseLivraison(), d.quartierBamako(), d.canalVente());
             case GROSSISTE -> new Grossiste(telephone, nom, pinHash, role, maintenant,
-                    exiger(d.nomBoutiqueMarche(), "nomBoutiqueMarche"), d.numeroNif(), d.registreCommerce());
+                    nomBoutiqueMarche, d.numeroNif(), d.registreCommerce());
             case COURTIER -> new Courtier(telephone, nom, pinHash, role, maintenant,
-                    exiger(d.nomSocieteImport(), "nomSocieteImport"), d.licenceTransit(), d.adresseDepot());
+                    nomSociete, d.licenceTransit(), d.adresseDepot());
             default -> throw new IllegalStateException();
         };
         u = utilisateurs.save(u);
