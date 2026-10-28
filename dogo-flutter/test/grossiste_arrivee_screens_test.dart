@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:dogo_app/grossiste/grossiste_connexion_screen.dart';
-import 'package:dogo_app/grossiste/grossiste_documents_kyc_screen.dart';
-import 'package:dogo_app/grossiste/grossiste_dossier_examen_screen.dart';
-import 'package:dogo_app/grossiste/grossiste_inscription_screen.dart';
-import 'package:dogo_app/services/kyc_api_service.dart';
+import 'package:karavan_app/grossiste/grossiste_connexion_screen.dart';
+import 'package:karavan_app/grossiste/grossiste_documents_kyc_screen.dart';
+import 'package:karavan_app/grossiste/grossiste_dossier_examen_screen.dart';
+import 'package:karavan_app/grossiste/grossiste_inscription_screen.dart';
+import 'package:karavan_app/services/kyc_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

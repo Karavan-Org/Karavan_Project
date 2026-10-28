@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/support_plateforme.dart';
 
-/// Écran Assistance Grossiste (Support B2B International DoGo)
+/// Écran Assistance Grossiste (Support B2B International Karavan)
 class AssistanceGrossisteScreen extends StatelessWidget {
   const AssistanceGrossisteScreen({super.key});
 

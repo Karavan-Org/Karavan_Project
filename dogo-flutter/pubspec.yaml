@@ -1,5 +1,5 @@
-name: dogo_app
-description: "Application mobile DoGo - Achat groupé international B2B"
+name: karavan_app
+description: "Application mobile Karavan - Achat groupé international B2B"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -25,6 +25,7 @@ dependencies:
   geolocator: ^14.0.1
   flutter_compass: ^0.8.1
   wakelock_plus: ^1.8.1
+  google_sign_in: ^7.2.0
 
 dev_dependencies:
   flutter_test:
@@ -42,7 +43,7 @@ flutter:
     - assets/html/
     - assets/logo/
 
-  # Inter, police officielle DoGo (assets/fonts/Inter-OFL.txt).
+  # Inter, police officielle Karavan (assets/fonts/Inter-OFL.txt).
   fonts:
     - family: Inter
       fonts:

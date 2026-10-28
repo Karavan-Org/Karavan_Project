@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/widgets/mobile_money_logo.dart';
+import 'package:karavan_app/widgets/mobile_money_logo.dart';
 
 void main() {
   group('OperateurMobileMoney', () {

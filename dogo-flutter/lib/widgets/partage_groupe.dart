@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/groupe_api_service.dart';
@@ -65,7 +65,7 @@ class _PartageGroupe extends StatelessWidget {
             Text(
               publie
                   ? "Les commerçants qui ouvrent ce lien arrivent directement sur votre groupe."
-                  : "Partagez-le dès maintenant : il donnera accès au groupe dès sa publication par dɔgɔ.",
+                  : "Partagez-le dès maintenant : il donnera accès au groupe dès sa publication par Karavan.",
               style: TextStyle(fontSize: 12.5, color: AppTheme.couleurTexteAttenue(context)),
             ),
             const SizedBox(height: 14),

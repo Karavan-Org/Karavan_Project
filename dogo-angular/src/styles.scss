@@ -1,9 +1,9 @@
-// Charte graphique DoGo historique.
+// Charte graphique Karavan officielle.
 @use '@angular/material' as mat;
 @use './app/shared/animations' as anim;
 
 :root {
-  // --- Palette Dɔgɔ ---
+  // --- Palette Karavan ---
   --bissap: #AC7F5E;           // Boutons principaux, liens, en-têtes, onglet actif
   --olive: #34C759;            // Progression des groupes, validation, étapes terminées
   --rose: #F5E8D3;             // Messages rassurants (fonds protégés), notifications

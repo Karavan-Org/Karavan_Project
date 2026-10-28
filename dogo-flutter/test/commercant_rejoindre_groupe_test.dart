@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/commercant/campagne_model.dart';
-import 'package:dogo_app/commercant/rejoindre_groupe_screen.dart';
-import 'package:dogo_app/commercant/fiche_campagne_screen.dart';
+import 'package:karavan_app/commercant/campagne_model.dart';
+import 'package:karavan_app/commercant/rejoindre_groupe_screen.dart';
+import 'package:karavan_app/commercant/fiche_campagne_screen.dart';
 
 void main() {
   group('Variantes du Grossiste et Quantités pour Commerçant', () {

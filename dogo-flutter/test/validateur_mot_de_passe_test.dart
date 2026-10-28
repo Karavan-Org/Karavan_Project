@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/services/validateur_mot_de_passe.dart';
+import 'package:karavan_app/services/validateur_mot_de_passe.dart';
 
 void main() {
   group('ValidateurMotDePasse - Création et modification', () {

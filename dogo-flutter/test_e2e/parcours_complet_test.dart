@@ -7,14 +7,14 @@
 // 2. flutter test test_e2e --dart-define=ip=localhost --dart-define=port=8091
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/services/api/api_client.dart';
-import 'package:dogo_app/services/auth_service.dart';
-import 'package:dogo_app/services/courtier_api_service.dart';
-import 'package:dogo_app/services/grossiste_api_service.dart';
-import 'package:dogo_app/services/groupe_api_service.dart';
-import 'package:dogo_app/services/paiement_api_service.dart';
-import 'package:dogo_app/services/profil_api_service.dart';
-import 'package:dogo_app/services/logistique_api_service.dart';
+import 'package:karavan_app/services/api/api_client.dart';
+import 'package:karavan_app/services/auth_service.dart';
+import 'package:karavan_app/services/courtier_api_service.dart';
+import 'package:karavan_app/services/grossiste_api_service.dart';
+import 'package:karavan_app/services/groupe_api_service.dart';
+import 'package:karavan_app/services/paiement_api_service.dart';
+import 'package:karavan_app/services/profil_api_service.dart';
+import 'package:karavan_app/services/logistique_api_service.dart';
 
 const pin = '2580';
 

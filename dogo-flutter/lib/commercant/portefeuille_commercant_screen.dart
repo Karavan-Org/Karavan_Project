@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../models/participation_model.dart';
 import '../models/remboursement_model.dart';
 import '../services/auth_service.dart';
@@ -609,7 +609,7 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
 
               const SizedBox(height: 20),
 
-              // Note de garantie DoGo
+              // Note de garantie Karavan
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(

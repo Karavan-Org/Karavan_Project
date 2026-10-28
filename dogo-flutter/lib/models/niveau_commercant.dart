@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// Les 3 niveaux de progression d'un Commerçant sur la plateforme DoGo
+/// Les 3 niveaux de progression d'un Commerçant sur la plateforme Karavan
 /// Basés sur le volume de commandes finalisées :
 /// - Niveau 1 (Nouveau Commerçant) : < 5 commandes
 /// - Niveau 2 (Commerçant Vérifié) : 5 à 19 commandes

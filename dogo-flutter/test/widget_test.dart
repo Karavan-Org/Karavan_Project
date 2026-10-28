@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/main.dart';
-import 'package:dogo_app/screens/splash_launch_screen.dart';
-import 'package:dogo_app/screens/onboarding_screen.dart';
+import 'package:karavan_app/main.dart';
+import 'package:karavan_app/screens/splash_launch_screen.dart';
+import 'package:karavan_app/screens/onboarding_screen.dart';
 
 void main() {
   testWidgets('DogoApp démarre sur SplashLaunchScreen', (WidgetTester tester) async {

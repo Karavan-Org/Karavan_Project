@@ -3,12 +3,12 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:dogo_app/services/api/api_client.dart';
-import 'package:dogo_app/services/api/api_config.dart';
-import 'package:dogo_app/services/auth_service.dart';
-import 'package:dogo_app/services/catalogue_api_service.dart';
-import 'package:dogo_app/services/groupe_api_service.dart';
-import 'package:dogo_app/services/kyc_api_service.dart';
+import 'package:karavan_app/services/api/api_client.dart';
+import 'package:karavan_app/services/api/api_config.dart';
+import 'package:karavan_app/services/auth_service.dart';
+import 'package:karavan_app/services/catalogue_api_service.dart';
+import 'package:karavan_app/services/groupe_api_service.dart';
+import 'package:karavan_app/services/kyc_api_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// PNG 1×1 valide

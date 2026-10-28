@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/models/campagne_model.dart';
+import 'package:karavan_app/models/campagne_model.dart';
 
 void main() {
   // JSON conforme à GroupeService.GroupeVue côté Spring Boot

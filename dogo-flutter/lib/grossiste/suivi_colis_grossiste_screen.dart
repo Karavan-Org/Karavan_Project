@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
 import '../services/groupe_api_service.dart';
@@ -9,7 +9,7 @@ import '../services/visibilite_ecran.dart';
 import 'notifier_administration_screen.dart';
 
 /// Suivi du colis des groupes que le grossiste achemine lui-même : il valide chaque étape dans l'ordre,
-/// chaque validation est notifiée immédiatement aux administrateurs dɔgɔ, qui mettent à jour le suivi
+/// chaque validation est notifiée immédiatement aux administrateurs Karavan, qui mettent à jour le suivi
 /// officiel vu par les commerçants (affiché ici aussi).
 class SuiviColisGrossisteScreen extends StatefulWidget {
   const SuiviColisGrossisteScreen({super.key});
@@ -267,8 +267,8 @@ class _SuiviColisGrossisteScreenState extends State<SuiviColisGrossisteScreen> {
                 Expanded(
                   child: Text(
                     convoi != null
-                        ? "Suivi officiel dɔgɔ : ${convoi['statut']}"
-                        : "Suivi officiel dɔgɔ : pas encore ouvert par l'administrateur",
+                        ? "Suivi officiel Karavan : ${convoi['statut']}"
+                        : "Suivi officiel Karavan : pas encore ouvert par l'administrateur",
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

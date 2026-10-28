@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import '../services/paiement_api_service.dart';
@@ -949,7 +949,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
 
             const SizedBox(height: 24),
 
-            // Notice Séquestre DoGo
+            // Notice Séquestre Karavan
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(

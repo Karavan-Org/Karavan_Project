@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/services/theme_service.dart';
-import 'package:dogo_app/theme/app_theme.dart';
-import 'package:dogo_app/widgets/bouton_bascule_theme.dart';
+import 'package:karavan_app/services/theme_service.dart';
+import 'package:karavan_app/theme/app_theme.dart';
+import 'package:karavan_app/widgets/bouton_bascule_theme.dart';
 
 void main() {
   setUp(() {

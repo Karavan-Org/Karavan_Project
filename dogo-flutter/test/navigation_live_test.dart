@@ -1,5 +1,5 @@
-import 'package:dogo_app/services/itineraire_service.dart';
-import 'package:dogo_app/services/navigation_live.dart';
+import 'package:karavan_app/services/itineraire_service.dart';
+import 'package:karavan_app/services/navigation_live.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api/api_exception.dart';
 import '../services/catalogue_api_service.dart';
@@ -31,7 +31,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
   final _douaneController = TextEditingController(text: '0');
   final _autresController = TextEditingController(text: '0');
   final _delaiController = TextEditingController(text: '30');
-  /// Politique d'annulation imposée par dɔgɔ (RG-24) : affichée, jamais modifiable ni supprimable par le grossiste.
+  /// Politique d'annulation imposée par Karavan (RG-24) : affichée, jamais modifiable ni supprimable par le grossiste.
   /// Le backend l'applique de lui-même (GroupeService.POLITIQUE_ANNULATION_PLATEFORME).
   static const _politiqueAnnulation = "Annulation possible tant que l'objectif n'est pas atteint ; "
       "remboursement intégral si le groupe est annulé ou n'atteint pas son objectif.";
@@ -164,7 +164,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
         icon: const Icon(Icons.check_circle_rounded, color: AppTheme.oliveProfond, size: 48),
         title: const Text("Groupe créé !", style: TextStyle(fontWeight: FontWeight.w800)),
         content: Text(
-          "« ${groupe.titre} » (n° ${groupe.id}) attend sa publication par dɔgɔ.\n\n"
+          "« ${groupe.titre} » (n° ${groupe.id}) attend sa publication par Karavan.\n\n"
           "Prix pour les commerçants : ${groupe.prixUnitaire} FCFA / pièce (frais de plateforme inclus).\n\n"
           "Partagez son lien pour que les commerçants le rejoignent.",
         ),
@@ -273,7 +273,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  "Vous acheminez vous-même la marchandise et signalez ses étapes à dɔgɔ. Les frais de plateforme "
+                  "Vous acheminez vous-même la marchandise et signalez ses étapes à Karavan. Les frais de plateforme "
                   "sont ajoutés automatiquement au prix ; le groupe est visible des commerçants après sa publication.",
                   style: TextStyle(fontSize: 12, color: AppTheme.couleurTexte(context)),
                 ),
@@ -343,7 +343,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
           const SizedBox(height: 12),
           // Lecture seule : la politique d'annulation est fixée par la plateforme
           InputDecorator(
-            decoration: _decoration("Politique d'annulation (fixée par dɔgɔ)").copyWith(
+            decoration: _decoration("Politique d'annulation (fixée par Karavan)").copyWith(
               prefixIcon: const Icon(Icons.lock_outline_rounded, size: 18),
             ),
             child: const Text(_politiqueAnnulation, style: TextStyle(fontSize: 13, height: 1.35)),

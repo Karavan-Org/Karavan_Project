@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../widgets/bouton_bascule_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -141,7 +141,7 @@ class _GrossisteInscriptionScreenState
                   width: double.infinity, height: 86),
               const SizedBox(height: 8),
               Text(
-                "Rejoignez dɔgɔ\nen tant que grossiste",
+                "Rejoignez Karavan\nen tant que grossiste",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontFamily: AppTheme.policeTitre, 
                     fontSize: 20.5,

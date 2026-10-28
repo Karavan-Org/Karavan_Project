@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/models/role_acteur.dart';
-import 'package:dogo_app/services/auth_service.dart';
-import 'package:dogo_app/services/session_storage_service.dart';
+import 'package:karavan_app/models/role_acteur.dart';
+import 'package:karavan_app/services/auth_service.dart';
+import 'package:karavan_app/services/session_storage_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

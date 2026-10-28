@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api/api_exception.dart';
 import '../services/groupe_api_service.dart';
@@ -128,7 +128,7 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
           title: const Text("Groupe créé", style: TextStyle(fontWeight: FontWeight.w800)),
           content: Text(
             "Le groupe n° ${soumis.id} (${soumis.produitNom}) est envoyé à ${soumis.grossisteNom}, "
-            "qui doit confirmer son stock. Il sera ensuite publié par un administrateur dɔgɔ, puis visible "
+            "qui doit confirmer son stock. Il sera ensuite publié par un administrateur Karavan, puis visible "
             "par les commerçants.\n\nPrix unitaire calculé : ${soumis.prixUnitaire} FCFA (frais de plateforme inclus).",
           ),
           actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Compris"))],
@@ -226,7 +226,7 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                "Sous-total saisi : $_coutUnitaireSaisi FCFA / pièce. Les frais de plateforme dɔgɔ sont ajoutés "
+                "Sous-total saisi : $_coutUnitaireSaisi FCFA / pièce. Les frais de plateforme Karavan sont ajoutés "
                 "automatiquement : le prix final s'affiche après la création.",
                 style: TextStyle(fontSize: 12, color: AppTheme.couleurTexte(context)),
               ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/widgets/avatar_profil_interactif.dart';
-import 'package:dogo_app/services/auth_service.dart';
+import 'package:karavan_app/widgets/avatar_profil_interactif.dart';
+import 'package:karavan_app/services/auth_service.dart';
 
 class _FakePainter extends CustomPainter {
   @override

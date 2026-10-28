@@ -1,4 +1,4 @@
-import 'package:dogo_app/grossiste/didacticiel_grossiste_guide.dart';
+import 'package:karavan_app/grossiste/didacticiel_grossiste_guide.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/screens/splash_launch_screen.dart';
+import 'package:karavan_app/screens/splash_launch_screen.dart';
 
 void main() {
   group('SplashLaunchScreen - Animation de départ & Design System', () {

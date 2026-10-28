@@ -1,4 +1,4 @@
-/// Alias pour compatibilité
+﻿/// Alias pour compatibilité
 typedef VarianteGroupe = VarianteGroupeModel;
 
 /// Modèle d'une variante de produit renseignée par le grossiste (RG-12)
@@ -69,7 +69,7 @@ class VarianteGroupeModel {
       };
 }
 
-/// Modèle d'un groupe d'achat / campagne d'importation groupée, compatible API Backend DoGo
+/// Modèle d'un groupe d'achat / campagne d'importation groupée, compatible API Backend Karavan
 class GroupeCampagneModel {
   final String id;
   final String titre;
@@ -189,7 +189,7 @@ class GroupeCampagneModel {
         ? rawProduitId.toInt()
         : int.tryParse(rawProduitId?.toString() ?? '');
 
-    // Photo réelle du produit (servie par le backend) ; à défaut, le logo dɔgɔ
+    // Photo réelle du produit (servie par le backend) ; à défaut, le logo Karavan
     String resolveImage() {
       final photo = produit?['photoUrl']?.toString() ?? json['imagePath']?.toString() ?? '';
       return photo.isNotEmpty ? photo : 'assets/images/logo_karavan.png';

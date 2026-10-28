@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.dogo_app"
+    namespace = "com.example.karavan_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

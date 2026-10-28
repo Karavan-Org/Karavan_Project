@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/grossiste/grossiste_main_nav.dart';
+import 'package:karavan_app/grossiste/grossiste_main_nav.dart';
 
 void main() {
   testWidgets('GrossisteMainNav renders properly on desktop browser', (tester) async {

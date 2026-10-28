@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/courtier/portefeuille_courtier_screen.dart';
-import 'package:dogo_app/services/api/api_client.dart';
-import 'package:dogo_app/services/api/api_config.dart';
+import 'package:karavan_app/courtier/portefeuille_courtier_screen.dart';
+import 'package:karavan_app/services/api/api_client.dart';
+import 'package:karavan_app/services/api/api_config.dart';
 
 /// Portefeuille Courtier branché sur l'API réelle (serveur HTTP local).
 void main() {

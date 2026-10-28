@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class AppTheme {
   // --- PALETTE GRAPHIQUE HISTORIQUE DOGO ---
@@ -559,7 +559,7 @@ class AppTheme {
         labelStyle: sans(14, FontWeight.w700, texte),
         unselectedLabelStyle: sans(14, FontWeight.w500, attenue),
       ),
-      // Navigation DoGo classique
+      // Navigation Karavan classique
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: sombre ? darkSurface : surface,
         surfaceTintColor: Colors.transparent,
@@ -633,7 +633,7 @@ class AppTheme {
 }
 
 /// Extension sur BuildContext pour accéder directement aux couleurs et styles adaptatifs
-extension DogoThemeExtension on BuildContext {
+extension KaravanThemeExtension on BuildContext {
   bool get estSombre => AppTheme.estSombre(this);
   Color get couleurFond => AppTheme.couleurFond(this);
   Color get couleurSurface => AppTheme.couleurSurface(this);

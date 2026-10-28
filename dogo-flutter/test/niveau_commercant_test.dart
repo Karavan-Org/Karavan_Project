@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/models/niveau_commercant.dart';
-import 'package:dogo_app/commercant/details_niveau_commercant_sheet.dart';
-import 'package:dogo_app/commercant/profil_commercant_screen.dart';
+import 'package:karavan_app/models/niveau_commercant.dart';
+import 'package:karavan_app/commercant/details_niveau_commercant_sheet.dart';
+import 'package:karavan_app/commercant/profil_commercant_screen.dart';
 
 void main() {
   group('NiveauCommercant - Logique métier des paliers', () {

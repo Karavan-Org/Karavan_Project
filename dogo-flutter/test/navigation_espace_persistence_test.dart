@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/services/session_storage_service.dart';
+import 'package:karavan_app/services/session_storage_service.dart';
 
 void main() {
   group('SessionStorageService - Persistance de l\'espace actif', () {

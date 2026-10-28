@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/widgets/animations_suivi_international.dart';
-import 'package:dogo_app/commercant/suivi_colis_screen.dart';
+import 'package:karavan_app/widgets/animations_suivi_international.dart';
+import 'package:karavan_app/commercant/suivi_colis_screen.dart';
 
 void main() {
   group('Suivi de Colis International - 10 Grandes Phases & Animations', () {

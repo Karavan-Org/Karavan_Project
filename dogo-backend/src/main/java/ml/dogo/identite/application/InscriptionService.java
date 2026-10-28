@@ -124,8 +124,8 @@ public class InscriptionService {
         utilisateurs.save(u);
         audit.tracer(u.getId(), "TELEPHONE_VERIFIE", null, "statut=" + u.getStatutCompte());
         notifications.notifier(u.getId(), u.typeActeur().exigeKyc()
-                ? "Bienvenue sur DoGo ! Envoyez maintenant votre dossier de vérification (KYC) pour activer votre compte."
-                : "Bienvenue sur DoGo ! Votre compte est actif.");
+                ? "Bienvenue sur Karavan ! Envoyez maintenant votre dossier de vérification (KYC) pour activer votre compte."
+                : "Bienvenue sur Karavan ! Votre compte est actif.");
         return new Resultat(u.getId(), u.getStatutCompte().name(), null);
     }
 

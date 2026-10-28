@@ -1,4 +1,4 @@
-/// Validateur centralisé et uniforme des mots de passe pour l'ensemble des acteurs DoGo
+﻿/// Validateur centralisé et uniforme des mots de passe pour l'ensemble des acteurs Karavan
 /// (Commerçants, Grossistes, Courtiers, Administrateurs).
 ///
 /// Respecte strictement les règles de sécurité backend RG-07 :

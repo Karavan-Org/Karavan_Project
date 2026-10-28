@@ -4,20 +4,22 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../theme/app_theme.dart';
 
 /// Widget Flutter affichant la planète 3D tournante avec Three.js
-/// (avec le cargo voguant sur la mer, l'avion, le carton DoGo et la sneaker en orbite).
-class DogoPlanet3DWidget extends StatefulWidget {
+/// (avec le cargo voguant sur la mer, l'avion, le carton Karavan et la sneaker en orbite).
+typedef DogoPlanet3DWidget = KaravanPlanet3DWidget;
+
+class KaravanPlanet3DWidget extends StatefulWidget {
   final double? height;
 
-  const DogoPlanet3DWidget({
+  const KaravanPlanet3DWidget({
     super.key,
     this.height,
   });
 
   @override
-  State<DogoPlanet3DWidget> createState() => _DogoPlanet3DWidgetState();
+  State<KaravanPlanet3DWidget> createState() => _KaravanPlanet3DWidgetState();
 }
 
-class _DogoPlanet3DWidgetState extends State<DogoPlanet3DWidget> {
+class _KaravanPlanet3DWidgetState extends State<KaravanPlanet3DWidget> {
   WebViewController? _controller;
   bool _isLoading = true;
 

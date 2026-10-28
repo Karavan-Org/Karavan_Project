@@ -1,5 +1,5 @@
-import 'package:dogo_app/grossiste/creer_groupe_grossiste_screen.dart';
-import 'package:dogo_app/services/lien_groupe.dart';
+import 'package:karavan_app/grossiste/creer_groupe_grossiste_screen.dart';
+import 'package:karavan_app/services/lien_groupe.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

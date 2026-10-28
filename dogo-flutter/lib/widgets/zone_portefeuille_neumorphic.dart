@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'karavan_logo.dart';
 
 /// Composant Portefeuille Neumorphique / Soft 3D Glass
 /// Reproduit fidèlement le design Soft UI avec relief doux, double ombre lumineuse,
-/// squircle 3D emblématique DoGo, pilules concaves d'informations, bouton gradient avec flèche circulaire
-/// et boutons squircles rapides d'opérateurs, tout en respectant scrupuleusement la charte DoGo.
+/// squircle 3D emblématique Karavan, pilules concaves d'informations, bouton gradient avec flèche circulaire
+/// et boutons squircles rapides d'opérateurs, tout en respectant scrupuleusement la charte Karavan.
 class ZonePortefeuilleNeumorphic extends StatelessWidget {
   final String titre;
   final String? sousTitre;

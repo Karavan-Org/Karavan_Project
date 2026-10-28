@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/commercant/reussite_paiement_screen.dart';
+import 'package:karavan_app/commercant/reussite_paiement_screen.dart';
 
 void main() {
   group('Jauge dynamique et réactive de ReussitePaiementScreen', () {

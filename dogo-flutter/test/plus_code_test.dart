@@ -1,4 +1,4 @@
-import 'package:dogo_app/services/plus_code.dart';
+import 'package:karavan_app/services/plus_code.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 

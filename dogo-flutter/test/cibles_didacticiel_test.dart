@@ -1,4 +1,4 @@
-import 'package:dogo_app/widgets/didacticiel_guide_overlay.dart';
+import 'package:karavan_app/widgets/didacticiel_guide_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

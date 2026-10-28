@@ -1,10 +1,10 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
 import 'api/api_exception.dart';
 
-/// Résultat d'un paiement selon le contrat Backend DoGo (PaiementVue)
+/// Résultat d'un paiement selon le contrat Backend Karavan (PaiementVue)
 class PaiementResultat {
   final int id;
   final int participationId;

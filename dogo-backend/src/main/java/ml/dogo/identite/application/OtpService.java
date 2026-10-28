@@ -70,7 +70,7 @@ public class OtpService {
                 maintenant.plus(proprietes.otp().validite()), maintenant));
         long minutes = Math.max(1, proprietes.otp().validite().toMinutes());
         notifications.envoyerSms(telephone,
-                "DoGo : votre code de vérification est " + code + ". Il est valable " + minutes + " min.");
+                "Karavan : votre code de vérification est " + code + ". Il est valable " + minutes + " min.");
         return code;
     }
 

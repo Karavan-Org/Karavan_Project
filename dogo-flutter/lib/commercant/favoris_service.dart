@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/groupe_api_service.dart';
 import 'campagne_model.dart';
 
 /// Service centralisé de gestion des Favoris et des Campagnes pour le Commerçant
-/// Sans données de test factices : alimenté par l'API Backend DoGo.
+/// Sans données de test factices : alimenté par l'API Backend Karavan.
 class FavorisService {
   FavorisService._internal();
   static final FavorisService instance = FavorisService._internal();
 
-  /// Catalogue dynamique alimenté par l'API Backend DoGo (initialement vide)
+  /// Catalogue dynamique alimenté par l'API Backend Karavan (initialement vide)
   late final ValueNotifier<List<GroupeCampagneModel>> campagnesNotifier =
       ValueNotifier<List<GroupeCampagneModel>>([]);
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/commercant/mes_commandes_screen.dart';
+import 'package:karavan_app/commercant/mes_commandes_screen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

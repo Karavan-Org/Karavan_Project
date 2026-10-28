@@ -1,4 +1,4 @@
-import '../widgets/tab_navigation_scope.dart';
+﻿import '../widgets/tab_navigation_scope.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
@@ -11,7 +11,7 @@ import 'suivi_colis_grossiste_screen.dart';
 import '../services/visibilite_ecran.dart';
 
 /// Groupes d'achat montés sur les produits du Grossiste (GET /api/groupes/du-grossiste) : ceux qu'il a créés
-/// lui-même (il les partage et signale les étapes de leur acheminement à dɔgɔ), et ceux des courtiers,
+/// lui-même (il les partage et signale les étapes de leur acheminement à Karavan), et ceux des courtiers,
 /// dont il confirme la disponibilité du stock (RG-18).
 class MesGroupesGrossisteScreen extends StatefulWidget {
   final String titre;
@@ -119,7 +119,7 @@ class _MesGroupesGrossisteScreenState extends State<MesGroupesGrossisteScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Stock confirmé : le groupe attend maintenant la publication par dɔgɔ"),
+          content: Text("Stock confirmé : le groupe attend maintenant la publication par Karavan"),
           backgroundColor: AppTheme.success,
         ),
       );

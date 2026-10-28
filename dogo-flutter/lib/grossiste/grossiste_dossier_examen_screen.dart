@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
@@ -11,7 +11,7 @@ import 'grossiste_onboarding_widgets.dart';
 import '../services/visibilite_ecran.dart';
 
 /// Espace verrouillé pendant l'examen du dossier d'un Grossiste ou d'un Courtier (maquette Figma « Espace Vendeur
-/// dɔgɔ »). Tirer vers le bas relit le dossier : approuvé → reconnexion puis espace, rejeté → nouveau dépôt.
+/// Karavan »). Tirer vers le bas relit le dossier : approuvé → reconnexion puis espace, rejeté → nouveau dépôt.
 class GrossisteDossierExamenScreen extends StatefulWidget {
   final DossierKyc dossier;
   final RoleActeur role;
@@ -463,8 +463,8 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                               ? "Votre compte courtier est activé avec succès. Vous pouvez désormais créer vos groupes d'achat et organiser vos convois en toute sécurité."
                               : "Votre compte vendeur est activé avec succès. Vous pouvez désormais publier vos produits, créer des groupes d'achat et encaisser vos paiements en toute sécurité.")
                           : (_courtier
-                              ? "Votre pièce d'identité et votre licence de transitaire sont en cours d'audit par l'équipe conformité dɔgɔ pour protéger les transactions du réseau."
-                              : "Votre RCCM et NIF sont en cours d'audit par l'équipe conformité dɔgɔ pour protéger les transactions du réseau."),
+                              ? "Votre pièce d'identité et votre licence de transitaire sont en cours d'audit par l'équipe conformité Karavan pour protéger les transactions du réseau."
+                              : "Votre RCCM et NIF sont en cours d'audit par l'équipe conformité Karavan pour protéger les transactions du réseau."),
                       style: TextStyle(fontSize: 10.5, color: AppTheme.couleurTexteAttenue(context), height: 1.3),
                     ),
                     const SizedBox(height: 10),
@@ -559,7 +559,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                   decoration: const BoxDecoration(color: AppTheme.olive, shape: BoxShape.circle),
                   child: const Icon(Icons.chat_rounded, color: Colors.white, size: 20),
                 ),
-                titre: "Équipe d'intégration dɔgɔ",
+                titre: "Équipe d'intégration Karavan",
                 couleurTitre: AppTheme.oliveProfond,
                 ligne1: "Besoin d'accélérer la vérification de votre compte ?",
                 couleurLigne1: AppTheme.oliveProfond,
@@ -593,7 +593,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                         TextSpan(
                           children: [
                             TextSpan(
-                              text: "Engagement dɔgɔ :\n",
+                              text: "Engagement Karavan :\n",
                               style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context), fontSize: 11),
                             ),
                             const TextSpan(text: "Votre catalogue sera immédiatement débloqué après validation."),

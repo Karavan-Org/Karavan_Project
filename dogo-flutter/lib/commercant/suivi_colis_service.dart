@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// Modèle d'étape logistique prescrite dans le cycle de vie DoGo
+/// Modèle d'étape logistique prescrite dans le cycle de vie Karavan
 class EtapeSuiviModel {
   final int numero;
   final String titre;
@@ -100,16 +100,16 @@ class SuiviColisService {
     EtapeSuiviModel(
       numero: 1,
       titre: "Groupe Clôturé & Paiements Séquestrés",
-      sousTitre: "100% des quotas atteints, fonds bloqués sous séquestre DoGo",
-      lieu: "Plateforme centrale DoGo (Bamako)",
+      sousTitre: "100% des quotas atteints, fonds bloqués sous séquestre Karavan",
+      lieu: "Plateforme centrale Karavan (Bamako)",
       dateHeure: "26 Septembre - 18:00",
-      acteurResponsable: "Validé par le Système Séquestre DoGo",
+      acteurResponsable: "Validé par le Système Séquestre Karavan",
       icone: Icons.verified_user_outlined,
     ),
     EtapeSuiviModel(
       numero: 2,
       titre: "Préparation & Conditionnement Grossiste",
-      sousTitre: "Inspection des lots, étiquetage codes barres DoGo et colisage",
+      sousTitre: "Inspection des lots, étiquetage codes barres Karavan et colisage",
       lieu: "Entrepôt Grossiste, Istanbul (Turquie)",
       dateHeure: "28 Septembre - 10:30",
       acteurResponsable: "Validé par Grossiste Bosphore Export",
@@ -121,7 +121,7 @@ class SuiviColisService {
       sousTitre: "Vol Cargo TK-641 pris en charge, suivi satellite activé",
       lieu: "Espace aérien international (Vol TK-641)",
       dateHeure: "30 Septembre - 14:15",
-      acteurResponsable: "Mis à jour par Admin DoGo & Courtier Touré",
+      acteurResponsable: "Mis à jour par Admin Karavan & Courtier Touré",
       icone: Icons.flight_takeoff,
     ),
     EtapeSuiviModel(
@@ -130,7 +130,7 @@ class SuiviColisService {
       sousTitre: "Formalités douanières groupées validées et transfert urbain",
       lieu: "Plateforme Douanière de Bamako-Sénou",
       dateHeure: "01 Octobre - 09:00",
-      acteurResponsable: "Validé par Administrateur Douanes DoGo",
+      acteurResponsable: "Validé par Administrateur Douanes Karavan",
       icone: Icons.fact_check_outlined,
     ),
     EtapeSuiviModel(

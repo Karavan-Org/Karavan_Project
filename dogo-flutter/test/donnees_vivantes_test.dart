@@ -1,5 +1,5 @@
-import 'package:dogo_app/services/convoi_api_service.dart';
-import 'package:dogo_app/utils/format.dart';
+import 'package:karavan_app/services/convoi_api_service.dart';
+import 'package:karavan_app/utils/format.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/widgets/bouton_bascule_theme.dart';
-import 'package:dogo_app/services/theme_service.dart';
+import 'package:karavan_app/widgets/bouton_bascule_theme.dart';
+import 'package:karavan_app/services/theme_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

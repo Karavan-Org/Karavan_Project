@@ -1,4 +1,4 @@
-/// Lien d'invitation vers un groupe d'achat : le créateur le partage, le commerçant l'ouvre
+﻿/// Lien d'invitation vers un groupe d'achat : le créateur le partage, le commerçant l'ouvre
 /// (lien cliquable, ou collé dans l'app) pour rejoindre le groupe.
 class LienGroupe {
   LienGroupe._();
@@ -16,7 +16,7 @@ class LienGroupe {
 
   static String message({required int groupeId, required String titre, num? prixUnitaire}) {
     final prix = (prixUnitaire != null && prixUnitaire > 0) ? " à $prixUnitaire FCFA la pièce" : "";
-    return "Rejoignez mon groupe d'achat « $titre »$prix sur dɔgɔ : ${lien(groupeId)}\n"
+    return "Rejoignez mon groupe d'achat « $titre »$prix sur Karavan : ${lien(groupeId)}\n"
         "(ou saisissez le code ${code(groupeId)} dans l'app)";
   }
 

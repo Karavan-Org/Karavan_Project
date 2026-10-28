@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/services/api/api_config.dart';
+import 'package:karavan_app/services/api/api_config.dart';
 
 void main() {
   test('ApiConfig.baseUrl fournit une URL valide et cohérente', () {

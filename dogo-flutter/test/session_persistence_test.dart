@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:dogo_app/services/session_storage_service.dart';
-import 'package:dogo_app/services/auth_service.dart';
+import 'package:karavan_app/services/session_storage_service.dart';
+import 'package:karavan_app/services/auth_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

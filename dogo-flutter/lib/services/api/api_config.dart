@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 
-/// Configuration centralisée des endpoints et URLs de l'API Backend DoGo
+/// Configuration centralisée des endpoints et URLs de l'API Backend Karavan
 class ApiConfig {
   ApiConfig._();
 

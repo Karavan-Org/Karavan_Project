@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -7,7 +7,7 @@ import 'api_config.dart';
 import 'api_exception.dart';
 import 'api_http_client.dart';
 
-/// Client HTTP centralisé de l'application DoGo
+/// Client HTTP centralisé de l'application Karavan
 class ApiClient {
   ApiClient._();
   static final ApiClient instance = ApiClient._();

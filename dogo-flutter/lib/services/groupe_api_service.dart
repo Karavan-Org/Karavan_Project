@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import '../models/campagne_model.dart';
 import '../models/participation_model.dart';
 import '../models/remboursement_model.dart';
@@ -6,7 +6,7 @@ import 'api/api_client.dart';
 import 'api/api_config.dart';
 import 'api/api_exception.dart';
 
-/// Service gérant les Groupes d'achat / Campagnes via l'API Backend DoGo
+/// Service gérant les Groupes d'achat / Campagnes via l'API Backend Karavan
 class GroupeApiService {
   GroupeApiService._();
   static final GroupeApiService instance = GroupeApiService._();
@@ -198,7 +198,7 @@ class GroupeApiService {
   Future<List<Map<String, dynamic>>> etapes(int groupeId) async =>
       _liste(await ApiClient.instance.get('/api/groupes/$groupeId/etapes'));
 
-  /// Convois (suivi officiel mis à jour par dɔgɔ) des groupes visibles par l'utilisateur connecté
+  /// Convois (suivi officiel mis à jour par Karavan) des groupes visibles par l'utilisateur connecté
   Future<List<Map<String, dynamic>>> convois() async => _liste(await ApiClient.instance.get('/api/convois'));
 
   /// Commandes nées d'un groupe (ou réservations si en cours)

@@ -1,14 +1,14 @@
-import 'package:dogo_app/grossiste/ajouter_produit_screen.dart';
-import 'package:dogo_app/commercant/aide_support_screen.dart';
-import 'package:dogo_app/courtier/assistance_courtier_screen.dart';
-import 'package:dogo_app/grossiste/assistance_grossiste_screen.dart';
-import 'package:dogo_app/commercant/parametres_commercant_screen.dart';
-import 'package:dogo_app/commercant/profil_commercant_screen.dart';
-import 'package:dogo_app/courtier/courtier_profil_screen.dart';
-import 'package:dogo_app/courtier/parametres_courtier_screen.dart';
-import 'package:dogo_app/grossiste/grossiste_drawer.dart';
-import 'package:dogo_app/grossiste/grossiste_profil_screen.dart';
-import 'package:dogo_app/grossiste/parametres_grossiste_screen.dart';
+import 'package:karavan_app/grossiste/ajouter_produit_screen.dart';
+import 'package:karavan_app/commercant/aide_support_screen.dart';
+import 'package:karavan_app/courtier/assistance_courtier_screen.dart';
+import 'package:karavan_app/grossiste/assistance_grossiste_screen.dart';
+import 'package:karavan_app/commercant/parametres_commercant_screen.dart';
+import 'package:karavan_app/commercant/profil_commercant_screen.dart';
+import 'package:karavan_app/courtier/courtier_profil_screen.dart';
+import 'package:karavan_app/courtier/parametres_courtier_screen.dart';
+import 'package:karavan_app/grossiste/grossiste_drawer.dart';
+import 'package:karavan_app/grossiste/grossiste_profil_screen.dart';
+import 'package:karavan_app/grossiste/parametres_grossiste_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

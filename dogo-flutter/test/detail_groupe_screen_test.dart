@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dogo_app/screens/detail_groupe_screen.dart';
-import 'package:dogo_app/services/groupe_api_service.dart';
+import 'package:karavan_app/screens/detail_groupe_screen.dart';
+import 'package:karavan_app/services/groupe_api_service.dart';
 
 void main() {
   testWidgets('DetailGroupeScreen affiche la maquette exacte du groupe', (tester) async {

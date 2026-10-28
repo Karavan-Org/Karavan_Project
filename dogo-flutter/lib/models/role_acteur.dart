@@ -1,4 +1,4 @@
-/// Les 3 acteurs de l'écosystème DoGo
+﻿/// Les 3 acteurs de l'écosystème Karavan
 enum RoleActeur {
   commercant(
     libelle: 'Commerçant',

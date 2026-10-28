@@ -1,6 +1,6 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
-/// Exception standardisée pour l'API Backend DoGo, compatible RFC 7807 (ProblemDetail)
+/// Exception standardisée pour l'API Backend Karavan, compatible RFC 7807 (ProblemDetail)
 class ApiException implements Exception {
   final int statusCode;
   final String message;

@@ -32,11 +32,13 @@ void main() async {
   // Rappel en console du backend ciblé (--dart-define=ip=... / port=...)
   debugPrint('Karavan API : ${ApiConfig.baseUrl}');
 
-  runApp(const DogoApp());
+  runApp(const KaravanApp());
 }
 
-class DogoApp extends StatelessWidget {
-  const DogoApp({super.key});
+typedef DogoApp = KaravanApp;
+
+class KaravanApp extends StatelessWidget {
+  const KaravanApp({super.key});
 
   /// Lien d'invitation ouvert depuis l'extérieur : https://dogo.ml/groupe/12 arrive en « /groupe/12 »,
   /// dogo://groupe/12 en « /12 ».

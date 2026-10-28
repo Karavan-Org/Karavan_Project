@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
 import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
@@ -768,7 +768,7 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Total des fonds sous séquestre dɔgɔ",
+                              "Total des fonds sous séquestre Karavan",
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
