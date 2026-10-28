@@ -32,11 +32,11 @@ public class GroupeController {
             @NotNull Instant dateLimite,
             @NotNull BigDecimal marchandise, @NotNull BigDecimal transport, @NotNull BigDecimal douane,
             @NotNull BigDecimal autres, Integer delaiLivraisonJours, String politiqueAnnulation,
-            Integer quantiteMinParCommercant) {
+            Integer quantiteMinParCommercant, String paysOrigineCode) {
 
         GroupeService.Demande versDemande() {
             return new GroupeService.Demande(titre, produitId, quantiteCible, dateLimite, marchandise, transport, douane,
-                    autres, delaiLivraisonJours, politiqueAnnulation, quantiteMinParCommercant);
+                    autres, delaiLivraisonJours, politiqueAnnulation, quantiteMinParCommercant, paysOrigineCode);
         }
     }
 

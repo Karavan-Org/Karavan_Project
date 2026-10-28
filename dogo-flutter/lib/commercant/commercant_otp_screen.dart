@@ -309,33 +309,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
 
               const SizedBox(height: 18),
 
-              // BANNIÈRE MODE DÉMO : seulement si le serveur a renvoyé le code
-              if (_codeSimulationCourant != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppTheme.oliveClair,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.oliveBordure),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.verified_outlined, color: AppTheme.oliveProfond, size: 20),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        "Code de confirmation SMS : $_codeSimulationCourant",
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.oliveProfond,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+
 
               const SizedBox(height: 24),
 

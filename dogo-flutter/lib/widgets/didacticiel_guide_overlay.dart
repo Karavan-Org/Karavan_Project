@@ -170,13 +170,13 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             icone: Icons.account_balance_wallet_rounded,
           ),
           _EtapeGuideData(
-            titre: "Menu, Paramètres & Mode Sombre",
+            titre: "Boutique, Carte & Paramètres",
             sousTitre: "VOTRE EN-TÊTE PERSONNEL",
             description:
-                "Gérez les informations de votre boutique, basculez en mode sombre ou clair en un clic, et ouvrez le menu latéral pour l'assistance en direct et vos paramètres de compte.",
+                "Renseignez le nom de votre boutique au marché et choisissez son emplacement sur la carte ou par coordonnées GPS dans vos Paramètres pour que les commerçants vous localisent facilement.",
             emplacement: EmplacementCible.enTeteProfilEtTheme,
             cleGlobale: cibles?.grossisteBarreApp,
-            icone: Icons.tune_rounded,
+            icone: Icons.storefront_rounded,
           ),
         ];
 
@@ -224,6 +224,14 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             emplacement: EmplacementCible.tabProfil,
             icone: Icons.account_balance_wallet_rounded,
           ),
+          const _EtapeGuideData(
+            titre: "Boutique & Emplacement GPS",
+            sousTitre: "FONCTIONNALITÉ 5 : VOS PARAMÈTRES",
+            description:
+                "Configurez dès maintenant le nom de votre boutique et choisissez votre emplacement sur la carte interactive ou par coordonnées GPS dans l'onglet Paramètres pour faciliter vos livraisons et retraits.",
+            emplacement: EmplacementCible.tabProfil,
+            icone: Icons.storefront_rounded,
+          ),
         ];
 
       case RoleActeur.courtier:
@@ -263,12 +271,12 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
             icone: Icons.account_balance_wallet_rounded,
           ),
           const _EtapeGuideData(
-            titre: "Profil & Société de Transit",
-            sousTitre: "FONCTIONNALITÉ 4 : COORDONNÉES & DÉPÔT",
+            titre: "Société, Dépôt & Emplacement GPS",
+            sousTitre: "FONCTIONNALITÉ 4 : VOS PARAMÈTRES",
             description:
-                "Gérez les informations de votre entreprise de transit, votre licence agréée, l'adresse exacte de vos dépôts à Bamako et vos paramètres de sécurité.",
+                "Rendez-vous dans vos Paramètres pour renseigner le nom de votre société de transit et pointer précisément l'emplacement de votre dépôt sur la carte interactive ou par coordonnées GPS.",
             emplacement: EmplacementCible.tabProfil,
-            icone: Icons.business_center_rounded,
+            icone: Icons.warehouse_rounded,
           ),
         ];
     }

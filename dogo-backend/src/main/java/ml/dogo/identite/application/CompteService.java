@@ -98,6 +98,21 @@ public class CompteService {
         return versProfil(u);
     }
 
+    public record CommandeModificationProfil(
+            String nom,
+            String langue,
+            String photoUrl,
+            String nomBoutique,
+            String nomBoutiqueMarche,
+            String nomSocieteImport,
+            String quartierBamako,
+            String adresseLivraison,
+            String adresseDepot,
+            Double latitude,
+            Double longitude
+    ) {
+    }
+
     @Transactional
     public ProfilComplet modifierProfil(long utilisateurId, String nom, String langue) {
         return modifierProfil(utilisateurId, nom, langue, null);
@@ -105,14 +120,74 @@ public class CompteService {
 
     @Transactional
     public ProfilComplet modifierProfil(long utilisateurId, String nom, String langue, String photoUrl) {
+        return modifierProfil(utilisateurId, new CommandeModificationProfil(
+                nom, langue, photoUrl, null, null, null, null, null, null, null, null));
+    }
+
+    @Transactional
+    public ProfilComplet modifierProfil(long utilisateurId, CommandeModificationProfil r) {
         Utilisateur u = charger(utilisateurId);
-        if (langue != null && !langue.isBlank() && !List.of("fr", "bm", "en").contains(langue)) {
+        if (r.langue() != null && !r.langue().isBlank() && !List.of("fr", "bm", "en").contains(r.langue())) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, null, "Langue acceptée : fr, bm, en");
         }
-        u.modifierIdentite(nom, langue);
-        if (photoUrl != null) {
-            u.modifierPhoto(photoUrl.isBlank() ? null : photoUrl.strip());
+        if (r.nom() != null && !r.nom().isBlank()) {
+            u.modifierIdentite(r.nom().strip(), r.langue() != null && !r.langue().isBlank() ? r.langue().strip() : u.getLangue());
+        } else if (r.langue() != null && !r.langue().isBlank()) {
+            u.modifierIdentite(u.getNom(), r.langue().strip());
         }
+        if (r.photoUrl() != null) {
+            u.modifierPhoto(r.photoUrl().isBlank() ? null : r.photoUrl().strip());
+        }
+
+        String boutiqueOuStructure = r.nomBoutique() != null ? r.nomBoutique()
+                : (r.nomBoutiqueMarche() != null ? r.nomBoutiqueMarche() : r.nomSocieteImport());
+
+        if (u instanceof Commercant c) {
+            if (boutiqueOuStructure != null && !boutiqueOuStructure.isBlank()) {
+                c.setNomBoutique(boutiqueOuStructure.strip());
+            }
+            if (r.quartierBamako() != null) {
+                c.setQuartierBamako(r.quartierBamako().strip());
+            }
+            if (r.adresseLivraison() != null) {
+                c.setAdresseLivraison(r.adresseLivraison().strip());
+            }
+            if (r.latitude() != null) {
+                c.setLatitude(r.latitude());
+            }
+            if (r.longitude() != null) {
+                c.setLongitude(r.longitude());
+            }
+        } else if (u instanceof Grossiste g) {
+            if (boutiqueOuStructure != null && !boutiqueOuStructure.isBlank()) {
+                g.setNomBoutiqueMarche(boutiqueOuStructure.strip());
+            }
+            if (r.quartierBamako() != null) {
+                g.setQuartierMarche(r.quartierBamako().strip());
+            }
+            if (r.latitude() != null) {
+                g.setLatitude(r.latitude());
+            }
+            if (r.longitude() != null) {
+                g.setLongitude(r.longitude());
+            }
+        } else if (u instanceof Courtier courtier) {
+            if (boutiqueOuStructure != null && !boutiqueOuStructure.isBlank()) {
+                courtier.setNomSocieteImport(boutiqueOuStructure.strip());
+            }
+            if (r.adresseDepot() != null) {
+                courtier.setAdresseDepot(r.adresseDepot().strip());
+            } else if (r.quartierBamako() != null) {
+                courtier.setAdresseDepot(r.quartierBamako().strip());
+            }
+            if (r.latitude() != null) {
+                courtier.setLatitude(r.latitude());
+            }
+            if (r.longitude() != null) {
+                courtier.setLongitude(r.longitude());
+            }
+        }
+
         utilisateurs.save(u);
         return versProfil(u);
     }
@@ -289,16 +364,23 @@ public class CompteService {
             d.put("adresseLivraison", c.getAdresseLivraison());
             d.put("quartierBamako", c.getQuartierBamako());
             d.put("canalVente", c.getCanalVente());
+            d.put("latitude", c.getLatitude());
+            d.put("longitude", c.getLongitude());
         } else if (u instanceof Grossiste g) {
             d.put("nomBoutiqueMarche", g.getNomBoutiqueMarche());
             d.put("numeroNif", g.getNumeroNif());
             d.put("registreCommerce", g.getRegistreCommerce());
             d.put("noteFiabilite", g.getNoteFiabilite());
+            d.put("quartierMarche", g.getQuartierMarche());
+            d.put("latitude", g.getLatitude());
+            d.put("longitude", g.getLongitude());
         } else if (u instanceof Courtier c) {
             d.put("nomSocieteImport", c.getNomSocieteImport());
             d.put("licenceTransit", c.getLicenceTransit());
             d.put("adresseDepot", c.getAdresseDepot());
             d.put("noteFiabilite", c.getNoteFiabilite());
+            d.put("latitude", c.getLatitude());
+            d.put("longitude", c.getLongitude());
         } else if (u instanceof Administrateur a) {
             d.put("matriculeAgent", a.getMatriculeAgent());
             d.put("roleAdministratif", a.getRoleAdministratif().name());

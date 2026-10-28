@@ -26,6 +26,12 @@ public class Commercant extends Utilisateur {
     @Column(name = "canal_vente")
     private String canalVente;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     protected Commercant() {
     }
 
@@ -44,7 +50,19 @@ public class Commercant extends Utilisateur {
     }
 
     public String getNomBoutique() { return nomBoutique; }
+    public void setNomBoutique(String nomBoutique) { this.nomBoutique = nomBoutique; }
+
     public String getAdresseLivraison() { return adresseLivraison; }
+    public void setAdresseLivraison(String adresseLivraison) { this.adresseLivraison = adresseLivraison; }
+
     public String getQuartierBamako() { return quartierBamako; }
+    public void setQuartierBamako(String quartierBamako) { this.quartierBamako = quartierBamako; }
+
     public String getCanalVente() { return canalVente; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

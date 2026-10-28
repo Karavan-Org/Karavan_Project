@@ -27,7 +27,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/moi")
 public class ProfilController {
 
-    public record ProfilRequete(String nom, String langue, String photoUrl) {
+    public record ProfilRequete(
+            String nom,
+            String langue,
+            String photoUrl,
+            String nomBoutique,
+            String nomBoutiqueMarche,
+            String nomSocieteImport,
+            String quartierBamako,
+            String adresseLivraison,
+            String adresseDepot,
+            Double latitude,
+            Double longitude
+    ) {
+        public CompteService.CommandeModificationProfil versCommande() {
+            return new CompteService.CommandeModificationProfil(
+                    nom, langue, photoUrl, nomBoutique, nomBoutiqueMarche,
+                    nomSocieteImport, quartierBamako, adresseLivraison, adresseDepot,
+                    latitude, longitude);
+        }
     }
 
     public record PhotoReponse(String photoUrl) {
@@ -54,7 +72,7 @@ public class ProfilController {
     @PreAuthorize("hasAuthority('PROFIL_GERER')")
     public CompteService.ProfilComplet modifier(@AuthenticationPrincipal UtilisateurCourant moi,
                                                 @RequestBody ProfilRequete r) {
-        return comptes.modifierProfil(moi.id(), r.nom(), r.langue(), r.photoUrl());
+        return comptes.modifierProfil(moi.id(), r.versCommande());
     }
 
     @PostMapping(value = "/photo", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)

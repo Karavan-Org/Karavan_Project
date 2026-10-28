@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import {
   FormBuilder,
   FormGroup,
@@ -15,7 +16,7 @@ declare const google: any;
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule],
   templateUrl: './login.html',
   styleUrl: './login.scss'
 })
@@ -48,7 +49,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (this.authService.obtenirJeton() && this.authService.obtenirProfil()?.type === 'ADMINISTRATEUR') {
-      void this.router.navigate(['/dashboard']);
+      void this.router.navigate(['/admin']);
     }
 
     this.loginForm = this.fb.group({
@@ -124,7 +125,7 @@ export class LoginComponent implements OnInit, OnDestroy {
             this.cdr.markForCheck();
             return;
           }
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/admin']);
         } else if (res.statut === 'PROFIL_INCOMPLET') {
           this.modeGoogleCompletion = true;
           this.donneesGoogle = {
@@ -219,7 +220,7 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
           return;
         }
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/admin']);
       },
       error: (err) => {
         this.isLoading = false;
@@ -274,7 +275,7 @@ export class LoginComponent implements OnInit, OnDestroy {
             'Cet espace est réservé aux administrateurs Karavan. Commerçants, grossistes et courtiers : utilisez l’application mobile.';
           return;
         }
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/admin']);
       },
       error: (erreur) => {
         this.isLoading = false;
@@ -282,7 +283,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
         if (erreur.status === 0) {
           this.errorMessage =
-            'Impossible de joindre le serveur. Vérifie que le backend est démarré.';
+            'Impossible de joindre le serveur Karavan. Veuillez vérifier votre connexion internet.';
         } else if (erreur.status === 401 || erreur.status === 403) {
           this.errorMessage =
             'Numéro de téléphone ou mot de passe incorrect, ou accès refusé.';

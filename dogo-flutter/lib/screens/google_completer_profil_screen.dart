@@ -38,8 +38,8 @@ class GoogleCompleterProfilScreen extends StatefulWidget {
 
 class _GoogleCompleterProfilScreenState extends State<GoogleCompleterProfilScreen> {
   final TextEditingController _phoneController = TextEditingController(text: "+223 ");
-  final List<TextEditingController> _otpControllers = List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
+  final List<TextEditingController> _otpControllers = List.generate(4, (_) => TextEditingController());
+  final List<FocusNode> _otpFocusNodes = List.generate(4, (_) => FocusNode());
 
   late RoleActeur _roleSelectionne;
   bool _otpEnvoye = false;
@@ -111,7 +111,7 @@ class _GoogleCompleterProfilScreenState extends State<GoogleCompleterProfilScree
 
       // Pré-remplissage en mode démo si le code est fourni par le backend
       if (_codeOtpDemo != null && _codeOtpDemo!.isNotEmpty) {
-        for (int i = 0; i < _codeOtpDemo!.length && i < 6; i++) {
+        for (int i = 0; i < _codeOtpDemo!.length && i < 4; i++) {
           _otpControllers[i].text = _codeOtpDemo![i];
         }
       }
@@ -130,8 +130,8 @@ class _GoogleCompleterProfilScreenState extends State<GoogleCompleterProfilScree
 
   Future<void> _validerOtpEtTerminer() async {
     final codeSaisi = _otpControllers.map((c) => c.text.trim()).join();
-    if (codeSaisi.length < 4) {
-      setState(() => _messageErreur = "Veuillez saisir le code complet reçu par SMS.");
+    if (codeSaisi.length != 4) {
+      setState(() => _messageErreur = "Veuillez saisir les 4 chiffres du code de vérification SMS.");
       return;
     }
 
@@ -144,7 +144,7 @@ class _GoogleCompleterProfilScreenState extends State<GoogleCompleterProfilScree
     });
 
     try {
-      await AuthService.instance.completerGoogleEtConnecter(
+      final profil = await AuthService.instance.completerGoogleEtConnecter(
         jetonInscription: widget.jetonInscription,
         telephone: telNettoye,
         codeOtp: codeSaisi,
@@ -153,7 +153,20 @@ class _GoogleCompleterProfilScreenState extends State<GoogleCompleterProfilScree
 
       if (!mounted) return;
 
-      final route = switch (_roleSelectionne) {
+      final roleEffectif = profil.roleActeur;
+      if (roleEffectif != _roleSelectionne) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Compte existant rattaché : vous êtes connecté à votre espace ${roleEffectif.libelle}.",
+            ),
+            backgroundColor: AppTheme.primary,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+
+      final route = switch (roleEffectif) {
         RoleActeur.grossiste => '/grossiste',
         RoleActeur.courtier => '/courtier',
         RoleActeur.commercant => '/commercant',
@@ -182,9 +195,30 @@ class _GoogleCompleterProfilScreenState extends State<GoogleCompleterProfilScree
     return Scaffold(
       backgroundColor: AppTheme.couleurFond(context),
       appBar: AppBar(
-        title: const Text("Complétez votre profil", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: couleurTexte, size: 22),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "Complétez votre profil",
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+          ),
+        ),
         centerTitle: true,
-        actions: const [BoutonBasculeTheme(), SizedBox(width: 8)],
+        actions: const [
+          Flexible(
+            fit: FlexFit.loose,
+            child: Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: BoutonBasculeTheme(compact: true),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -343,17 +377,17 @@ class _GoogleCompleterProfilScreenState extends State<GoogleCompleterProfilScree
 
                   const SizedBox(height: 20),
 
-                  // 6 cases de code OTP
+                  // 4 cases de code OTP (Code SMS Karavan à 4 chiffres)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(6, (index) {
+                    children: List.generate(4, (index) {
                       return Container(
-                        width: 44,
-                        height: 52,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: 54,
+                        height: 58,
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
                         decoration: BoxDecoration(
                           color: couleurCarte,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: couleurBordure, width: 1.5),
                         ),
                         child: Center(
@@ -363,16 +397,16 @@ class _GoogleCompleterProfilScreenState extends State<GoogleCompleterProfilScree
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.center,
                             maxLength: 1,
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: couleurTexte),
+                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: couleurTexte),
                             decoration: const InputDecoration(counterText: "", border: InputBorder.none),
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                             onChanged: (val) {
-                              if (val.isNotEmpty && index < 5) {
+                              if (val.isNotEmpty && index < 3) {
                                 _otpFocusNodes[index + 1].requestFocus();
                               } else if (val.isEmpty && index > 0) {
                                 _otpFocusNodes[index - 1].requestFocus();
                               }
-                              if (index == 5 && val.isNotEmpty) {
+                              if (index == 3 && val.isNotEmpty) {
                                 _validerOtpEtTerminer();
                               }
                             },

@@ -17,6 +17,14 @@ public interface IdentiteApi {
     record MoyenPaiementInfo(long id, long utilisateurId, String numero, String operateur) {
     }
 
+    record SupervisionStats(long commercants, long grossistes, long courtiers, long administrateurs) {
+        public long totalActeurs() {
+            return commercants + grossistes + courtiers;
+        }
+    }
+
+    SupervisionStats statistiquesSupervision();
+
     Optional<ActeurInfo> acteur(long utilisateurId);
 
     /** Renvoie le moyen de paiement s'il appartient bien à l'utilisateur, sinon lève une erreur métier. */

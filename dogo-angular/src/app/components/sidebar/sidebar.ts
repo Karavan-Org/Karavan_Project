@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 import { AdminSecuriteService } from '../../core/services/admin-securite.service';
 import { PERMISSIONS_PAGES } from '../../core/permissions';
+import { TableauDeBordService } from '../../pages/tableau-de-bord/tableau-de-bord.service';
 
 interface MenuItem {
   label: string;
@@ -38,19 +39,38 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private readonly api = inject(AdminApiService);
   private readonly notifications = inject(NotificationService);
   readonly securite = inject(AdminSecuriteService);
+  private readonly tbService = inject(TableauDeBordService);
   private minuterie?: ReturnType<typeof setInterval>;
+
+  /** Mode miniature/réduit (conforme à la capture de référence) */
+  readonly estReduite = signal<boolean>(false);
 
   /** Dossiers KYC et groupes en attente de décision (badges du menu), relus chaque minute */
   readonly kycEnAttente = signal(0);
   readonly groupesAModerer = signal(0);
 
   ngOnInit(): void {
+    try {
+      const stocke = localStorage.getItem('karavan_sidebar_reduite');
+      if (stocke !== null) {
+        this.estReduite.set(stocke === 'true');
+      }
+    } catch {}
+
     this.chargerBadges();
     this.minuterie = setInterval(() => this.chargerBadges(), 60_000);
   }
 
   ngOnDestroy(): void {
     clearInterval(this.minuterie);
+  }
+
+  basculerReduite(): void {
+    const nv = !this.estReduite();
+    this.estReduite.set(nv);
+    try {
+      localStorage.setItem('karavan_sidebar_reduite', String(nv));
+    } catch {}
   }
 
   private chargerBadges(): void {
@@ -97,11 +117,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
     return item.route;
   }
 
+  onItemClick(item: MenuItem): void {
+    if (item.route === '/admin' && this.router.url === '/admin') {
+      this.tbService.basculerPanneauStats();
+    }
+  }
+
   private readonly menu: MenuSection[] = [
     {
       title: "VUE D'ENSEMBLE",
       items: [
-        { label: 'Supervision Réseau', icon: 'grid_view', route: '/dashboard' },
+        { label: 'Tableau de bord', icon: 'public', route: '/admin' },
         { label: 'Validations KYC', icon: 'verified_user', route: '/kyc-validation' },
         { label: "Groupes d'achat", icon: 'groups', route: '/groupes' },
         { label: 'Séquestre & Finance', icon: 'account_balance_wallet', route: '/finance' },
@@ -140,7 +166,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       .toUpperCase();
 
     return {
-      initials: initials || 'U',
+      initials: initials || 'AD',
       name,
       role: this.roleAdministratif(profil?.permissions ?? [])
     };

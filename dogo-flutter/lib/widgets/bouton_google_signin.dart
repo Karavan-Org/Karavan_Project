@@ -59,9 +59,24 @@ class BoutonGoogleSignIn extends StatelessWidget {
       }
 
       final res = await AuthService.instance.authentifierGoogle(idToken);
-      final statut = res['statut'] as String?;
-      if (statut == 'CONNECTE') {
-        final route = switch (role) {
+      final statut = res['statut']?.toString();
+      final String? jeton = res['jeton'] as String?;
+      final bool estConnecte = statut == 'CONNECTE' || (jeton != null && jeton.isNotEmpty);
+      if (estConnecte) {
+        final profil = AuthService.instance.profilActuel;
+        final roleEffectif = profil?.roleActeur ?? role;
+        if (profil != null && profil.roleActeur != role) {
+          scaffold.showSnackBar(
+            SnackBar(
+              content: Text(
+                "Ce compte Google est associé au profil ${profil.roleActeur.libelle}. Redirection vers votre espace ${profil.roleActeur.libelle}...",
+              ),
+              backgroundColor: AppTheme.primary,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        final route = switch (roleEffectif) {
           RoleActeur.grossiste => '/grossiste',
           RoleActeur.courtier => '/courtier',
           RoleActeur.commercant => '/commercant',
@@ -71,12 +86,12 @@ class BoutonGoogleSignIn extends StatelessWidget {
         nav.push(
           MaterialPageRoute(
             builder: (_) => GoogleCompleterProfilScreen(
-              jetonInscription: res['jetonInscription'] as String? ?? '',
-              sub: res['sub'] as String?,
-              email: res['email'] as String? ?? account.email,
-              emailVerified: res['emailVerified'] as bool? ?? true,
-              nom: res['nom'] as String? ?? account.displayName,
-              photoUrl: res['photoUrl'] as String? ?? account.photoUrl,
+              jetonInscription: res['jetonInscription']?.toString() ?? '',
+              sub: res['sub']?.toString(),
+              email: res['email']?.toString() ?? account.email,
+              emailVerified: res['emailVerified'] == true,
+              nom: res['nom']?.toString() ?? account.displayName,
+              photoUrl: res['photoUrl']?.toString() ?? account.photoUrl,
               roleParDefaut: role,
             ),
           ),
@@ -269,8 +284,24 @@ class GoogleAuthModal extends StatefulWidget {
 }
 
 class _GoogleAuthModalState extends State<GoogleAuthModal> {
-  final String _nomGoogle = "Salif Modibo Keïta";
-  final String _emailGoogle = "salifmodibok@gmail.com";
+  final List<Map<String, String>> _comptesDisponibles = const [
+    {
+      'nom': 'Salif Modibo Keïta',
+      'email': 'salifmodibok@gmail.com',
+      'sub': 'google-uid-salif',
+    },
+    {
+      'nom': 'Mamadou Touré (Grossiste)',
+      'email': 'grossiste.toure@gmail.com',
+      'sub': 'google-uid-grossiste',
+    },
+    {
+      'nom': 'Ousmane Traoré (Courtier)',
+      'email': 'courtier.traore@gmail.com',
+      'sub': 'google-uid-courtier',
+    },
+  ];
+  int _indexSelectionne = 0;
   bool _enCours = false;
   String? _messageErreur;
 
@@ -281,33 +312,56 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
     });
 
     final nav = Navigator.of(context);
+    final compte = _comptesDisponibles[_indexSelectionne];
+    final nomGoogle = compte['nom']!;
+    final emailGoogle = compte['email']!;
+    final subGoogle = compte['sub']!;
 
     try {
       // Émission d'un mock token Google valide pour le backend en profil local/demo
-      final token = 'mock-google-token:google-uid-demo:$_emailGoogle:true:$_nomGoogle:';
+      final token = 'mock-google-token:$subGoogle:$emailGoogle:true:$nomGoogle:';
       final res = await AuthService.instance.authentifierGoogle(token);
 
       if (!mounted) return;
-      nav.pop(); // Fermer la modale
 
-      final statut = res['statut'] as String?;
-      if (statut == 'CONNECTE') {
-        final route = switch (widget.role) {
+      final statut = res['statut']?.toString();
+      final String? jeton = res['jeton'] as String?;
+      final bool estConnecte = statut == 'CONNECTE' || (jeton != null && jeton.isNotEmpty);
+
+      if (estConnecte) {
+        nav.pop(); // Fermer la modale
+        final profil = AuthService.instance.profilActuel;
+        final roleEffectif = profil?.roleActeur ?? widget.role;
+
+        if (profil != null && profil.roleActeur != widget.role) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Ce compte Google est enregistré en tant que ${profil.roleActeur.libelle}. Redirection vers votre espace ${profil.roleActeur.libelle}...",
+              ),
+              backgroundColor: AppTheme.primary,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+
+        final route = switch (roleEffectif) {
           RoleActeur.grossiste => '/grossiste',
           RoleActeur.courtier => '/courtier',
           RoleActeur.commercant => '/commercant',
         };
         nav.pushReplacementNamed(route);
       } else if (statut == 'PROFIL_INCOMPLET') {
+        nav.pop(); // Fermer la modale
         nav.push(
           MaterialPageRoute(
             builder: (_) => GoogleCompleterProfilScreen(
-              jetonInscription: res['jetonInscription'] as String? ?? '',
-              sub: res['sub'] as String?,
-              email: res['email'] as String? ?? _emailGoogle,
-              emailVerified: res['emailVerified'] as bool? ?? true,
-              nom: res['nom'] as String? ?? _nomGoogle,
-              photoUrl: res['photoUrl'] as String?,
+              jetonInscription: res['jetonInscription']?.toString() ?? '',
+              sub: res['sub']?.toString(),
+              email: res['email']?.toString() ?? emailGoogle,
+              emailVerified: res['emailVerified'] == true,
+              nom: res['nom']?.toString() ?? nomGoogle,
+              photoUrl: res['photoUrl']?.toString(),
               roleParDefaut: widget.role,
             ),
           ),
@@ -315,7 +369,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
       } else {
         setState(() {
           _enCours = false;
-          _messageErreur = res['message']?.toString() ?? "Réponse inattendue";
+          _messageErreur = res['message']?.toString() ?? "Réponse inattendue lors de la connexion.";
         });
       }
     } on ApiException catch (e) {
@@ -395,7 +449,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        "Espace ${widget.role.name} Karavan",
+                        "Espace ${widget.role.libelle} Karavan",
                         style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
@@ -411,58 +465,82 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: estSombre ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF8F9FA),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: couleurBordure, width: 1.1),
+            const SizedBox(height: 14),
+            Text(
+              "Choisissez un compte Google :",
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: couleurAttenue,
               ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: const Color(0xFF4285F4),
-                    child: Text(
-                      _nomGoogle[0],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
+            ),
+            const SizedBox(height: 8),
+            for (int i = 0; i < _comptesDisponibles.length; i++) ...[
+              Builder(builder: (_) {
+                final compte = _comptesDisponibles[i];
+                final estSelectionne = i == _indexSelectionne;
+                return InkWell(
+                  onTap: () => setState(() => _indexSelectionne = i),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: estSelectionne
+                          ? (estSombre ? AppTheme.darkPrimaryContainer : const Color(0xFFFBF6F0))
+                          : (estSombre ? Colors.white.withValues(alpha: 0.04) : const Color(0xFFF8F9FA)),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: estSelectionne ? AppTheme.primary : couleurBordure,
+                        width: estSelectionne ? 1.6 : 1.1,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          _nomGoogle,
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w700,
-                            color: couleurTexte,
+                        CircleAvatar(
+                          radius: 19,
+                          backgroundColor: const Color(0xFF4285F4),
+                          child: Text(
+                            compte['nom']![0],
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _emailGoogle,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: couleurAttenue,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                compte['nom']!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: couleurTexte,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                compte['email']!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: couleurAttenue,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
+                        if (estSelectionne)
+                          const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 20)
+                        else
+                          Icon(Icons.radio_button_unchecked_rounded, color: couleurAttenue, size: 20),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                );
+              }),
+            ],
             if (_messageErreur != null) ...[
               const SizedBox(height: 12),
               Text(
@@ -475,7 +553,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                 textAlign: TextAlign.center,
               ),
             ],
-            const SizedBox(height: 22),
+            const SizedBox(height: 16),
             SizedBox(
               height: 52,
               child: ElevatedButton(

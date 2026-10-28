@@ -274,10 +274,12 @@ class AuthService {
       );
     }
 
-    if (response['statut'] == 'CONNECTE' &&
-        response['jeton'] is String &&
-        (response['jeton'] as String).isNotEmpty) {
-      final jeton = response['jeton'] as String;
+    final String? jeton = response['jeton'] as String?;
+    final statut = response['statut']?.toString();
+    final bool estConnecte = (jeton != null && jeton.isNotEmpty) ||
+        (statut == 'CONNECTE' && jeton != null && jeton.isNotEmpty);
+
+    if (jeton != null && estConnecte) {
       ApiClient.instance.definirJeton(jeton);
       final profil = UtilisateurProfil.fromJson(
           response['profil'] as Map<String, dynamic>? ?? {});
@@ -288,7 +290,7 @@ class AuthService {
         refreshToken: refreshToken ?? '',
         profil: profil,
       );
-      return {'statut': 'CONNECTE', 'profil': profil};
+      return {'statut': 'CONNECTE', 'profil': profil, 'jeton': jeton};
     }
 
     return response;

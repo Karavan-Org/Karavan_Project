@@ -111,10 +111,16 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.varianteInitiale != null;
+    final couleurCarte = AppTheme.couleurCarte(context);
+    final couleurTexte = AppTheme.couleurTexte(context);
+    final couleurAttenue = AppTheme.couleurTexteAttenue(context);
+    final couleurBordure = AppTheme.couleurBordure(context);
+    final couleurBordureForte = AppTheme.couleurBordureForte(context);
+    final couleurSurfaceDouce = AppTheme.couleurSurfaceDouce(context);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: Colors.white,
+      backgroundColor: couleurCarte,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
@@ -147,57 +153,59 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                             isEditing
                                 ? "Modifier la variante"
                                 : "Ajouter une variante",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
+                              color: couleurTexte,
                             ),
                           ),
                           Text(
                             isEditing
                                 ? "Ajustez la taille, la couleur et le stock"
                                 : "Définissez la taille, la couleur et la quantité en stock",
-                            style: const TextStyle(
-                                fontSize: 12.5, color: AppTheme.textMuted),
+                            style: TextStyle(
+                                fontSize: 12.5, color: couleurAttenue),
                           ),
                         ],
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: AppTheme.textMuted),
+                      icon: Icon(Icons.close, color: couleurAttenue),
                       onPressed: () => Navigator.pop(context),
                       tooltip: "Fermer",
                     ),
                   ],
                 ),
                 const SizedBox(height: 18),
-                const Divider(height: 1, color: AppTheme.bordure),
+                Divider(height: 1, color: couleurBordure),
                 const SizedBox(height: 18),
 
                 // 1. CHAMP TAILLE / POINTURE
-                const Text(
+                Text(
                   "Taille ou Pointure *",
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: couleurTexte),
                 ),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _tailleController,
+                  style: TextStyle(color: couleurTexte),
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: "Ex : 42, L, XL, 38, Unique, 500g...",
+                    hintStyle: TextStyle(color: couleurAttenue),
                     prefixIcon: const Icon(Icons.straighten_rounded,
                         color: AppTheme.primary, size: 20),
                     filled: true,
-                    fillColor: AppTheme.creme,
+                    fillColor: couleurSurfaceDouce,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide:
-                          BorderSide(color: AppTheme.couleurBordure(context)),
+                          BorderSide(color: couleurBordure),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide:
-                          BorderSide(color: AppTheme.couleurBordure(context)),
+                          BorderSide(color: couleurBordure),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -234,11 +242,11 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                                     : FontWeight.w500)),
                         selected: selected,
                         selectedColor: AppTheme.primary.withValues(alpha: 0.2),
-                        backgroundColor: AppTheme.surfaceDouce,
+                        backgroundColor: couleurSurfaceDouce,
                         labelStyle: TextStyle(
                             color: selected
                                 ? AppTheme.primaryDark
-                                : AppTheme.textPrimary),
+                                : couleurTexte),
                         visualDensity: VisualDensity.compact,
                         onSelected: (_) {
                           setState(() {
@@ -259,11 +267,11 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                         selected: selected,
                         selectedColor:
                             AppTheme.secondary.withValues(alpha: 0.25),
-                        backgroundColor: AppTheme.surfaceDouce,
+                        backgroundColor: couleurSurfaceDouce,
                         labelStyle: TextStyle(
                             color: selected
                                 ? AppTheme.ocreProfond
-                                : AppTheme.textPrimary),
+                                : couleurTexte),
                         visualDensity: VisualDensity.compact,
                         onSelected: (_) {
                           setState(() {
@@ -277,29 +285,31 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                 const SizedBox(height: 18),
 
                 // 2. CHAMP COULEUR / MODÈLE
-                const Text(
+                Text(
                   "Couleur ou Modèle *",
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: couleurTexte),
                 ),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _couleurController,
+                  style: TextStyle(color: couleurTexte),
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: "Ex : Noir, Blanc, Bleu, Rouge, Doré...",
+                    hintStyle: TextStyle(color: couleurAttenue),
                     prefixIcon: const Icon(Icons.palette_outlined,
                         color: AppTheme.primary, size: 20),
                     filled: true,
-                    fillColor: AppTheme.creme,
+                    fillColor: couleurSurfaceDouce,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide:
-                          BorderSide(color: AppTheme.couleurBordure(context)),
+                          BorderSide(color: couleurBordure),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide:
-                          BorderSide(color: AppTheme.couleurBordure(context)),
+                          BorderSide(color: couleurBordure),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -351,11 +361,11 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                                   : FontWeight.w500)),
                       backgroundColor: selected
                           ? AppTheme.primary.withValues(alpha: 0.18)
-                          : AppTheme.surfaceDouce,
+                          : couleurSurfaceDouce,
                       labelStyle: TextStyle(
                           color: selected
                               ? AppTheme.primaryDark
-                              : AppTheme.textPrimary),
+                              : couleurTexte),
                       visualDensity: VisualDensity.compact,
                       onPressed: () {
                         setState(() {
@@ -371,10 +381,10 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       "Quantité en stock disponible *",
                       style: TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 13.5),
+                          fontWeight: FontWeight.w700, fontSize: 13.5, color: couleurTexte),
                     ),
                     Row(
                       children: [
@@ -395,9 +405,9 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceDouce,
+                        color: couleurSurfaceDouce,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.bordureForte),
+                        border: Border.all(color: couleurBordureForte),
                       ),
                       child: IconButton(
                         icon: const Icon(Icons.remove,
@@ -412,26 +422,26 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                         controller: _stockController,
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 16),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 16, color: couleurTexte),
                         decoration: InputDecoration(
                           hintText: "Ex : 50",
                           prefixIcon: const Icon(Icons.inventory_2_outlined,
                               color: AppTheme.primary, size: 20),
                           suffixText: "unités",
-                          suffixStyle: const TextStyle(
-                              fontSize: 12, color: AppTheme.textMuted),
+                          suffixStyle: TextStyle(
+                              fontSize: 12, color: couleurAttenue),
                           filled: true,
-                          fillColor: AppTheme.creme,
+                          fillColor: couleurSurfaceDouce,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide: BorderSide(
-                                color: AppTheme.couleurBordure(context)),
+                                color: couleurBordure),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide: BorderSide(
-                                color: AppTheme.couleurBordure(context)),
+                                color: couleurBordure),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -456,9 +466,9 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                     const SizedBox(width: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceDouce,
+                        color: couleurSurfaceDouce,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.bordureForte),
+                        border: Border.all(color: couleurBordureForte),
                       ),
                       child: IconButton(
                         icon: const Icon(Icons.add,
@@ -473,9 +483,9 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Raccourcis : ",
+                    Text("Raccourcis : ",
                         style: TextStyle(
-                            fontSize: 11.5, color: AppTheme.textMuted)),
+                            fontSize: 11.5, color: couleurAttenue)),
                     for (final qte in [10, 25, 50, 100, 200]) ...[
                       InkWell(
                         onTap: () => _definirStock(qte),
@@ -485,13 +495,13 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                               horizontal: 8, vertical: 3),
                           margin: const EdgeInsets.only(right: 4),
                           decoration: BoxDecoration(
-                            color: AppTheme.surfaceDouce,
+                            color: couleurSurfaceDouce,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppTheme.bordureForte),
+                            border: Border.all(color: couleurBordureForte),
                           ),
                           child: Text("$qte",
-                              style: const TextStyle(
-                                  fontSize: 11.5, fontWeight: FontWeight.w600)),
+                              style: TextStyle(
+                                  fontSize: 11.5, fontWeight: FontWeight.w600, color: couleurTexte)),
                         ),
                       ),
                     ],
@@ -500,32 +510,33 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                 const SizedBox(height: 18),
 
                 // 4. RÉFÉRENCE SKU (OPTIONNEL)
-                const Text(
+                Text(
                   "Référence SKU (Optionnel)",
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: couleurTexte),
                 ),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _skuController,
+                  style: TextStyle(color: couleurTexte),
                   decoration: InputDecoration(
                     hintText: "Ex : REF-VAR-42-NOIR",
                     helperText:
                         "Laissez vide pour générer un code unique automatique.",
-                    helperStyle: const TextStyle(
-                        fontSize: 11.5, color: AppTheme.textMuted),
+                    helperStyle: TextStyle(
+                        fontSize: 11.5, color: couleurAttenue),
                     prefixIcon: const Icon(Icons.qr_code_2_rounded,
-                        color: AppTheme.textMuted, size: 20),
+                        color: AppTheme.primary, size: 20),
                     filled: true,
-                    fillColor: AppTheme.creme,
+                    fillColor: couleurSurfaceDouce,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide:
-                          BorderSide(color: AppTheme.couleurBordure(context)),
+                          BorderSide(color: couleurBordure),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide:
-                          BorderSide(color: AppTheme.couleurBordure(context)),
+                          BorderSide(color: couleurBordure),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -546,14 +557,14 @@ class _VarianteDialogState extends State<VarianteProduitDialog> {
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: AppTheme.bordureForte),
+                          side: BorderSide(color: couleurBordureForte),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16)),
                         ),
-                        child: const Text("Annuler",
+                        child: Text("Annuler",
                             style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary)),
+                                color: couleurTexte)),
                       ),
                     ),
                     const SizedBox(width: 12),

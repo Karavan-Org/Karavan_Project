@@ -74,3 +74,88 @@ Pour prévenir les erreurs de manipulation et les compromissions de session acti
   - **Envois de notifications** (messages de support, notification d'arrivée au dépôt avec lien GPS).
   - **Création de nouveaux comptes administrateurs**.
 - Le backend valide cryptographiquement le code (`POST /api/admin/securite/verifier`). Si le code est invalide ou absent, l'action est rejetée avec le code d'erreur HTTP 403 `CODE_SECURITE_INVALIDE` (règle `RG-SEC-02`), et l'échec est tracé dans le journal d'audit.
+
+## ADR-023 : Nouveau Tableau de Bord Administrateur (Globe Terrestre 3D & Cadran des Groupes) et Pays d'Origine
+
+### Contexte
+La supervision des flux d'importation internationaux de Karavan nécessitait une refonte majeure de l'accueil administrateur pour offrir une vue spatiale 3D et interactive des importations vers le hub central de Bamako (Mali).
+
+### Décisions Prises
+
+#### 1. Modèle de Données & Migration V23
+- Table de référence `pays` : `code_iso` (PK, 2 lettres), `code_iso3`, `nom_fr`, `latitude`, `longitude` (centroïdes), `actif`.
+- Données initiales : pays plausibles pour l'import malien (Chine, Turquie, Émirats arabes unis, Inde, France, Maroc, Sénégal, Côte d'Ivoire, Ghana, Nigéria) et le Mali comme hub de convergence.
+- Colonne nullable `pays_origine_code` sur la table `groupe_achat` avec clé étrangère vers `pays(code_iso)`.
+- Migration Flyway `V23__pays_origine_groupes.sql` et script de rollback `rollback_V23__pays_origine_groupes.sql`.
+
+#### 2. Règle Métier RG-PAYS
+- Tout NOUVEAU groupe d'achat créé par un grossiste ou un courtier DOIT obligatoirement avoir son pays d'origine renseigné (`paysOrigineCode != null`).
+- La publication ou validation d'un groupe sans pays d'origine est systématiquement refusée par le backend (code `DONNEES_INVALIDES`, règle `RG-PAYS`).
+- Côté mobile/web Flutter, intégration d'un sélecteur dédié `SelecteurPays` avec recherche textuelle et drapeaux emojis dans les formulaires de création grossiste et courtier.
+
+#### 3. Remplacement du Tableau de Bord Administrateur Angular
+- L'ancien accueil `DashboardComponent` est supprimé au profit de `TableauDeBordComponent` chargé sur la route par défaut `/admin` (avec redirection rétro-compatible de `/dashboard`).
+- **Zone Centrale (A)** : Globe 3D interactif basé sur `globe.gl` et Three.js utilisant les contours GeoJSON locaux (`assets/geo/ne_110m_admin_0_countries.geojson`, 0 dépendance externe/payante). Arcs lumineux animés reliant chaque pays source à Bamako (lat 12.6392, lon -8.0029). Auto-rotation douce et recentrage interactif.
+- **Zone Gauche (B)** : Cadran rotatif circulaire des groupes avec jauge de progression, pilules de statut, navigation scroll/clavier et accroche magnétique.
+- **Zone Droite (C)** : Statistiques en temps réel (volume sous séquestre FCFA, barres de répartition par pays, alertes retards, encart de rattrapage en 1 clic pour anciens groupes sans pays).
+- **Tiroir Latéral Coulissant** : panneau détaillé sans quitter la page (décomposition des coûts, intervenants, chronologie logistique, bouton fiche complète).
+- Préservation intégrale des fonctionnalités antérieures, notamment la génération et le téléchargement du rapport PDF complet (`jsPDF` et `autoTable`).
+
+
+
+## ADR-024 : Configuration Différée du Nom de Boutique/Société & Emplacement sur Carte/GPS dans les Paramètres
+
+### Contexte
+Afin de fluidifier l'expérience d'inscription des utilisateurs (Commerçants, Grossistes et Courtiers), le renseignement du nom de la boutique ou société ainsi que la localisation géographique précise (quartier, coordonnées GPS) ne doivent plus bloquer le formulaire d'inscription. Ces informations doivent être configurables et modifiables ultérieurement depuis l'écran **Paramètres**.
+
+### Décisions Prises
+
+#### 1. Modèle de Données & Migration V24
+- Ajout de colonnes géographiques et de localisation :
+  - `commercant` : `latitude DOUBLE NULL`, `longitude DOUBLE NULL`.
+  - `grossiste` : `latitude DOUBLE NULL`, `longitude DOUBLE NULL`, `quartier_marche VARCHAR(120) NULL`.
+  - `courtier` : `latitude DOUBLE NULL`, `longitude DOUBLE NULL`.
+- Migration additive Flyway `V24__coordonnees_emplacement_acteurs.sql` et script de retour arrière `rollback_V24__coordonnees_emplacement_acteurs.sql`.
+
+#### 2. Assouplissement de l'Inscription (Backend & Mobile)
+- Dans `InscriptionService.java` :
+  - `nomBoutique`, `nomBoutiqueMarche` et `nomSocieteImport` sont désormais optionnels lors de l'appel d'inscription.
+  - S'ils ne sont pas fournis, ils prennent automatiquement pour valeur par défaut `"Boutique " + nom` ou `"Société " + nom`.
+- Dans `commercant_inscription_screen.dart` :
+  - Suppression des champs préalables "Nom de la boutique", "Quartier", "Licence" et "Dépôt".
+  - Le formulaire d'inscription est allégé (Nom, Téléphone, Mot de passe, Confirmation) avec un encart explicatif informant que la structure et l'emplacement se configurent dans les Paramètres.
+
+#### 3. Gestion dans l'Écran Paramètres (`ParametresCompteScreen`)
+- Ajout d'une section dédiée **« BOUTIQUE & EMPLACEMENT »** (ou **« SOCIÉTÉ & DÉPÔT »** pour les courtiers) :
+  - **Modification du nom de la structure** : boîte de dialogue interactive pour modifier le nom de la boutique ou de la société de transit.
+  - **Localisation sur carte interactive** : ouverture de `SelecteurEmplacementCarteDialog` exploitant `flutter_map` et les tuiles OpenStreetMap avec un pointeur interactif (déplacement au toucher, calcul en temps réel des coordonnées GPS, recentrage sur Bamako).
+  - **Saisie directe des coordonnées** : boîte de dialogue `SaisieCoordonneesDialog` permettant la saisie manuelle de la latitude, de la longitude et du nom du quartier/repère.
+- Les modifications sont enregistrées via l'endpoint sécurisé `PATCH /api/moi`.
+
+#### 4. Didacticiel Guidé (`DidacticielGuideOverlay`)
+- Mise à jour des étapes du didacticiel pour les trois rôles :
+  - Commerçant : ajout d'une étape dédiée invitant à configurer sa boutique et son emplacement GPS dans l'onglet Paramètres.
+  - Grossiste : mise à jour de l'étape de l'en-tête pour mettre en valeur la localisation sur la carte.
+  - Courtier : mise à jour de l'étape de profil pour guider la localisation du dépôt de transit.
+
+
+## ADR-022 : Tableau de Bord Administrateur Karavan — Globe Terrestre 3D & Cadran Horizontal des Groupes
+
+### Contexte
+L'interface d'administration Karavan nécessitait une refonte complète de sa page d'accueil (`/admin`) pour offrir une supervision immersive des flux d'achats groupés internationaux convergeant vers le hub de Bamako (Mali).
+La maquette cible (image Figma de référence) présente :
+- Un Globe terrestre 3D réaliste (Three.js / Globe.gl) avec texture Blue Marble, atmosphère bleue et anneaux orbitaux.
+- Des marqueurs géographiques dynamiques pour chaque pays d'origine de convoi (avec drapeaux et coordonnées réelles).
+- Un Cadran rotatif 3D horizontal des groupes (demi-cylindre mécanique en perspective) enveloppant la partie inférieure de la planète avec drapeaux ISO, identifiants `#ID`, pays, visuels des produits et prix.
+- Un panneau rétractable « Statistiques générales » (fermé par défaut, ouverture au clic sur le bouton de l'en-tête ou depuis la barre latérale, et fermeture via une croix `✕`).
+
+### Décisions Prises
+
+#### 1. Persistance et dynamique des données
+- Aucune donnée statique dans l'interface d'administration : tous les compteurs, groupes, flux d'activité récente et drapeaux proviennent des endpoints Spring Boot `/api/admin/tableau-de-bord/resume` et `/api/admin/tableau-de-bord/groupes`.
+- Amorçage au démarrage (`AmorcageGroupesDemo.java`) : si la table des groupes d'achats est vide, amorçage automatique de convois actifs représentatifs des corridors réels (Côte d'Ivoire, Sénégal, Maroc, Ghana, Chine, Turquie, Brésil) avec leurs grossistes, produits, photos et prix unitaires.
+
+#### 2. Expérience Utilisateur et Interactivité
+- **Globe 3D interactif** : au clic sur une carte du cadran ou lors de la rotation (`[ Tourner le cadran ]`, flèches `<` / `>`), la caméra du globe WebGL pivote automatiquement pour centrer le pays d'origine sélectionné.
+- **Tiroir Statistiques Générales** : fermé par défaut conformément aux consignes. L'administrateur peut l'ouvrir d'un clic sur `[ Statistiques ]` dans l'en-tête ou en cliquant sur « Tableau de bord » dans la barre latérale, et le refermer d'un clic sur la croix `✕`.
+- **Fiche de détail d'un groupe** : tiroir latéral droit s'ouvrant à la sélection d'un groupe pour visualiser le détail complet du convoi.

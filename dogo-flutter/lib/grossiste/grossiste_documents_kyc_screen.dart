@@ -217,7 +217,7 @@ class _GrossisteDocumentsKycScreenState extends State<GrossisteDocumentsKycScree
                     height: 86,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: AppTheme.creme,
+                      color: AppTheme.couleurSurfaceDouce(context),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Column(

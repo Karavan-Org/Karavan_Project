@@ -18,6 +18,7 @@ uploads/
 *.log
 *.sqlite
 *.db
+db_dump_*.sql
 
 # ==========================================
 # Environnement & Secrets

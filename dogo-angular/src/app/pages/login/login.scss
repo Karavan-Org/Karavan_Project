@@ -1,4 +1,4 @@
-/* Variables de couleurs DoGo Design System */
+/* Variables de couleurs Karavan / DoGo Design System */
 $primary: var(--primary);
 $primary-hover: var(--primary-hover);
 $bg-light: var(--bg-app);
@@ -21,6 +21,7 @@ $error-color: var(--danger);
   font-family: var(--font-texte);
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .login-card {
@@ -50,20 +51,44 @@ $error-color: var(--danger);
   flex-direction: column;
   justify-content: center;
 
+  @media (max-width: 500px) {
+    padding: 30px 20px;
+  }
+
   .form-header {
-    margin-bottom: 30px;
+    margin-bottom: 22px;
 
     h2 {
       font-size: 28px;
-      font-weight: 700;
-      color: $text-dark;
+      font-weight: 800;
+      color: #2D231C;
       margin: 0 0 8px 0;
+      letter-spacing: -0.3px;
     }
 
     .subtitle {
-      font-size: 14px;
+      font-size: 13.5px;
       color: $text-muted;
       margin: 0;
+      line-height: 1.4;
+    }
+  }
+
+  /* Encart démo officiel Karavan */
+  .encart-admin-info {
+    background: #fdf6f0;
+    border: 1px solid #ebd3c2;
+    border-left: 4px solid #AC7F5E;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    font-size: 12.5px;
+    color: #5a4638;
+    line-height: 1.5;
+
+    .encart-titre {
+      font-weight: 700;
+      color: #AC7F5E;
     }
   }
 
@@ -72,12 +97,16 @@ $error-color: var(--danger);
     flex-direction: column;
 
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 18px;
 
       .input-wrapper {
         position: relative;
         display: flex;
         align-items: center;
+        border: 1.5px solid $border-color;
+        border-radius: 10px;
+        background-color: #ffffff;
+        transition: all 0.22s ease;
 
         .icon {
           position: absolute;
@@ -86,74 +115,75 @@ $error-color: var(--danger);
           display: flex;
           align-items: center;
           transition: all 0.22s ease;
+          pointer-events: none;
         }
 
         input {
           width: 100%;
           padding: 13px 14px 13px 44px;
-          border: 1.5px solid $border-color;
+          border: none;
+          background: transparent;
           border-radius: 10px;
           font-size: 14px;
-          color: $text-dark;
+          font-weight: 600;
+          color: #2D231C;
           outline: none;
-          transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
-          background-color: #ffffff;
+          box-sizing: border-box;
 
-          &:focus {
-            border-color: $primary;
-            box-shadow: 0 4px 16px rgba(172, 127, 94, 0.15), 0 0 0 3px rgba(172, 127, 94, 0.16);
+          // Élimine le fond bleu pâle de l'autofill navigateur
+          &:-webkit-autofill,
+          &:-webkit-autofill:hover,
+          &:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+            -webkit-text-fill-color: #2D231C !important;
+            font-weight: 600 !important;
           }
 
           &.is-invalid {
             border-color: $error-color;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
           }
         }
 
-        &:focus-within .icon {
-          color: $primary;
-          transform: scale(1.1);
+        &:focus-within {
+          border-color: #8F6243;
+          box-shadow: 0 4px 16px rgba(172, 127, 94, 0.15), 0 0 0 3px rgba(172, 127, 94, 0.16);
+
+          .icon {
+            color: #8F6243;
+            transform: scale(1.1);
+          }
         }
       }
 
       .error-msg {
         color: $error-color;
-        font-size: 12px;
+        font-size: 11.5px;
         margin-top: 5px;
+        font-weight: 600;
       }
     }
 
     .form-options {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 25px;
-
-      .forgot-link {
-        font-size: 13px;
-        color: $primary;
-        text-decoration: none;
-        font-weight: 500;
-
-        &:hover {
-          text-decoration: underline;
-          color: $primary-hover;
-        }
-      }
+      font-size: 12.5px;
+      color: $text-muted;
+      margin: 0 0 20px 0;
+      line-height: 1.45;
     }
 
     .server-error {
       background-color: var(--danger-light);
       color: $error-color;
-      padding: 10px;
-      border: 1px solid rgba(192,57,43, 0.2);
-      border-radius: 6px;
-      font-size: 13px;
-      margin-bottom: 15px;
+      padding: 10px 12px;
+      border: 1px solid rgba(192, 57, 43, 0.2);
+      border-radius: 8px;
+      font-size: 12.5px;
+      margin-bottom: 16px;
       text-align: center;
+      font-weight: 600;
     }
 
     .btn-submit {
-      background: linear-gradient(135deg, $primary 0%, $primary-hover 100%);
+      background: linear-gradient(135deg, #8F6243 0%, #754D31 100%);
       color: #ffffff;
       border: none;
       padding: 14px;
@@ -161,12 +191,12 @@ $error-color: var(--danger);
       font-size: 15px;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 4px 16px rgba(172, 127, 94, 0.28);
+      box-shadow: 0 4px 16px rgba(143, 98, 67, 0.28);
       transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 
       &:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(172, 127, 94, 0.4);
+        box-shadow: 0 8px 24px rgba(143, 98, 67, 0.4);
       }
 
       &:active:not(:disabled) {
@@ -178,10 +208,70 @@ $error-color: var(--danger);
         cursor: not-allowed;
       }
     }
+
+    /* Raccourci Démo */
+    .raccourci-demo-bloc {
+      margin-top: 14px;
+      text-align: center;
+
+      .btn-demo-pill {
+        background: none;
+        border: 1px dashed #A8204B;
+        color: #A8204B;
+        border-radius: 8px;
+        padding: 7px 14px;
+        font-size: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: rgba(168, 32, 75, 0.05);
+          transform: translateY(-1px);
+        }
+      }
+    }
+
+    /* Bouton Google Sign-In */
+    .google-signin-wrapper {
+      margin-top: 14px;
+
+      .btn-google {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 11px 16px;
+        background-color: #ffffff;
+        color: #3C4043;
+        border: 1.5px solid #dadce0;
+        border-radius: 10px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          background-color: #F8FAFC;
+          border-color: #8F6243;
+          box-shadow: 0 2px 8px rgba(60, 64, 67, 0.12);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .google-icon {
+          flex-shrink: 0;
+        }
+      }
+    }
   }
 }
 
-/* --- Section Droite (Illustration Vague) --- */
+/* --- Section Droite (Illustration Vague avec Mascotte) --- */
 .illustration-section {
   flex: 1.1;
   position: relative;
@@ -192,7 +282,7 @@ $error-color: var(--danger);
   padding: 30px;
   overflow: hidden;
 
-  /* Effet de vague arrondie sur la gauche */
+  /* Effet de vague arrondie blanche sur la gauche (exactement comme la capture) */
   &::before {
     content: '';
     position: absolute;
@@ -230,86 +320,7 @@ $error-color: var(--danger);
   }
 }
 
-@keyframes loginCardPop {
-  0% {
-    opacity: 0;
-    transform: scale(0.96) translateY(16px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes floatMascot {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-10px) rotate(1deg);
-  }
-}
-
-.btn-google {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  padding: 13px 18px;
-  background-color: #ffffff;
-  color: #3c4043;
-  border: 1.5px solid #dadce0;
-  border-radius: 12px;
-  font-size: 14.5px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.08);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover:not(:disabled) {
-    background-color: #f8fafd;
-    border-color: #c6c9ce;
-    box-shadow: 0 2px 6px rgba(60, 64, 67, 0.15);
-    transform: translateY(-1px);
-  }
-
-  &:active:not(:disabled) {
-    transform: scale(0.99);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .google-icon {
-    flex-shrink: 0;
-  }
-}
-
-.separator {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: 18px 0;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid var(--border);
-  }
-
-  span {
-    padding: 0 12px;
-  }
-}
-
+/* Mode Google Complétion */
 .google-user-preview {
   display: flex;
   align-items: center;
@@ -365,4 +376,24 @@ $error-color: var(--danger);
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--text-main);
+}
+
+@keyframes loginCardPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes floatMascot {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
 }

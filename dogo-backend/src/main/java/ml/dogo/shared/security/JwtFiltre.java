@@ -41,6 +41,9 @@ public class JwtFiltre extends OncePerRequestFilter {
                 JwtService.JetonInfo j = info.get();
                 List<GrantedAuthority> autorites = new ArrayList<>(j.permissions().stream()
                         .<GrantedAuthority>map(SimpleGrantedAuthority::new).toList());
+                if (j.type() != null && !j.type().isBlank()) {
+                    autorites.add(new SimpleGrantedAuthority("ROLE_" + j.type().trim().toUpperCase()));
+                }
                 if (etat == EtatSession.EN_ATTENTE) {
                     // Lu par FiltreCompteEnAttente : seul le parcours de vérification reste ouvert (RG-03)
                     autorites.add(new SimpleGrantedAuthority(AccesCompteEnAttente.MARQUEUR));

@@ -1,4 +1,4 @@
-import '../widgets/bouton_bascule_theme.dart';
+﻿import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/bouton_google_signin.dart';
 import '../widgets/mot_de_passe_oublie_modal.dart';
 import '../theme/app_theme.dart';
@@ -126,7 +126,7 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
       } else if (e is ApiException) {
         message = e.messageComplet;
       } else {
-        message = 'Erreur de connexion : ${e.toString()}';
+        message = 'Impossible de se connecter au serveur Karavan. Veuillez vérifier votre connexion internet et réessayer.';
       }
 
       ScaffoldMessenger.of(context).showSnackBar(

@@ -78,13 +78,23 @@ public class InscriptionService {
         String nom = d.nom().strip();
         var maintenant = horloge.instant();
 
+        String nomBoutique = (d.nomBoutique() != null && !d.nomBoutique().isBlank())
+                ? d.nomBoutique().strip()
+                : "Boutique " + nom;
+        String nomBoutiqueMarche = (d.nomBoutiqueMarche() != null && !d.nomBoutiqueMarche().isBlank())
+                ? d.nomBoutiqueMarche().strip()
+                : "Boutique " + nom;
+        String nomSociete = (d.nomSocieteImport() != null && !d.nomSocieteImport().isBlank())
+                ? d.nomSocieteImport().strip()
+                : "Société " + nom;
+
         Utilisateur u = switch (d.type()) {
             case COMMERCANT -> new Commercant(telephone, nom, pinHash, role, maintenant,
-                    exiger(d.nomBoutique(), "nomBoutique"), d.adresseLivraison(), d.quartierBamako(), d.canalVente());
+                    nomBoutique, d.adresseLivraison(), d.quartierBamako(), d.canalVente());
             case GROSSISTE -> new Grossiste(telephone, nom, pinHash, role, maintenant,
-                    exiger(d.nomBoutiqueMarche(), "nomBoutiqueMarche"), d.numeroNif(), d.registreCommerce());
+                    nomBoutiqueMarche, d.numeroNif(), d.registreCommerce());
             case COURTIER -> new Courtier(telephone, nom, pinHash, role, maintenant,
-                    exiger(d.nomSocieteImport(), "nomSocieteImport"), d.licenceTransit(), d.adresseDepot());
+                    nomSociete, d.licenceTransit(), d.adresseDepot());
             default -> throw new IllegalStateException();
         };
         u = utilisateurs.save(u);
@@ -143,12 +153,12 @@ public class InscriptionService {
         // Le numéro n'est pas vérifié (inscription non finalisée) : on remplace proprement le brouillon
         long ancienId = existant.getId();
         jdbcTemplate.update("UPDATE code_otp SET utilisateur_id = NULL WHERE utilisateur_id = ?", ancienId);
-        jdbcTemplate.update("DELETE FROM commercant WHERE utilisateur_id = ?", ancienId);
-        jdbcTemplate.update("DELETE FROM grossiste WHERE utilisateur_id = ?", ancienId);
-        jdbcTemplate.update("DELETE FROM courtier WHERE utilisateur_id = ?", ancienId);
         jdbcTemplate.update("DELETE FROM notification WHERE utilisateur_id = ?", ancienId);
         jdbcTemplate.update("DELETE FROM session_utilisateur WHERE utilisateur_id = ?", ancienId);
         jdbcTemplate.update("DELETE FROM refresh_token WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM compte_externe WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM moyen_paiement_utilisateur WHERE utilisateur_id = ?", ancienId);
+        jdbcTemplate.update("DELETE FROM dossier_kyc WHERE utilisateur_id = ?", ancienId);
         utilisateurs.delete(existant);
         utilisateurs.flush();
         audit.tracer(ancienId, "INSCRIPTION_NON_FINALISEE_REMPLACEE", null,

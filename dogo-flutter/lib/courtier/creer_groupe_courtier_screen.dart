@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api/api_exception.dart';
 import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/image_produit.dart';
+import '../models/pays_model.dart';
+import '../widgets/selecteur_pays.dart';
 
 /// Création d'un groupe d'achat par le Courtier (RG-16, RG-17) : il choisit un produit dans le catalogue
 /// des grossistes validés, fixe l'objectif et la grille de coûts unitaires, puis envoie le groupe au grossiste
@@ -32,11 +34,16 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
   bool _chargement = true;
   String? _erreurChargement;
   bool _envoi = false;
+  List<PaysModel> _listePays = [];
+  PaysModel? _paysSelectionne;
+  bool _chargementPays = false;
+  String? _erreurPays;
 
   @override
   void initState() {
     super.initState();
     _chargerProduits();
+    _chargerPays();
     for (final c in [_marchandiseController, _transportController, _douaneController, _autresController]) {
       c.addListener(() => setState(() {}));
     }
@@ -57,6 +64,34 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _chargerPays() async {
+    setState(() => _chargementPays = true);
+    try {
+      final liste = await GroupeApiService.instance.chargerPays();
+      if (!mounted) return;
+      setState(() {
+        _listePays = liste;
+        _chargementPays = false;
+        _tenterPreselectionPays();
+      });
+    } catch (_) {
+      if (mounted) setState(() => _chargementPays = false);
+    }
+  }
+
+  void _tenterPreselectionPays() {
+    if (_produit == null || _listePays.isEmpty) return;
+    final brut = _produit!['paysOrigine']?.toString().trim();
+    if (brut == null || brut.isEmpty) return;
+    try {
+      final trouve = _listePays.firstWhere(
+        (p) => p.nomFr.toLowerCase() == brut.toLowerCase() || p.codeIso.toLowerCase() == brut.toLowerCase(),
+      );
+      _paysSelectionne = trouve;
+      _erreurPays = null;
+    } catch (_) {}
   }
 
   Future<void> _chargerProduits() async {
@@ -103,6 +138,11 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
       _erreur("Choisissez d'abord un produit");
       return;
     }
+    if (_paysSelectionne == null) {
+      setState(() => _erreurPays = "Le pays d'origine est obligatoire pour créer un groupe");
+      _erreur("Veuillez sélectionner le pays d'origine du produit");
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _envoi = true);
@@ -118,6 +158,7 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
         delaiLivraisonJours: _entier(_delaiController),
         politiqueAnnulation: _politiqueController.text.trim(),
         quantiteMinParCommercant: _entier(_minimumController),
+        paysOrigineCode: _paysSelectionne?.codeIso,
       );
       final soumis = await GroupeApiService.instance.soumettre(groupe.id);
       if (!mounted) return;
@@ -171,8 +212,19 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
             const SizedBox(height: 10),
             ..._sectionProduits(),
             const SizedBox(height: 24),
-            _titre("2. Objectif"),
+            _titre("2. Origine et Objectif"),
             const SizedBox(height: 10),
+            SelecteurPays(
+              listePays: _listePays,
+              paysSelectionne: _paysSelectionne,
+              onPaysChoisi: (p) => setState(() {
+                _paysSelectionne = p;
+                _erreurPays = null;
+              }),
+              messageErreur: _erreurPays,
+              chargement: _chargementPays,
+            ),
+            const SizedBox(height: 14),
             Row(
               children: [
                 Expanded(child: _champ(_quantiteController, "Quantité cible (pièces)", obligatoire: true, minimum: 1)),

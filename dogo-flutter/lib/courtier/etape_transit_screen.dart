@@ -132,12 +132,17 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final couleurFond = AppTheme.couleurFond(context);
+    final couleurCarte = AppTheme.couleurCarte(context);
+    final couleurTexte = AppTheme.couleurTexte(context);
+    final couleurAttenue = AppTheme.couleurTexteAttenue(context);
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: couleurFond,
       appBar: AppBar(
-        title: const Text("Suivi des convois", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: AppTheme.textDark,
+        title: Text("Suivi des convois", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: couleurTexte)),
+        backgroundColor: couleurCarte,
+        foregroundColor: couleurTexte,
         elevation: 0,
       ),
       body: RefreshIndicator(
@@ -156,6 +161,7 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
                         _erreur ??
                             "Aucun convoi. Créez-en un depuis l'acheminement d'un groupe qui a atteint son objectif.",
                         textAlign: TextAlign.center,
+                        style: TextStyle(color: couleurAttenue),
                       ),
                     ],
                   )
@@ -172,12 +178,24 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
 
   Widget _carte(Convoi c) {
     final actions = _actions[c.statut] ?? const [];
+    final couleurCarte = AppTheme.couleurCarte(context);
+    final couleurTexte = AppTheme.couleurTexte(context);
+    final couleurAttenue = AppTheme.couleurTexteAttenue(context);
+    final couleurBordure = AppTheme.couleurBordure(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: couleurCarte,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [BoxShadow(color: Color(0x0A46321E), blurRadius: 12, offset: Offset(0, 4))],
+        border: Border.all(color: couleurBordure, width: 1.1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: AppTheme.estSombre(context) ? 0.2 : 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +225,7 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
           const SizedBox(height: 4),
           Text(
             "Groupe n°${c.groupeId ?? '—'}${c.transporteur.isNotEmpty ? ' • ${c.transporteur}' : ''}",
-            style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+            style: TextStyle(fontSize: 12, color: couleurAttenue),
           ),
           const SizedBox(height: 12),
           ...c.evenements.reversed.map(_ligneEvenement),
@@ -227,6 +245,10 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
                   onPressed: _action ? null : () => _jalonLibre(c),
                   icon: const Icon(Icons.add_location_alt_outlined, size: 16),
                   label: const Text("Jalon"),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: couleurTexte,
+                    side: BorderSide(color: couleurBordure),
+                  ),
                 ),
             ],
           ),
@@ -254,10 +276,10 @@ class _EtapeTransitScreenState extends State<EtapeTransitScreen> {
           Expanded(
             child: Text(
               "${EtapeTransitScreen.libelleStatut(e.statut)} — ${e.localisation}",
-              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.couleurTexte(context)),
             ),
           ),
-          Text(quand, style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+          Text(quand, style: TextStyle(fontSize: 11, color: AppTheme.couleurTexteAttenue(context))),
         ],
       ),
     );

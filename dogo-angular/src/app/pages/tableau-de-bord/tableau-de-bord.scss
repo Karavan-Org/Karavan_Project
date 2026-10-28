@@ -1,0 +1,547 @@
+// ==============================================================================
+// TABLEAU DE BORD ADMINISTRATEUR KARAVAN (GLOBE 3D + CADRAN HORIZONTAL DES GROUPES)
+// ==============================================================================
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.supervision-dashboard-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100vh - 48px);
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+// ------------------------------------------------------------------------------
+// 1. EN-TÊTE SUPÉRIEUR
+// ------------------------------------------------------------------------------
+.dashboard-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 8px;
+  flex-shrink: 0;
+
+  .topbar-titre-bloc {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .titre-avec-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .main-titre {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0F172A;
+        letter-spacing: -0.4px;
+        margin: 0;
+      }
+
+      .badge-compteur {
+        background: #EEF2FF;
+        color: #3B82F6;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 2px 10px;
+        border-radius: 20px;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+    }
+
+    .sous-titre-cadran {
+      font-size: 13px;
+      color: #64748B;
+      margin: 0;
+    }
+  }
+
+  .topbar-droite-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    .btn-toggle-stats {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #3B82F6;
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 24px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #2563EB;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(59, 130, 246, 0.45);
+      }
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    .recherche-champ-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 24px;
+      padding: 7px 16px;
+      width: 270px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      transition: all 0.2s ease;
+
+      &:focus-within {
+        border-color: #3B82F6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        width: 310px;
+      }
+
+      .search-ico {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #94A3B8;
+      }
+
+      input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 13px;
+        color: #0F172A;
+        width: 100%;
+
+        &::placeholder {
+          color: #94A3B8;
+        }
+      }
+    }
+
+    .notif-bell-wrapper {
+      .notif-btn {
+        position: relative;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #475569;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #F8FAFC;
+          color: #0F172A;
+        }
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+
+        .notif-point-rouge {
+          position: absolute;
+          top: 8px;
+          right: 9px;
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #EF4444;
+          box-shadow: 0 0 4px #EF4444;
+        }
+      }
+    }
+
+    .admin-avatar-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+
+      .avatar-cercle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #0F172A;
+        color: #FFFFFF;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+      }
+
+      .avatar-chevron {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #64748B;
+      }
+    }
+  }
+}
+
+// ------------------------------------------------------------------------------
+// 2. SCÈNE PRINCIPALE (TIROIR GAUCHE + SCÈNE 3D)
+// ------------------------------------------------------------------------------
+.scene-principale-wrapper {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  min-height: 520px;
+}
+
+// TIROIR LATÉRAL GAUCHE : STATISTIQUES GÉNÉRALES
+.tiroir-stats-gauche {
+  width: 320px;
+  min-width: 320px;
+  max-width: 320px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  z-index: 20;
+  animation: glisserGauche 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  .stats-header-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    .stats-titre-group {
+      .stats-titre {
+        font-size: 17px;
+        font-weight: 800;
+        color: #0F172A;
+        margin: 0;
+      }
+
+      .stats-sous-titre {
+        font-size: 12px;
+        color: #64748B;
+        margin: 2px 0 0 0;
+      }
+    }
+
+    .btn-fermer-stats {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid #E2E8F0;
+      background: #F8FAFC;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #F1F5F9;
+        color: #0F172A;
+        transform: scale(1.08);
+      }
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  // Cartes KPI
+  .kpis-cartes-colonne {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .kpi-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: #F8FAFC;
+    border: 1px solid #EDF2F7;
+    border-radius: 14px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+
+    .kpi-icon-rond {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      &.bleu-clair {
+        background: #EFF6FF;
+        color: #3B82F6;
+      }
+
+      &.bleu-nuit {
+        background: #EEF2FF;
+        color: #4F46E5;
+      }
+
+      mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    .kpi-info-bloc {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+
+      .kpi-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748B;
+      }
+
+      .kpi-chiffre-ligne {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 6px;
+        margin-top: 2px;
+
+        .kpi-valeur {
+          font-size: 20px;
+          font-weight: 800;
+          color: #0F172A;
+          letter-spacing: -0.4px;
+        }
+
+        .kpi-badge-evolution {
+          font-size: 11px;
+          font-weight: 700;
+
+          &.positif {
+            color: #16A34A;
+          }
+
+          small {
+            font-size: 9px;
+            font-weight: 500;
+            color: #94A3B8;
+            display: block;
+          }
+        }
+      }
+    }
+  }
+
+  // Activité Récente
+  .activite-recente-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+
+    .section-titre-box {
+      .sec-titre {
+        font-size: 14px;
+        font-weight: 800;
+        color: #0F172A;
+        margin: 0;
+      }
+
+      .sec-sous-titre {
+        font-size: 11px;
+        color: #94A3B8;
+      }
+    }
+
+    .activite-flux-liste {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      max-height: 380px;
+      padding-right: 4px;
+    }
+
+    .activite-flux-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: #F8FAFC;
+      border-radius: 12px;
+      border: 1px solid #F1F5F9;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #F1F5F9;
+      }
+
+      .activite-visuel {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        .drapeau-pastille {
+          font-size: 22px;
+          line-height: 1;
+        }
+
+        .avatar-pastille {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          background: #DBEAFE;
+          color: #2563EB;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+
+      .activite-corps {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        .activite-titre-texte {
+          font-size: 12px;
+          font-weight: 700;
+          color: #0F172A;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .activite-sous-texte {
+          font-size: 11px;
+          color: #64748B;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      .activite-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+
+        .temps-relatif {
+          font-size: 10px;
+          color: #94A3B8;
+        }
+
+        .point-en-ligne {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #22C55E;
+          box-shadow: 0 0 6px #22C55E;
+        }
+      }
+    }
+  }
+}
+
+// ------------------------------------------------------------------------------
+// 3. ZONE PRINCIPALE : GLOBE 3D + CADRAN HORIZONTAL
+// ------------------------------------------------------------------------------
+.globe-cadran-stage {
+  flex: 1;
+  position: relative;
+  background: radial-gradient(circle at 50% 45%, #19253d 0%, #0c1527 65%, #050a14 100%);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.35s ease;
+
+  .globe-3d-scene-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+  }
+
+  .cadran-horizontal-overlay {
+    position: absolute;
+    bottom: 16px;
+    left: 0;
+    right: 0;
+    z-index: 25;
+    pointer-events: none;
+
+    app-cadran-groupes {
+      pointer-events: auto;
+    }
+  }
+}
+
+// Animation du volet
+@keyframes glisserGauche {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
