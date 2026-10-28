@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   OnInit,
   ViewChild,
   computed,
@@ -10,8 +11,9 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AdminApiService, Convoi, DossierKyc } from '../../core/services/admin-api.service';
@@ -54,6 +56,7 @@ export class TableauDeBordComponent implements OnInit {
   private readonly router = inject(Router);
   readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly resume = signal<ResumeTableauDeBord | null>(null);
   readonly groupes = signal<GroupeCadranVue[]>([]);
@@ -61,7 +64,10 @@ export class TableauDeBordComponent implements OnInit {
   readonly paysFiltre = signal<string | null>(null);
   readonly groupeDetail = signal<GroupeDetailVue | null>(null);
 
-  /** Le panneau Statistiques Générales est FERMÉ par défaut, s'ouvre au clic et se ferme avec une croix */
+  /**
+   * Le panneau Statistiques Générales est situé À L'INTÉRIEUR de la scène 3D.
+   * Il est fermé par défaut (miniature discrète), s'ouvre au clic et se ferme via la croix (✕).
+   */
   readonly panneauStatsOuvert = this.tbService.panneauStatsOuvert;
   readonly rechercheTexte = signal<string>('');
 
@@ -81,7 +87,6 @@ export class TableauDeBordComponent implements OnInit {
   chargement = false;
   erreur = '';
 
-  // Données conservées pour la compatibilité avec l'ancien tableau de bord et le rapport PDF
   totalSequestre = 0;
   kycEnAttente: DossierKyc[] = [];
   convoisTransit: Convoi[] = [];
@@ -99,60 +104,72 @@ export class TableauDeBordComponent implements OnInit {
     this.chargement = true;
     this.erreur = '';
 
-    // 1. Résumé du tableau de bord
-    this.tbService.getResume().subscribe({
-      next: r => {
-        this.resume.set(r);
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.erreur = 'Impossible de charger le résumé du tableau de bord.';
-        this.cdr.markForCheck();
-      }
-    });
+    // 1. Résumé du tableau de bord (protégé par takeUntilDestroyed)
+    this.tbService.getResume()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: r => {
+          this.resume.set(r);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.erreur = 'Impossible de charger le résumé du tableau de bord.';
+          this.cdr.markForCheck();
+        }
+      });
 
     // 2. Groupes pour le cadran
-    this.tbService.getGroupes({ taille: 200 }).subscribe({
-      next: grps => {
-        this.groupes.set(grps || []);
-        this.chargement = false;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.chargement = false;
-        this.cdr.markForCheck();
-      }
-    });
+    this.tbService.getGroupes({ taille: 200 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: grps => {
+          this.groupes.set(grps || []);
+          this.chargement = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.chargement = false;
+          this.cdr.markForCheck();
+        }
+      });
 
     // 3. Liste des pays de référence
-    this.tbService.getPaysActifs().subscribe({
-      next: pays => {
-        this.listePays.set(pays || []);
-        this.cdr.markForCheck();
-      }
-    });
+    this.tbService.getPaysActifs()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: pays => {
+          this.listePays.set(pays || []);
+          this.cdr.markForCheck();
+        }
+      });
 
-    // 4. Données annexes (Séquestre, KYC, Convois)
-    this.adminApi.sequestres().subscribe({
-      next: s => {
-        this.totalSequestre = s?.totalBloque ?? 0;
-        this.cdr.markForCheck();
-      }
-    });
+    // 4. Données annexes
+    this.adminApi.sequestres()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: s => {
+          this.totalSequestre = s?.totalBloque ?? 0;
+          this.cdr.markForCheck();
+        }
+      });
 
-    this.adminApi.dossiersKyc().subscribe({
-      next: d => {
-        this.kycEnAttente = d ?? [];
-        this.cdr.markForCheck();
-      }
-    });
+    this.adminApi.dossiersKyc()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: d => {
+          this.kycEnAttente = d ?? [];
+          this.cdr.markForCheck();
+        }
+      });
 
-    this.adminApi.convois().subscribe({
-      next: c => {
-        this.convoisTransit = (c ?? []).filter(item => item.statut === 'EN_TRANSIT' || item.statut === 'BLOQUE_DOUANE');
-        this.cdr.markForCheck();
-      }
-    });
+    this.adminApi.convois()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: c => {
+          this.convoisTransit = (c ?? []).filter(item => item.statut === 'EN_TRANSIT' || item.statut === 'BLOQUE_DOUANE');
+          this.cdr.markForCheck();
+        }
+      });
   }
 
   ouvrirPanneauStats(): void {
@@ -176,52 +193,86 @@ export class TableauDeBordComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  onGroupeSelectionne(g: GroupeCadranVue): void {
+  /**
+   * Rotation du cadran (flèche gauche/droite, molette, points de pagination) :
+   * - Oriente la caméra 3D du globe sur le pays
+   * - NE FAIT PAS APPARAÎTRE LE TIROIR DE DÉTAIL SI CELUI-CI EST FERMÉ !
+   * - Si et seulement si le tiroir est DÉJÀ ouvert, met à jour son contenu.
+   */
+  onRotationCadran(g: GroupeCadranVue): void {
     if (g.paysOrigine?.codeIso) {
       this.globe3d?.focaliserSurPays(g.paysOrigine.codeIso);
     }
-    this.tbService.getDetailGroupe(g.id).subscribe({
-      next: detail => {
-        this.groupeDetail.set(detail);
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        // En cas d'erreur de chargement du détail, affichage basique
-        this.groupeDetail.set({
-          id: g.id,
-          titre: g.titre,
-          statut: g.statut,
-          paysOrigine: g.paysOrigine,
-          quantiteCible: g.quantiteCible,
-          quantiteConfirmee: g.quantiteConfirmee,
-          quantiteReservee: g.quantiteReservee,
-          quantiteRestante: Math.max(0, g.quantiteCible - (g.quantiteConfirmee + g.quantiteReservee)),
-          progressionPourcentage: g.progressionPourcentage,
-          prixUnitaire: g.prixUnitaire,
-          dateLancement: g.dateLancement,
-          dateLimite: g.dateLimite,
-          disponibiliteValidee: true,
-          porteParGrossiste: false,
-          grossiste: g.grossiste,
-          courtier: g.courtier,
-          produitNom: g.titre,
-          produitDescription: '',
-          produitPhotoUrl: g.produitPhotoUrl || null,
-          categorieNom: g.categorieNom,
-          prixMarchandise: 0,
-          transport: 0,
-          fraisPlateforme: 0,
-          douane: 0,
-          autres: 0,
-          devise: 'XOF',
-          delaiLivraisonJours: 30,
-          politiqueAnnulation: null,
-          quantiteMinParCommercant: 1,
-          etapesAcheminement: []
-        });
-        this.cdr.markForCheck();
-      }
-    });
+
+    if (this.groupeDetail() !== null) {
+      this.chargerDetailGroupe(g.id);
+    }
+  }
+
+  /**
+   * Clic explicite sur une carte du cadran :
+   * - Si déjà ouvert sur ce même groupe -> on le ferme
+   * - Sinon -> on focalise la caméra et on ouvre le détail
+   */
+  onGroupeClique(g: GroupeCadranVue): void {
+    if (this.groupeDetail()?.id === g.id) {
+      this.fermerDetail();
+      return;
+    }
+
+    if (g.paysOrigine?.codeIso) {
+      this.globe3d?.focaliserSurPays(g.paysOrigine.codeIso);
+    }
+
+    this.chargerDetailGroupe(g.id);
+  }
+
+  private chargerDetailGroupe(id: number): void {
+    this.tbService.getDetailGroupe(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: detail => {
+          this.groupeDetail.set(detail);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          const g = this.groupes().find(item => item.id === id);
+          if (!g) return;
+          this.groupeDetail.set({
+            id: g.id,
+            titre: g.titre,
+            statut: g.statut,
+            paysOrigine: g.paysOrigine,
+            quantiteCible: g.quantiteCible,
+            quantiteConfirmee: g.quantiteConfirmee,
+            quantiteReservee: g.quantiteReservee,
+            quantiteRestante: Math.max(0, g.quantiteCible - (g.quantiteConfirmee + g.quantiteReservee)),
+            progressionPourcentage: g.progressionPourcentage,
+            prixUnitaire: g.prixUnitaire,
+            dateLancement: g.dateLancement,
+            dateLimite: g.dateLimite,
+            disponibiliteValidee: true,
+            porteParGrossiste: false,
+            grossiste: g.grossiste,
+            courtier: g.courtier,
+            produitNom: g.titre,
+            produitDescription: '',
+            produitPhotoUrl: g.produitPhotoUrl || null,
+            categorieNom: g.categorieNom,
+            prixMarchandise: 0,
+            transport: 0,
+            fraisPlateforme: 0,
+            douane: 0,
+            autres: 0,
+            devise: 'XOF',
+            delaiLivraisonJours: 30,
+            politiqueAnnulation: null,
+            quantiteMinParCommercant: 1,
+            etapesAcheminement: []
+          });
+          this.cdr.markForCheck();
+        }
+      });
   }
 
   fermerDetail(): void {

@@ -1,0 +1,169 @@
+<div
+  class="portefeuille-3d-scene-container"
+  (mousemove)="onMouseMove($event)"
+  (mouseleave)="onMouseLeave()"
+>
+  <!-- Scène 3D avec perspective spatiale -->
+  <div class="portefeuille-3d-rig" [style.transform]="rigTransform">
+
+    <!-- 1. SOURCE D'ARGENT MOBILE : Smartphone stylisé émettant le virement instantané -->
+    <div class="mobile-money-source" title="Entrée d'argent via Mobile Money (Orange Money / Wave / Moov)">
+      <div class="mini-smartphone">
+        <div class="phone-glass-reflection"></div>
+        <div class="phone-speaker"></div>
+        <div class="phone-screen">
+          <div class="screen-header-bar">
+            <span class="signal-dot"></span>
+            <span class="battery-bar"></span>
+          </div>
+
+          <!-- Notification de paiement mobile -->
+          <div class="mobile-notif-card">
+            <div class="op-icon-bubble">
+              <span>📲</span>
+            </div>
+            <div class="notif-texts">
+              <span class="notif-op-name">Mobile Money</span>
+              <span class="notif-tx-amount">+ 100 000 F</span>
+            </div>
+          </div>
+
+          <!-- Ondes radar de transmission vers le portefeuille -->
+          <div class="mobile-tx-waves">
+            <span class="wave w-1"></span>
+            <span class="wave w-2"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flux dynamique de jetons dorés voyageant du téléphone au portefeuille -->
+      <div class="flux-particules-argent">
+        <div class="jeton-piece j-1" aria-hidden="true">
+          <span class="piece-inner">🪙</span>
+        </div>
+        <div class="jeton-piece j-2" aria-hidden="true">
+          <span class="piece-inner">🪙</span>
+        </div>
+        <div class="jeton-piece j-3" aria-hidden="true">
+          <span class="piece-inner">🪙</span>
+        </div>
+        <div class="faisceau-lumineux" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <!-- 2. LE PORTEFEUILLE EN CUIR KARAVAN 3D -->
+    <div class="portefeuille-corps" [class.hover-boost]="estSurvole">
+
+      <!-- Ombre portée douce 3D au sol -->
+      <div class="ombre-portee-sol" aria-hidden="true"></div>
+
+      <!-- Rabat arrière (fond en cuir Bissap surpiqué) -->
+      <div class="cuir-rabat-fond">
+        <div class="couture-point-selle"></div>
+      </div>
+
+      <!-- Compartiment à billets (Argent liquide FCFA en relief) -->
+      <div class="compartiment-billets">
+        <!-- Billet 1 : 10 000 FCFA (Teinte Émeraude / UEMOA) -->
+        <div class="billet-fcfa billet-10000">
+          <div class="billet-bande-hologramme"></div>
+          <div class="billet-corps">
+            <div class="billet-haut">
+              <span class="billet-banque">BCEAO · UEMOA</span>
+              <span class="billet-somme">10 000</span>
+            </div>
+            <div class="billet-bas">
+              <span class="billet-devise">FCFA</span>
+              <span class="billet-symbole">🌾</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Billet 2 : 5 000 FCFA (Teinte Ocre Sahélien) -->
+        <div class="billet-fcfa billet-5000">
+          <div class="billet-bande-hologramme"></div>
+          <div class="billet-corps">
+            <div class="billet-haut">
+              <span class="billet-banque">BCEAO</span>
+              <span class="billet-somme">5 000</span>
+            </div>
+            <div class="billet-bas">
+              <span class="billet-devise">FCFA</span>
+              <span class="billet-symbole">🐘</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compartiment pour cartes bancaires -->
+      <div class="compartiment-cartes">
+        <!-- Carte Bancaire Karavan Business 3D inclinée -->
+        <div class="carte-bancaire-3d" title="Carte Bancaire Séquestre Karavan">
+          <div class="carte-cb-surface">
+            <!-- Reflet métallisé spéculaire -->
+            <div class="cb-specular-sheen"></div>
+
+            <div class="cb-header-row">
+              <!-- Puce électronique EMV dorée -->
+              <div class="cb-puce-emv">
+                <div class="puce-contact c-1"></div>
+                <div class="puce-contact c-2"></div>
+              </div>
+
+              <!-- Icône sans contact NFC -->
+              <div class="cb-nfc-wave">
+                <mat-icon>contactless</mat-icon>
+              </div>
+            </div>
+
+            <!-- Identité de la carte -->
+            <div class="cb-brand-row">
+              <span class="cb-brand-title">KARAVAN</span>
+              <span class="cb-brand-tier">PLATINUM</span>
+            </div>
+
+            <!-- Numéro masqué sécurisé et réseau -->
+            <div class="cb-footer-row">
+              <span class="cb-card-number">•••• 8420</span>
+              <div class="cb-reseau-badge">
+                <span class="circle-rouge"></span>
+                <span class="circle-ocre"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rabat avant du portefeuille (cuir camel Bissap avec coutures et logo embossé) -->
+      <div class="cuir-rabat-avant">
+        <div class="couture-point-selle"></div>
+        <div class="cuir-grain-texture"></div>
+
+        <!-- Bouton fermoir pression doré -->
+        <div class="fermoir-pression-dore">
+          <div class="pression-centre"></div>
+        </div>
+
+        <!-- Logo Karavan embossé à chaud sur le cuir -->
+        <div class="monogramme-karavan-embosse">
+          <div class="monogramme-icone">
+            <span class="lettre-k">K</span>
+          </div>
+          <span class="texte-sequestre">SÉQUESTRE</span>
+        </div>
+
+        <!-- Lueur de réception lorsqu'une somme mobile entre dans le portefeuille -->
+        <div class="halo-reception-argent" aria-hidden="true"></div>
+      </div>
+
+    </div>
+
+    <!-- 3. Mini-badge subtil de garantie et statut -->
+    <div class="badge-statut-sequestre">
+      <span class="pastille-verte-pulse"></span>
+      <span class="badge-texte">Séquestre actif & garanti</span>
+    </div>
+
+  </div>
+</div>
+

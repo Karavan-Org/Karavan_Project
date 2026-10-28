@@ -1,7 +1,15 @@
-<aside class="sidebar" [class.sidebar-reduite]="estReduite()">
+<aside
+  class="sidebar"
+  [class.sidebar-reduite]="estReduite()"
+  (click)="onSidebarClick($event)"
+>
 
-  <!-- 1. En-tête : Logo et Identité Karavan -->
-  <div class="brand-header" (click)="estReduite() ? basculerReduite() : null" [title]="estReduite() ? 'Agrandir la barre latérale' : ''">
+  <!-- 1. En-tête : Logo et Identité Karavan (cliquer dessus bascule l'état ouvert/fermé) -->
+  <div
+    class="brand-header"
+    (click)="basculerReduite()"
+    [title]="estReduite() ? 'Cliquer pour ouvrir le menu' : 'Cliquer pour réduire le menu'"
+  >
     <img
       src="assets/logo_karavan.png"
       alt="Logo Karavan"
@@ -12,6 +20,17 @@
       <span class="brand-name">Karavan</span>
       <span class="brand-tag">ADMINISTRATION</span>
     </div>
+
+    <!-- Petite flèche discrète de bascule dans l'en-tête en mode étendu -->
+    <button
+      type="button"
+      class="btn-mini-close-top"
+      *ngIf="!estReduite()"
+      (click)="$event.stopPropagation(); basculerReduite()"
+      title="Fermer le menu"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
   </div>
 
   <div class="sidebar-divider" *ngIf="!estReduite()"></div>
@@ -54,7 +73,7 @@
               {{ item.badge }}
             </span>
 
-            <!-- Tooltip flottant au survol en mode miniature (style maquette Figma) -->
+            <!-- Tooltip flottant au survol en mode miniature (style Karavan) -->
             <span class="floating-tooltip" *ngIf="estReduite()">
               {{ item.label }}
             </span>
@@ -85,13 +104,13 @@
       </button>
     </div>
 
-    <!-- Bouton de bascule Réduire / Agrandir la barre latérale (conforme à l'image) -->
+    <!-- Bouton de bascule Réduire / Agrandir la barre latérale -->
     <div class="toggle-collapse-bar">
       <button
         type="button"
         class="collapse-btn"
         (click)="basculerReduite()"
-        [title]="estReduite() ? 'Agrandir la barre latérale' : 'Réduire la barre latérale'"
+        [title]="estReduite() ? 'Agrandir le menu latéral' : 'Réduire le menu en miniature'"
       >
         <mat-icon class="collapse-icon">
           {{ estReduite() ? 'chevron_right' : 'chevron_left' }}

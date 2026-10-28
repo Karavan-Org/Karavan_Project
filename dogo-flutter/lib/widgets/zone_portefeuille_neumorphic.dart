@@ -1,10 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'karavan_logo.dart';
+import 'portefeuille_3d_widget.dart';
 
 /// Composant Portefeuille Neumorphique / Soft 3D Glass
 /// Reproduit fidèlement le design Soft UI avec relief doux, double ombre lumineuse,
-/// squircle 3D emblématique Karavan, pilules concaves d'informations, bouton gradient avec flèche circulaire
+/// animation 3D immersive du portefeuille Karavan (cuir, billets FCFA, carte Platinum, mobile money),
+/// pilules concaves d'informations, bouton gradient avec flèche circulaire
 /// et boutons squircles rapides d'opérateurs, tout en respectant scrupuleusement la charte Karavan.
 class ZonePortefeuilleNeumorphic extends StatelessWidget {
   final String titre;
@@ -18,6 +20,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
   final List<Widget>? squirclesRapides;
   final String? titreSquirclesRapides;
   final bool compact;
+  final bool afficherAnimation3D;
 
   const ZonePortefeuilleNeumorphic({
     super.key,
@@ -32,6 +35,7 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
     this.squirclesRapides,
     this.titreSquirclesRapides,
     this.compact = false,
+    this.afficherAnimation3D = true,
   });
 
   @override
@@ -130,47 +134,54 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Emblème 3D en squircle pillow : logo Karavan
-              Container(
-                width: compact ? 56 : 68,
-                height: compact ? 56 : 68,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(compact ? 18 : 22),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: AppTheme.estSombre(context)
-                        ? const [AppTheme.darkSurfaceHaute, AppTheme.darkSurface]
-                        : const [Colors.white, AppTheme.surfaceDouce],
-                  ),
-              border: Border.all(color: AppTheme.couleurBordureForte(context), width: 2.2),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.estSombre(context)
-                      ? Colors.white.withValues(alpha: 0.035)
-                      : Colors.white,
-                  offset: const Offset(-4, -4),
-                      blurRadius: 10,
-                    ),
-                    const BoxShadow(
-                      color: Color(0x1E2C241E),
-                      offset: Offset(4, 9),
-                      blurRadius: 16,
-                    ),
-                  ],
+              // Animation 3D Matérielle & Légère du Portefeuille Karavan
+              if (afficherAnimation3D) ...[
+                Portefeuille3dWidget(
+                  compact: compact,
+                  hauteur: compact ? 120 : 155,
                 ),
-                // Logo Karavan logé dans le squircle (sa pastille crème en épouse la forme)
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(compact ? 16 : 20),
-                  child: Image.asset(
-                    KaravanLogo.asset,
-                    fit: BoxFit.cover,
-                    cacheWidth: 200,
+                SizedBox(height: compact ? 6 : 10),
+              ] else ...[
+                // Emblème 3D en squircle pillow : logo Karavan (repli)
+                Container(
+                  width: compact ? 56 : 68,
+                  height: compact ? 56 : 68,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(compact ? 18 : 22),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: AppTheme.estSombre(context)
+                          ? const [AppTheme.darkSurfaceHaute, AppTheme.darkSurface]
+                          : const [Colors.white, AppTheme.surfaceDouce],
+                    ),
+                    border: Border.all(color: AppTheme.couleurBordureForte(context), width: 2.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.estSombre(context)
+                            ? Colors.white.withValues(alpha: 0.035)
+                            : Colors.white,
+                        offset: const Offset(-4, -4),
+                        blurRadius: 10,
+                      ),
+                      const BoxShadow(
+                        color: Color(0x1E2C241E),
+                        offset: Offset(4, 9),
+                        blurRadius: 16,
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(compact ? 16 : 20),
+                    child: Image.asset(
+                      KaravanLogo.asset,
+                      fit: BoxFit.cover,
+                      cacheWidth: 200,
+                    ),
                   ),
                 ),
-              ),
-
-              SizedBox(height: compact ? 12 : 16),
+                SizedBox(height: compact ? 12 : 16),
+              ],
 
               // Titre & Sous-titre
               Text(

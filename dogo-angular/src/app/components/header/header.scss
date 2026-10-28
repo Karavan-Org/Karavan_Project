@@ -12,23 +12,23 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: #0B111E;
-    color: #FFFFFF;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: #183630;
+    color: #FAF8F5;
+    border: 1px solid rgba(238, 168, 35, 0.35);
     border-radius: 20px;
     padding: 7px 16px;
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
     margin-right: 14px;
     flex-shrink: 0;
 
     &:hover {
-      background: #2563EB;
-      border-color: #3B82F6;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+      background: #AC7F5E;
+      border-color: #EEA823;
+      box-shadow: 0 4px 14px rgba(172, 127, 94, 0.45);
       transform: translateX(-2px);
     }
 

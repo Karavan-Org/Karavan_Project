@@ -19,6 +19,7 @@ import { AdminApiService, CommandeGroupe, DossierKyc, Groupe, LigneAudit } from 
 import { AnnuaireService, Membre, Relation, Reseau } from '../../core/services/annuaire.service';
 import { AuthService } from '../../core/services/auth.service';
 import { AdminSecuriteService } from '../../core/services/admin-securite.service';
+import { Portefeuille3dComponent } from '../../components/portefeuille-3d/portefeuille-3d.component';
 
 /** Groupes dont les commandes existent (créées à l'objectif atteint) */
 const ETATS_AVEC_COMMANDES = ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE', 'TERMINE'];
@@ -37,7 +38,7 @@ export interface CommandeFiche extends CommandeGroupe {
 @Component({
   selector: 'app-fiche-utilisateur',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, Portefeuille3dComponent],
   templateUrl: './fiche-utilisateur.html',
   styleUrl: './fiche-utilisateur.scss'
 })
@@ -174,6 +175,10 @@ export class FicheUtilisateurComponent implements OnInit {
 
   readonly sequestreLibere = computed(() =>
     this.reseau().sequestres.filter(s => s.statut === 'LIBERE').reduce((t, s) => t + Number(s.montantBloque), 0)
+  );
+
+  readonly totalSequestreActif = computed(() =>
+    this.sequestreBloque() + this.sequestreLibere()
   );
 
   /** Commandes du commerçant lui-même (les autres comptes voient les acheteurs dans leurs partenaires) */
