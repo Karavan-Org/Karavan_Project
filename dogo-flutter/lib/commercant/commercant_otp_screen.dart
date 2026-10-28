@@ -325,7 +325,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        "Code de test (valable 2 min) : $_codeSimulationCourant",
+                        "Code de confirmation SMS : $_codeSimulationCourant",
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,

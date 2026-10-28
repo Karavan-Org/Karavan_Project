@@ -145,6 +145,61 @@ export class AuthService {
   }
 
   /**
+   * Authentification via ID Token Google pour l'espace administration.
+   */
+  authentifierGoogle(idToken: string): Observable<any> {
+    return this.http
+      .post<any>(
+        `${this.apiUrl}/auth/google`,
+        { idToken, deviceId: 'admin-console' },
+        { withCredentials: true, headers: this.authHeaders }
+      )
+      .pipe(
+        tap((reponse) => {
+          if (reponse.statut === 'CONNECTE' && reponse.jeton) {
+            this.accessToken = reponse.jeton;
+            this.profil = reponse.profil;
+            this.estInitialise = true;
+            localStorage.removeItem('dogo_token');
+            localStorage.removeItem('dogo_profil');
+          }
+        })
+      );
+  }
+
+  /**
+   * Étape 1 : Demande de code OTP SMS pour lier le numéro malien au compte Google.
+   */
+  demanderOtpGoogle(jetonInscription: string, telephone: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/auth/google/demander-otp`,
+      { jetonInscription, telephone },
+      { withCredentials: true, headers: this.authHeaders }
+    );
+  }
+
+  /**
+   * Étape 2 : Vérification OTP et ouverture de session pour le compte Google.
+   */
+  completerGoogle(jetonInscription: string, telephone: string, codeOtp: string): Observable<ReponseConnexion> {
+    return this.http
+      .post<ReponseConnexion>(
+        `${this.apiUrl}/auth/google/completer`,
+        { jetonInscription, telephone, codeOtp, deviceId: 'admin-console' },
+        { withCredentials: true, headers: this.authHeaders }
+      )
+      .pipe(
+        tap((reponse) => {
+          this.accessToken = reponse.jeton;
+          this.profil = reponse.profil;
+          this.estInitialise = true;
+          localStorage.removeItem('dogo_token');
+          localStorage.removeItem('dogo_profil');
+        })
+      );
+  }
+
+  /**
    * Vrai si l'administrateur connecté détient au moins une des permissions (son rôle TECHNIQUE, VALIDATION,
    * FINANCE ou SUPPORT les fixe côté backend). Sans argument : simplement connecté.
    */

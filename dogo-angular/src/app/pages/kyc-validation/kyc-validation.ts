@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { dateCourte, dateRelative, messageErreur } from '../../core/api';
+import { AdminSecuriteService } from '../../core/services/admin-securite.service';
 import {
   AdminApiService,
   Courtier,
@@ -50,6 +51,7 @@ export class KycValidationComponent implements OnInit, OnDestroy {
   private readonly api = inject(AdminApiService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
+  private readonly securite = inject(AdminSecuriteService);
 
   readonly dossiers = signal<DossierKyc[]>([]);
   readonly selection = signal<DossierKyc | null>(null);
@@ -241,7 +243,7 @@ export class KycValidationComponent implements OnInit, OnDestroy {
 
   // ---------------------------------------------------------------- décisions
 
-  valider(): void {
+  async valider(): Promise<void> {
     const d = this.selection();
     if (!d || this.envoi()) {
       return;
@@ -249,7 +251,17 @@ export class KycValidationComponent implements OnInit, OnDestroy {
     if (!this.dossierComplet() && !confirm('Des contrôles ne sont pas satisfaits. Valider quand même ce dossier ?')) {
       return;
     }
-    this.decider(d, 'APPROUVE', 'Dossier conforme', `Dossier approuvé : ${this.entreprise(d)} est activé et notifié.`);
+    try {
+      await this.securite.demanderConfirmation({
+        titre: 'Validation de Dossier KYC',
+        description: `Validation et approbation du dossier KYC de « ${this.entreprise(d)} ». Son compte sera activé.`,
+        actionTexte: 'Valider le dossier',
+        icone: 'verified_user'
+      });
+      this.decider(d, 'APPROUVE', 'Dossier conforme', `Dossier approuvé : ${this.entreprise(d)} est activé et notifié.`);
+    } catch {
+      // Annulé
+    }
   }
 
   demanderComplement(): void {
@@ -268,7 +280,7 @@ export class KycValidationComponent implements OnInit, OnDestroy {
       `Demande envoyée à ${this.entreprise(d)} : il complétera son dossier depuis l'application.`);
   }
 
-  rejeter(): void {
+  async rejeter(): Promise<void> {
     const d = this.selection();
     if (!d || this.envoi()) {
       return;
@@ -277,7 +289,18 @@ export class KycValidationComponent implements OnInit, OnDestroy {
     if (!motif?.trim()) {
       return;
     }
-    this.decider(d, 'REJETE', motif.trim(), `Dossier rejeté : ${this.entreprise(d)} est notifié du motif.`);
+    try {
+      await this.securite.demanderConfirmation({
+        titre: 'Rejet de Dossier KYC',
+        description: `Rejet du dossier KYC de « ${this.entreprise(d)} » pour le motif : « ${motif.trim()} ».`,
+        actionTexte: 'Rejeter le dossier',
+        icone: 'cancel',
+        danger: true
+      });
+      this.decider(d, 'REJETE', motif.trim(), `Dossier rejeté : ${this.entreprise(d)} est notifié du motif.`);
+    } catch {
+      // Annulé
+    }
   }
 
   private decider(d: DossierKyc, decision: 'APPROUVE' | 'REJETE', commentaire: string, succes: string): void {

@@ -1,0 +1,161 @@
+<div class="modal-backdrop" *ngIf="securite.modalOuverte()" (click)="fermer()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <!-- MODE 1 : CONFIRMATION D'UNE ACTION SENSIBLE -->
+    <ng-container *ngIf="securite.modalMode() === 'CONFIRMATION'">
+      <div class="modal-header" [class.danger-header]="securite.configAction()?.danger">
+        <div class="icon-circle">
+          <span>🔒</span>
+        </div>
+        <div class="header-text">
+          <h3>{{ securite.configAction()?.titre || 'Confirmation de sécurité' }}</h3>
+          <p class="subtitle">Code de validation administrateur (4 chiffres)</p>
+        </div>
+        <button type="button" class="btn-close" (click)="fermer()" aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="action-alert" [class.danger-alert]="securite.configAction()?.danger">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-content">
+            <strong>Opération administrative sous contrôle :</strong>
+            <p>{{ securite.configAction()?.description }}</p>
+          </div>
+        </div>
+
+        <div class="pin-section">
+          <label class="pin-label">Saisissez votre code secret à 4 chiffres :</label>
+
+          <div class="digits-wrapper">
+            <input
+              *ngFor="let digit of [0, 1, 2, 3]; let i = index"
+              #digitInput
+              type="password"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="1"
+              class="digit-box"
+              [value]="chiffresConfirmation[i]"
+              (input)="onDigitInput($event, i, 'confirmation')"
+              (keydown)="onKeyDown($event, i, 'confirmation')"
+              (keyup.enter)="codeConfirmationComplet() && validerConfirmation()"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="error-banner" *ngIf="messageErreur()">
+            <span>❌ {{ messageErreur() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="fermer()" [disabled]="enCours()">
+          Annuler
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          [class.btn-danger]="securite.configAction()?.danger"
+          [disabled]="!codeConfirmationComplet() || enCours()"
+          (click)="validerConfirmation()">
+          <span *ngIf="!enCours()">{{ securite.configAction()?.actionTexte || 'Valider' }}</span>
+          <span *ngIf="enCours()">Vérification...</span>
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- MODE 2 : CONFIGURATION DU CODE DE SÉCURITÉ -->
+    <ng-container *ngIf="securite.modalMode() === 'CONFIGURATION'">
+      <div class="modal-header">
+        <div class="icon-circle primary-circle">
+          <span>🛡️</span>
+        </div>
+        <div class="header-text">
+          <h3>{{ securite.statut()?.configure ? 'Modifier mon code de sécurité' : 'Configurer mon code de sécurité' }}</h3>
+          <p class="subtitle">Protection des actions administratives Karavan</p>
+        </div>
+        <button type="button" class="btn-close" (click)="fermer()" aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="info-box">
+          💡 Ce code à 4 chiffres vous est propre. Il vous sera demandé systématiquement avant chaque action sensible (validation KYC, suspension de compte, notification groupée, litiges financiers).
+        </div>
+
+        <!-- Ancien code si déjà configuré -->
+        <div class="form-group" *ngIf="securite.statut()?.configure">
+          <label class="field-label">Ancien code de sécurité (4 chiffres) :</label>
+          <input
+            type="password"
+            maxlength="4"
+            inputmode="numeric"
+            class="input-code-compact"
+            placeholder="••••"
+            [(ngModel)]="ancienCode"
+          />
+        </div>
+
+        <!-- Nouveau code -->
+        <div class="form-group">
+          <label class="field-label">Nouveau code de sécurité (4 chiffres) :</label>
+          <div class="digits-wrapper digits-small">
+            <input
+              *ngFor="let digit of [0, 1, 2, 3]; let i = index"
+              type="password"
+              maxlength="1"
+              inputmode="numeric"
+              class="digit-box"
+              [value]="nouveauCode[i]"
+              (input)="onDigitInput($event, i, 'nouveau')"
+              (keydown)="onKeyDown($event, i, 'nouveau')"
+            />
+          </div>
+        </div>
+
+        <!-- Confirmer le nouveau code -->
+        <div class="form-group">
+          <label class="field-label">Confirmez votre nouveau code (4 chiffres) :</label>
+          <div class="digits-wrapper digits-small">
+            <input
+              *ngFor="let digit of [0, 1, 2, 3]; let i = index"
+              type="password"
+              maxlength="1"
+              inputmode="numeric"
+              class="digit-box"
+              [value]="confirmationCode[i]"
+              (input)="onDigitInput($event, i, 'confirmer')"
+              (keydown)="onKeyDown($event, i, 'confirmer')"
+            />
+          </div>
+        </div>
+
+        <div class="error-banner" *ngIf="messageErreur()">
+          <span>❌ {{ messageErreur() }}</span>
+        </div>
+
+        <div class="success-banner" *ngIf="messageSucces()">
+          <span>✅ {{ messageSucces() }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="fermer()" [disabled]="enCours()">
+          Fermer
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="!codeNouveauComplet() || enCours()"
+          (click)="enregistrerConfiguration()">
+          <span *ngIf="!enCours()">Enregistrer le code de sécurité</span>
+          <span *ngIf="enCours()">Enregistrement...</span>
+        </button>
+      </div>
+    </ng-container>
+
+  </div>
+</div>
+

@@ -84,6 +84,10 @@ public class AuthService {
             throw compteInexistant();
         }
         u.verifierNonVerrouille(maintenant);
+        if (!u.hasMotDePasse()) {
+            throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, "RG-07",
+                    "Ce compte a été configuré avec Google sans mot de passe classique. Veuillez vous connecter avec le bouton « Continuer avec Google », ou cliquer sur « Mot de passe oublié ? » pour en définir un.");
+        }
         boolean motDePasseValide = pin != null && encodeur.matches(pin, u.getMotDePasseHash());
         if (!motDePasseValide) {
             compteurs.enregistrerEchecPin(u.getId(), proprietes.pin().maxEchecs(), proprietes.pin().verrouillage(),

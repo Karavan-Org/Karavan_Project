@@ -193,15 +193,15 @@ public class CompteService {
         sessions.invaliderToutes(cibleId);
         refreshTokenService.revoquerPourUtilisateur(cibleId);
         audit.tracer(administrateurId, "COMPTE_SUSPENDU", "utilisateur=" + cibleId, "motif=" + motif);
-        notifications.notifier(cibleId, "Votre compte DoGo a été suspendu. Contactez le support.");
+        notifications.notifier(cibleId, "Votre compte Karavan a été suspendu. Contactez le support.");
     }
 
     @Transactional
     public void changerMotDePasse(long utilisateurId, String ancienMdp, String nouveauMdp) {
         Utilisateur u = charger(utilisateurId);
-        boolean motDePasseValide = ancienMdp != null && encodeur.matches(ancienMdp, u.getMotDePasseHash());
+        boolean motDePasseValide = !u.hasMotDePasse() || (ancienMdp != null && encodeur.matches(ancienMdp, u.getMotDePasseHash()));
         if (!motDePasseValide) {
-            throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, "RG-07", "Ancien mot de passe / code PIN incorrect");
+            throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, "RG-07", "Ancien mot de passe incorrect");
         }
         if (nouveauMdp == null || nouveauMdp.isBlank() || nouveauMdp.length() < 4) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-07", "Le nouveau code doit comporter au moins 4 caractères");

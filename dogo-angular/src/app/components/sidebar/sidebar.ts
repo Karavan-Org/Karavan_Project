@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
+import { AdminSecuriteService } from '../../core/services/admin-securite.service';
 import { PERMISSIONS_PAGES } from '../../core/permissions';
 
 interface MenuItem {
@@ -36,6 +37,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly api = inject(AdminApiService);
   private readonly notifications = inject(NotificationService);
+  readonly securite = inject(AdminSecuriteService);
   private minuterie?: ReturnType<typeof setInterval>;
 
   /** Dossiers KYC et groupes en attente de décision (badges du menu), relus chaque minute */

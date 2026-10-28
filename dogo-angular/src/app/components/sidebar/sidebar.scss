@@ -247,6 +247,59 @@
     }
   }
 
+  /* Code de sécurité à 4 chiffres */
+  .security-pin-bar {
+    margin: 0 12px 10px;
+
+    .security-pin-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 8px 10px;
+      border: 1px dashed var(--gris-bord);
+      border-radius: 10px;
+      background: #ffffff;
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(172, 127, 94, 0.08);
+        border-color: var(--primary);
+        border-style: solid;
+        transform: translateY(-1px);
+      }
+
+      .sec-icon {
+        font-size: 13px;
+      }
+
+      .sec-text {
+        flex: 1;
+        text-align: left;
+        color: var(--text-muted);
+      }
+
+      .sec-badge {
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-size: 9.5px;
+        font-weight: 800;
+        background: #fff3cd;
+        color: #856404;
+
+        &.sec-badge-ok {
+          background: #d4edda;
+          color: #155724;
+        }
+      }
+    }
+  }
+
   /* Profil administrateur */
 
   .user-footer {

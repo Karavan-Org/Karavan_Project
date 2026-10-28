@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 /// Configuration centralisée des endpoints et URLs de l'API Backend Karavan
 class ApiConfig {
@@ -57,6 +57,10 @@ class ApiConfig {
   static const String renvoyerOtp = '/api/auth/renvoyer-otp';
   static const String demandeResetMdp = '/api/auth/mot-de-passe-oublie/demande';
   static const String reinitialiserMdp = '/api/auth/mot-de-passe-oublie/reinitialiser';
+  static const String googleAuth = '/api/auth/google';
+  static const String googleCompleter = '/api/auth/google/completer';
+  static const String googleDemanderOtp = '/api/auth/google/demander-otp';
+  static const String googleClientId = String.fromEnvironment('google_client_id', defaultValue: '');
 
   // --- Endpoints Dossier KYC (Grossiste / Courtier) ---
   static const String kyc = '/api/kyc';

@@ -49,8 +49,13 @@ public class OtpService {
     /** Génère un nouveau code (les précédents sont annulés), l'envoie par SMS et le renvoie en clair à l'appelant. */
     @Transactional
     public String emettre(Utilisateur utilisateur) {
+        return emettrePourTelephone(utilisateur.getTelephone(), utilisateur.getId());
+    }
+
+    @Transactional
+    public String emettrePourTelephone(String telephoneBrut, Long utilisateurIdOptionnel) {
         Instant maintenant = horloge.instant();
-        String telephone = utilisateur.getTelephone();
+        String telephone = ml.dogo.identite.domain.Telephone.normaliser(telephoneBrut);
         // Comptés par numéro et non par compte : remplacer une inscription abandonnée ne remet rien à zéro
         otps.findFirstByTelephoneOrderByDateCreationDesc(telephone).ifPresent(dernier -> {
             Duration delai = proprietes.otp().afficherDansReponse() ? Duration.ofSeconds(2) : DELAI_RENVOI;
@@ -64,14 +69,36 @@ public class OtpService {
             throw new ErreurMetier(CodeErreur.CONFLIT, "RG-02",
                     "Trop de codes demandés pour ce numéro : réessayez dans 24 heures ou contactez le support");
         }
-        otps.invaliderAnciens(utilisateur.getId());
+        if (utilisateurIdOptionnel != null) {
+            otps.invaliderAnciens(utilisateurIdOptionnel);
+        }
         String code = String.format("%04d", alea.nextInt(10_000));
-        otps.save(new CodeOtp(utilisateur.getId(), telephone, encodeur.encode(code),
+        otps.save(new CodeOtp(utilisateurIdOptionnel, telephone, encodeur.encode(code),
                 maintenant.plus(proprietes.otp().validite()), maintenant));
         long minutes = Math.max(1, proprietes.otp().validite().toMinutes());
         notifications.envoyerSms(telephone,
                 "Karavan : votre code de vérification est " + code + ". Il est valable " + minutes + " min.");
         return code;
+    }
+
+    @Transactional
+    public void verifierPourTelephone(String telephoneBrut, String saisi) {
+        Instant maintenant = horloge.instant();
+        String telephone = ml.dogo.identite.domain.Telephone.normaliser(telephoneBrut);
+        CodeOtp otp = otps.findFirstByTelephoneOrderByDateCreationDesc(telephone)
+                .filter(o -> !o.isUtilise())
+                .orElseThrow(() -> new ErreurMetier(CodeErreur.OTP_INVALIDE, "RG-02", "Code invalide ou expiré"));
+        otp.verifierUtilisable(proprietes.otp().maxTentatives(), maintenant);
+        if (!compteurs.reserverTentativeOtp(otp.getId(), proprietes.otp().maxTentatives(), maintenant)) {
+            throw new ErreurMetier(CodeErreur.OTP_INVALIDE, "RG-02", "Code invalide ou expiré");
+        }
+        boolean valide = saisi != null && encodeur.matches(saisi, otp.getCodeHash());
+        if (!valide) {
+            throw new ErreurMetier(CodeErreur.OTP_INVALIDE, "RG-02", "Code invalide ou expiré");
+        }
+        if (otps.consommer(otp.getId()) != 1) {
+            throw new ErreurMetier(CodeErreur.OTP_INVALIDE, "RG-02", "Code invalide ou expiré");
+        }
     }
 
     /** Vrai si le compte a encore un code utilisable (inscription en cours de vérification). */

@@ -111,7 +111,7 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
       if (!mounted) return;
       setState(() {
         _chargement = false;
-        _erreur = e is ApiException ? e.messageComplet : "Erreur lors de l'envoi du code : $e";
+        _erreur = e is ApiException ? e.messageComplet : "Impossible d'envoyer le code SMS. Veuillez vérifier votre connexion.";
       });
     }
   }
@@ -180,7 +180,7 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
       if (!mounted) return;
       setState(() {
         _chargement = false;
-        _erreur = e is ApiException ? e.messageComplet : "Erreur de réinitialisation : $e";
+        _erreur = e is ApiException ? e.messageComplet : "Impossible de réinitialiser le mot de passe. Veuillez vérifier le code saisi.";
       });
     }
   }
@@ -364,7 +364,7 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          "Mode Démo : Code OTP SMS reçu = $_codeOtpDemo",
+                          "Code de confirmation SMS reçu : $_codeOtpDemo",
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
@@ -498,3 +498,4 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
     );
   }
 }
+

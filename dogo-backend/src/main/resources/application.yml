@@ -76,3 +76,5 @@ dogo:
     secret-callback: ${DOGO_MM_SECRET}   # signature HMAC des callbacks (RG-35)
   stockage:
     dossier: ${DOGO_STOCKAGE:./donnees/fichiers}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}

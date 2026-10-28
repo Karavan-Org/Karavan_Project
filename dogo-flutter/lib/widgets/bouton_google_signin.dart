@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/role_acteur.dart';
+import '../screens/google_completer_profil_screen.dart';
+import '../services/api/api_config.dart';
 import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
-import '../commercant/commercant_otp_screen.dart';
-import '../services/validateur_mot_de_passe.dart';
-import 'mot_de_passe_oublie_modal.dart';
 
 /// Bouton officiel « Continuer avec Google » respectant la charte graphique Google et l'identité visuelle Karavan.
 class BoutonGoogleSignIn extends StatelessWidget {
@@ -23,6 +22,90 @@ class BoutonGoogleSignIn extends StatelessWidget {
     this.onTelephoneConfirme,
   });
 
+  Future<void> _declencherConnexionGoogle(BuildContext context) async {
+    if (onAvantClic != null) onAvantClic!();
+
+    final scaffold = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+
+    // En environnement de test / local sans ID client Google configuré,
+    // ouvrir la boîte de dialogue de démonstration assistée
+    if (ApiConfig.googleClientId.isEmpty) {
+      GoogleAuthModal.ouvrir(context: context, role: role);
+      return;
+    }
+
+    try {
+      final googleSignIn = GoogleSignIn(
+        serverClientId: ApiConfig.googleClientId,
+        scopes: const ['email', 'profile'],
+      );
+
+      final GoogleSignInAccount? account = await googleSignIn.signIn();
+      if (account == null) {
+        scaffold.showSnackBar(
+          const SnackBar(
+            content: Text("Connexion Google annulée."),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+
+      final GoogleSignInAuthentication auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        throw Exception("Impossible d'obtenir les identifiants de connexion Google.");
+      }
+
+      final res = await AuthService.instance.authentifierGoogle(idToken);
+      final statut = res['statut'] as String?;
+      if (statut == 'CONNECTE') {
+        final route = switch (role) {
+          RoleActeur.grossiste => '/grossiste',
+          RoleActeur.courtier => '/courtier',
+          RoleActeur.commercant => '/commercant',
+        };
+        nav.pushReplacementNamed(route);
+      } else if (statut == 'PROFIL_INCOMPLET') {
+        nav.push(
+          MaterialPageRoute(
+            builder: (_) => GoogleCompleterProfilScreen(
+              jetonInscription: res['jetonInscription'] as String? ?? '',
+              sub: res['sub'] as String?,
+              email: res['email'] as String? ?? account.email,
+              emailVerified: res['emailVerified'] as bool? ?? true,
+              nom: res['nom'] as String? ?? account.displayName,
+              photoUrl: res['photoUrl'] as String? ?? account.photoUrl,
+              roleParDefaut: role,
+            ),
+          ),
+        );
+      } else {
+        scaffold.showSnackBar(
+          SnackBar(
+            content: Text(res['message']?.toString() ?? "Réponse inattendue lors de la connexion."),
+            backgroundColor: AppTheme.danger,
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      scaffold.showSnackBar(
+        SnackBar(
+          content: Text(e.messageComplet),
+          backgroundColor: AppTheme.danger,
+        ),
+      );
+    } catch (_) {
+      scaffold.showSnackBar(
+        const SnackBar(
+          content: Text("Impossible de finaliser l'authentification Google. Veuillez réessayer."),
+          backgroundColor: AppTheme.danger,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final estSombre = AppTheme.estSombre(context);
@@ -31,10 +114,7 @@ class BoutonGoogleSignIn extends StatelessWidget {
     final couleurTexte = AppTheme.couleurTexte(context);
 
     return InkWell(
-      onTap: () {
-        if (onAvantClic != null) onAvantClic!();
-        GoogleAuthModal.ouvrir(context: context, role: role);
-      },
+      onTap: () => _declencherConnexionGoogle(context),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         height: 52,
@@ -130,13 +210,9 @@ class _GoogleGLogoPainter extends CustomPainter {
       ..strokeWidth = epaisseur;
 
     // Arcs formant le cercle Google
-    // Bleu : quart supérieur droit et barre horizontale
     canvas.drawArc(rect, -0.6, 1.2, false, paintBleu);
-    // Vert : quart inférieur
     canvas.drawArc(rect, 0.6, 1.2, false, paintVert);
-    // Jaune : quart inférieur gauche
     canvas.drawArc(rect, 1.8, 1.2, false, paintJaune);
-    // Rouge : quart supérieur
     canvas.drawArc(rect, 3.0, 1.2, false, paintRouge);
 
     // Barre transversale bleue du "G"
@@ -155,7 +231,7 @@ class _GoogleGLogoPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Modal moderne d'authentification Google avec confirmation obligatoire du numéro 2FA
+/// Modal moderne d'authentification Google (avec support du mode démo/test)
 class GoogleAuthModal extends StatefulWidget {
   final RoleActeur role;
 
@@ -193,147 +269,64 @@ class GoogleAuthModal extends StatefulWidget {
 }
 
 class _GoogleAuthModalState extends State<GoogleAuthModal> {
-  // Compte Google connecté par défaut dans le navigateur ou personnalisable
   final String _nomGoogle = "Salif Modibo Keïta";
   final String _emailGoogle = "salifmodibok@gmail.com";
-  final TextEditingController _phoneController = TextEditingController(text: "+223 ");
-  final TextEditingController _passwordController = TextEditingController();
-  bool _masquerMotDePasse = true;
-  bool _envoiEnCours = false;
+  bool _enCours = false;
   String? _messageErreur;
 
-  @override
-  void dispose() {
-    _phoneController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  String _libelleRole(RoleActeur role) {
-    switch (role) {
-      case RoleActeur.commercant:
-        return "Commerçant";
-      case RoleActeur.courtier:
-        return "Courtier";
-      case RoleActeur.grossiste:
-        return "Grossiste";
-    }
-  }
-
-  Future<void> _confirmerEtRecevoir2FA() async {
-    final telBrut = _phoneController.text.trim();
-    final telNettoye = telBrut.replaceAll(RegExp(r'\s+'), '');
-    final motDePasse = _passwordController.text;
-
-    if (telNettoye.length < 8) {
-      setState(() {
-        _messageErreur = "Veuillez saisir un numéro de téléphone valide pour recevoir le code 2FA.";
-      });
-      return;
-    }
-
-    final erreurMdp = ValidateurMotDePasse.validerCreation(motDePasse);
-    if (erreurMdp != null) {
-      setState(() {
-        _messageErreur = erreurMdp;
-      });
-      return;
-    }
-
+  Future<void> _lancerAuthentificationSimulee() async {
     setState(() {
-      _envoiEnCours = true;
+      _enCours = true;
       _messageErreur = null;
     });
 
+    final nav = Navigator.of(context);
+
     try {
-      // 1. Tenter une connexion directe au cas où le compte existe déjà
-      try {
-        await AuthService.instance.connecter(
-          telephone: telNettoye,
-          motDePasse: motDePasse,
-          pin: motDePasse,
-        );
-        if (!mounted) return;
-        Navigator.of(context).pop();
+      // Émission d'un mock token Google valide pour le backend en profil local/demo
+      final token = 'mock-google-token:google-uid-demo:$_emailGoogle:true:$_nomGoogle:';
+      final res = await AuthService.instance.authentifierGoogle(token);
+
+      if (!mounted) return;
+      nav.pop(); // Fermer la modale
+
+      final statut = res['statut'] as String?;
+      if (statut == 'CONNECTE') {
         final route = switch (widget.role) {
           RoleActeur.grossiste => '/grossiste',
           RoleActeur.courtier => '/courtier',
           RoleActeur.commercant => '/commercant',
         };
-        Navigator.of(context).pushReplacementNamed(route);
-        return;
-      } catch (eConn) {
-        if (eConn is ApiException && eConn.statusCode == 401) {
-          setState(() {
-            _envoiEnCours = false;
-            _messageErreur =
-                "Ce compte existe déjà avec un mot de passe différent. Saisissez votre mot de passe habituel ou cliquez sur « Mot de passe oublié ? ».";
-          });
-          return;
-        }
-      }
-
-      String? codeOtpSimule;
-
-      // Inscription ou renvoi OTP selon l'existence du compte
-      try {
-        final res = await AuthService.instance.inscrire(
-          typeActeur: widget.role.name.toUpperCase(),
-          telephone: telNettoye,
-          nom: _nomGoogle,
-          motDePasse: motDePasse,
-          pin: motDePasse,
-          nomBoutique: widget.role == RoleActeur.commercant ? "Boutique $_nomGoogle" : null,
-          quartierBamako: widget.role == RoleActeur.commercant ? "Grand Marché" : null,
-          nomBoutiqueMarche: widget.role == RoleActeur.grossiste ? "Établissements $_nomGoogle" : null,
-          numeroNif: widget.role == RoleActeur.grossiste ? "084729103M" : null,
-          nomSocieteImport: widget.role == RoleActeur.courtier ? "Transit & Fret $_nomGoogle" : null,
-          licenceTransit: widget.role == RoleActeur.courtier ? "LT-BKO-2026" : null,
-        );
-        codeOtpSimule = res['codeOtp']?.toString();
-      } on ApiException catch (e) {
-        if (e.statusCode == 409 || e.code == 'CONFLIT') {
-          // Tentative de récupération du code OTP si une inscription non finalisée est en attente
-          try {
-            final renvoi = await AuthService.instance.renvoyerOtp(telephone: telNettoye);
-            codeOtpSimule = renvoi['codeOtp']?.toString();
-          } catch (_) {
-            setState(() {
-              _envoiEnCours = false;
-              _messageErreur =
-                  "Ce numéro est déjà actif sur la plateforme. Connectez-vous avec votre mot de passe ou cliquez sur « Mot de passe oublié ? ».";
-            });
-            return;
-          }
-        } else {
-          rethrow;
-        }
-      }
-
-      if (!mounted) return;
-
-      Navigator.of(context).pop(); // Fermer la modale Google
-
-      // Redirection immédiate vers l'écran de vérification 2FA OTP
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => CommercantOtpScreen(
-            numeroTelephone: telNettoye,
-            role: widget.role,
-            codeSimulation: codeOtpSimule,
-            nom: _nomGoogle,
-            motDePasse: motDePasse,
-            pin: motDePasse,
+        nav.pushReplacementNamed(route);
+      } else if (statut == 'PROFIL_INCOMPLET') {
+        nav.push(
+          MaterialPageRoute(
+            builder: (_) => GoogleCompleterProfilScreen(
+              jetonInscription: res['jetonInscription'] as String? ?? '',
+              sub: res['sub'] as String?,
+              email: res['email'] as String? ?? _emailGoogle,
+              emailVerified: res['emailVerified'] as bool? ?? true,
+              nom: res['nom'] as String? ?? _nomGoogle,
+              photoUrl: res['photoUrl'] as String?,
+              roleParDefaut: widget.role,
+            ),
           ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
+        );
+      } else {
+        setState(() {
+          _enCours = false;
+          _messageErreur = res['message']?.toString() ?? "Réponse inattendue";
+        });
+      }
+    } on ApiException catch (e) {
       setState(() {
-        _envoiEnCours = false;
-        _messageErreur = e is ApiException
-            ? e.messageComplet
-            : "Une erreur est survenue lors de l'authentification : $e";
+        _enCours = false;
+        _messageErreur = e.messageComplet;
+      });
+    } catch (_) {
+      setState(() {
+        _enCours = false;
+        _messageErreur = "Une erreur est survenue lors de la connexion. Veuillez réessayer.";
       });
     }
   }
@@ -364,7 +357,6 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Barre d'accroche supérieure
             Center(
               child: Container(
                 width: 42,
@@ -376,8 +368,6 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                 ),
               ),
             ),
-
-            // En-tête Google & Karavan
             Row(
               children: [
                 Container(
@@ -396,7 +386,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Connexion avec Google",
+                        "Connexion Google",
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
@@ -405,7 +395,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        "Espace ${_libelleRole(widget.role)} Karavan",
+                        "Espace ${widget.role.name} Karavan",
                         style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
@@ -421,10 +411,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                 ),
               ],
             ),
-
             const SizedBox(height: 18),
-
-            // Carte Compte Google actif sur le navigateur
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -438,7 +425,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                     radius: 22,
                     backgroundColor: const Color(0xFF4285F4),
                     child: Text(
-                      _nomGoogle.isNotEmpty ? _nomGoogle[0] : "G",
+                      _nomGoogle[0],
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -451,22 +438,14 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                _nomGoogle,
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: couleurTexte,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Icon(Icons.check_circle_rounded, color: Color(0xFF34A853), size: 16),
-                          ],
+                        Text(
+                          _nomGoogle,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            color: couleurTexte,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -481,253 +460,26 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF34A853).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      "Navigateur",
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF2E7D32),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Encart informatif 2FA Mali & Logistique
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppTheme.doreKaravan.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppTheme.doreKaravan.withValues(alpha: 0.35),
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.verified_user_rounded, color: AppTheme.doreKaravan, size: 22),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Double Authentification obligatoire (2FA)",
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: couleurTexte,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Google ne transmet pas de numéro malien vérifié. Pour sécuriser vos achats groupés, vos retraits au dépôt et vos transactions Mobile Money (Orange Money, Wave, Moov), veuillez confirmer votre numéro.",
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: couleurAttenue,
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 18),
-
-            // Champ de confirmation du numéro de téléphone
-            Text(
-              "Numéro de téléphone Malien (+223)",
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: couleurTexte,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: couleurCarte,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: _messageErreur != null ? AppTheme.danger : couleurBordure,
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppTheme.bissap.withValues(alpha: 0.08),
-                    ),
-                    child: const Icon(Icons.phone_iphone_rounded, color: AppTheme.bissap, size: 19),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[\d\s\+]')),
-                      ],
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        color: couleurTexte,
-                      ),
-                      decoration: InputDecoration(
-                        filled: false,
-                        hintText: "+223 70 00 00 00",
-                        hintStyle: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: couleurAttenue,
-                        ),
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Champ de configuration du mot de passe
-            Text(
-              "Mot de passe du compte",
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: couleurTexte,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: couleurCarte,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: _messageErreur != null ? AppTheme.danger : couleurBordure,
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppTheme.bissap.withValues(alpha: 0.08),
-                    ),
-                    child: const Icon(Icons.lock_rounded, color: AppTheme.bissap, size: 19),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _passwordController,
-                      obscureText: _masquerMotDePasse,
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w600,
-                        color: couleurTexte,
-                      ),
-                      decoration: InputDecoration(
-                        filled: false,
-                        hintText: "8+ car., maj., min., chiffre",
-                        hintStyle: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: couleurAttenue,
-                        ),
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      _masquerMotDePasse ? Icons.visibility_off : Icons.visibility,
-                      color: couleurAttenue,
-                      size: 20,
-                    ),
-                    onPressed: () => setState(() => _masquerMotDePasse = !_masquerMotDePasse),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  final tel = _phoneController.text.trim();
-                  Navigator.of(context).pop();
-                  MotDePasseOublieModal.ouvrir(context, initialTelephone: tel);
-                },
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: const Text(
-                  "Mot de passe oublié ?",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.bissap,
-                  ),
-                ),
-              ),
-            ),
-
             if (_messageErreur != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
                 _messageErreur!,
                 style: const TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.danger,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
-
             const SizedBox(height: 22),
-
-            // Bouton de confirmation & envoi 2FA
             SizedBox(
               height: 52,
               child: ElevatedButton(
-                onPressed: _envoiEnCours ? null : _confirmerEtRecevoir2FA,
+                onPressed: _enCours ? null : _lancerAuthentificationSimulee,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.bissap,
                   foregroundColor: Colors.white,
@@ -736,7 +488,7 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: _envoiEnCours
+                child: _enCours
                     ? const SizedBox(
                         width: 22,
                         height: 22,
@@ -748,10 +500,10 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                     : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.sms_rounded, size: 19),
+                          GoogleGIcon(taille: 20),
                           SizedBox(width: 10),
                           Text(
-                            "Confirmer et recevoir le code 2FA",
+                            "Continuer avec ce compte Google",
                             style: TextStyle(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w800,
@@ -759,21 +511,6 @@ class _GoogleAuthModalState extends State<GoogleAuthModal> {
                           ),
                         ],
                       ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-            Center(
-              child: Text(
-                widget.role == RoleActeur.commercant
-                    ? "Étape suivante : Vérification OTP SMS puis accès immédiat à votre espace"
-                    : "Étape suivante : Vérification OTP SMS puis dépôt des pièces justificatives (KYC)",
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: couleurAttenue,
-                ),
-                textAlign: TextAlign.center,
               ),
             ),
           ],

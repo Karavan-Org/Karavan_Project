@@ -255,6 +255,105 @@ class AuthService {
     );
   }
 
+  /// Authentification via ID Token Google (RG-07)
+  /// Renvoie soit {'statut': 'CONNECTE', 'profil': ...} soit {'statut': 'PROFIL_INCOMPLET', 'jetonInscription': ...}
+  Future<Map<String, dynamic>> authentifierGoogle(String idToken, {String? deviceId}) async {
+    final response = await ApiClient.instance.postSansAuth(
+      ApiConfig.googleAuth,
+      body: {
+        'idToken': idToken,
+        'deviceId': deviceId ?? 'flutter-device-client',
+      },
+      headers: _entetesPlateforme,
+    );
+
+    if (response is! Map<String, dynamic>) {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Réponse inattendue du serveur lors de la connexion Google.',
+      );
+    }
+
+    if (response['statut'] == 'CONNECTE' &&
+        response['jeton'] is String &&
+        (response['jeton'] as String).isNotEmpty) {
+      final jeton = response['jeton'] as String;
+      ApiClient.instance.definirJeton(jeton);
+      final profil = UtilisateurProfil.fromJson(
+          response['profil'] as Map<String, dynamic>? ?? {});
+      profilNotifier.value = profil;
+
+      final refreshToken = response['refreshToken'] as String?;
+      await SessionStorageService.instance.sauvegarderSession(
+        refreshToken: refreshToken ?? '',
+        profil: profil,
+      );
+      return {'statut': 'CONNECTE', 'profil': profil};
+    }
+
+    return response;
+  }
+
+  /// Étape 1 : Demande de code OTP pour finaliser l'inscription Google
+  Future<Map<String, dynamic>> demanderOtpGoogleCompleter({
+    required String jetonInscription,
+    required String telephone,
+  }) async {
+    final response = await ApiClient.instance.postSansAuth(
+      ApiConfig.googleDemanderOtp,
+      body: {
+        'jetonInscription': jetonInscription,
+        'telephone': telephone,
+      },
+      headers: _entetesPlateforme,
+    );
+    return response is Map<String, dynamic> ? response : {};
+  }
+
+  /// Étape 2 : Vérification OTP et finalisation de l'inscription / fusion Google
+  Future<UtilisateurProfil> completerGoogleEtConnecter({
+    required String jetonInscription,
+    required String telephone,
+    required String codeOtp,
+    String? typeActeur,
+    String? nomBoutique,
+    String? quartierBamako,
+    String? deviceId,
+  }) async {
+    final response = await ApiClient.instance.postSansAuth(
+      ApiConfig.googleCompleter,
+      body: {
+        'jetonInscription': jetonInscription,
+        'telephone': telephone,
+        'codeOtp': codeOtp,
+        if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
+        if (nomBoutique != null) 'nomBoutique': nomBoutique,
+        if (quartierBamako != null) 'quartierBamako': quartierBamako,
+        'deviceId': deviceId ?? 'flutter-device-client',
+      },
+      headers: _entetesPlateforme,
+    );
+
+    if (response is! Map<String, dynamic> || response['jeton'] is! String) {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Réponse inattendue lors de la complétion du compte Google.',
+      );
+    }
+
+    ApiClient.instance.definirJeton(response['jeton'] as String);
+    final profil = UtilisateurProfil.fromJson(
+        response['profil'] as Map<String, dynamic>? ?? {});
+    profilNotifier.value = profil;
+
+    final refreshToken = response['refreshToken'] as String?;
+    await SessionStorageService.instance.sauvegarderSession(
+      refreshToken: refreshToken ?? '',
+      profil: profil,
+    );
+    return profil;
+  }
+
   /// Upload d'une photo de profil (JPEG, PNG, WEBP) vers le serveur (stockage sécurisé)
   Future<String> uploaderPhotoProfil(Uint8List octets,
       {String nom = 'avatar.jpg'}) async {

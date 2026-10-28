@@ -37,7 +37,10 @@ public abstract class Utilisateur {
     @Column(nullable = false)
     private String nom;
 
-    @Column(name = "mot_de_passe_hash", nullable = false)
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "mot_de_passe_hash")
     private String motDePasseHash;
 
     @Column(nullable = false)
@@ -128,6 +131,9 @@ public abstract class Utilisateur {
     public Long getId() { return id; }
     public String getTelephone() { return telephone; }
     public String getNom() { return nom; }
+    public String getEmail() { return email; }
+    public void modifierEmail(String email) { this.email = email; }
+    public boolean hasMotDePasse() { return motDePasseHash != null && !motDePasseHash.isBlank(); }
     public String getMotDePasseHash() { return motDePasseHash; }
     public String getPinHash() { return motDePasseHash; }
     public String getLangue() { return langue; }

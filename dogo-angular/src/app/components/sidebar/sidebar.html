@@ -59,6 +59,21 @@
 
   </nav>
 
+  <!-- Bouton configuration Code de Sécurité 4 chiffres -->
+  <div class="security-pin-bar">
+    <button
+      type="button"
+      class="security-pin-btn"
+      (click)="securite.ouvrirConfiguration()"
+      title="Code de sécurité à 4 chiffres (requis pour chaque validation)">
+      <span class="sec-icon">🔒</span>
+      <span class="sec-text">Code sécurité :</span>
+      <span class="sec-badge" [class.sec-badge-ok]="securite.statut()?.configure">
+        {{ securite.statut()?.configure ? 'Actif (4 chiffres)' : 'À configurer' }}
+      </span>
+    </button>
+  </div>
+
   <!-- Profil administrateur -->
   <footer class="user-footer">
 

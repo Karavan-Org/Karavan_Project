@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { AdminSecuriteService } from '../../core/services/admin-securite.service';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import jsPDF from 'jspdf';
@@ -44,6 +45,7 @@ const ETATS_ACHEMINEMENT = ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE'];
 })
 export class CorridorsComponent implements OnInit, OnDestroy {
   private readonly api = inject(AdminApiService);
+  private readonly securite = inject(AdminSecuriteService);
   readonly peutGererPoints = inject(AuthService).peut('POINT_RETRAIT_GERER');
   nouveauPoint = { nom: '', adresse: '', quartier: '', lienGoogleMap: '' };
   readonly pointEnEdition = signal<PointRetrait | null>(null);
@@ -383,7 +385,7 @@ export class CorridorsComponent implements OnInit, OnDestroy {
       `Colis disponibles à ${point.nom} : chaque commerçant reçoit son code de retrait.`);
   }
 
-  notifierDepotAvecGoogleMap(g: Groupe): void {
+  async notifierDepotAvecGoogleMap(g: Groupe): Promise<void> {
     const points = this.points();
     if (!points.length) {
       this.message.set('Aucun point de retrait enregistré. Créez d’abord un point avec son lien Google Maps.');
@@ -420,10 +422,20 @@ export class CorridorsComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.lancer(
-      this.api.notifierArriveeDepot(g.id, point.id),
-      `Notification envoyée aux commerçants avec la localisation Google Maps de « ${point.nom} » !`
-    );
+    try {
+      await this.securite.demanderConfirmation({
+        titre: "Notification d'arrivée au dépôt",
+        description: `Envoi groupé de la notification d'arrivée au dépôt « ${point.nom} » (avec géolocalisation GPS) aux commerçants du groupe #${g.id}.`,
+        actionTexte: 'Envoyer la notification',
+        icone: 'notifications_active'
+      });
+      this.lancer(
+        this.api.notifierArriveeDepot(g.id, point.id),
+        `Notification envoyée aux commerçants avec la localisation Google Maps de « ${point.nom} » !`
+      );
+    } catch {
+      // Annulé
+    }
   }
 
   editerPoint(p: PointRetrait): void {

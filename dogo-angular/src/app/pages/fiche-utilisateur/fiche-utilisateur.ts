@@ -18,6 +18,7 @@ import { LIBELLES_COMPTE, LIBELLES_ROLE_ADMIN, LIBELLES_TYPE } from '../../core/
 import { AdminApiService, CommandeGroupe, DossierKyc, Groupe, LigneAudit } from '../../core/services/admin-api.service';
 import { AnnuaireService, Membre, Relation, Reseau } from '../../core/services/annuaire.service';
 import { AuthService } from '../../core/services/auth.service';
+import { AdminSecuriteService } from '../../core/services/admin-securite.service';
 
 /** Groupes dont les commandes existent (créées à l'objectif atteint) */
 const ETATS_AVEC_COMMANDES = ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE', 'TERMINE'];
@@ -46,6 +47,7 @@ export class FicheUtilisateurComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly auth = inject(AuthService);
+  readonly securite = inject(AdminSecuriteService);
 
   readonly id = signal(0);
   readonly chargement = signal(true);
@@ -68,43 +70,63 @@ export class FicheUtilisateurComponent implements OnInit {
   diffusionSujet = '';
   diffusionMessage = '';
 
-  envoyerMessageSupport(): void {
+  async envoyerMessageSupport(): Promise<void> {
     if (!this.messageSupportTexte.trim()) return;
-    this.envoi.set(true);
-    this.api.envoyerMessageSupport(this.id(), this.messageSupportTexte.trim()).subscribe({
-      next: () => {
-        this.envoi.set(false);
-        this.messageSupportOuvert.set(false);
-        this.messageSupportTexte = '';
-        this.echec.set(false);
-        this.message.set('Message de support transmis avec succès à l’utilisateur (notification in-app et SMS).');
-      },
-      error: (e) => {
-        this.envoi.set(false);
-        this.echec.set(true);
-        this.message.set(messageErreur(e, 'Échec de l’envoi du message de support.'));
-      }
-    });
+    try {
+      await this.securite.demanderConfirmation({
+        titre: 'Envoi de notification support',
+        description: `Envoi d'un message direct par SMS et In-App à l'utilisateur : « ${this.messageSupportTexte.trim()} ».`,
+        actionTexte: 'Envoyer la notification',
+        icone: 'sms'
+      });
+      this.envoi.set(true);
+      this.api.envoyerMessageSupport(this.id(), this.messageSupportTexte.trim()).subscribe({
+        next: () => {
+          this.envoi.set(false);
+          this.messageSupportOuvert.set(false);
+          this.messageSupportTexte = '';
+          this.echec.set(false);
+          this.message.set('Message de support transmis avec succès à l’utilisateur (notification in-app et SMS).');
+        },
+        error: (e) => {
+          this.envoi.set(false);
+          this.echec.set(true);
+          this.message.set(messageErreur(e, 'Échec de l’envoi du message de support.'));
+        }
+      });
+    } catch {
+      // Annulé
+    }
   }
 
-  diffuserAuxAdmins(): void {
+  async diffuserAuxAdmins(): Promise<void> {
     if (!this.diffusionSujet.trim() || !this.diffusionMessage.trim()) return;
-    this.envoi.set(true);
-    this.api.diffuserAuxAdmins(this.diffusionSujet.trim(), this.diffusionMessage.trim()).subscribe({
-      next: () => {
-        this.envoi.set(false);
-        this.diffusionAdminsOuverte.set(false);
-        this.diffusionSujet = '';
-        this.diffusionMessage = '';
-        this.echec.set(false);
-        this.message.set('Note d’information diffusée avec succès à tous les administrateurs.');
-      },
-      error: (e) => {
-        this.envoi.set(false);
-        this.echec.set(true);
-        this.message.set(messageErreur(e, 'Échec de la diffusion aux administrateurs.'));
-      }
-    });
+    try {
+      await this.securite.demanderConfirmation({
+        titre: 'Diffusion administrative',
+        description: `Diffusion d'une alerte à tous les administrateurs Karavan : « ${this.diffusionSujet.trim()} ».`,
+        actionTexte: 'Diffuser la note',
+        icone: 'campaign'
+      });
+      this.envoi.set(true);
+      this.api.diffuserAuxAdmins(this.diffusionSujet.trim(), this.diffusionMessage.trim()).subscribe({
+        next: () => {
+          this.envoi.set(false);
+          this.diffusionAdminsOuverte.set(false);
+          this.diffusionSujet = '';
+          this.diffusionMessage = '';
+          this.echec.set(false);
+          this.message.set('Note d’information diffusée avec succès à tous les administrateurs.');
+        },
+        error: (e) => {
+          this.envoi.set(false);
+          this.echec.set(true);
+          this.message.set(messageErreur(e, 'Échec de la diffusion aux administrateurs.'));
+        }
+      });
+    } catch {
+      // Annulé
+    }
   }
 
   readonly libellesType = LIBELLES_TYPE;
@@ -314,29 +336,57 @@ export class FicheUtilisateurComponent implements OnInit {
     void this.router.navigate(['/kyc-validation'], { queryParams: { utilisateur: this.id() } });
   }
 
-  suspendre(): void {
+  async suspendre(): Promise<void> {
     const m = this.membre();
     const motif = this.motif.trim();
     if (!m || !motif) {
       return;
     }
-    this.executer(this.api.suspendreCompte(m.id, motif), `Le compte de ${m.nom} est suspendu : ses sessions sont fermées et il est notifié.`, () => {
-      this.motif = '';
-      this.suspensionOuverte.set(false);
-    });
+    try {
+      await this.securite.demanderConfirmation({
+        titre: 'Suspension de compte',
+        description: `Suspension immédiate du compte de ${m.nom} pour le motif : « ${motif} ». Ses sessions seront fermées.`,
+        actionTexte: 'Suspendre le compte',
+        icone: 'block',
+        danger: true
+      });
+      this.executer(this.api.suspendreCompte(m.id, motif), `Le compte de ${m.nom} est suspendu : ses sessions sont fermées et il est notifié.`, () => {
+        this.motif = '';
+        this.suspensionOuverte.set(false);
+      });
+    } catch {
+      // Annulé
+    }
   }
 
-  reactiver(): void {
+  async reactiver(): Promise<void> {
     const m = this.membre();
-    if (m && confirm(`Réactiver le compte de ${m.nom} ?`)) {
+    if (!m) return;
+    try {
+      await this.securite.demanderConfirmation({
+        titre: 'Réactivation de compte',
+        description: `Réactivation du compte de ${m.nom}. L'utilisateur pourra à nouveau se connecter et opérer.`,
+        actionTexte: 'Réactiver le compte',
+        icone: 'check_circle'
+      });
       this.executer(this.api.reactiverCompte(m.id), `Le compte de ${m.nom} est de nouveau actif.`);
+    } catch {
+      // Annulé
     }
   }
 
   /** RG-54 : nouveau code de retrait envoyé par SMS au commerçant */
-  regenererCode(c: CommandeFiche): void {
-    if (confirm(`Générer un nouveau code de retrait pour la commande #${c.id} ? L'ancien code ne fonctionnera plus.`)) {
+  async regenererCode(c: CommandeFiche): Promise<void> {
+    try {
+      await this.securite.demanderConfirmation({
+        titre: 'Génération Code de Retrait',
+        description: `Génération d'un nouveau code de retrait pour la commande #${c.id}. L'ancien code sera révoqué.`,
+        actionTexte: 'Générer le code',
+        icone: 'vpn_key'
+      });
       this.executer(this.api.regenererCodeRetrait(c.id), `Nouveau code envoyé par SMS pour la commande #${c.id}.`);
+    } catch {
+      // Annulé
     }
   }
 

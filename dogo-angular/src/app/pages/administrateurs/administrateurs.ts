@@ -7,6 +7,7 @@ import { LIBELLES_COMPTE, LIBELLES_ROLE_ADMIN } from '../../core/permissions';
 import { AdminApiService, Administrateur, NouvelAdministrateur, RoleAdministratif } from '../../core/services/admin-api.service';
 import { AnnuaireService } from '../../core/services/annuaire.service';
 import { AuthService } from '../../core/services/auth.service';
+import { AdminSecuriteService } from '../../core/services/admin-securite.service';
 
 const MISSIONS: Record<RoleAdministratif, string> = {
   TECHNIQUE: 'Accès complet : supervision système, gestion des comptes admins, configuration des points de retrait (Seul rôle avec tous les accès)',
@@ -30,6 +31,7 @@ const MISSIONS: Record<RoleAdministratif, string> = {
 export class AdministrateursComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   private readonly annuaire = inject(AnnuaireService);
+  private readonly securite = inject(AdminSecuriteService);
   readonly auth = inject(AuthService);
 
   readonly liste = signal<Administrateur[]>([]);
@@ -75,7 +77,7 @@ export class AdministrateursComponent implements OnInit {
 
   readonly estTechnique = computed(() => this.liste().some(a => a.id === this.auth.obtenirProfil()?.id && a.roleAdministratif === 'TECHNIQUE'));
 
-  creer(): void {
+  async creer(): Promise<void> {
     const a = { ...this.nouveau, telephone: this.nouveau.telephone.trim(), nom: this.nouveau.nom.trim(), matricule: this.nouveau.matricule.trim() };
     const mdp = (a.motDePasse || a.pin || '').trim();
     const valide = mdp.length >= 8 && /[A-Z]/.test(mdp) && /[a-z]/.test(mdp) && /[0-9]/.test(mdp);
@@ -84,23 +86,34 @@ export class AdministrateursComponent implements OnInit {
       this.message.set('Le mot de passe doit comporter au moins 8 caractères, dont une majuscule, une minuscule et un chiffre.');
       return;
     }
-    this.envoi.set(true);
-    this.message.set('');
-    this.api.creerAdministrateur({ ...a, motDePasse: mdp, pin: mdp }).subscribe({
-      next: () => {
-        this.envoi.set(false);
-        this.echec.set(false);
-        this.message.set(`${a.nom} (${LIBELLES_ROLE_ADMIN[a.role]}) peut se connecter avec ${a.telephone} et son mot de passe.`);
-        this.nouveau = this.vide();
-        this.charger();
-        this.annuaire.charger(true).subscribe({ error: () => undefined });
-      },
-      error: e => {
-        this.envoi.set(false);
-        this.echec.set(true);
-        this.message.set(messageErreur(e, 'Création impossible.'));
-      }
-    });
+
+    try {
+      await this.securite.demanderConfirmation({
+        titre: 'Création d’un nouvel administrateur',
+        description: `Création du compte administrateur « ${a.nom} » avec le rôle ${LIBELLES_ROLE_ADMIN[a.role]}.`,
+        actionTexte: 'Créer l’administrateur',
+        icone: 'admin_panel_settings'
+      });
+      this.envoi.set(true);
+      this.message.set('');
+      this.api.creerAdministrateur({ ...a, motDePasse: mdp, pin: mdp }).subscribe({
+        next: () => {
+          this.envoi.set(false);
+          this.echec.set(false);
+          this.message.set(`${a.nom} (${LIBELLES_ROLE_ADMIN[a.role]}) peut se connecter avec ${a.telephone} et son mot de passe.`);
+          this.nouveau = this.vide();
+          this.charger();
+          this.annuaire.charger(true).subscribe({ error: () => undefined });
+        },
+        error: e => {
+          this.envoi.set(false);
+          this.echec.set(true);
+          this.message.set(messageErreur(e, 'Création impossible.'));
+        }
+      });
+    } catch {
+      // Annulé
+    }
   }
 
   private vide(): NouvelAdministrateur {

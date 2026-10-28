@@ -24,6 +24,12 @@ public class Administrateur extends Utilisateur {
     @Column(name = "role_administratif", nullable = false)
     private RoleAdministratif roleAdministratif;
 
+    @Column(name = "code_securite_hash")
+    private String codeSecuriteHash;
+
+    @Column(name = "code_securite_date")
+    private Instant codeSecuriteDate;
+
     protected Administrateur() {
     }
 
@@ -41,4 +47,16 @@ public class Administrateur extends Utilisateur {
 
     public String getMatriculeAgent() { return matriculeAgent; }
     public RoleAdministratif getRoleAdministratif() { return roleAdministratif; }
+
+    public boolean hasCodeSecurite() {
+        return codeSecuriteHash != null && !codeSecuriteHash.isBlank();
+    }
+
+    public void definirCodeSecurite(String hash, Instant date) {
+        this.codeSecuriteHash = hash;
+        this.codeSecuriteDate = date;
+    }
+
+    public String getCodeSecuriteHash() { return codeSecuriteHash; }
+    public Instant getCodeSecuriteDate() { return codeSecuriteDate; }
 }

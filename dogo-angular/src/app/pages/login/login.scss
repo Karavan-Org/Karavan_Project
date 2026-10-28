@@ -249,3 +249,120 @@ $error-color: var(--danger);
     transform: translateY(-10px) rotate(1deg);
   }
 }
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 18px;
+  background-color: #ffffff;
+  color: #3c4043;
+  border: 1.5px solid #dadce0;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover:not(:disabled) {
+    background-color: #f8fafd;
+    border-color: #c6c9ce;
+    box-shadow: 0 2px 6px rgba(60, 64, 67, 0.15);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.99);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .google-icon {
+    flex-shrink: 0;
+  }
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 18px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border);
+  }
+
+  span {
+    padding: 0 12px;
+  }
+}
+
+.google-user-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8f9fa;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+
+  .google-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #4285f4;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .google-user-info {
+    display: flex;
+    flex-direction: column;
+
+    strong {
+      font-size: 14.5px;
+      color: var(--text-main);
+    }
+
+    small {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+  }
+}
+
+.info-encart {
+  background: rgba(172, 127, 94, 0.10);
+  border: 1px solid rgba(172, 127, 94, 0.3);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-main);
+}
