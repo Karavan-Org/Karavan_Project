@@ -19,7 +19,10 @@ export interface CarteCadran3D {
   groupe: GroupeCadranVue;
   indexOriginal: number;
   offset: number; // -3, -2, -1, 0, 1, 2, 3
-  transform: string;
+  baseTx: string;
+  baseTz: string;
+  baseRy: string;
+  baseScale: number;
   opacity: number;
   zIndex: number;
   estActive: boolean;
@@ -56,15 +59,19 @@ export interface CarteCadran3D {
           </div>
         } @else {
           <div class="cartes-arc-wrapper">
-            @for (item of cartesVisibles; track item.offset) {
+            @for (item of cartesVisibles; track (item.groupe.id + '_' + item.offset)) {
               <div
                 class="carte-groupe-3d"
                 [class.carte-active]="item.estActive"
-                [class.carte-survolee]="survolOffset === item.offset"
-                [style.transform]="obtenirTransformCarte(item)"
-                [style.opacity]="obtenirOpaciteCarte(item)"
-                [style.zIndex]="obtenirZIndexCarte(item)"
-                (mouseenter)="onSurvolCarte(item.offset)"
+                [class.carte-survolee]="survolId === item.groupe.id"
+                [style.--offset]="item.offset"
+                [style.--base-tx]="item.baseTx"
+                [style.--base-tz]="item.baseTz"
+                [style.--base-ry]="item.baseRy"
+                [style.--base-scale]="item.baseScale"
+                [style.--base-opacity]="item.opacity"
+                [style.--base-z]="item.zIndex"
+                (mouseenter)="onSurvolCarte(item.groupe.id)"
                 (mouseleave)="onQuitterSurvol()"
                 (click)="clicCarte(item)"
                 [title]="item.estActive && groupeSelectionneId === item.groupe.id ? 'Cliquer pour fermer le détail' : 'Cliquer pour voir le détail de ce produit'"
@@ -268,8 +275,8 @@ export interface CarteCadran3D {
     // 3. Carte individuelle sur l'arc 3D
     .carte-groupe-3d {
       position: absolute;
-      width: 126px;
-      height: 164px;
+      width: 128px;
+      height: 166px;
       background: linear-gradient(145deg, rgba(24, 54, 48, 0.94) 0%, rgba(14, 32, 28, 0.98) 100%);
       border: 1.5px solid rgba(238, 168, 35, 0.25);
       border-radius: 16px;
@@ -281,35 +288,38 @@ export interface CarteCadran3D {
       cursor: pointer;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(12px);
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-                  opacity 0.35s ease,
-                  box-shadow 0.3s ease,
-                  border-color 0.3s ease;
+
+      // Positionnement initial sur l'arc 3D via variables CSS matérielles
+      transform: translateX(var(--base-tx)) translateZ(var(--base-tz)) rotateY(var(--base-ry)) scale(var(--base-scale));
+      opacity: var(--base-opacity);
+      z-index: var(--base-z);
+
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                  opacity 0.25s ease,
+                  box-shadow 0.25s ease,
+                  border-color 0.25s ease;
       will-change: transform, opacity, box-shadow;
+      pointer-events: auto;
 
-      // Effet quand le curseur passe dessus : la carte s'avance nettement vers le spectateur
-      &.carte-survolee {
-        border-color: #EEA823 !important;
-        box-shadow: 0 28px 60px rgba(0, 0, 0, 0.8),
-                    0 0 32px rgba(238, 168, 35, 0.75),
-                    inset 0 0 18px rgba(172, 127, 94, 0.5) !important;
-        cursor: pointer;
-      }
-
-      &:hover:not(.carte-active):not(.carte-survolee) {
-        border-color: rgba(238, 168, 35, 0.6);
-        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 12px rgba(172, 127, 94, 0.3);
-      }
-
-      // Carte active mise en valeur avec halo chaleureux Karavan (Bissap & Ocre)
+      // Carte active centrale au repos
       &.carte-active {
-        width: 138px;
-        height: 176px;
-        border: 2px solid #AC7F5E;
-        box-shadow: 0 0 32px rgba(172, 127, 94, 0.7),
+        border-color: #AC7F5E;
+        box-shadow: 0 0 28px rgba(172, 127, 94, 0.65),
                     inset 0 0 14px rgba(238, 168, 35, 0.4),
-                    0 18px 40px rgba(0, 0, 0, 0.6);
-        background: linear-gradient(145deg, rgba(34, 58, 52, 0.98) 0%, rgba(18, 34, 30, 0.99) 100%);
+                    0 16px 36px rgba(0, 0, 0, 0.55);
+      }
+
+      // QUEL QUE SOIT L'ÉLÉMENT TOUCHÉ PAR LE CURSEUR (milieu, gauche, droite) :
+      // CET ÉLÉMENT BONDIT INSTANTANÉMENT VERS L'AVANT AU TOUT PREMIER PLAN !
+      &:hover,
+      &.carte-survolee {
+        transform: translateX(var(--base-tx)) translateY(-34px) translateZ(120px) rotateY(calc(var(--offset) * 3deg)) scale(1.30) !important;
+        opacity: 1 !important;
+        z-index: 1000 !important;
+        border-color: #EEA823 !important;
+        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.88),
+                    0 0 36px rgba(238, 168, 35, 0.85),
+                    inset 0 0 18px rgba(172, 127, 94, 0.5) !important;
       }
     }
 
@@ -560,48 +570,20 @@ export class CadranGroupesComponent implements OnChanges {
   @Output() groupeFerme = new EventEmitter<void>();
 
   indexActif = 0;
-  survolOffset: number | null = null;
+  survolId: number | null = null;
   groupesFiltres: GroupeCadranVue[] = [];
   cartesVisibles: CarteCadran3D[] = [];
 
   constructor(private readonly cdr: ChangeDetectorRef) {}
 
-  onSurvolCarte(offset: number): void {
-    this.survolOffset = offset;
+  onSurvolCarte(groupeId: number): void {
+    this.survolId = groupeId;
     this.cdr.markForCheck();
   }
 
   onQuitterSurvol(): void {
-    this.survolOffset = null;
+    this.survolId = null;
     this.cdr.markForCheck();
-  }
-
-  /**
-   * Calcule la transformation 3D :
-   * Quand le curseur passe dessus, la carte s'avance franchement vers le spectateur (translateZ + 85px),
-   * s'élève au-dessus du rang (translateY -26px), se redresse face caméra et grossit (scale * 1.25).
-   */
-  obtenirTransformCarte(item: CarteCadran3D): string {
-    if (this.survolOffset === item.offset) {
-      const angleDeg = item.offset * 6; // redressement partiel face au regard
-      const translateX = item.offset * 144;
-      const translateZ = (-Math.abs(item.offset) * 42) + 85; // s'avance franchement vers l'avant
-      const translateY = -26; // monte au-dessus des autres cartes
-      const baseScale = item.offset === 0 ? 1.08 : Math.max(0.72, 1 - Math.abs(item.offset) * 0.09);
-      const scale = baseScale * 1.25;
-      return `translateX(${translateX}px) translateY(${translateY}px) translateZ(${translateZ}px) rotateY(${angleDeg}deg) scale(${scale})`;
-    }
-    return item.transform;
-  }
-
-  obtenirZIndexCarte(item: CarteCadran3D): number {
-    if (this.survolOffset === item.offset) return 99;
-    return item.zIndex;
-  }
-
-  obtenirOpaciteCarte(item: CarteCadran3D): number {
-    if (this.survolOffset === item.offset) return 1;
-    return item.opacity;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -677,10 +659,10 @@ export class CadranGroupesComponent implements OnChanges {
       if (!groupe) continue;
 
       const angleDeg = offset * 14;
-      const translateX = offset * 142;
-      const translateZ = -Math.abs(offset) * 42;
-      const scale = offset === 0 ? 1.05 : Math.max(0.72, 1 - Math.abs(offset) * 0.09);
-      const opacity = offset === 0 ? 1 : Math.max(0.45, 1 - Math.abs(offset) * 0.18);
+      const translateX = offset * 144;
+      const translateZ = -Math.abs(offset) * 44;
+      const scale = offset === 0 ? 1.06 : Math.max(0.74, 1 - Math.abs(offset) * 0.08);
+      const opacity = offset === 0 ? 1 : Math.max(0.55, 1 - Math.abs(offset) * 0.15);
       const zIndex = 30 - Math.abs(offset);
 
       const drapeau = this.drapeauParCode(groupe.paysOrigine?.codeIso) || groupe.drapeau || '🌐';
@@ -690,7 +672,10 @@ export class CadranGroupesComponent implements OnChanges {
         groupe,
         indexOriginal: idx,
         offset,
-        transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${angleDeg}deg) scale(${scale})`,
+        baseTx: `${translateX}px`,
+        baseTz: `${translateZ}px`,
+        baseRy: `${angleDeg}deg`,
+        baseScale: scale,
         opacity,
         zIndex,
         estActive: offset === 0,
