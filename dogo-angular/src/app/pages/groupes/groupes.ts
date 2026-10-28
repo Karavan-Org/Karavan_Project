@@ -95,6 +95,13 @@ export class GroupesComponent implements OnInit {
 
   ngOnInit(): void {
     let ongletDemande = false;
+    this.route.paramMap.subscribe(p => {
+      const id = Number(p.get('id'));
+      if (id) {
+        this.selectionId.set(id);
+        ongletDemande = true;
+      }
+    });
     this.route.queryParamMap.subscribe(p => {
       const id = Number(p.get('id'));
       if (id) {

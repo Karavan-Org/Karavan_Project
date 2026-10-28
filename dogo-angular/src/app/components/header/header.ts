@@ -1,5 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, ChangeDetectorRef, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { NotificationAdmin, NotificationService } from '../../core/services/notification.service';
 import { LIBELLES_GROUPE, dateRelative } from '../../core/api';
 import { LIBELLES_COMPTE, LIBELLES_TYPE, PERMISSIONS_PAGES } from '../../core/permissions';
@@ -118,7 +119,26 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly relatif = dateRelative;
   private clockInterval?: ReturnType<typeof setInterval>;
 
+  readonly routeCourante = signal<string>(this.router.url);
+
+  readonly afficherBoutonRetour = computed(() => {
+    const url = this.routeCourante();
+    return url !== '/admin' && url !== '/' && !url.startsWith('/login');
+  });
+
+  retournerAuDashboard(): void {
+    void this.router.navigate(['/admin']);
+  }
+
   ngOnInit(): void {
+    this.routeCourante.set(this.router.url);
+    this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(() => {
+        this.routeCourante.set(this.router.url);
+        this.changeDetector.markForCheck();
+      });
+
     this.updateDateTime();
     this.notifications.demarrer();
 

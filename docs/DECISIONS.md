@@ -159,3 +159,13 @@ La maquette cible (image Figma de référence) présente :
 - **Globe 3D interactif** : au clic sur une carte du cadran ou lors de la rotation (`[ Tourner le cadran ]`, flèches `<` / `>`), la caméra du globe WebGL pivote automatiquement pour centrer le pays d'origine sélectionné.
 - **Tiroir Statistiques Générales** : fermé par défaut conformément aux consignes. L'administrateur peut l'ouvrir d'un clic sur `[ Statistiques ]` dans l'en-tête ou en cliquant sur « Tableau de bord » dans la barre latérale, et le refermer d'un clic sur la croix `✕`.
 - **Fiche de détail d'un groupe** : tiroir latéral droit s'ouvrant à la sélection d'un groupe pour visualiser le détail complet du convoi.
+
+
+#### 3. Barre Latérale Rétractable (Mode Miniature & Étendu) et Navigation Retour
+- **Barre latérale rétractable (deux états)** :
+  - **État étendu (240px)** : identité de marque Karavan, titres de rubriques, libellés de menus, badges KYC / modération, et bouton de réduction `[ < ] Réduire la barre`.
+  - **État miniature (72px)** : affichage compact épuré avec icônes centrées, infobulles flottantes au survol (`.floating-tooltip`) indiquant le nom de chaque page (style maquette Figma), et bouton d'expansion `[ > ]`.
+  - Navigation continue en mode miniature : les icônes restent 100% interactives et cliquables pour les administrateurs habitués à l'emplacement des pages.
+  - Mémorisation de l'état réduit dans `localStorage` (`karavan_sidebar_reduite`).
+- **Bouton « Retour au Tableau de bord »** :
+  - Présent en en-tête global sur toutes les pages administratives secondaires (`/utilisateurs`, `/groupes`, `/finance`, etc.) pour revenir instantanément au Globe 3D et au cadran d'accueil en un seul clic.

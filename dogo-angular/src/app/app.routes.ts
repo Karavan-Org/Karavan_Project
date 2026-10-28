@@ -47,6 +47,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/groupes/groupes').then(m => m.GroupesComponent)
   },
   {
+    path: 'groupes/:id',
+    ...protegee('groupes'),
+    loadComponent: () => import('./pages/groupes/groupes').then(m => m.GroupesComponent)
+  },
+  {
     path: 'utilisateurs',
     ...protegee('utilisateurs'),
     loadComponent: () => import('./pages/utilisateurs/utilisateurs').then(m => m.UtilisateursComponent)

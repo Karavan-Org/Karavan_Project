@@ -137,7 +137,8 @@ import { GroupeDetailVue } from '../tableau-de-bord.service';
         <!-- Pied avec lien vers la fiche complète existante -->
         <div class="tiroir-pied">
           <a
-            [routerLink]="['/groupes', groupe.id]"
+            routerLink="/groupes"
+            [queryParams]="{ id: groupe.id }"
             class="btn-fiche-complete"
             (click)="onFermer.emit()"
           >

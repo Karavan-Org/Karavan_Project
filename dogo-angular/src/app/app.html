@@ -5,15 +5,15 @@
 
 <!-- CAS 2 : Si c'est une autre page (Dashboard, Finance, etc.) avec la disposition normale -->
 <div class="app-layout" *ngIf="!isLoginPage">
-  <!-- 1. Votre Sidebar rénovée -->
+  <!-- 1. Votre Sidebar rénovée (avec mode miniature rétractable) -->
   <app-sidebar></app-sidebar>
 
   <div class="main-wrapper">
-    <!-- 2. Votre Header rénové -->
-    <app-header></app-header>
+    <!-- 2. Header global avec bouton retour (affiché sur toutes les pages sauf le tableau de bord) -->
+    <app-header *ngIf="!isDashboardPage"></app-header>
 
     <!-- 3. Le contenu de la page active -->
-    <main class="page-content">
+    <main class="page-content" [class.dashboard-content-mode]="isDashboardPage">
       <router-outlet></router-outlet>
     </main>
   </div>
