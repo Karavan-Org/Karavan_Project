@@ -45,3 +45,4 @@ export class Portefeuille3dComponent {
     this.cdr.markForCheck();
   }
 }
+
