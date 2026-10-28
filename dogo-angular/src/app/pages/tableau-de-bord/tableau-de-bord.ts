@@ -32,7 +32,6 @@ import { ModalAssignerPaysComponent } from './modal-assigner-pays/modal-assigner
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     MatIconModule,
     Globe3dComponent,
     CadranGroupesComponent,

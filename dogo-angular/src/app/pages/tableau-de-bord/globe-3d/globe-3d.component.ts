@@ -30,16 +30,6 @@ interface ArcData {
   stroke: number;
 }
 
-interface PointData {
-  lat: number;
-  lng: number;
-  name: string;
-  codeIso: string;
-  nombreGroupes: number;
-  color: string;
-  size: number;
-}
-
 @Component({
   selector: 'app-globe-3d',
   standalone: true,
@@ -47,13 +37,22 @@ interface PointData {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="globe-container">
+      <!-- Anneaux orbitaux concentriques / Radar halo (comme sur le modèle de référence) -->
+      <div class="orbital-rings-backdrop">
+        <div class="orbital-ring ring-1"></div>
+        <div class="orbital-ring ring-2"></div>
+        <div class="orbital-ring ring-3"></div>
+        <div class="orbital-ring ring-4"></div>
+      </div>
+
+      <!-- Canevas WebGL Globe 3D -->
       <div #globeDiv class="globe-viewport"></div>
 
       <!-- Superposition des commandes du globe -->
       <div class="globe-overlay-top">
         <div class="hub-badge">
           <span class="pulsing-dot"></span>
-          <span class="hub-label">Hub Destination : <strong>Bamako, Mali</strong></span>
+          <span class="hub-label">Hub Karavan : <strong>Bamako, Mali</strong></span>
         </div>
 
         <div class="globe-actions">
@@ -61,7 +60,7 @@ interface PointData {
             type="button"
             class="globe-btn"
             (click)="reinitialiserVue()"
-            title="Recentrer sur le Mali (Bamako)"
+            title="Recentrer la caméra sur le Mali (Bamako)"
           >
             <mat-icon>my_location</mat-icon>
             Recentrer
@@ -79,7 +78,7 @@ interface PointData {
         </div>
       </div>
 
-      <!-- Filtre actif éventuel -->
+      <!-- Filtre actif pays -->
       @if (paysFiltre) {
         <div class="filtre-actif-pill">
           <span>Origine : <strong>{{ paysFiltre }}</strong></span>
@@ -97,7 +96,7 @@ interface PointData {
         </div>
         <div class="legende-item">
           <span class="point-source"></span>
-          <span>Pays fournisseurs actifs</span>
+          <span>Pays partenaires actifs</span>
         </div>
       </div>
     </div>
@@ -107,18 +106,66 @@ interface PointData {
       position: relative;
       width: 100%;
       height: 100%;
-      min-height: 520px;
-      background: radial-gradient(circle at 50% 50%, #2A211B 0%, #17120F 100%);
-      border-radius: 20px;
+      min-height: 540px;
+      background: radial-gradient(circle at 50% 50%, #2A211B 0%, #17120F 75%, #0F0B09 100%);
+      border-radius: 24px;
       overflow: hidden;
-      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4), 0 8px 30px rgba(45, 35, 28, 0.15);
-      border: 1px solid rgba(238, 168, 35, 0.18);
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4), 0 10px 36px rgba(45, 35, 28, 0.18);
+      border: 1px solid rgba(238, 168, 35, 0.22);
+    }
+
+    // Anneaux orbitaux concentriques (arrière-plan inspiré de la capture de référence)
+    .orbital-rings-backdrop {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .orbital-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      transition: all 0.5s ease;
+
+      &.ring-1 {
+        width: 500px;
+        height: 500px;
+        border: 1.5px solid rgba(238, 168, 35, 0.22);
+        box-shadow: 0 0 50px rgba(238, 168, 35, 0.12);
+      }
+
+      &.ring-2 {
+        width: 660px;
+        height: 660px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 70px rgba(143, 98, 67, 0.08);
+      }
+
+      &.ring-3 {
+        width: 840px;
+        height: 840px;
+        border: 1px dashed rgba(255, 255, 255, 0.07);
+      }
+
+      &.ring-4 {
+        width: 1020px;
+        height: 1020px;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+      }
     }
 
     .globe-viewport {
+      position: relative;
       width: 100%;
       height: 100%;
       cursor: grab;
+      z-index: 2;
+
       &:active {
         cursor: grabbing;
       }
@@ -140,7 +187,7 @@ interface PointData {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      background: rgba(45, 35, 28, 0.85);
+      background: rgba(45, 35, 28, 0.88);
       backdrop-filter: blur(8px);
       padding: 8px 16px;
       border-radius: 30px;
@@ -149,6 +196,7 @@ interface PointData {
       font-size: 13px;
       letter-spacing: 0.2px;
       pointer-events: auto;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
     }
 
     .pulsing-dot {
@@ -244,7 +292,7 @@ interface PointData {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      background: rgba(30, 23, 18, 0.82);
+      background: rgba(30, 23, 18, 0.85);
       backdrop-filter: blur(6px);
       padding: 10px 14px;
       border-radius: 12px;
@@ -319,8 +367,8 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     try {
       const Globe = (await import('globe.gl')).default;
       const container = this.globeDiv.nativeElement;
-      const largeur = container.clientWidth || 600;
-      const hauteur = container.clientHeight || 520;
+      const largeur = container.clientWidth || 700;
+      const hauteur = container.clientHeight || 560;
 
       this.globeInstance = new Globe(container)
         .width(largeur)
@@ -328,7 +376,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         .backgroundColor('rgba(0, 0, 0, 0)')
         .showAtmosphere(true)
         .atmosphereColor('#8F6243')
-        .atmosphereAltitude(0.18)
+        .atmosphereAltitude(0.16)
         .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
         .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
         .arcStartLat('startLat')
@@ -336,7 +384,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         .arcEndLat('endLat')
         .arcEndLng('endLng')
         .arcColor('color')
-        .arcAltitude(0.25)
+        .arcAltitude(0.24)
         .arcStroke('stroke')
         .arcDashLength(0.4)
         .arcDashGap(0.2)
@@ -354,14 +402,14 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
           const el = document.createElement('div');
           if (d.isHub) {
             el.innerHTML = `
-              <div style="display:flex; align-items:center; gap:6px; background:#8F6243; color:#FAF8F5; padding:4px 10px; border-radius:14px; font-size:11px; font-weight:700; border:1px solid #EEA823; box-shadow:0 0 12px rgba(238,168,35,0.6); pointer-events:none; white-space:nowrap;">
+              <div style="display:flex; align-items:center; gap:6px; background:#8F6243; color:#FAF8F5; padding:4px 10px; border-radius:14px; font-size:11px; font-weight:700; border:1px solid #EEA823; box-shadow:0 0 14px rgba(238,168,35,0.7); pointer-events:none; white-space:nowrap;">
                 <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#EEA823;"></span>
                 Bamako
               </div>
             `;
           } else {
             el.innerHTML = `
-              <div style="cursor:pointer; background:rgba(45,35,28,0.9); color:#FAF8F5; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:600; border:1px solid rgba(238,168,35,0.4); box-shadow:0 2px 8px rgba(0,0,0,0.4); white-space:nowrap;">
+              <div style="cursor:pointer; background:rgba(45,35,28,0.92); color:#FAF8F5; padding:3px 8px; border-radius:12px; font-size:10.5px; font-weight:600; border:1px solid rgba(238,168,35,0.4); box-shadow:0 2px 8px rgba(0,0,0,0.4); white-space:nowrap;">
                 ${d.name} (${d.nombreGroupes})
               </div>
             `;
@@ -370,23 +418,23 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
           return el;
         });
 
-      // Configuration caméra centrée sur l'Afrique de l'Ouest / Bamako
-      this.globeInstance.pointOfView({ lat: 15, lng: 5, altitude: 2.2 }, 1000);
+      // Altitude réduite à 1.62 pour faire apparaître la planète très grosse (comme sur la capture de référence)
+      this.globeInstance.pointOfView({ lat: 15, lng: 5, altitude: 1.62 }, 1000);
 
-      // Auto-rotation
+      // Auto-rotation fluide
       const controls = this.globeInstance.controls();
       controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.6;
+      controls.autoRotateSpeed = 0.5;
       controls.enableDamping = true;
       controls.dampingFactor = 0.08;
 
-      // Charger les contours des pays en GeoJSON local
+      // Charger les contours des pays en GeoJSON
       this.chargerContoursGeoJson();
 
       // Mettre à jour les arcs et points
       this.mettreAJourDonneesGlobe();
 
-      // Resize observer pour adapter la taille du canevas
+      // Resize observer
       this.resizeObserver = new ResizeObserver(entries => {
         for (const entry of entries) {
           const { width, height } = entry.contentRect;
@@ -397,7 +445,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
       });
       this.resizeObserver.observe(container);
     } catch (err) {
-      console.warn('Impossible de charger GlobeGL en 3D (repli silencieux) :', err);
+      console.warn('GlobeGL fallback :', err);
     }
   }
 
@@ -411,14 +459,12 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
           .hexPolygonMargin(0.3)
           .hexPolygonColor((d: any) => {
             const code = d.properties?.ISO_A2 || d.properties?.ADM0_A3;
-            if (code === 'MLI' || code === 'ML') return '#EEA823'; // Mali mis en valeur
+            if (code === 'MLI' || code === 'ML') return '#EEA823';
             const aDesGroupes = this.repartitionPays.some(p => p.codeIso === code);
             return aDesGroupes ? '#8F6243' : 'rgba(255, 255, 255, 0.12)';
           });
       },
-      error: () => {
-        // En cas d'erreur de chargement GeoJSON, le globe affiche les textures intégrées
-      }
+      error: () => {}
     });
   }
 
@@ -472,7 +518,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         {
           lat: (pays.latitude + this.BAMAKO_LAT) / 2,
           lng: (pays.longitude + this.BAMAKO_LNG) / 2,
-          altitude: 1.8
+          altitude: 1.45
         },
         1200
       );
@@ -486,7 +532,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   reinitialiserVue(): void {
     if (!this.globeInstance) return;
-    this.globeInstance.pointOfView({ lat: 15, lng: 5, altitude: 2.2 }, 1200);
+    this.globeInstance.pointOfView({ lat: 15, lng: 5, altitude: 1.62 }, 1200);
   }
 
   basculerRotation(): void {
@@ -501,4 +547,3 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.selectionnerPays(codeIso);
   }
 }
-

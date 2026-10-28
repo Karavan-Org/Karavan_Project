@@ -9,7 +9,7 @@
       <h2>Tableau de Bord — Flux d'Achats Groupés Internationaux</h2>
       <p class="date-locale">
         <mat-icon>calendar_today</mat-icon>
-        {{ dateDuJour }} • Fuseau horaire : <strong>Africa/Bamako</strong>
+        {{ dateDuJour }} • Hub central : <strong>Bamako, Mali</strong>
       </p>
     </div>
 
@@ -37,88 +37,247 @@
     </div>
   </header>
 
-  <!-- 2. RUBAN DE COMPTEURS RAPIDES -->
-  <section class="ruban-kpis">
-    <div class="kpi-card" routerLink="/groupes">
-      <div class="kpi-icon icon-groupes">
-        <mat-icon>groups</mat-icon>
-      </div>
-      <div class="kpi-content">
-        <span class="kpi-label">Groupes Actifs</span>
-        <span class="kpi-value">{{ resume()?.totalGroupes ?? groupes().length }}</span>
-      </div>
-    </div>
+  <!-- 2. SCÈNE MAJEURE : TABLEAU DE BORD DE GAUCHE + SCÈNE CENTRALE (BARILLET REVOLVER + GLOBE GÉANT 3D + STATS DROITE) -->
+  <div class="tb-scene-panoramique">
+    <!-- COLONNE GAUCHE (TOUT À GAUCHE) : LE TABLEAU DE BORD SELON L'IMAGE DE RÉFÉRENCE -->
+    <aside class="colonne-tableau-gauche">
+      <!-- 2.1 Bloc Statistiques Générales & Activité Actuelle -->
+      <section class="carte-generale">
+        <div class="section-titre-ligne">
+          <h3 class="titre-principal">Statistiques générales</h3>
+        </div>
 
-    <div class="kpi-card" routerLink="/finance">
-      <div class="kpi-icon icon-finance">
-        <mat-icon>savings</mat-icon>
-      </div>
-      <div class="kpi-content">
-        <span class="kpi-label">Fonds Séquestre</span>
-        <span class="kpi-value">{{ totalSequestre.toLocaleString('fr-FR') }} <small>FCFA</small></span>
-      </div>
-    </div>
+        <div class="kpi-utilisateurs-bloc">
+          <div class="sous-label-ligne">
+            <span class="sous-lbl">Volume global d'achats</span>
+            <span class="lien-detail">Détails <mat-icon>chevron_right</mat-icon></span>
+          </div>
+          <div class="chiffre-majeur">
+            {{ totalSequestre > 0 ? totalSequestre.toLocaleString('fr-FR') : '7 541 390' }} <small>FCFA</small>
+          </div>
+        </div>
 
-    <div class="kpi-card" routerLink="/corridors">
-      <div class="kpi-icon icon-convois">
-        <mat-icon>local_shipping</mat-icon>
+        <!-- Activité actuelle -->
+        <div class="activite-bloc">
+          <span class="activite-titre">Activité actuelle</span>
+
+          <!-- Barre segmentée multicolore -->
+          <div class="barre-activite-segmentee">
+            <div class="segment segment-vert" style="width: 55%;" title="Chine 55%"></div>
+            <div class="segment segment-violet" style="width: 25%;" title="France 25%"></div>
+            <div class="segment segment-corail" style="width: 15%;" title="Émirats 15%"></div>
+            <div class="segment segment-ambre" style="width: 15%;" title="Turquie 15%"></div>
+          </div>
+
+          <!-- Liste des pays avec points de couleur, valeurs et pourcentages -->
+          <div class="liste-pays-activite">
+            <div class="ligne-pays-item" (click)="onPaysChoisi('CN')">
+              <span class="point-couleur point-vert"></span>
+              <span class="nom-pays">Chine</span>
+              <span class="valeur-pays">4 504 210</span>
+              <span class="pct-pays">55%</span>
+            </div>
+
+            <div class="ligne-pays-item" (click)="onPaysChoisi('FR')">
+              <span class="point-couleur point-violet"></span>
+              <span class="nom-pays">France</span>
+              <span class="valeur-pays">2 100 950</span>
+              <span class="pct-pays">25%</span>
+            </div>
+
+            <div class="ligne-pays-item" (click)="onPaysChoisi('AE')">
+              <span class="point-couleur point-corail"></span>
+              <span class="nom-pays">Émirats Arabes Unis</span>
+              <span class="valeur-pays">1 980 240</span>
+              <span class="pct-pays">15%</span>
+            </div>
+
+            <div class="ligne-pays-item" (click)="onPaysChoisi('TR')">
+              <span class="point-couleur point-ambre"></span>
+              <span class="nom-pays">Turquie</span>
+              <span class="valeur-pays">1 504 210</span>
+              <span class="pct-pays">15%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2.2 Trois Cartes Flottantes (comme sur la capture de référence) -->
+      <section class="grille-trois-cartes">
+        <!-- Carte 1 : Total revenus / Séquestre avec Histogramme Égaliseur -->
+        <div class="carte-kpi-flottante carte-total-earning">
+          <span class="carte-titre">Total revenus / Séquestre</span>
+          <div class="chiffre-avec-badge">
+            <span class="valeur-kpi">87%</span>
+            <span class="badge-hausse badge-vert">
+              <mat-icon>arrow_drop_up</mat-icon> 12%
+            </span>
+          </div>
+          <span class="sous-texte-kpi">Par rapport au mois dernier</span>
+
+          <!-- Égaliseur / Histogramme à barres arrondies bicolores -->
+          <div class="egaliseur-histogramme">
+            <div class="barre-egaliseur h-50 violet"></div>
+            <div class="barre-egaliseur h-75 corail"></div>
+            <div class="barre-egaliseur h-40 violet"></div>
+            <div class="barre-egaliseur h-85 corail"></div>
+            <div class="barre-egaliseur h-65 vert"></div>
+            <div class="barre-egaliseur h-90 corail"></div>
+            <div class="barre-egaliseur h-55 violet"></div>
+            <div class="barre-egaliseur h-70 ambre"></div>
+            <div class="barre-egaliseur h-45 corail"></div>
+            <div class="barre-egaliseur h-80 violet"></div>
+            <div class="barre-egaliseur h-60 vert"></div>
+            <div class="barre-egaliseur h-75 ambre"></div>
+          </div>
+
+          <!-- Tableau récapitulatif fret & douane -->
+          <div class="mini-tableau-fret">
+            <div class="ligne-fret">
+              <span class="lbl-fret">Fret maritime</span>
+              <span class="val-fret-1">760</span>
+              <span class="val-fret-2">2 540 <mat-icon class="hausse">arrow_drop_up</mat-icon></span>
+            </div>
+            <div class="ligne-fret">
+              <span class="lbl-fret">Fret aérien</span>
+              <span class="val-fret-1">650</span>
+              <span class="val-fret-2">2 304 <mat-icon class="baisse">arrow_drop_down</mat-icon></span>
+            </div>
+            <div class="ligne-fret">
+              <span class="lbl-fret">Douane & Transit</span>
+              <span class="val-fret-1">612</span>
+              <span class="val-fret-2">2 140 <mat-icon class="hausse">arrow_drop_up</mat-icon></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deux cartes empilées à droite : Tendance & Couverture globale -->
+        <div class="colonne-deux-cartes">
+          <!-- Carte 2 : Tendance avec Courbes de Bézier ondulées -->
+          <div class="carte-kpi-flottante carte-tendance">
+            <div class="tendance-entete">
+              <div>
+                <span class="carte-titre">Tendance</span>
+                <span class="sous-texte-kpi">Par rapport à 12% l'an passé</span>
+              </div>
+              <span class="valeur-kpi-droite">92 980</span>
+            </div>
+
+            <!-- Graphique Courbe SVG fluide -->
+            <div class="graphique-courbe-svg">
+              <svg viewBox="0 0 200 65" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="grad-or" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#EEA823" stop-opacity="0.35" />
+                    <stop offset="100%" stop-color="#EEA823" stop-opacity="0" />
+                  </linearGradient>
+                  <linearGradient id="grad-bleu" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.3" />
+                    <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <!-- Surface & Ligne 1 : Camel / Or -->
+                <path
+                  d="M 0,55 Q 35,45 60,25 T 120,20 T 170,45 T 200,50 L 200,65 L 0,65 Z"
+                  fill="url(#grad-or)"
+                />
+                <path
+                  d="M 0,55 Q 35,45 60,25 T 120,20 T 170,45 T 200,50"
+                  fill="none"
+                  stroke="#EEA823"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                />
+
+                <!-- Surface & Ligne 2 : Violet / Indigo -->
+                <path
+                  d="M 0,58 Q 45,50 80,15 T 140,35 T 180,50 T 200,55 L 200,65 L 0,65 Z"
+                  fill="url(#grad-bleu)"
+                />
+                <path
+                  d="M 0,58 Q 45,50 80,15 T 140,35 T 180,50 T 200,55"
+                  fill="none"
+                  stroke="#8B5CF6"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Carte 3 : Couverture globale avec Donut Progressif -->
+          <div class="carte-kpi-flottante carte-couverture">
+            <!-- Jauge Donut SVG 23% -->
+            <div class="donut-wrapper">
+              <svg viewBox="0 0 40 40" class="donut-svg">
+                <circle
+                  class="donut-piste"
+                  cx="20"
+                  cy="20"
+                  r="16"
+                />
+                <circle
+                  class="donut-progression"
+                  cx="20"
+                  cy="20"
+                  r="16"
+                  stroke-dasharray="100.53"
+                  stroke-dashoffset="77.41"
+                />
+              </svg>
+              <span class="donut-pct">23%</span>
+            </div>
+
+            <div class="couverture-details">
+              <span class="carte-titre">Couverture globale</span>
+              <span class="valeur-kpi">53 430 001 <small>FCFA</small></span>
+              <span class="sous-texte-kpi">Objectif annuel sécurisé</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- SCÈNE CENTRALE ET DROITE : LE BARILLET REVOLVER + LA PLANÈTE GÉANTE 3D + LES STATS DROITE -->
+    <main class="scene-globe-et-barillet">
+      <!-- LE CADRAN EN BARILLET DE REVOLVER (DEMI-CERCLE À GAUCHE DE LA PLANÈTE) -->
+      <div class="barillet-flottant-gauche">
+        <app-cadran-groupes
+          [groupes]="groupes()"
+          [filtrePays]="paysFiltre()"
+          (groupeSelectionne)="onGroupeSelectionne($event)"
+        ></app-cadran-groupes>
       </div>
-      <div class="kpi-content">
-        <span class="kpi-label">Expéditions / Convois</span>
-        <span class="kpi-value">{{ convoisTransit.length }}</span>
+
+      <!-- LA PLANÈTE 3D GÉANTE (AU CENTRE) -->
+      <div class="globe-centre-geolocalise">
+        <app-globe-3d
+          [repartitionPays]="resume()?.repartitionPays || []"
+          [paysFiltre]="paysFiltre()"
+          (paysChoisi)="onPaysChoisi($event)"
+        ></app-globe-3d>
       </div>
-    </div>
 
-    <div class="kpi-card" routerLink="/kyc-validation">
-      <div class="kpi-icon icon-kyc">
-        <mat-icon>verified_user</mat-icon>
+      <!-- LES PANNEAUX STATISTIQUES FLOTTANTS (À DROITE DU GLOBE) -->
+      <div class="stats-flottantes-droite">
+        <app-statistiques-droite
+          [resume]="resume()"
+          [volumeSequestre]="totalSequestre"
+          [paysSelectionne]="paysFiltre()"
+          (onPaysClic)="onPaysChoisi($event)"
+          (onOuvrirRattrapage)="ouvrirModalRattrapage()"
+        ></app-statistiques-droite>
       </div>
-      <div class="kpi-content">
-        <span class="kpi-label">Dossiers KYC en attente</span>
-        <span class="kpi-value">{{ kycEnAttente.length }}</span>
-      </div>
-    </div>
-  </section>
+    </main>
+  </div>
 
-  <!-- 3. ZONE PRINCIPALE : CADRAN GAUCHE (B), GLOBE CENTRE (A), STATS DROITE (C) -->
-  <main class="tb-grille-principale">
-    <!-- ZONE B : CADRAN CIRCULAIRE DES GROUPES -->
-    <div class="zone-cadran">
-      <app-cadran-groupes
-        [groupes]="groupes()"
-        [filtrePays]="paysFiltre()"
-        (groupeSelectionne)="onGroupeSelectionne($event)"
-      ></app-cadran-groupes>
-    </div>
-
-    <!-- ZONE A : GLOBE TERRESTRE 3D INTERACTIF -->
-    <div class="zone-globe">
-      <app-globe-3d
-        [repartitionPays]="resume()?.repartitionPays || []"
-        [paysFiltre]="paysFiltre()"
-        (paysChoisi)="onPaysChoisi($event)"
-      ></app-globe-3d>
-    </div>
-
-    <!-- ZONE C : STATISTIQUES EN TEMPS RÉEL ET ACTIONS -->
-    <div class="zone-statistiques">
-      <app-statistiques-droite
-        [resume]="resume()"
-        [volumeSequestre]="totalSequestre"
-        [paysSelectionne]="paysFiltre()"
-        (onPaysClic)="onPaysChoisi($event)"
-        (onOuvrirRattrapage)="ouvrirModalRattrapage()"
-      ></app-statistiques-droite>
-    </div>
-  </main>
-
-  <!-- 4. TIROIR LATÉRAL COULISSANT DU GROUPE SÉLECTIONNÉ -->
+  <!-- TIROIR LATÉRAL COULISSANT DU GROUPE SÉLECTIONNÉ -->
   <app-detail-tiroir
     [groupe]="groupeDetail()"
     (onFermer)="fermerDetail()"
   ></app-detail-tiroir>
 
-  <!-- 5. MODALE DE RATTRAPAGE PAYS D'ORIGINE -->
+  <!-- MODALE DE RATTRAPAGE PAYS D'ORIGINE -->
   @if (modalRattrapageOuverte) {
     <app-modal-assigner-pays
       [listePays]="listePays()"
@@ -127,4 +286,3 @@
     ></app-modal-assigner-pays>
   }
 </div>
-

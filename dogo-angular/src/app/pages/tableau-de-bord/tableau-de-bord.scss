@@ -1,8 +1,8 @@
 .tableau-de-bord-page {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 24px 28px;
+  gap: 16px;
+  padding: 20px 24px;
   background: #FAF8F5;
   min-height: calc(100vh - 64px);
   box-sizing: border-box;
@@ -10,44 +10,48 @@
   color: #2D231C;
 }
 
-// 1. EN-TÊTE
+// 1. EN-TÊTE COMPACT & ÉLÉGANT
 .tb-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   background: #FFFFFF;
-  padding: 20px 24px;
-  border-radius: 20px;
+  padding: 14px 22px;
+  border-radius: 18px;
   border: 1px solid rgba(143, 98, 67, 0.12);
-  box-shadow: 0 4px 20px rgba(45, 35, 28, 0.05);
+  box-shadow: 0 4px 18px rgba(45, 35, 28, 0.04);
 
   .header-titre-bloc {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
     .logo-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       background: #FAF8F5;
       border: 1px solid rgba(143, 98, 67, 0.2);
-      padding: 3px 10px;
+      padding: 4px 10px;
       border-radius: 14px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
       color: #8F6243;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
-      margin-bottom: 6px;
+      letter-spacing: 0.5px;
 
       .dot {
         width: 6px;
         height: 6px;
         border-radius: 50%;
         background: #EEA823;
+        box-shadow: 0 0 6px #EEA823;
       }
     }
 
     h2 {
-      margin: 0 0 6px 0;
-      font-size: 21px;
+      margin: 0;
+      font-size: 18px;
       font-weight: 900;
       color: #2D231C;
       letter-spacing: -0.3px;
@@ -58,13 +62,13 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 12.5px;
+      font-size: 12px;
       color: #8C7E74;
 
       mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
         color: #8F6243;
       }
 
@@ -83,25 +87,25 @@
 .btn-action {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 30px;
-  font-size: 13.5px;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
   border: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
   }
 
   &.btn-secondaire {
     background: #FAF8F5;
     color: #2D231C;
-    border: 1px solid rgba(45, 35, 28, 0.12);
+    border: 1px solid rgba(45, 35, 28, 0.14);
 
     &:hover {
       background: rgba(143, 98, 67, 0.1);
@@ -115,135 +119,531 @@
 
     &:hover {
       background: #734c31;
-      box-shadow: 0 4px 14px rgba(143, 98, 67, 0.3);
+      box-shadow: 0 4px 14px rgba(143, 98, 67, 0.25);
     }
   }
 }
 
-// 2. RUBAN KPIS
-.ruban-kpis {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+// 2. SCÈNE MAJEURE PANORAMIQUE (TABLEAU GAUCHE + SCÈNE CENTRALE GLOBE / BARILLET)
+.tb-scene-panoramique {
+  display: flex;
+  gap: 18px;
+  align-items: stretch;
+  min-height: calc(100vh - 170px);
 
-  @media (max-width: 1100px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr;
+  @media (max-width: 1200px) {
+    flex-direction: column;
   }
 }
 
-.kpi-card {
+// -------------------------------------------------------------
+// COLONNE GAUCHE : LE TABLEAU DE BORD (SELON LA CAPTURE DE RÉFÉRENCE)
+// -------------------------------------------------------------
+.colonne-tableau-gauche {
+  width: 440px;
+  min-width: 420px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 14px;
-  background: #FFFFFF;
-  padding: 14px 18px;
-  border-radius: 16px;
-  border: 1px solid rgba(143, 98, 67, 0.1);
-  box-shadow: 0 2px 10px rgba(45, 35, 28, 0.04);
-  cursor: pointer;
-  transition: all 0.2s ease;
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(143, 98, 67, 0.12);
-    border-color: #8F6243;
+  @media (max-width: 1400px) {
+    width: 400px;
+    min-width: 380px;
   }
 
-  .kpi-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+  @media (max-width: 1200px) {
+    width: 100%;
+    min-width: 100%;
+  }
+}
+
+// 2.1 Carte Générale (General Statistics)
+.carte-generale {
+  background: #FFFFFF;
+  border-radius: 22px;
+  padding: 20px 22px;
+  box-shadow: 0 4px 20px rgba(45, 35, 28, 0.05);
+  border: 1px solid rgba(143, 98, 67, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  .section-titre-ligne {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
 
-    mat-icon {
-      font-size: 22px;
-      width: 22px;
-      height: 22px;
-    }
-
-    &.icon-groupes {
-      background: rgba(143, 98, 67, 0.12);
-      color: #8F6243;
-    }
-
-    &.icon-finance {
-      background: rgba(238, 168, 35, 0.15);
-      color: #C6820A;
-    }
-
-    &.icon-convois {
-      background: rgba(21, 101, 192, 0.12);
-      color: #1565C0;
-    }
-
-    &.icon-kyc {
-      background: rgba(46, 125, 50, 0.12);
-      color: #2E7D32;
+    .titre-principal {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 800;
+      color: #2D231C;
+      letter-spacing: -0.3px;
     }
   }
 
-  .kpi-content {
+  .kpi-utilisateurs-bloc {
     display: flex;
     flex-direction: column;
+    gap: 4px;
 
-    .kpi-label {
-      font-size: 11.5px;
-      font-weight: 600;
-      color: #8C7E74;
-    }
+    .sous-label-ligne {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
 
-    .kpi-value {
-      font-size: 18px;
-      font-weight: 900;
-      color: #2D231C;
+      .sous-lbl {
+        font-size: 12px;
+        font-weight: 600;
+        color: #8C7E74;
+      }
 
-      small {
+      .lien-detail {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
         font-size: 11px;
         font-weight: 700;
+        color: #8F6243;
+        cursor: pointer;
+
+        mat-icon {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+        }
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+
+    .chiffre-majeur {
+      font-size: 34px;
+      font-weight: 900;
+      color: #2D231C;
+      letter-spacing: -0.8px;
+      line-height: 1.1;
+
+      small {
+        font-size: 14px;
+        font-weight: 800;
         color: #EEA823;
+        letter-spacing: 0;
+      }
+    }
+  }
+
+  // Activité actuelle
+  .activite-bloc {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(143, 98, 67, 0.08);
+
+    .activite-titre {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #2D231C;
+    }
+
+    .barre-activite-segmentee {
+      display: flex;
+      height: 8px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #FAF8F5;
+      gap: 2px;
+
+      .segment {
+        height: 100%;
+        transition: width 0.4s ease;
+
+        &.segment-vert { background: #10B981; }
+        &.segment-violet { background: #8B5CF6; }
+        &.segment-corail { background: #F43F5E; }
+        &.segment-ambre { background: #EEA823; }
+      }
+    }
+
+    .liste-pays-activite {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 2px;
+
+      .ligne-pays-item {
+        display: grid;
+        grid-template-columns: 14px 1fr auto auto;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 4px 6px;
+        border-radius: 8px;
+        transition: background 0.15s ease;
+
+        &:hover {
+          background: #FAF8F5;
+        }
+
+        .point-couleur {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+
+          &.point-vert { background: #10B981; }
+          &.point-violet { background: #8B5CF6; }
+          &.point-corail { background: #F43F5E; }
+          &.point-ambre { background: #EEA823; }
+        }
+
+        .nom-pays {
+          font-weight: 600;
+          color: #2D231C;
+        }
+
+        .valeur-pays {
+          font-weight: 700;
+          color: #8C7E74;
+          font-size: 11.5px;
+        }
+
+        .pct-pays {
+          font-weight: 800;
+          color: #2D231C;
+          width: 32px;
+          text-align: right;
+        }
       }
     }
   }
 }
 
-// 3. GRILLE PRINCIPALE (3 ZONES)
-.tb-grille-principale {
+// 2.2 Grille des 3 Cartes Flottantes
+.grille-trois-cartes {
   display: grid;
-  grid-template-columns: 340px 1fr 340px;
-  gap: 18px;
-  min-height: 600px;
-  height: calc(100vh - 240px);
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 
-  @media (max-width: 1400px) {
-    grid-template-columns: 310px 1fr 300px;
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.carte-kpi-flottante {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(45, 35, 28, 0.05);
+  border: 1px solid rgba(143, 98, 67, 0.12);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(45, 35, 28, 0.09);
   }
 
-  @media (max-width: 1100px) {
+  .carte-titre {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #8C7E74;
+    margin-bottom: 4px;
+  }
+
+  .valeur-kpi {
+    font-size: 19px;
+    font-weight: 900;
+    color: #2D231C;
+    line-height: 1.1;
+
+    small {
+      font-size: 10px;
+      color: #EEA823;
+    }
+  }
+
+  .sous-texte-kpi {
+    font-size: 9.5px;
+    color: #A3968C;
+  }
+}
+
+// Carte 1 : Total Earning / Égaliseur
+.carte-total-earning {
+  gap: 6px;
+
+  .chiffre-avec-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge-hausse {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 6px;
+
+    mat-icon {
+      font-size: 13px;
+      width: 13px;
+      height: 13px;
+    }
+
+    &.badge-vert {
+      color: #10B981;
+      background: rgba(16, 185, 129, 0.1);
+    }
+  }
+
+  // Égaliseur à barres verticales
+  .egaliseur-histogramme {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 52px;
+    padding: 6px 0;
+    gap: 3px;
+
+    .barre-egaliseur {
+      flex: 1;
+      border-radius: 4px;
+      transition: height 0.3s ease;
+
+      &.h-40 { height: 40%; }
+      &.h-45 { height: 45%; }
+      &.h-50 { height: 50%; }
+      &.h-55 { height: 55%; }
+      &.h-60 { height: 60%; }
+      &.h-65 { height: 65%; }
+      &.h-70 { height: 70%; }
+      &.h-75 { height: 75%; }
+      &.h-80 { height: 80%; }
+      &.h-85 { height: 85%; }
+      &.h-90 { height: 90%; }
+
+      &.violet { background: linear-gradient(180deg, #8B5CF6, #A78BFA); }
+      &.corail { background: linear-gradient(180deg, #F43F5E, #FB7185); }
+      &.vert   { background: linear-gradient(180deg, #10B981, #34D399); }
+      &.ambre  { background: linear-gradient(180deg, #EEA823, #FBBF24); }
+    }
+  }
+
+  // Mini-tableau fret
+  .mini-tableau-fret {
     display: flex;
     flex-direction: column;
-    height: auto;
+    gap: 5px;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(143, 98, 67, 0.08);
+
+    .ligne-fret {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+
+      .lbl-fret {
+        color: #8C7E74;
+        font-weight: 600;
+      }
+
+      .val-fret-1 {
+        color: #8C7E74;
+        font-weight: 700;
+      }
+
+      .val-fret-2 {
+        font-weight: 800;
+        color: #2D231C;
+        display: inline-flex;
+        align-items: center;
+
+        mat-icon {
+          font-size: 12px;
+          width: 12px;
+          height: 12px;
+
+          &.hausse { color: #10B981; }
+          &.baisse { color: #F43F5E; }
+        }
+      }
+    }
   }
 }
 
-.zone-cadran {
-  height: 100%;
-  min-height: 520px;
+// Colonne avec les 2 autres cartes
+.colonne-deux-cartes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.zone-globe {
-  height: 100%;
-  min-height: 520px;
+// Carte 2 : Tendance
+.carte-tendance {
+  .tendance-entete {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+
+    .valeur-kpi-droite {
+      font-size: 16px;
+      font-weight: 900;
+      color: #2D231C;
+    }
+  }
+
+  .graphique-courbe-svg {
+    width: 100%;
+    height: 52px;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
 }
 
-.zone-statistiques {
+// Carte 3 : Couverture globale avec Donut
+.carte-couverture {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+
+  .donut-wrapper {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+
+    .donut-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+
+      .donut-piste {
+        fill: none;
+        stroke: #FAF8F5;
+        stroke-width: 4;
+      }
+
+      .donut-progression {
+        fill: none;
+        stroke: #8B5CF6;
+        stroke-width: 4;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.5s ease;
+      }
+    }
+
+    .donut-pct {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      color: #2D231C;
+    }
+  }
+
+  .couverture-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+// -------------------------------------------------------------
+// SCÈNE CENTRALE ET DROITE : LE BARILLET REVOLVER + GLOBE GÉANT 3D + STATS DROITE
+// -------------------------------------------------------------
+.scene-globe-et-barillet {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  background: #FFFFFF;
+  border-radius: 24px;
+  padding: 14px;
+  border: 1px solid rgba(143, 98, 67, 0.14);
+  box-shadow: 0 4px 24px rgba(45, 35, 28, 0.06);
+  min-height: 560px;
+  overflow: hidden;
+
+  @media (max-width: 1200px) {
+    min-height: 600px;
+  }
+}
+
+// Barillet revolver (180° à gauche de la planète)
+.barillet-flottant-gauche {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 14px;
+  width: 210px;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+// Globe 3D géant centré
+.globe-centre-geolocalise {
+  flex: 1;
+  width: 100%;
   height: 100%;
-  min-height: 520px;
+  min-height: 560px;
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+// Panneaux statistiques flottants (à droite du globe)
+.stats-flottantes-droite {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  right: 14px;
+  width: 270px;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+@media (max-width: 1350px) {
+  .scene-globe-et-barillet {
+    flex-direction: column;
+    min-height: auto;
+    gap: 16px;
+  }
+
+  .barillet-flottant-gauche,
+  .stats-flottantes-droite {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .globe-centre-geolocalise {
+    min-height: 480px;
+  }
 }
 
 .spin {
@@ -254,4 +654,3 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-

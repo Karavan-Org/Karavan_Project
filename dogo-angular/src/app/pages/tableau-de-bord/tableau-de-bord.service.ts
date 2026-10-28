@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_URL } from '../../core/api';
 
 export interface PaysVue {
   codeIso: string;
@@ -114,7 +115,7 @@ export interface PaysReference {
 })
 export class TableauDeBordService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/admin/tableau-de-bord';
+  private readonly baseUrl = `${API_URL}/admin/tableau-de-bord`;
 
   getResume(): Observable<ResumeTableauDeBord> {
     return this.http.get<ResumeTableauDeBord>(`${this.baseUrl}/resume`);
@@ -146,7 +147,7 @@ export class TableauDeBordService {
   }
 
   getPaysActifs(): Observable<PaysReference[]> {
-    return this.http.get<PaysReference[]>('/api/pays');
+    return this.http.get<PaysReference[]>(`${API_URL}/pays`);
   }
 }
 
