@@ -31,8 +31,6 @@ class _CommercantInscriptionScreenState
   final _phoneController = TextEditingController();
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
-  final _extraField1Controller = TextEditingController();
-  final _extraField2Controller = TextEditingController();
   bool _obscurePin = true;
   bool _obscureConfirmPin = true;
   bool _isLoading = false;
@@ -51,8 +49,6 @@ class _CommercantInscriptionScreenState
     _phoneController.dispose();
     _pinController.dispose();
     _confirmPinController.dispose();
-    _extraField1Controller.dispose();
-    _extraField2Controller.dispose();
     super.dispose();
   }
 
@@ -105,31 +101,6 @@ class _CommercantInscriptionScreenState
         nom: nom,
         motDePasse: pin,
         pin: pin,
-        nomBoutique: widget.role == RoleActeur.commercant
-            ? _extraField1Controller.text.trim()
-            : null,
-        quartierBamako: widget.role == RoleActeur.commercant
-            ? _extraField2Controller.text.trim()
-            : null,
-        numeroNif: widget.role == RoleActeur.grossiste
-            ? _extraField1Controller.text.trim()
-            : null,
-        nomBoutiqueMarche: widget.role == RoleActeur.grossiste
-            ? _extraField2Controller.text.trim()
-            : null,
-        nomSocieteImport: widget.role == RoleActeur.courtier
-            ? (_extraField2Controller.text.trim().isNotEmpty
-                ? _extraField2Controller.text.trim()
-                : nom)
-            : (widget.role == RoleActeur.grossiste
-                ? _extraField2Controller.text.trim()
-                : null),
-        licenceTransit: widget.role == RoleActeur.courtier
-            ? _extraField1Controller.text.trim()
-            : null,
-        adresseDepot: widget.role == RoleActeur.courtier
-            ? _extraField2Controller.text.trim()
-            : null,
       );
 
       if (!mounted) return;
@@ -169,6 +140,7 @@ class _CommercantInscriptionScreenState
   Widget build(BuildContext context) {
     const camelColor = AppTheme.bissap;
     const borderColor = AppTheme.bordureForte;
+    final estSombre = AppTheme.estSombre(context);
 
     return Scaffold(
       backgroundColor: AppTheme.couleurFond(context),
@@ -306,62 +278,41 @@ class _CommercantInscriptionScreenState
 
               const SizedBox(height: 14),
 
-              // 6. CHAMPS SPÉCIFIQUES AU RÔLE (Pour conformité Backend Dogo)
-              if (widget.role == RoleActeur.commercant) ...[
-                _buildFigmaInputField(
-                  icon: Icons.storefront_outlined,
-                  label: "Nom de la boutique",
-                  hint: "Ex: Boutique Élégance Dabanani",
-                  controller: _extraField1Controller,
-                  borderColor: borderColor,
-                  camelColor: camelColor,
+              // 6. NOTE D'INFORMATION CONFIGURATION PARAMÈTRES
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: estSombre ? const Color(0xFF2A231C) : const Color(0xFFFBF6F0),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: estSombre ? AppTheme.doreKaravan.withValues(alpha: 0.3) : const Color(0xFFE2CBB2),
+                  ),
                 ),
-                const SizedBox(height: 14),
-                _buildFigmaInputField(
-                  icon: Icons.place_outlined,
-                  label: "Quartier / Marché Bamako",
-                  hint: "Ex: Grand Marché Dabanani, Missira",
-                  controller: _extraField2Controller,
-                  borderColor: borderColor,
-                  camelColor: camelColor,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: AppTheme.doreKaravan,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.role == RoleActeur.courtier
+                            ? "Le nom de votre société de transit et l'emplacement de votre dépôt (carte ou GPS) seront configurables directement dans vos Paramètres."
+                            : "Le nom de votre boutique et votre emplacement géographique (carte ou coordonnées GPS) seront configurables directement dans vos Paramètres.",
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.35,
+                          fontWeight: FontWeight.w500,
+                          color: estSombre ? const Color(0xFFE6D6C6) : const Color(0xFF6B5843),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ] else if (widget.role == RoleActeur.grossiste) ...[
-                _buildFigmaInputField(
-                  icon: Icons.store_mall_directory_outlined,
-                  label: "Nom de la boutique au marché",
-                  hint: "Ex: Grand Dépôt Dabanani ou SoloImport",
-                  controller: _extraField2Controller,
-                  borderColor: borderColor,
-                  camelColor: camelColor,
-                ),
-                const SizedBox(height: 14),
-                _buildFigmaInputField(
-                  icon: Icons.badge_outlined,
-                  label: "Numéro NIF / Registre de Commerce",
-                  hint: "Ex: 084192043M ou RCCM-BKO-2024",
-                  controller: _extraField1Controller,
-                  borderColor: borderColor,
-                  camelColor: camelColor,
-                ),
-              ] else if (widget.role == RoleActeur.courtier) ...[
-                _buildFigmaInputField(
-                  icon: Icons.verified_user_outlined,
-                  label: "Licence de transit / Agrément",
-                  hint: "Ex: Agrément CEMAC/UEMOA 2026",
-                  controller: _extraField1Controller,
-                  borderColor: borderColor,
-                  camelColor: camelColor,
-                ),
-                const SizedBox(height: 14),
-                _buildFigmaInputField(
-                  icon: Icons.warehouse_outlined,
-                  label: "Adresse du dépôt / Hub Bamako",
-                  hint: "Ex: Dabanani Porte 14 ou Halles de Bamako",
-                  controller: _extraField2Controller,
-                  borderColor: borderColor,
-                  camelColor: camelColor,
-                ),
-              ],
+              ),
 
               const SizedBox(height: 28),
 

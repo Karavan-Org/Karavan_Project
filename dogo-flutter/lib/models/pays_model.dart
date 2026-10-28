@@ -38,3 +38,4 @@ class PaysModel {
     return String.fromCharCode(premier) + String.fromCharCode(second);
   }
 }
+
