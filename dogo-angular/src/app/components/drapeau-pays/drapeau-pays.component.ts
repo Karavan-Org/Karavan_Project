@@ -1,6 +1,5 @@
 import { Component, Input, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { PaysResolverService } from '../../core/services/pays-resolver.service';
 
 @Component({
@@ -10,12 +9,19 @@ import { PaysResolverService } from '../../core/services/pays-resolver.service';
   template: `
     @if (badge) {
       <span class="drapeau-badge-pill" [class.badge-compact]="compact">
-        <span
-          class="drapeau-img-wrapper"
-          [style.width.px]="largeur"
-          [style.height.px]="hauteur"
-          [innerHTML]="svgSecurise()"
-        ></span>
+        <span class="drapeau-img-wrapper" [style.width.px]="largeur" [style.height.px]="hauteur">
+          @if (!erreur()) {
+            <img
+              [src]="urlDrapeau()"
+              [alt]="info().nomFr"
+              class="drapeau-img"
+              (error)="erreur.set(true)"
+              loading="lazy"
+            />
+          } @else {
+            <span class="drapeau-fallback">{{ info().codeIso }}</span>
+          }
+        </span>
         <span class="drapeau-nom">{{ info().nomFr }}</span>
         @if (avecCode) {
           <span class="drapeau-code">({{ info().codeIso }})</span>
@@ -23,12 +29,19 @@ import { PaysResolverService } from '../../core/services/pays-resolver.service';
       </span>
     } @else {
       <span class="drapeau-inline-wrapper" [class.inline-flex]="avecNom || avecCode">
-        <span
-          class="drapeau-img-wrapper"
-          [style.width.px]="largeur"
-          [style.height.px]="hauteur"
-          [innerHTML]="svgSecurise()"
-        ></span>
+        <span class="drapeau-img-wrapper" [style.width.px]="largeur" [style.height.px]="hauteur">
+          @if (!erreur()) {
+            <img
+              [src]="urlDrapeau()"
+              [alt]="info().nomFr"
+              class="drapeau-img"
+              (error)="erreur.set(true)"
+              loading="lazy"
+            />
+          } @else {
+            <span class="drapeau-fallback">{{ info().codeIso }}</span>
+          }
+        </span>
         @if (avecNom) {
           <span class="drapeau-nom">{{ info().nomFr }}</span>
         }
@@ -51,17 +64,25 @@ import { PaysResolverService } from '../../core/services/pays-resolver.service';
       justify-content: center;
       overflow: hidden;
       border-radius: 3.5px;
-      border: 1px solid rgba(0, 0, 0, 0.18);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
       background-color: rgba(255, 255, 255, 0.15);
       flex-shrink: 0;
+    }
 
-      ::ng-deep svg {
-        width: 100%;
-        height: 100%;
-        display: block;
-        object-fit: cover;
-      }
+    .drapeau-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .drapeau-fallback {
+      font-size: 10px;
+      font-weight: 800;
+      color: inherit;
+      line-height: 1;
+      text-transform: uppercase;
     }
 
     .drapeau-inline-wrapper.inline-flex {
@@ -103,10 +124,10 @@ import { PaysResolverService } from '../../core/services/pays-resolver.service';
 })
 export class DrapeauPaysComponent {
   private readonly paysResolver = inject(PaysResolverService);
-  private readonly sanitizer = inject(DomSanitizer);
 
   @Input() set pays(valeur: string | null | undefined) {
     this._paysSaisie.set(valeur ?? '');
+    this.erreur.set(false);
   }
 
   @Input() largeur = 22;
@@ -117,13 +138,16 @@ export class DrapeauPaysComponent {
   @Input() compact = false;
 
   private readonly _paysSaisie = signal<string>('ML');
+  readonly erreur = signal<boolean>(false);
 
   readonly info = computed(() => {
     return this.paysResolver.resoudre(this._paysSaisie());
   });
 
-  readonly svgSecurise = computed<SafeHtml>(() => {
-    const rawSvg = this.paysResolver.svgDrapeau(this.info().codeIso);
-    return this.sanitizer.bypassSecurityTrustHtml(rawSvg);
+  readonly urlDrapeau = computed(() => {
+    const info = this.info();
+    const l = this.largeur > 30 ? 80 : 40;
+    return `https://flagcdn.com/w${l}/${info.codeIso.toLowerCase()}.png`;
   });
 }
+

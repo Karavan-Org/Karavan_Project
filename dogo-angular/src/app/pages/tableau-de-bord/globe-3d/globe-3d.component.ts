@@ -17,7 +17,6 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
 import { GroupeCadranVue, RepartitionPaysVue } from '../tableau-de-bord.service';
-import { PaysResolverService } from '../../../core/services/pays-resolver.service';
 
 interface ArcData {
   startLat: number;
@@ -285,8 +284,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   constructor(
     @Inject(PLATFORM_ID) private readonly platformId: object,
-    private readonly http: HttpClient,
-    private readonly paysResolver: PaysResolverService
+    private readonly http: HttpClient
   ) {}
 
   ngAfterViewInit(): void {
@@ -343,8 +341,8 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
           if (d.isHub) {
             el.innerHTML = `
               <div style="display:flex; flex-direction:column; align-items:center;">
-                <div style="background:#183630; color:#FFFFFF; padding:4px 9px; border-radius:14px; font-size:11px; font-weight:800; box-shadow:0 0 16px rgba(52,199,89,0.8); border:1.5px solid #34C759; white-space:nowrap; display:flex; align-items:center; gap:6px;">
-                  <span style="display:inline-flex; width:16px; height:11px; border-radius:2px; overflow:hidden; vertical-align:middle; flex-shrink:0;">${this.paysResolver.svgDrapeau('ML')}</span>
+                <div style="background:#183630; color:#FFFFFF; padding:4px 9px; border-radius:14px; font-size:11px; font-weight:800; box-shadow:0 0 16px rgba(52,199,89,0.8); border:1.5px solid #34C759; white-space:nowrap; display:flex; align-items:center; gap:5px;">
+                  <span>🇲🇱</span>
                   <span>Hub Bamako</span>
                 </div>
                 <div style="width:2px; height:8px; background:#34C759;"></div>
@@ -355,8 +353,8 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
             const couleur = d.couleur || '#EEA823';
             el.innerHTML = `
               <div style="display:flex; flex-direction:column; align-items:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                <div style="background:rgba(24, 54, 48, 0.96); color:#FFFFFF; padding:3px 8px; border-radius:14px; font-size:11px; font-weight:700; box-shadow:0 0 14px ${couleur}, 0 4px 10px rgba(0,0,0,0.5); border:1.5px solid ${couleur}; white-space:nowrap; display:flex; align-items:center; gap:6px;">
-                  <span style="display:inline-flex; width:16px; height:11px; border-radius:2px; overflow:hidden; vertical-align:middle; flex-shrink:0;">${this.paysResolver.svgDrapeau(d.codeIso)}</span>
+                <div style="background:rgba(24, 54, 48, 0.94); color:#FFFFFF; padding:3px 8px; border-radius:14px; font-size:11px; font-weight:700; box-shadow:0 0 14px ${couleur}, 0 4px 10px rgba(0,0,0,0.5); border:1.5px solid ${couleur}; white-space:nowrap; display:flex; align-items:center; gap:5px;">
+                  <img src="https://flagcdn.com/w40/${d.codeIso.toLowerCase()}.png" style="width:16px; height:11px; border-radius:2px; box-shadow:0 1px 2px rgba(0,0,0,0.4); object-fit:cover; display:inline-block;" alt="${d.codeIso}" onerror="this.style.display='none'" />
                   <span>${d.name}</span>
                 </div>
                 <div style="width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid ${couleur}; margin-top:-1px;"></div>
@@ -368,8 +366,8 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
           return el;
         });
 
-      // Vue initiale centrée au-dessus de l'Afrique et surélevée (altitude 1.82, lat 22) pour dégager les pins des cartes
-      this.globeInstance.pointOfView({ lat: 22, lng: 4, altitude: 1.82 }, 1000);
+      // Vue initiale centrée au-dessus de l'Afrique et surélevée (altitude 1.82) pour dégager les pins des cartes
+      this.globeInstance.pointOfView({ lat: 18, lng: 4, altitude: 1.82 }, 1000);
 
       const controls = this.globeInstance.controls();
       controls.autoRotate = true;

@@ -27,112 +27,6 @@ class DrapeauPays extends StatelessWidget {
     this.fallback,
   });
 
-  Widget _construireRepliCouleurs(BuildContext context, PaysInfo info) {
-    final code = info.codeIso.toUpperCase();
-    switch (code) {
-      case 'ML':
-        return const Row(
-          children: [
-            Expanded(child: ColoredBox(color: Color(0xFF14B53A))),
-            Expanded(child: ColoredBox(color: Color(0xFFFCD116))),
-            Expanded(child: ColoredBox(color: Color(0xFFCE1126))),
-          ],
-        );
-      case 'CI':
-        return const Row(
-          children: [
-            Expanded(child: ColoredBox(color: Color(0xFFF77F00))),
-            Expanded(child: ColoredBox(color: Color(0xFFFFFFFF))),
-            Expanded(child: ColoredBox(color: Color(0xFF009A44))),
-          ],
-        );
-      case 'FR':
-        return const Row(
-          children: [
-            Expanded(child: ColoredBox(color: Color(0xFF002654))),
-            Expanded(child: ColoredBox(color: Color(0xFFFFFFFF))),
-            Expanded(child: ColoredBox(color: Color(0xFFCE1126))),
-          ],
-        );
-      case 'GN':
-        return const Row(
-          children: [
-            Expanded(child: ColoredBox(color: Color(0xFFCE1126))),
-            Expanded(child: ColoredBox(color: Color(0xFFFCD116))),
-            Expanded(child: ColoredBox(color: Color(0xFF009460))),
-          ],
-        );
-      case 'NG':
-        return const Row(
-          children: [
-            Expanded(child: ColoredBox(color: Color(0xFF008751))),
-            Expanded(child: ColoredBox(color: Color(0xFFFFFFFF))),
-            Expanded(child: ColoredBox(color: Color(0xFF008751))),
-          ],
-        );
-      case 'GH':
-        return const Column(
-          children: [
-            Expanded(child: ColoredBox(color: Color(0xFFCE1126))),
-            Expanded(child: ColoredBox(color: Color(0xFFFCD116))),
-            Expanded(child: ColoredBox(color: Color(0xFF006B3F))),
-          ],
-        );
-      case 'SN':
-        return const Row(
-          children: [
-            Expanded(child: ColoredBox(color: Color(0xFF00853F))),
-            Expanded(child: ColoredBox(color: Color(0xFFFDEF42))),
-            Expanded(child: ColoredBox(color: Color(0xFFE31B23))),
-          ],
-        );
-      case 'TR':
-        return Container(
-          color: const Color(0xFFE30A17),
-          alignment: Alignment.center,
-          child: const Text('🇹🇷', style: TextStyle(fontSize: 10)),
-        );
-      case 'CN':
-        return Container(
-          color: const Color(0xFFDE2910),
-          alignment: Alignment.center,
-          child: const Text('★', style: TextStyle(color: Color(0xFFFFDE00), fontSize: 10, fontWeight: FontWeight.bold)),
-        );
-      case 'MA':
-        return Container(
-          color: const Color(0xFFC1272D),
-          alignment: Alignment.center,
-          child: const Text('★', style: TextStyle(color: Color(0xFF006233), fontSize: 10, fontWeight: FontWeight.bold)),
-        );
-      case 'BR':
-        return Container(
-          color: const Color(0xFF009739),
-          alignment: Alignment.center,
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Color(0xFFFEDD00),
-              shape: BoxShape.circle,
-            ),
-          ),
-        );
-      default:
-        return Container(
-          color: AppTheme.couleurSurfaceDouce(context),
-          alignment: Alignment.center,
-          child: Text(
-            info.codeIso,
-            style: TextStyle(
-              fontSize: (hauteur * 0.55).clamp(8.0, 13.0),
-              fontWeight: FontWeight.w800,
-              color: AppTheme.couleurTexte(context),
-            ),
-          ),
-        );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final info = PaysResolverService.instance.resoudre(pays);
@@ -164,11 +58,27 @@ class DrapeauPays extends StatelessWidget {
           height: hauteur,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return fallback ?? _construireRepliCouleurs(context, info);
+            // Repli gracieux : affichage de l'emoji drapeau ou du code ISO
+            return fallback ??
+                Container(
+                  color: AppTheme.couleurSurfaceDouce(context),
+                  alignment: Alignment.center,
+                  child: Text(
+                    info.codeIso,
+                    style: TextStyle(
+                      fontSize: (hauteur * 0.55).clamp(8.0, 13.0),
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.couleurTexte(context),
+                    ),
+                  ),
+                );
           },
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
-            return _construireRepliCouleurs(context, info);
+            return Container(
+              color: AppTheme.couleurSurfaceDouce(context),
+              alignment: Alignment.center,
+            );
           },
         ),
       ),
@@ -234,23 +144,32 @@ class DrapeauBadge extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           DrapeauPays(
             pays: info.codeIso,
-            largeur: compact ? 18 : 22,
-            hauteur: compact ? 12 : 15,
-            rayon: 3,
+            largeur: compact ? 16 : 20,
+            hauteur: compact ? 11 : 14,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Text(
             info.nomFr,
             style: TextStyle(
-              fontSize: compact ? 11.5 : 12.5,
+              fontSize: compact ? 11 : 12,
               fontWeight: FontWeight.w700,
               color: AppTheme.couleurTexte(context),
             ),
           ),
+          if (!compact) ...[
+            const SizedBox(width: 3),
+            Text(
+              info.codeIso,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.couleurTexteAttenue(context),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -266,3 +185,4 @@ class DrapeauBadge extends StatelessWidget {
     return content;
   }
 }
+

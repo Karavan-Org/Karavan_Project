@@ -5,6 +5,7 @@ export interface PaysInfo {
   nomFr: string;
   nomEn: string;
   drapeauEmoji: string;
+  indicatifTel?: string; // ex: "+223", "+225", "+90", "+86"
 }
 
 @Injectable({
@@ -195,6 +196,14 @@ export class PaysResolverService {
       return this.parCode(code);
     }
 
+    // 1b. Recherche par indicatif téléphonique direct (+223, 00223, 223)
+    const digitsOnly = saisie.trim().replace(/^\+|^00/, '');
+    for (const [code, indicatif] of Object.entries(PaysResolverService.indicatifsMap)) {
+      if (indicatif.replace('+', '') === digitsOnly) {
+        return this.parCode(code);
+      }
+    }
+
     // 2. Recherche par code ISO 2 lettres
     if (cle.length === 2) {
       return this.parCode(cle.toUpperCase());
@@ -223,15 +232,37 @@ export class PaysResolverService {
     return { codeIso: 'ML', nomFr: 'Mali', nomEn: 'Mali', drapeauEmoji: '🇲🇱' };
   }
 
+  private static readonly indicatifsMap: Record<string, string> = {
+    ML: '+223', CI: '+225', SN: '+221', GH: '+233', GN: '+224',
+    BF: '+226', NE: '+227', TG: '+228', BJ: '+229', NG: '+234',
+    CM: '+237', MA: '+212', DZ: '+213', TN: '+216', EG: '+20',
+    ZA: '+27', TR: '+90', CN: '+86', BR: '+55', FR: '+33',
+    AE: '+971', IN: '+91', ES: '+34', DE: '+49', IT: '+39',
+    US: '+1', CA: '+1', GB: '+44', BE: '+32', CH: '+41',
+    NL: '+31', PT: '+351', SA: '+966', VN: '+84', TH: '+66',
+    ID: '+62', MY: '+60', JP: '+81', KR: '+82', PK: '+92', BD: '+880'
+  };
+
+  indicatif(codeIso?: string | null): string {
+    const info = this.resoudre(codeIso);
+    return PaysResolverService.indicatifsMap[info.codeIso] || '+223';
+  }
+
   parCode(codeIso: string): PaysInfo {
     const code = codeIso.toUpperCase();
     const trouve = PaysResolverService.referentiel.find(p => p.codeIso === code);
-    if (trouve) return trouve;
+    if (trouve) {
+      return {
+        ...trouve,
+        indicatifTel: PaysResolverService.indicatifsMap[code] || '+223'
+      };
+    }
     return {
       codeIso: code,
       nomFr: code,
       nomEn: code,
-      drapeauEmoji: this.codeVersEmoji(code)
+      drapeauEmoji: this.codeVersEmoji(code),
+      indicatifTel: PaysResolverService.indicatifsMap[code] || '+223'
     };
   }
 
@@ -267,6 +298,9 @@ export class PaysResolverService {
   }
 
   get tousLesPays(): PaysInfo[] {
-    return [...PaysResolverService.referentiel];
+    return PaysResolverService.referentiel.map(p => ({
+      ...p,
+      indicatifTel: PaysResolverService.indicatifsMap[p.codeIso] || '+223'
+    }));
   }
 }

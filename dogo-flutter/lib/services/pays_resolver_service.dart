@@ -4,12 +4,14 @@ class PaysInfo {
   final String nomFr;   // ex: "Turquie"
   final String nomEn;   // ex: "Turkey"
   final String drapeauEmoji; // ex: "🇹🇷"
+  final String indicatifTel; // ex: "+223", "+225", "+90"
 
   const PaysInfo({
     required this.codeIso,
     required this.nomFr,
     required this.nomEn,
     required this.drapeauEmoji,
+    this.indicatifTel = '+223',
   });
 
   /// URL haute résolution du drapeau officiel (FlagCDN CDN mondial ultra-rapide)
@@ -198,15 +200,43 @@ class PaysResolverService {
     return const PaysInfo(codeIso: 'ML', nomFr: 'Mali', nomEn: 'Mali', drapeauEmoji: '🇲🇱');
   }
 
+  static const Map<String, String> _indicatifsMap = {
+    'ML': '+223', 'CI': '+225', 'SN': '+221', 'GH': '+233', 'GN': '+224',
+    'BF': '+226', 'NE': '+227', 'TG': '+228', 'BJ': '+229', 'NG': '+234',
+    'CM': '+237', 'MA': '+212', 'DZ': '+213', 'TN': '+216', 'EG': '+20',
+    'ZA': '+27', 'TR': '+90', 'CN': '+86', 'BR': '+55', 'FR': '+33',
+    'AE': '+971', 'IN': '+91', 'ES': '+34', 'DE': '+49', 'IT': '+39',
+    'US': '+1', 'CA': '+1', 'GB': '+44', 'BE': '+32', 'CH': '+41',
+    'NL': '+31', 'PT': '+351', 'SA': '+966', 'VN': '+84', 'TH': '+66',
+    'ID': '+62', 'MY': '+60', 'JP': '+81', 'KR': '+82', 'PK': '+92', 'BD': '+880'
+  };
+
+  /// Renvoie l'indicatif téléphonique international d'un pays (ex: "+223", "+225")
+  String indicatif(String? saisie) {
+    final info = resoudre(saisie);
+    return _indicatifsMap[info.codeIso] ?? '+223';
+  }
+
   PaysInfo _parCode(String codeIso) {
     final trouve = _referentiel.where((p) => p.codeIso == codeIso);
-    if (trouve.isNotEmpty) return trouve.first;
+    final ind = _indicatifsMap[codeIso.toUpperCase()] ?? '+223';
+    if (trouve.isNotEmpty) {
+      final p = trouve.first;
+      return PaysInfo(
+        codeIso: p.codeIso,
+        nomFr: p.nomFr,
+        nomEn: p.nomEn,
+        drapeauEmoji: p.drapeauEmoji,
+        indicatifTel: ind,
+      );
+    }
     final emoji = _codeVersEmoji(codeIso);
     return PaysInfo(
       codeIso: codeIso,
       nomFr: codeIso,
       nomEn: codeIso,
       drapeauEmoji: emoji,
+      indicatifTel: ind,
     );
   }
 
@@ -231,3 +261,4 @@ class PaysResolverService {
     }).toList();
   }
 }
+

@@ -1,6 +1,7 @@
 // Charte graphique Karavan officielle.
 @use '@angular/material' as mat;
 @use './app/shared/animations' as anim;
+@import 'intl-tel-input/dist/css/intlTelInput.css';
 
 :root {
   // --- Palette Karavan ---
