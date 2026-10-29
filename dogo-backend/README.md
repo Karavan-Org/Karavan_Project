@@ -16,10 +16,10 @@ Java 21 · Spring Boot 3.5 · Maven · MySQL 8 · Flyway · JWT + sessions serve
 Les tables sont créées automatiquement par Flyway (`src/main/resources/db/migration`, V1 → V19). Il suffit que MySQL tourne :
 
 ```sql
-CREATE DATABASE dogo CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE DATABASE karavan CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 ```
 
-Le profil par défaut est `prod` : sans profil local explicite, l'application exige des identifiants DB, secrets et origines CORS de production valides et refuse le démarrage si des comptes conservent le mot de passe partagé de V11. En local, activez le profil `local`, qui se connecte par défaut à `localhost:3306/dogo` avec `root` / `1234` :
+Le profil par défaut est `prod` : sans profil local explicite, l'application exige des identifiants DB, secrets et origines CORS de production valides et refuse le démarrage si des comptes conservent le mot de passe partagé de V11. En local, activez le profil `local`, qui se connecte par défaut à `localhost:3306/karavan` avec `root` / `1234` :
 
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=local

@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
  * Codes valables 1 seconde ici pour simuler l'abandon ; le test attend le délai de 30 s entre deux SMS.
  */
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:mysql://localhost:3306/dogo_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true",
+        "spring.datasource.url=jdbc:mysql://localhost:3306/karavan_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true",
         "spring.flyway.clean-disabled=false",
         "dogo.otp.validite=PT1S"})
 @AutoConfigureMockMvc
