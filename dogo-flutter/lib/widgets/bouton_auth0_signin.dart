@@ -25,8 +25,29 @@ class BoutonAuth0SignIn extends StatelessWidget {
   Future<void> _declencherConnexionAuth0(BuildContext context) async {
     if (onAvantClic != null) onAvantClic!();
 
-    // Ouvre la boîte de dialogue Auth0 (Universal Login web, test direct ou token)
-    Auth0AuthModal.ouvrir(context: context, role: role);
+    const domain = ApiConfig.auth0Domain;
+    const clientId = ApiConfig.auth0ClientId;
+    final audience = Uri.encodeComponent(ApiConfig.auth0Audience);
+    final redirectUri = Uri.encodeComponent('http://localhost:3000');
+    final nonce = 'karavan-${DateTime.now().millisecondsSinceEpoch}';
+
+    final authUrl = Uri.parse(
+      'https://$domain/authorize?client_id=$clientId&response_type=token%20id_token&redirect_uri=$redirectUri&scope=openid%20profile%20email&audience=$audience&nonce=$nonce',
+    );
+
+    try {
+      if (await canLaunchUrl(authUrl)) {
+        await launchUrl(authUrl, mode: LaunchMode.platformDefault);
+      } else {
+        if (context.mounted) {
+          Auth0AuthModal.ouvrir(context: context, role: role);
+        }
+      }
+    } catch (_) {
+      if (context.mounted) {
+        Auth0AuthModal.ouvrir(context: context, role: role);
+      }
+    }
   }
 
   @override
@@ -38,6 +59,7 @@ class BoutonAuth0SignIn extends StatelessWidget {
 
     return InkWell(
       onTap: () => _declencherConnexionAuth0(context),
+      onLongPress: () => Auth0AuthModal.ouvrir(context: context, role: role),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         height: 52,

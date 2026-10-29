@@ -25,8 +25,26 @@ class AuthService {
   Map<String, String> get _entetesPlateforme =>
       kIsWeb ? const {'X-Client-Platform': 'flutter-web'} : const {};
 
-  /// Restaure la session au démarrage à partir de flutter_secure_storage
+  /// Restaure la session au démarrage à partir de flutter_secure_storage ou retour Auth0 URL
   Future<UtilisateurProfil?> restaurerSession() async {
+    // 0. Détection d'un retour d'authentification Auth0 via l'URL Web (fragment hash #id_token=... ou query param)
+    if (kIsWeb) {
+      final uri = Uri.base;
+      String? idToken = uri.queryParameters['id_token'];
+      if ((idToken == null || idToken.isEmpty) && uri.fragment.isNotEmpty) {
+        final frag = Uri.splitQueryString(uri.fragment.replaceFirst(RegExp(r'^/?'), ''));
+        idToken = frag['id_token'];
+      }
+      if (idToken != null && idToken.isNotEmpty) {
+        try {
+          final res = await authentifierAuth0(idToken);
+          if (res['statut'] == 'CONNECTE' && res['profil'] is UtilisateurProfil) {
+            return res['profil'] as UtilisateurProfil;
+          }
+        } catch (_) {}
+      }
+    }
+
     final refreshToken =
         kIsWeb ? null : await SessionStorageService.instance.lireRefreshToken();
     if (!kIsWeb && (refreshToken == null || refreshToken.isEmpty)) {
