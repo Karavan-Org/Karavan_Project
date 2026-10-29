@@ -59,30 +59,18 @@ class _KaravanPlanet3DWidgetState extends State<KaravanPlanet3DWidget> {
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
-      return Container(
+      return SizedBox(
         height: widget.height ?? 340,
-        alignment: Alignment.center,
-        child: Container(
-          width: 260,
-          height: 260,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: [
-                AppTheme.primary.withValues(alpha: 0.22),
-                AppTheme.doreKaravan.withValues(alpha: 0.12),
-                Colors.transparent,
-              ],
-              stops: const [0.35, 0.7, 1.0],
-            ),
-          ),
-          child: Center(
-            child: Icon(
-              Icons.public,
-              size: 130,
-              color: AppTheme.doreKaravan.withValues(alpha: 0.85),
-            ),
-          ),
+        width: double.infinity,
+        child: HtmlElementView.fromTagName(
+          tagName: 'iframe',
+          onElementCreated: (dynamic element) {
+            element.src = 'karavan_planet_3d.html';
+            element.style.border = 'none';
+            element.style.width = '100%';
+            element.style.height = '100%';
+            element.style.backgroundColor = 'transparent';
+          },
         ),
       );
     }

@@ -432,3 +432,4 @@ class _Auth0CompleterProfilScreenState extends State<Auth0CompleterProfilScreen>
 
 // Rétrocompatibilité
 typedef GoogleCompleterProfilScreen = Auth0CompleterProfilScreen;
+
