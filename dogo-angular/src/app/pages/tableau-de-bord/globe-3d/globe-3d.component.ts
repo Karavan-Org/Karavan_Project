@@ -273,6 +273,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() groupes: GroupeCadranVue[] = [];
   @Input() paysFiltre: string | null = null;
   @Output() paysChoisi = new EventEmitter<string | null>();
+  @Output() groupeChoisi = new EventEmitter<GroupeCadranVue>();
 
   private globeInstance: any = null;
   autoRotationActive = true;
@@ -351,17 +352,70 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
             `;
           } else {
             const couleur = d.couleur || '#EEA823';
+            const g = d.groupePrincipal;
+            const nbGroupes = d.groupes?.length || d.nombreGroupes || 1;
+            const multiBadge = nbGroupes > 1 ? `<span style="background:rgba(255,255,255,0.18); color:#E2E8F0; font-size:9px; padding:1px 4px; border-radius:4px; font-weight:700;">+${nbGroupes - 1}</span>` : '';
+
+            let infoGroupeHtml = '';
+            if (g) {
+              const titreCourt = g.titre.length > 22 ? g.titre.slice(0, 21) + '…' : g.titre;
+              const prixFmt = g.prixUnitaire ? Number(g.prixUnitaire).toLocaleString('fr-FR') : '';
+              infoGroupeHtml = `
+                <div style="margin-top:4px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.12); display:flex; flex-direction:column; gap:2px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:4px;">
+                    <span style="font-size:10px; font-weight:700; color:#FFFFFF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px;" title="${g.titre}">
+                      ${titreCourt}
+                    </span>
+                    <span style="font-size:9px; color:${couleur}; font-weight:800; background:rgba(238,168,35,0.18); padding:1px 4px; border-radius:4px; border:0.5px solid ${couleur}66;">
+                      #${g.id}
+                    </span>
+                  </div>
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:9px;">
+                    <span style="color:#EEA823; font-weight:700;">${prixFmt} F</span>
+                    <span style="color:#34C759; font-weight:700;">${g.progression}%</span>
+                  </div>
+                </div>
+              `;
+            }
+
             el.innerHTML = `
-              <div style="display:flex; flex-direction:column; align-items:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                <div style="background:rgba(24, 54, 48, 0.94); color:#FFFFFF; padding:3px 8px; border-radius:14px; font-size:11px; font-weight:700; box-shadow:0 0 14px ${couleur}, 0 4px 10px rgba(0,0,0,0.5); border:1.5px solid ${couleur}; white-space:nowrap; display:flex; align-items:center; gap:5px;">
-                  <img src="https://flagcdn.com/w40/${d.codeIso.toLowerCase()}.png" style="width:16px; height:11px; border-radius:2px; box-shadow:0 1px 2px rgba(0,0,0,0.4); object-fit:cover; display:inline-block;" alt="${d.codeIso}" onerror="this.style.display='none'" />
-                  <span>${d.name}</span>
+              <div class="globe-pin-bubble" style="
+                display:flex; flex-direction:column; align-items:center; transition:transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+                filter: drop-shadow(0 4px 12px rgba(0,0,0,0.65));
+              " onmouseover="this.style.transform='scale(1.15) translateY(-4px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+                <div style="
+                  background:rgba(18, 38, 34, 0.95);
+                  backdrop-filter:blur(6px);
+                  color:#FFFFFF;
+                  padding:4px 8px;
+                  border-radius:12px;
+                  box-shadow:0 0 16px ${couleur}66, inset 0 1px 0 rgba(255,255,255,0.15);
+                  border:1.5px solid ${couleur};
+                  min-width:115px;
+                  max-width:165px;
+                ">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:5px;">
+                    <div style="display:flex; align-items:center; gap:4px;">
+                      <img src="https://flagcdn.com/w40/${d.codeIso.toLowerCase()}.png" 
+                           style="width:15px; height:10px; border-radius:2px; object-fit:cover; display:inline-block;" 
+                           alt="${d.codeIso}" 
+                           onerror="this.style.display='none'" />
+                      <span style="font-size:11px; font-weight:800; color:#FFFFFF; letter-spacing:0.2px;">${d.name}</span>
+                    </div>
+                    ${multiBadge}
+                  </div>
+                  ${infoGroupeHtml}
                 </div>
                 <div style="width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid ${couleur}; margin-top:-1px;"></div>
-                <div style="width:5px; height:5px; border-radius:50%; background:${couleur}; box-shadow:0 0 6px ${couleur}; margin-top:1px;"></div>
+                <div style="width:5px; height:5px; border-radius:50%; background:${couleur}; box-shadow:0 0 8px ${couleur}; margin-top:1px;"></div>
               </div>
             `;
-            el.onclick = () => this.selectionnerPays(d.codeIso);
+            el.onclick = () => {
+              this.selectionnerPays(d.codeIso);
+              if (d.groupePrincipal) {
+                this.groupeChoisi.emit(d.groupePrincipal);
+              }
+            };
           }
           return el;
         });
@@ -435,32 +489,70 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
       FR: '#64748B'  // Ardoise neutre
     };
 
+    // Indexation de tous les pays à afficher (depuis repartitionPays et depuis les groupes actifs)
+    const paysMap = new Map<string, { codeIso: string; nomFr: string; latitude: number; longitude: number; nombreGroupes: number }>();
+
     for (const pays of this.repartitionPays) {
       if (pays.latitude && pays.longitude) {
-        const couleur = paletteCouleurs[pays.codeIso] || '#EEA823';
-        arcs.push({
-          startLat: pays.latitude,
-          startLng: pays.longitude,
-          endLat: this.BAMAKO_LAT,
-          endLng: this.BAMAKO_LNG,
-          color: [couleur, '#34C759'],
-          name: pays.nomFr,
-          codeIso: pays.codeIso,
-          nombreGroupes: pays.nombreGroupes,
-          stroke: 1.8
-        });
-
-        htmlPoints.push({
-          lat: pays.latitude,
-          lng: pays.longitude,
-          name: pays.nomFr,
-          codeIso: pays.codeIso,
-          nombreGroupes: pays.nombreGroupes,
-          couleur: couleur,
-          drapeau: this.drapeauParCode(pays.codeIso),
-          isHub: false
+        paysMap.set(pays.codeIso.toUpperCase(), {
+          codeIso: pays.codeIso.toUpperCase(),
+          nomFr: pays.nomFr,
+          latitude: pays.latitude,
+          longitude: pays.longitude,
+          nombreGroupes: pays.nombreGroupes || 1
         });
       }
+    }
+
+    // Inclusion garantie de chaque groupe ayant un pays d'origine avec coordonnées
+    for (const g of this.groupes || []) {
+      const p = g.paysOrigine;
+      if (p && p.codeIso && p.latitude && p.longitude) {
+        const code = p.codeIso.toUpperCase();
+        if (!paysMap.has(code)) {
+          paysMap.set(code, {
+            codeIso: code,
+            nomFr: p.nomFr || code,
+            latitude: p.latitude,
+            longitude: p.longitude,
+            nombreGroupes: 1
+          });
+        }
+      }
+    }
+
+    for (const pays of paysMap.values()) {
+      const couleur = paletteCouleurs[pays.codeIso] || '#EEA823';
+      const groupesDuPays = (this.groupes || []).filter(
+        g => g.paysOrigine?.codeIso?.toUpperCase() === pays.codeIso
+      );
+      const groupePrincipal = groupesDuPays[0] || null;
+      const nbGroupes = Math.max(pays.nombreGroupes, groupesDuPays.length);
+
+      arcs.push({
+        startLat: pays.latitude,
+        startLng: pays.longitude,
+        endLat: this.BAMAKO_LAT,
+        endLng: this.BAMAKO_LNG,
+        color: [couleur, '#34C759'],
+        name: pays.nomFr,
+        codeIso: pays.codeIso,
+        nombreGroupes: nbGroupes,
+        stroke: 1.8
+      });
+
+      htmlPoints.push({
+        lat: pays.latitude,
+        lng: pays.longitude,
+        name: pays.nomFr,
+        codeIso: pays.codeIso,
+        nombreGroupes: nbGroupes,
+        couleur: couleur,
+        drapeau: this.drapeauParCode(pays.codeIso),
+        isHub: false,
+        groupes: groupesDuPays,
+        groupePrincipal: groupePrincipal
+      });
     }
 
     this.globeInstance.arcsData(arcs);
@@ -495,13 +587,18 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private animerCameraVersPays(codeIso: string): void {
-    const pays = this.repartitionPays.find(p => p.codeIso === codeIso);
-    if (pays && pays.latitude && pays.longitude && this.globeInstance) {
+    const code = codeIso?.toUpperCase();
+    const paysRep = this.repartitionPays.find(p => p.codeIso.toUpperCase() === code);
+    const paysGrp = this.groupes.map(g => g.paysOrigine).find(p => p?.codeIso?.toUpperCase() === code);
+    const lat = paysRep?.latitude ?? paysGrp?.latitude;
+    const lng = paysRep?.longitude ?? paysGrp?.longitude;
+
+    if (lat != null && lng != null && this.globeInstance) {
       this.globeInstance.pointOfView(
         {
-          lat: (pays.latitude + this.BAMAKO_LAT) / 2,
-          lng: (pays.longitude + this.BAMAKO_LNG) / 2,
-          altitude: 1.62
+          lat: lat * 0.72 + this.BAMAKO_LAT * 0.28,
+          lng: lng * 0.72 + this.BAMAKO_LNG * 0.28,
+          altitude: 1.68
         },
         1200
       );

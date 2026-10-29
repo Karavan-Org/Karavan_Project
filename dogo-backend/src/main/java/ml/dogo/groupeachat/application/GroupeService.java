@@ -93,13 +93,15 @@ public class GroupeService {
     private final DogoProperties proprietes;
     private final Clock horloge;
     private final PaysRepository paysRepository;
+    private final PaysService paysService;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public GroupeService(GroupeAchatRepository groupes, GrilleTarifaireRepository grilles,
                          ConditionCommercialeRepository conditions, TransitionStatutGroupeRepository transitions,
                          ValidationGroupeRepository validations, MoteurEtatsGroupe moteur, CatalogueApi catalogue,
                          IdentiteApi identite, AuditApi audit, NotificationApi notifications,
                          DogoProperties proprietes, Clock horloge, EtapeAcheminementRepository etapes,
-                         PaysRepository paysRepository) {
+                         PaysRepository paysRepository, PaysService paysService) {
         this.groupes = groupes;
         this.etapes = etapes;
         this.grilles = grilles;
@@ -114,6 +116,17 @@ public class GroupeService {
         this.proprietes = proprietes;
         this.horloge = horloge;
         this.paysRepository = paysRepository;
+        this.paysService = paysService != null ? paysService : new PaysService(paysRepository);
+    }
+
+    public GroupeService(GroupeAchatRepository groupes, GrilleTarifaireRepository grilles,
+                         ConditionCommercialeRepository conditions, TransitionStatutGroupeRepository transitions,
+                         ValidationGroupeRepository validations, MoteurEtatsGroupe moteur, CatalogueApi catalogue,
+                         IdentiteApi identite, AuditApi audit, NotificationApi notifications,
+                         DogoProperties proprietes, Clock horloge, EtapeAcheminementRepository etapes,
+                         PaysRepository paysRepository) {
+        this(groupes, grilles, conditions, transitions, validations, moteur, catalogue, identite, audit, notifications,
+                proprietes, horloge, etapes, paysRepository, new PaysService(paysRepository));
     }
 
     // ------------------------------------------------------------- création / modification
@@ -141,16 +154,17 @@ public class GroupeService {
         }
         identite.exigerActif(produit.grossisteId());
 
-        String codePays = d.paysOrigineCode() != null && !d.paysOrigineCode().isBlank()
-                ? d.paysOrigineCode().trim().toUpperCase()
-                : (produit.paysOrigine() != null ? produit.paysOrigine().trim().toUpperCase() : null);
-        if (codePays == null || codePays.isBlank()) {
+        String saisiePays = d.paysOrigineCode() != null && !d.paysOrigineCode().isBlank()
+                ? d.paysOrigineCode().trim()
+                : (produit.paysOrigine() != null ? produit.paysOrigine().trim() : null);
+        if (saisiePays == null || saisiePays.isBlank()) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS", "Le pays d'origine est obligatoire");
         }
-        paysRepository.findById(codePays)
+        Pays pays = paysService.resoudre(saisiePays)
                 .filter(Pays::isActif)
                 .orElseThrow(() -> new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS",
-                        "Pays d'origine non reconnu ou inactif : " + codePays));
+                        "Pays d'origine non reconnu ou inactif : " + saisiePays));
+        String codePays = pays.getCodeIso();
 
         Instant maintenant = horloge.instant();
         Calcul calcul = calculer(d, maintenant);
@@ -171,14 +185,16 @@ public class GroupeService {
             throw new ErreurMetier(CodeErreur.CONFLIT, "RG-20",
                     "La grille tarifaire est figée : seul un brouillon peut être modifié");
         }
-        String codePays = d.paysOrigineCode() != null && !d.paysOrigineCode().isBlank()
-                ? d.paysOrigineCode().trim().toUpperCase()
+        String saisiePays = d.paysOrigineCode() != null && !d.paysOrigineCode().isBlank()
+                ? d.paysOrigineCode().trim()
                 : g.getPaysOrigineCode();
-        if (codePays != null) {
-            paysRepository.findById(codePays)
+        String codePays = null;
+        if (saisiePays != null && !saisiePays.isBlank()) {
+            Pays pays = paysService.resoudre(saisiePays)
                     .filter(Pays::isActif)
                     .orElseThrow(() -> new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS",
-                            "Pays d'origine non reconnu ou inactif : " + codePays));
+                            "Pays d'origine non reconnu ou inactif : " + saisiePays));
+            codePays = pays.getCodeIso();
         }
         Calcul calcul = calculer(d, horloge.instant());
         g.modifierBrouillon(titre(d), codePays, calcul.quantiteCible, calcul.prixUnitaire, d.dateLimite());
@@ -512,11 +528,11 @@ public class GroupeService {
         if (paysCode == null || paysCode.isBlank()) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS", "Le pays d'origine est obligatoire");
         }
-        String code = paysCode.trim().toUpperCase();
-        paysRepository.findById(code)
+        Pays pays = paysService.resoudre(paysCode)
                 .filter(Pays::isActif)
                 .orElseThrow(() -> new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-PAYS",
-                        "Pays d'origine non reconnu ou inactif : " + code));
+                        "Pays d'origine non reconnu ou inactif : " + paysCode));
+        String code = pays.getCodeIso();
         GroupeAchat g = groupes.findById(groupeId)
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
         g.assignerPaysOrigine(code);
@@ -531,8 +547,20 @@ public class GroupeService {
         ConditionCommerciale cond = conditions.findByGroupeId(g.getId()).orElseThrow();
         String codePays = g.getPaysOrigineCode();
         String nomPays = null;
-        if (codePays != null) {
-            nomPays = paysRepository.findById(codePays).map(Pays::getNomFr).orElse(codePays);
+        if (codePays == null && p.paysOrigine() != null && !p.paysOrigine().isBlank()) {
+            java.util.Optional<Pays> pOpt = paysService.resoudre(p.paysOrigine());
+            if (pOpt.isPresent()) {
+                codePays = pOpt.get().getCodeIso();
+                nomPays = pOpt.get().getNomFr();
+                try {
+                    g.assignerPaysOrigine(codePays);
+                    groupes.save(g);
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        if (codePays != null && nomPays == null) {
+            nomPays = paysService.resoudre(codePays).map(Pays::getNomFr).orElse(codePays);
         }
         return new GroupeVue(g.getId(), g.getTitre() != null ? g.getTitre() : p.nom(), g.getStatut().name(),
                 new ProduitVue(p.id(), p.nom(), p.description(), p.paysOrigine(), p.categorie(), p.photoUrl(),
