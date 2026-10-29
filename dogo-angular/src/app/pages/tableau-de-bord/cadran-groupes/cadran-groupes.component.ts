@@ -38,7 +38,15 @@ export interface CarteCadran3D {
   imports: [CommonModule, MatIconModule, DrapeauPaysComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="cadran-horizontal-scene" (wheel)="onMolette($event)">
+    <div
+      class="cadran-horizontal-scene"
+      [class.en-glissement]="glissementActif"
+      (wheel)="onMolette($event)"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp($event)"
+      (pointercancel)="onPointerCancel($event)"
+    >
       <!-- Flèche gauche de rotation (<) : fait tourner le cadran SANS ouvrir le tiroir -->
       <button
         type="button"
@@ -59,12 +67,17 @@ export interface CarteCadran3D {
             <span>Aucun groupe actif</span>
           </div>
         } @else {
-          <div class="cartes-arc-wrapper">
+          <div
+            #cartesWrapper
+            class="cartes-arc-wrapper"
+            [class.glissement-actif]="glissementActif"
+          >
             @for (item of cartesVisibles; track (item.groupe.id + '_' + item.offset)) {
               <div
                 class="carte-groupe-3d"
                 [class.carte-active]="item.estActive"
                 [class.carte-survolee]="survolId === item.groupe.id"
+                [class.carte-laterale]="!item.estActive"
                 [style.--offset]="item.offset"
                 [style.--base-tx]="item.baseTx"
                 [style.--base-tz]="item.baseTz"
@@ -74,9 +87,21 @@ export interface CarteCadran3D {
                 [style.--base-z]="item.zIndex"
                 (mouseenter)="onSurvolCarte(item.groupe.id)"
                 (mouseleave)="onQuitterSurvol()"
-                (click)="clicCarte(item)"
-                [title]="item.estActive && groupeSelectionneId === item.groupe.id ? 'Cliquer pour fermer le détail' : 'Cliquer pour voir le détail de ce produit'"
+                (click)="clicCarte(item, $event)"
+                (dblclick)="doubleClicCarte(item, $event)"
+                [title]="item.estActive ? (groupeSelectionneId === item.groupe.id ? 'Cliquer pour fermer le détail' : 'Cliquer pour voir le détail de ce produit') : 'Cliquer pour afficher ce groupe au centre'"
               >
+                <!-- Badge d'action contextuelle au survol -->
+                <div class="carte-action-hint">
+                  @if (item.estActive) {
+                    <mat-icon>visibility</mat-icon>
+                    <span>Détails</span>
+                  } @else {
+                    <mat-icon>center_focus_strong</mat-icon>
+                    <span>Centrer</span>
+                  }
+                </div>
+
                 <!-- En-tête de la carte : Drapeau + #ID -->
                 <div class="carte-top-row">
                   <span class="carte-drapeau">
@@ -133,6 +158,13 @@ export interface CarteCadran3D {
 
       <!-- Zone inférieure : Barre de commandes (Précédent / Suivant + Points) + Bouton Tourner le cadran -->
       <div class="cadran-bas-actions">
+        <!-- Indice d'interaction à la souris / tactile -->
+        <div class="cadran-roulis-hint" title="Glissez avec la souris ou utilisez la molette pour faire tourner le cadran">
+          <mat-icon class="hint-icon">drag_indicator</mat-icon>
+          <span>Glissez ou roulez avec la souris pour faire tourner le cadran</span>
+          <mat-icon class="hint-icon">swipe</mat-icon>
+        </div>
+
         <!-- Barre de commandes complète sans aucun chevauchement avec les cartes -->
         <div class="barre-commandes-row">
           <button
@@ -201,6 +233,17 @@ export interface CarteCadran3D {
       justify-content: center;
       user-select: none;
       perspective: 1200px;
+      cursor: grab;
+      touch-action: pan-y;
+
+      &.en-glissement {
+        cursor: grabbing !important;
+
+        .carte-groupe-3d {
+          cursor: grabbing !important;
+          pointer-events: none !important;
+        }
+      }
     }
 
     // 1. Boutons flèches flottants (dégagés en hauteur sur l'horizon du globe pour ne jamais toucher les cartes)
@@ -273,6 +316,12 @@ export interface CarteCadran3D {
       align-items: center;
       justify-content: center;
       transform-style: preserve-3d;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+
+      &.glissement-actif {
+        transition: none !important;
+      }
     }
 
     // 3. Carte individuelle sur l'arc 3D
@@ -312,18 +361,63 @@ export interface CarteCadran3D {
                     0 16px 36px rgba(0, 0, 0, 0.55);
       }
 
+      &.carte-laterale {
+        &:hover {
+          border-color: #EEA823 !important;
+        }
+      }
+
       // QUEL QUE SOIT L'ÉLÉMENT TOUCHÉ PAR LE CURSEUR (milieu, gauche, droite) :
-      // CET ÉLÉMENT BONDIT INSTANTANÉMENT VERS L'AVANT AU TOUT PREMIER PLAN !
+      // CET ÉLÉMENT BONDIT VERS L'AVANT ET RÉAGIT IMMÉDIATEMENT !
       &:hover,
       &.carte-survolee {
-        transform: translateX(var(--base-tx)) translateY(-34px) translateZ(120px) rotateY(calc(var(--offset) * 3deg)) scale(1.30) !important;
+        transform: translateX(var(--base-tx)) translateY(-32px) translateZ(100px) scale(1.24) !important;
         opacity: 1 !important;
         z-index: 1000 !important;
         border-color: #EEA823 !important;
-        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.88),
-                    0 0 36px rgba(238, 168, 35, 0.85),
-                    inset 0 0 18px rgba(172, 127, 94, 0.5) !important;
+        box-shadow: 0 28px 56px rgba(0, 0, 0, 0.85),
+                    0 0 32px rgba(238, 168, 35, 0.8),
+                    inset 0 0 16px rgba(172, 127, 94, 0.4) !important;
       }
+
+      &:active {
+        transform: translateX(var(--base-tx)) translateY(-26px) translateZ(85px) scale(1.18) !important;
+      }
+    }
+
+    // Badge d'action réactive qui apparaît au survol de chaque carte
+    .carte-action-hint {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: rgba(238, 168, 35, 0.95);
+      color: #0F172A;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 10px rgba(238, 168, 35, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      white-space: nowrap;
+      z-index: 50;
+
+      mat-icon {
+        font-size: 12px;
+        width: 12px;
+        height: 12px;
+      }
+    }
+
+    .carte-groupe-3d:hover .carte-action-hint,
+    .carte-groupe-3d.carte-survolee .carte-action-hint {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     .carte-top-row {
@@ -426,9 +520,39 @@ export interface CarteCadran3D {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      margin-top: 12px;
+      gap: 10px;
+      margin-top: 10px;
       z-index: 40;
+    }
+
+    .cadran-roulis-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.65);
+      background: rgba(14, 32, 28, 0.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(238, 168, 35, 0.2);
+      border-radius: 20px;
+      padding: 4px 14px;
+      letter-spacing: 0.25px;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+
+      .hint-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        color: #EEA823;
+      }
+
+      &:hover {
+        color: #FAF8F5;
+        border-color: rgba(238, 168, 35, 0.45);
+        background: rgba(24, 54, 48, 0.85);
+      }
     }
 
     .barre-commandes-row {
@@ -563,23 +687,39 @@ export class CadranGroupesComponent implements OnChanges {
   @Input() paysFiltre: string | null = null;
   @Input() groupeSelectionneId: number | null = null;
 
-  /** Émis lors de la rotation (flèches < / >, molette, points) : oriente le Globe SANS ouvrir le tiroir */
+  /** Émis lors de la rotation (flèches < / >, molette, points, glissement souris) : oriente le Globe SANS ouvrir le tiroir */
   @Output() rotationChange = new EventEmitter<GroupeCadranVue>();
 
-  /** Émis UNIQUEMENT lors du clic sur une carte pour ouvrir son détail */
+  /** Émis UNIQUEMENT lors du clic sur la carte active ou double-clic pour ouvrir son détail */
   @Output() groupeClique = new EventEmitter<GroupeCadranVue>();
 
   /** Émis quand on clique sur la carte active pour fermer son détail */
   @Output() groupeFerme = new EventEmitter<void>();
+
+  @ViewChild('cartesWrapper') cartesWrapperRef?: ElementRef<HTMLDivElement>;
 
   indexActif = 0;
   survolId: number | null = null;
   groupesFiltres: GroupeCadranVue[] = [];
   cartesVisibles: CarteCadran3D[] = [];
 
+  // Propriétés de manipulation directe à la souris (Glisser / Faire rouler le cadran)
+  glissementActif = false;
+  aGlisse = false;
+  startX = 0;
+  startY = 0;
+  deltaX = 0;
+  dateDebutGlissement = 0;
+  capturedPointerId: number | null = null;
+
+  // Lissage de la molette
+  private dernierTempsMolette = 0;
+  private accumulateurMolette = 0;
+
   constructor(private readonly cdr: ChangeDetectorRef) {}
 
   onSurvolCarte(groupeId: number): void {
+    if (this.glissementActif) return;
     this.survolId = groupeId;
     this.cdr.markForCheck();
   }
@@ -588,6 +728,126 @@ export class CadranGroupesComponent implements OnChanges {
     this.survolId = null;
     this.cdr.markForCheck();
   }
+
+  // ---------------------------------------------------------------------------
+  // INTERACTION DIRECTE SOURIS / TACTILE : FAIRE ROULER LE CADRAN (DRAG & ROLL)
+  // ---------------------------------------------------------------------------
+
+  onPointerDown(event: PointerEvent): void {
+    if (this.groupesFiltres.length === 0) return;
+    // Ne capturer que le clic principal gauche de la souris ou le contact tactile
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    this.glissementActif = true;
+    this.aGlisse = false;
+    this.startX = event.clientX;
+    this.startY = event.clientY;
+    this.deltaX = 0;
+    this.dateDebutGlissement = Date.now();
+
+    try {
+      (event.currentTarget as HTMLElement)?.setPointerCapture(event.pointerId);
+      this.capturedPointerId = event.pointerId;
+    } catch (_) {}
+  }
+
+  onPointerMove(event: PointerEvent): void {
+    if (!this.glissementActif) return;
+
+    const dx = event.clientX - this.startX;
+    if (Math.abs(dx) > 6) {
+      this.aGlisse = true;
+    }
+
+    this.deltaX = dx;
+
+    // Rendu physique direct en temps réel à 120 FPS du cylindre rotatif sous la souris
+    if (this.cartesWrapperRef?.nativeElement) {
+      const el = this.cartesWrapperRef.nativeElement;
+      el.style.transition = 'none';
+      const rotY = this.deltaX * 0.07;
+      el.style.transform = `translateX(${this.deltaX}px) rotateY(${rotY}deg)`;
+    }
+  }
+
+  onPointerUp(event: PointerEvent): void {
+    if (!this.glissementActif) return;
+    this.terminerGlissement(event);
+  }
+
+  onPointerCancel(event: PointerEvent): void {
+    if (!this.glissementActif) return;
+    this.terminerGlissement(event);
+  }
+
+  private terminerGlissement(event?: PointerEvent): void {
+    this.glissementActif = false;
+
+    if (this.capturedPointerId !== null && event) {
+      try {
+        (event.currentTarget as HTMLElement)?.releasePointerCapture(this.capturedPointerId);
+      } catch (_) {}
+      this.capturedPointerId = null;
+    }
+
+    const duree = Math.max(1, Date.now() - this.dateDebutGlissement);
+    const vitesse = this.deltaX / duree; // pixels par ms
+
+    const seuilDistance = 38; // seuil de déclenchement du cran
+    const seuilVitesse = 0.28; // impulsion rapide (flick)
+
+    if (this.deltaX < -seuilDistance || vitesse < -seuilVitesse) {
+      // Glissement vers la gauche -> Avancer vers la droite (groupe suivant)
+      const pas = Math.min(3, Math.max(1, Math.round(-this.deltaX / 144)));
+      this.avancerDe(pas);
+    } else if (this.deltaX > seuilDistance || vitesse > seuilVitesse) {
+      // Glissement vers la droite -> Reculer vers la gauche (groupe précédent)
+      const pas = Math.min(3, Math.max(1, Math.round(this.deltaX / 144)));
+      this.reculerDe(pas);
+    }
+
+    // Réinitialisation de la transformation avec transition magnétique fluide (snap)
+    if (this.cartesWrapperRef?.nativeElement) {
+      const el = this.cartesWrapperRef.nativeElement;
+      el.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+      el.style.transform = 'translateX(0px) rotateY(0deg)';
+    }
+
+    this.deltaX = 0;
+    this.cdr.markForCheck();
+
+    // Maintient aGlisse vrai quelques millisecondes pour éviter qu'un drag ne déclenche un clic accidentel
+    setTimeout(() => {
+      this.aGlisse = false;
+      this.cdr.markForCheck();
+    }, 60);
+  }
+
+  // ---------------------------------------------------------------------------
+  // INTERACTION SOURIS : MOLETTE ET TOUCHPAD (SCROLL FLUIDE DU CADRAN)
+  // ---------------------------------------------------------------------------
+
+  onMolette(event: WheelEvent): void {
+    event.preventDefault();
+    const maintenant = Date.now();
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    this.accumulateurMolette += delta;
+
+    // Déclenchement au-delà d'un seuil avec temporisation pour éviter l'emballement
+    if (Math.abs(this.accumulateurMolette) > 35 && (maintenant - this.dernierTempsMolette > 150)) {
+      if (this.accumulateurMolette > 0) {
+        this.tournerDroite();
+      } else {
+        this.tournerGauche();
+      }
+      this.accumulateurMolette = 0;
+      this.dernierTempsMolette = maintenant;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // GESTION DU FILTRAGE ET RECALCUL 3D
+  // ---------------------------------------------------------------------------
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['groupes'] || changes['paysFiltre']) {
@@ -692,30 +952,40 @@ export class CadranGroupesComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
+  // ---------------------------------------------------------------------------
+  // NAVIGATION ET ROTATION DU CADRAN
+  // ---------------------------------------------------------------------------
+
+  avancerDe(pas: number): void {
+    if (this.groupesFiltres.length === 0) return;
+    this.indexActif = (this.indexActif + pas) % this.groupesFiltres.length;
+    this.recalculerCartes3D();
+    this.rotationChange.emit(this.groupesFiltres[this.indexActif]);
+  }
+
+  reculerDe(pas: number): void {
+    if (this.groupesFiltres.length === 0) return;
+    this.indexActif = (this.indexActif - (pas % this.groupesFiltres.length) + this.groupesFiltres.length) % this.groupesFiltres.length;
+    this.recalculerCartes3D();
+    this.rotationChange.emit(this.groupesFiltres[this.indexActif]);
+  }
+
   /**
-   * Rotation à gauche via la flèche (<) :
-   * Fait tourner le cadran et le globe SANS ouvrir le tiroir de détail
+   * Rotation à gauche (<) : fait tourner le cadran d'un cran vers la gauche
    */
   tournerGauche(): void {
-    if (this.groupesFiltres.length === 0) return;
-    this.indexActif = (this.indexActif - 1 + this.groupesFiltres.length) % this.groupesFiltres.length;
-    this.recalculerCartes3D();
-    this.rotationChange.emit(this.groupesFiltres[this.indexActif]);
+    this.reculerDe(1);
   }
 
   /**
-   * Rotation à droite via la flèche (>) :
-   * Fait tourner le cadran et le globe SANS ouvrir le tiroir de détail
+   * Rotation à droite (>) : fait tourner le cadran d'un cran vers la droite
    */
   tournerDroite(): void {
-    if (this.groupesFiltres.length === 0) return;
-    this.indexActif = (this.indexActif + 1) % this.groupesFiltres.length;
-    this.recalculerCartes3D();
-    this.rotationChange.emit(this.groupesFiltres[this.indexActif]);
+    this.avancerDe(1);
   }
 
   /**
-   * Sélection via les points de pagination : fait tourner le cadran SANS forcer l'ouverture du tiroir
+   * Sélection directe via un point indicateur : tourne directement vers cet index
    */
   choisirIndex(index: number): void {
     if (index >= 0 && index < this.groupesFiltres.length) {
@@ -726,24 +996,43 @@ export class CadranGroupesComponent implements OnChanges {
   }
 
   /**
-   * Clic explicite sur une carte :
-   * - Si la carte est active et son détail est ouvert -> le ferme
-   * - Si la carte est active et son détail est fermé -> l'ouvre
-   * - Si c'est une carte latérale -> fait tourner vers elle ET ouvre son détail
+   * Clic direct sur une carte :
+   * - Si c'est une carte latérale : PAGER DIRECTEMENT VERS CE GROUPE (le fait rouler au centre) !
+   * - Si c'est la carte déjà active au centre : ouvre ou ferme le tiroir de détails !
    */
-  clicCarte(item: CarteCadran3D): void {
+  clicCarte(item: CarteCadran3D, event?: MouseEvent): void {
+    event?.stopPropagation();
+
+    // Si l'utilisateur était en train de glisser/faire rouler avec la souris, ne pas traiter comme un clic
+    if (this.aGlisse) {
+      return;
+    }
+
     if (item.estActive) {
+      // Carte centrale active : ouvre/ferme le tiroir latéral
       if (this.groupeSelectionneId === item.groupe.id) {
         this.groupeFerme.emit();
       } else {
         this.groupeClique.emit(item.groupe);
       }
     } else {
-      this.indexActif = item.indexOriginal;
-      this.recalculerCartes3D();
-      this.rotationChange.emit(item.groupe);
-      this.groupeClique.emit(item.groupe);
+      // Carte latérale (gauche ou droite) : PAGER VERS CETTE CARTE !
+      // Fait tourner le cadran pour l'amener au centre et oriente la caméra du globe
+      this.choisirIndex(item.indexOriginal);
     }
+  }
+
+  /**
+   * Double-clic sur n'importe quelle carte : centre la carte et ouvre immédiatement son tiroir de détail
+   */
+  doubleClicCarte(item: CarteCadran3D, event?: MouseEvent): void {
+    event?.stopPropagation();
+    if (this.aGlisse) return;
+
+    this.indexActif = item.indexOriginal;
+    this.recalculerCartes3D();
+    this.rotationChange.emit(item.groupe);
+    this.groupeClique.emit(item.groupe);
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -755,15 +1044,6 @@ export class CadranGroupesComponent implements OnChanges {
       this.tournerGauche();
     } else if (event.key === 'ArrowRight') {
       this.tournerDroite();
-    }
-  }
-
-  onMolette(event: WheelEvent): void {
-    event.preventDefault();
-    if (event.deltaY > 0 || event.deltaX > 0) {
-      this.tournerDroite();
-    } else {
-      this.tournerGauche();
     }
   }
 
