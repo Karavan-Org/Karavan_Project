@@ -251,8 +251,8 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Color(0x3334C759),
-                          blurRadius: 18,
+                          color: Color(0x1F000000),
+                          blurRadius: 12,
                           offset: Offset(0, 6),
                         ),
                       ],

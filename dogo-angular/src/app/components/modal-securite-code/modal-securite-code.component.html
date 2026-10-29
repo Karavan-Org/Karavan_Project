@@ -1,51 +1,48 @@
 <div class="modal-backdrop" *ngIf="securite.modalOuverte()" (click)="fermer()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
+  <div class="modal-card" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
 
     <!-- MODE 1 : CONFIRMATION D'UNE ACTION SENSIBLE -->
     <ng-container *ngIf="securite.modalMode() === 'CONFIRMATION'">
       <div class="modal-header" [class.danger-header]="securite.configAction()?.danger">
         <div class="icon-circle">
-          <span>🔒</span>
+          <mat-icon>{{ securite.configAction()?.icone || 'lock' }}</mat-icon>
         </div>
         <div class="header-text">
           <h3>{{ securite.configAction()?.titre || 'Confirmation de sécurité' }}</h3>
-          <p class="subtitle">Code de validation administrateur (4 chiffres)</p>
+          <p class="subtitle">Code de validation administrateur</p>
         </div>
-        <button type="button" class="btn-close" (click)="fermer()" aria-label="Fermer">✕</button>
+        <button type="button" class="btn-close" (click)="fermer()" aria-label="Fermer">
+          <mat-icon>close</mat-icon>
+        </button>
       </div>
 
       <div class="modal-body">
-        <div class="action-alert" [class.danger-alert]="securite.configAction()?.danger">
-          <div class="alert-icon">⚠️</div>
-          <div class="alert-content">
-            <strong>Opération administrative sous contrôle :</strong>
-            <p>{{ securite.configAction()?.description }}</p>
-          </div>
+        <div class="note" [class.note-danger]="securite.configAction()?.danger">
+          <mat-icon class="note-icon">{{ securite.configAction()?.danger ? 'warning' : 'info' }}</mat-icon>
+          <p>{{ securite.configAction()?.description }}</p>
         </div>
 
-        <div class="pin-section">
-          <label class="pin-label">Saisissez votre code secret à 4 chiffres :</label>
-
+        <div class="form-group">
+          <label class="field-label">Code de sécurité</label>
           <div class="digits-wrapper">
             <input
               *ngFor="let digit of [0, 1, 2, 3]; let i = index"
-              #digitInput
               type="password"
               inputmode="numeric"
-              pattern="[0-9]*"
-              maxlength="1"
               class="digit-box"
+              [attr.aria-label]="'Chiffre ' + (i + 1)"
+              (focus)="$any($event.target).select()"
               [value]="chiffresConfirmation[i]"
               (input)="onDigitInput($event, i, 'confirmation')"
               (keydown)="onKeyDown($event, i, 'confirmation')"
-              (keyup.enter)="codeConfirmationComplet() && validerConfirmation()"
               autocomplete="off"
             />
           </div>
+        </div>
 
-          <div class="error-banner" *ngIf="messageErreur()">
-            <span>❌ {{ messageErreur() }}</span>
-          </div>
+        <div class="message message-erreur" *ngIf="messageErreur()" role="alert">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ messageErreur() }}</span>
         </div>
       </div>
 
@@ -53,15 +50,13 @@
         <button type="button" class="btn-secondary" (click)="fermer()" [disabled]="enCours()">
           Annuler
         </button>
-
         <button
           type="button"
           class="btn-primary"
           [class.btn-danger]="securite.configAction()?.danger"
           [disabled]="!codeConfirmationComplet() || enCours()"
           (click)="validerConfirmation()">
-          <span *ngIf="!enCours()">{{ securite.configAction()?.actionTexte || 'Valider' }}</span>
-          <span *ngIf="enCours()">Vérification...</span>
+          {{ enCours() ? 'Vérification…' : (securite.configAction()?.actionTexte || 'Valider') }}
         </button>
       </div>
     </ng-container>
@@ -69,74 +64,111 @@
     <!-- MODE 2 : CONFIGURATION DU CODE DE SÉCURITÉ -->
     <ng-container *ngIf="securite.modalMode() === 'CONFIGURATION'">
       <div class="modal-header">
-        <div class="icon-circle primary-circle">
-          <span>🛡️</span>
+        <div class="icon-circle">
+          <mat-icon>shield</mat-icon>
         </div>
         <div class="header-text">
           <h3>{{ securite.statut()?.configure ? 'Modifier mon code de sécurité' : 'Configurer mon code de sécurité' }}</h3>
           <p class="subtitle">Protection des actions administratives Karavan</p>
         </div>
-        <button type="button" class="btn-close" (click)="fermer()" aria-label="Fermer">✕</button>
+        <button type="button" class="btn-close" (click)="fermer()" aria-label="Fermer">
+          <mat-icon>close</mat-icon>
+        </button>
       </div>
 
       <div class="modal-body">
-        <div class="info-box">
-          💡 Ce code à 4 chiffres vous est propre. Il vous sera demandé systématiquement avant chaque action sensible (validation KYC, suspension de compte, notification groupée, litiges financiers).
+        <div class="note">
+          <mat-icon class="note-icon">info</mat-icon>
+          <p>
+            Ce code personnel à 4 chiffres vous sera demandé avant chaque action sensible :
+            validation KYC, suspension de compte, notification groupée, litiges financiers.
+          </p>
         </div>
 
-        <!-- Ancien code si déjà configuré -->
-        <div class="form-group" *ngIf="securite.statut()?.configure">
-          <label class="field-label">Ancien code de sécurité (4 chiffres) :</label>
+        <!-- Ancien code si déjà configuré (ou mot de passe de connexion si oublié) -->
+        <div class="form-group" *ngIf="securite.statut()?.configure && !viaMotDePasse">
+          <div class="label-ligne">
+            <label class="field-label">Code actuel</label>
+            <button type="button" class="lien" (click)="basculerMotDePasse(true)">Code oublié ?</button>
+          </div>
+          <div class="digits-wrapper">
+            <input
+              *ngFor="let digit of [0, 1, 2, 3]; let i = index"
+              type="password"
+              inputmode="numeric"
+              class="digit-box"
+              [attr.aria-label]="'Code actuel, chiffre ' + (i + 1)"
+              (focus)="$any($event.target).select()"
+              [value]="ancienCode[i]"
+              (input)="onDigitInput($event, i, 'ancien')"
+              (keydown)="onKeyDown($event, i, 'ancien')"
+              autocomplete="off"
+              data-lpignore="true"
+            />
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="securite.statut()?.configure && viaMotDePasse">
+          <div class="label-ligne">
+            <label class="field-label" for="mot-de-passe-confirmation">Mot de passe de connexion</label>
+            <button type="button" class="lien" (click)="basculerMotDePasse(false)">Je connais mon code</button>
+          </div>
           <input
+            id="mot-de-passe-confirmation"
             type="password"
-            maxlength="4"
-            inputmode="numeric"
-            class="input-code-compact"
-            placeholder="••••"
-            [(ngModel)]="ancienCode"
+            class="champ-texte"
+            name="mot-de-passe-confirmation"
+            autocomplete="current-password"
+            [(ngModel)]="motDePasse"
           />
         </div>
 
         <!-- Nouveau code -->
         <div class="form-group">
-          <label class="field-label">Nouveau code de sécurité (4 chiffres) :</label>
-          <div class="digits-wrapper digits-small">
+          <label class="field-label">Nouveau code</label>
+          <div class="digits-wrapper">
             <input
               *ngFor="let digit of [0, 1, 2, 3]; let i = index"
               type="password"
-              maxlength="1"
               inputmode="numeric"
               class="digit-box"
+              [attr.aria-label]="'Nouveau code, chiffre ' + (i + 1)"
+              (focus)="$any($event.target).select()"
               [value]="nouveauCode[i]"
               (input)="onDigitInput($event, i, 'nouveau')"
               (keydown)="onKeyDown($event, i, 'nouveau')"
+              autocomplete="new-password"
             />
           </div>
         </div>
 
         <!-- Confirmer le nouveau code -->
         <div class="form-group">
-          <label class="field-label">Confirmez votre nouveau code (4 chiffres) :</label>
-          <div class="digits-wrapper digits-small">
+          <label class="field-label">Confirmation du nouveau code</label>
+          <div class="digits-wrapper">
             <input
               *ngFor="let digit of [0, 1, 2, 3]; let i = index"
               type="password"
-              maxlength="1"
               inputmode="numeric"
               class="digit-box"
+              [attr.aria-label]="'Confirmation, chiffre ' + (i + 1)"
+              (focus)="$any($event.target).select()"
               [value]="confirmationCode[i]"
               (input)="onDigitInput($event, i, 'confirmer')"
               (keydown)="onKeyDown($event, i, 'confirmer')"
+              autocomplete="new-password"
             />
           </div>
         </div>
 
-        <div class="error-banner" *ngIf="messageErreur()">
-          <span>❌ {{ messageErreur() }}</span>
+        <div class="message message-erreur" *ngIf="messageErreur()" role="alert">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ messageErreur() }}</span>
         </div>
 
-        <div class="success-banner" *ngIf="messageSucces()">
-          <span>✅ {{ messageSucces() }}</span>
+        <div class="message message-succes" *ngIf="messageSucces()" role="status">
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ messageSucces() }}</span>
         </div>
       </div>
 
@@ -144,18 +176,15 @@
         <button type="button" class="btn-secondary" (click)="fermer()" [disabled]="enCours()">
           Fermer
         </button>
-
         <button
           type="button"
           class="btn-primary"
           [disabled]="!codeNouveauComplet() || enCours()"
           (click)="enregistrerConfiguration()">
-          <span *ngIf="!enCours()">Enregistrer le code de sécurité</span>
-          <span *ngIf="enCours()">Enregistrement...</span>
+          {{ enCours() ? 'Enregistrement…' : 'Enregistrer le code' }}
         </button>
       </div>
     </ng-container>
 
   </div>
 </div>
-

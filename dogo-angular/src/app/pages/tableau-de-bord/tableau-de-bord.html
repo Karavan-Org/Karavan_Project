@@ -11,14 +11,10 @@
       </p>
     </div>
 
-    <!-- Côté droit : Micro-indicateurs subtils animés + Recherche + Notifications + Profil -->
+    <!-- Côté droit : indicateurs + statistiques + recherche + notifications (le profil est dans la barre latérale) -->
     <div class="topbar-droite-actions">
-      <!-- 1. Micro-stat Utilisateurs subtile avec icône animée -->
-      <div
-        class="micro-stat-capsule capsule-utilisateurs"
-        (click)="basculerPanneauStats()"
-        title="Cliquer pour afficher les détails des utilisateurs"
-      >
+      <!-- 1. Micro-stat Utilisateurs (indicateur)-->
+      <div class="micro-stat-capsule capsule-utilisateurs">
         <span class="icone-animee icone-pulse-users">👥</span>
         <div class="capsule-chiffre-bloc">
           <span class="valeur-chiffre">{{ (resume()?.utilisateurs?.total || 12).toLocaleString('fr-FR') }}</span>
@@ -27,11 +23,7 @@
       </div>
 
       <!-- 2. Micro-stat Colis / Convois subtile avec colis animé -->
-      <div
-        class="micro-stat-capsule capsule-colis"
-        (click)="basculerPanneauStats()"
-        title="Cliquer pour afficher les détails des convois"
-      >
+      <div class="micro-stat-capsule capsule-colis">
         <span class="icone-animee icone-bounce-box">📦</span>
         <div class="capsule-chiffre-bloc">
           <span class="valeur-chiffre">{{ resume()?.totalGroupes ?? groupes().length }}</span>
@@ -39,7 +31,7 @@
         </div>
       </div>
 
-      <!-- 3. Bouton discret pour basculer les statistiques générales -->
+      <!-- 3. Unique accès au panneau de statistiques générales -->
       <button
         type="button"
         class="btn-stats-icone-seule"
@@ -70,11 +62,6 @@
         </button>
       </div>
 
-      <!-- Avatar administrateur connecté -->
-      <div class="admin-avatar-pill">
-        <div class="avatar-cercle">AD</div>
-        <mat-icon class="avatar-chevron">keyboard_arrow_down</mat-icon>
-      </div>
     </div>
   </header>
 
@@ -92,21 +79,7 @@
         ></app-globe-3d>
       </div>
 
-      <!-- B. DÉCLENCHEUR SUBTIL FLOTTANT (QUAND LE PANNEAU EST FERMÉ) : PAS DE TEXTE ENCOMBRANT -->
-      @if (!panneauStatsOuvert()) {
-        <button
-          type="button"
-          class="mini-capsule-stats-stage"
-          (click)="ouvrirPanneauStats()"
-          title="Ouvrir les statistiques détaillées"
-          aria-label="Statistiques détaillées"
-        >
-          <span class="orb-icone">📊</span>
-          <span class="point-vert-pulse"></span>
-        </button>
-      }
-
-      <!-- C. PANNEAU DE STATISTIQUES FLOTTANT (QUAND OUVERT, SE FERME PAR LA CROIX) -->
+      <!-- B. PANNEAU DE STATISTIQUES FLOTTANT (QUAND OUVERT, SE FERME PAR LA CROIX) -->
       @if (panneauStatsOuvert()) {
         <aside class="tiroir-stats-gauche">
           <div class="stats-header-bar">
@@ -202,7 +175,7 @@
         </aside>
       }
 
-      <!-- D. Cadran rotatif 3D horizontal des groupes :
+      <!-- C. Cadran rotatif 3D horizontal des groupes :
            - rotationChange : tourne le cadran sans ouvrir le tiroir
            - groupeClique : ouvre/ferme le tiroir au clic sur la carte
       -->

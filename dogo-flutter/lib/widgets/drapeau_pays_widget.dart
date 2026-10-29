@@ -1,10 +1,11 @@
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import '../services/pays_resolver_service.dart';
 import '../theme/app_theme.dart';
 
-/// Widget universel d'affichage d'un drapeau de pays avec résolution automatique.
-/// Reconnaît n'importe quelle entrée (nom en français, nom en anglais, code ISO 2 ou 3 lettres)
-/// et affiche un drapeau visuel net, propre, avec coins arrondis et bordure douce.
+/// Drapeau d'un pays (vectoriel, embarqué dans l'application : aucun appel réseau).
+/// Accepte un code ISO 2 ou 3 lettres, un nom français ou anglais. Une saisie non reconnue
+/// affiche un globe neutre plutôt qu'un drapeau deviné.
 class DrapeauPays extends StatelessWidget {
   final String? pays;
   final double largeur;
@@ -13,106 +14,82 @@ class DrapeauPays extends StatelessWidget {
   final bool avecNom;
   final bool avecCode;
   final TextStyle? styleTexte;
-  final Widget? fallback;
 
   const DrapeauPays({
     super.key,
     required this.pays,
     this.largeur = 22.0,
     this.hauteur = 15.0,
-    this.rayon = 3.5,
+    this.rayon = 2.5,
     this.avecNom = false,
     this.avecCode = false,
     this.styleTexte,
-    this.fallback,
   });
 
   @override
   Widget build(BuildContext context) {
     final info = PaysResolverService.instance.resoudre(pays);
 
-    final widgetDrapeau = Container(
+    final drapeau = Container(
       width: largeur,
       height: hauteur,
-      decoration: BoxDecoration(
+      foregroundDecoration: BoxDecoration(
         borderRadius: BorderRadius.circular(rayon),
         border: Border.all(
           color: AppTheme.estSombre(context)
-              ? Colors.white.withValues(alpha: 0.20)
-              : Colors.black.withValues(alpha: 0.12),
-          width: 0.8,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            offset: const Offset(0, 1),
-            blurRadius: 2,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(rayon - 0.5),
-        child: Image.network(
-          info.urlDrapeau(largeur: largeur > 30 ? 80 : 40),
-          width: largeur,
-          height: hauteur,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            // Repli gracieux : affichage de l'emoji drapeau ou du code ISO
-            return fallback ??
-                Container(
-                  color: AppTheme.couleurSurfaceDouce(context),
-                  alignment: Alignment.center,
-                  child: Text(
-                    info.codeIso,
-                    style: TextStyle(
-                      fontSize: (hauteur * 0.55).clamp(8.0, 13.0),
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.couleurTexte(context),
-                    ),
-                  ),
-                );
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              color: AppTheme.couleurSurfaceDouce(context),
-              alignment: Alignment.center,
-            );
-          },
+              ? Colors.white.withValues(alpha: 0.18)
+              : Colors.black.withValues(alpha: 0.10),
+          width: 0.6,
         ),
       ),
+      decoration: BoxDecoration(
+        color: AppTheme.couleurSurfaceDouce(context),
+        borderRadius: BorderRadius.circular(rayon),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: info.estReconnu
+          ? CountryFlag.fromCountryCode(
+              info.codeIso,
+              theme: ImageTheme(width: largeur, height: hauteur),
+            )
+          : Icon(
+              Icons.public,
+              size: hauteur * 0.8,
+              color: AppTheme.couleurTexteAttenue(context),
+            ),
     );
 
-    if (!avecNom && !avecCode) {
-      return widgetDrapeau;
-    }
+    if (!avecNom && !avecCode) return drapeau;
 
-    final texteNom = avecNom
-        ? (avecCode ? "${info.nomFr} (${info.codeIso})" : info.nomFr)
-        : "(${info.codeIso})";
+    final texte = !info.estReconnu
+        ? info.nomFr
+        : avecNom
+            ? (avecCode ? '${info.nomFr} (${info.codeIso})' : info.nomFr)
+            : info.codeIso;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        widgetDrapeau,
+        drapeau,
         const SizedBox(width: 6),
-        Text(
-          texteNom,
-          style: styleTexte ??
-              TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.couleurTexte(context),
-              ),
+        Flexible(
+          child: Text(
+            texte,
+            overflow: TextOverflow.ellipsis,
+            style: styleTexte ??
+                TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.couleurTexte(context),
+                ),
+          ),
         ),
       ],
     );
   }
 }
 
-/// Badge pilule élégant combinant le drapeau et le nom du pays d'origine
+/// Pastille « drapeau + nom du pays d'origine ». Ne s'affiche pas si l'origine n'est pas renseignée.
 class DrapeauBadge extends StatelessWidget {
   final String? pays;
   final bool compact;
@@ -127,62 +104,48 @@ class DrapeauBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (pays == null || pays!.trim().isEmpty) return const SizedBox.shrink();
     final info = PaysResolverService.instance.resoudre(pays);
 
-    final content = Container(
+    final contenu = Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 6 : 8,
         vertical: compact ? 3 : 4,
       ),
       decoration: BoxDecoration(
         color: AppTheme.couleurSurfaceDouce(context),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppTheme.couleurBordure(context),
-          width: 1.0,
-        ),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppTheme.couleurBordure(context)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           DrapeauPays(
-            pays: info.codeIso,
+            pays: pays,
             largeur: compact ? 16 : 20,
-            hauteur: compact ? 11 : 14,
+            hauteur: compact ? 12 : 15,
           ),
-          const SizedBox(width: 5),
-          Text(
-            info.nomFr,
-            style: TextStyle(
-              fontSize: compact ? 11 : 12,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.couleurTexte(context),
-            ),
-          ),
-          if (!compact) ...[
-            const SizedBox(width: 3),
-            Text(
-              info.codeIso,
+          SizedBox(width: compact ? 5 : 6),
+          Flexible(
+            child: Text(
+              info.nomFr,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.couleurTexteAttenue(context),
+                fontSize: compact ? 11 : 12,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.couleurTexte(context),
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
 
-    if (onTap != null) {
-      return InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: content,
-      );
-    }
-
-    return content;
+    if (onTap == null) return contenu;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: contenu,
+    );
   }
 }
-

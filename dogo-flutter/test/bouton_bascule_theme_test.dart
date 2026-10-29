@@ -6,69 +6,39 @@ import 'package:karavan_app/services/theme_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('BoutonBasculeTheme - Animations Soleil Rayonnant & Lune Lumineuse', () {
-    testWidgets('affiche le soleil rayonnant en mode clair et la lune lumineuse en mode sombre', (tester) async {
-      ThemeService.instance.themeModeNotifier.value = ThemeMode.light;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData.light(),
-          darkTheme: ThemeData.dark(),
-          themeMode: ThemeMode.light,
-          home: const Scaffold(
-            body: Center(
-              child: BoutonBasculeTheme(compact: true),
-            ),
-          ),
-        ),
+  Widget app(Widget bouton, ThemeMode mode) => MaterialApp(
+        theme: ThemeData.light(),
+        darkTheme: ThemeData.dark(),
+        themeMode: mode,
+        home: Scaffold(body: Center(child: bouton)),
       );
 
-      await tester.pump(const Duration(milliseconds: 100));
+  group('BoutonBasculeTheme', () {
+    testWidgets('compact : la lune propose le mode sombre, le soleil le mode clair', (tester) async {
+      ThemeService.instance.themeModeNotifier.value = ThemeMode.light;
+      await tester.pumpWidget(app(const BoutonBasculeTheme(compact: true), ThemeMode.light));
 
-      // Doit afficher la clé du soleil rayonnant
-      expect(find.byKey(const ValueKey("soleil_rayonnant_compact")), findsOneWidget);
-      expect(find.byKey(const ValueKey("lune_lumineuse_compact")), findsNothing);
+      expect(find.byKey(const ValueKey('theme_clair')), findsOneWidget);
+      expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
 
-      // Clic pour basculer en mode sombre
       await tester.tap(find.byType(BoutonBasculeTheme));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
 
       expect(ThemeService.instance.themeModeNotifier.value, ThemeMode.dark);
-      expect(find.byKey(const ValueKey("lune_lumineuse_compact")), findsOneWidget);
-      expect(find.byKey(const ValueKey("soleil_rayonnant_compact")), findsNothing);
+      expect(find.byKey(const ValueKey('theme_sombre')), findsOneWidget);
     });
 
-    testWidgets('affiche le format carte étendu en mode non-compact', (tester) async {
+    testWidgets('format étendu : affiche le mode actif en toutes lettres', (tester) async {
       ThemeService.instance.themeModeNotifier.value = ThemeMode.dark;
+      await tester.pumpWidget(app(const BoutonBasculeTheme(compact: false), ThemeMode.dark));
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData.light(),
-          darkTheme: ThemeData.dark(),
-          themeMode: ThemeMode.dark,
-          home: const Scaffold(
-            body: Center(
-              child: BoutonBasculeTheme(compact: false),
-            ),
-          ),
-        ),
-      );
+      expect(find.text('Mode sombre'), findsOneWidget);
 
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(find.byKey(const ValueKey("lune_lumineuse_full")), findsOneWidget);
-      expect(find.text("Sombre"), findsOneWidget);
-      expect(find.text("Actif"), findsOneWidget);
-
-      // Clic pour repasser en mode clair
       await tester.tap(find.byType(BoutonBasculeTheme));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
 
       expect(ThemeService.instance.themeModeNotifier.value, ThemeMode.light);
-      expect(find.byKey(const ValueKey("soleil_rayonnant_full")), findsOneWidget);
-      expect(find.text("Clair"), findsOneWidget);
+      expect(find.text('Mode clair'), findsOneWidget);
     });
   });
 }

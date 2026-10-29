@@ -15,6 +15,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { GroupeCadranVue } from '../tableau-de-bord.service';
 import { DrapeauPaysComponent } from '../../../components/drapeau-pays/drapeau-pays.component';
+import { PaysResolverService } from '../../../core/services/pays-resolver.service';
 
 export interface CarteCadran3D {
   groupe: GroupeCadranVue;
@@ -27,7 +28,6 @@ export interface CarteCadran3D {
   opacity: number;
   zIndex: number;
   estActive: boolean;
-  drapeau: string;
   nomPays: string;
   photoUrl?: string;
 }
@@ -133,7 +133,7 @@ export interface CarteCadran3D {
                     />
                   } @else {
                     <div class="media-placeholder">
-                      <span class="icone-produit">{{ obtenirIconeProduit(item.groupe) }}</span>
+                      <mat-icon class="icone-produit">inventory_2</mat-icon>
                     </div>
                   }
                 </div>
@@ -198,7 +198,7 @@ export interface CarteCadran3D {
                 class="dot-indicateur"
                 [class.dot-actif]="idx === indexActif"
                 (click)="choisirIndex(idx)"
-                [title]="g.paysOrigine?.nomFr ? (g.paysOrigine?.nomFr + ' - ' + g.titre) : g.titre"
+                [title]="nomDuPays(g) ? (nomDuPays(g) + ' - ' + g.titre) : g.titre"
               ></button>
             }
           </div>
@@ -280,7 +280,7 @@ export interface CarteCadran3D {
       &:hover:not(:disabled) {
         background: #AC7F5E;
         border-color: #EEA823;
-        box-shadow: 0 0 20px rgba(238, 168, 35, 0.6);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
         transform: translateY(-50%) scale(1.12);
       }
 
@@ -369,9 +369,7 @@ export interface CarteCadran3D {
       // Carte active centrale au repos
       &.carte-active {
         border-color: #AC7F5E;
-        box-shadow: 0 0 28px rgba(172, 127, 94, 0.65),
-                    inset 0 0 14px rgba(238, 168, 35, 0.4),
-                    0 16px 36px rgba(0, 0, 0, 0.55);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.45);
       }
 
       &.carte-laterale {
@@ -394,14 +392,11 @@ export interface CarteCadran3D {
         z-index: 1000 !important;
         border-color: #EEA823 !important;
         background: linear-gradient(145deg, rgba(30, 68, 60, 0.98) 0%, rgba(16, 40, 34, 0.99) 100%) !important;
-        box-shadow: 0 26px 52px rgba(0, 0, 0, 0.85),
-                    0 0 32px rgba(238, 168, 35, 0.75),
-                    inset 0 0 16px rgba(172, 127, 94, 0.35) !important;
+        box-shadow: 0 22px 44px rgba(0, 0, 0, 0.6) !important;
         transition: transform 0.12s ease-out, box-shadow 0.25s ease, border-color 0.25s ease !important;
 
         .carte-top-row .carte-id {
-          color: #FFD166;
-          text-shadow: 0 0 8px rgba(238, 168, 35, 0.8);
+          color: #FFFFFF;
         }
 
         .media-img {
@@ -433,7 +428,7 @@ export interface CarteCadran3D {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), 0 0 12px rgba(238, 168, 35, 0.7);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -531,8 +526,10 @@ export interface CarteCadran3D {
         height: 100%;
 
         .icone-produit {
-          font-size: 28px;
-          filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+          font-size: 30px;
+          width: 30px;
+          height: 30px;
+          color: rgba(255, 255, 255, 0.35);
           transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
       }
@@ -678,7 +675,6 @@ export interface CarteCadran3D {
           width: 12px;
           height: 12px;
           background: #EEA823;
-          box-shadow: 0 0 12px #EEA823;
         }
       }
     }
@@ -773,7 +769,15 @@ export class CadranGroupesComponent implements OnChanges {
   private accumulateurMolette = 0;
   private rotationVerrouillee = false;
 
-  constructor(private readonly cdr: ChangeDetectorRef) {}
+  constructor(
+    private readonly cdr: ChangeDetectorRef,
+    private readonly paysResolver: PaysResolverService
+  ) {}
+
+  nomDuPays(g: GroupeCadranVue): string {
+    const info = this.paysResolver.resoudre(g.paysOrigine?.codeIso || g.paysOrigine?.nomFr);
+    return info.reconnu ? info.nomFr : (g.paysOrigine?.nomFr || '');
+  }
 
   // ---------------------------------------------------------------------------
   // INTERACTION DYNAMIQUE AU PASSAGE DU CURSEUR (SOURIS) SUR LES GROUPES
@@ -1013,8 +1017,8 @@ export class CadranGroupesComponent implements OnChanges {
       const opacity = offset === 0 ? 1 : Math.max(0.55, 1 - Math.abs(offset) * 0.15);
       const zIndex = 30 - Math.abs(offset);
 
-      const drapeau = this.drapeauParCode(groupe.paysOrigine?.codeIso) || groupe.drapeau || '🌐';
-      const nomPays = groupe.paysOrigine?.nomFr || 'International';
+      const infoPays = this.paysResolver.resoudre(groupe.paysOrigine?.codeIso || groupe.paysOrigine?.nomFr);
+      const nomPays = infoPays.reconnu ? infoPays.nomFr : (groupe.paysOrigine?.nomFr || 'Origine non renseignée');
 
       cartes.push({
         groupe,
@@ -1027,7 +1031,6 @@ export class CadranGroupesComponent implements OnChanges {
         opacity,
         zIndex,
         estActive: offset === 0,
-        drapeau,
         nomPays,
         photoUrl: groupe.produitPhotoUrl
       });
@@ -1153,32 +1156,4 @@ export class CadranGroupesComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
-  obtenirIconeProduit(groupe: GroupeCadranVue): string {
-    const code = groupe.paysOrigine?.codeIso?.toUpperCase();
-    const cat = (groupe.categorieNom || '').toLowerCase();
-    const titre = (groupe.titre || '').toLowerCase();
-
-    if (titre.includes('cajou') || titre.includes('épice')) return '🥜';
-    if (titre.includes('wax') || titre.includes('bazin') || titre.includes('tissu')) return '👗';
-    if (titre.includes('argan') || titre.includes('karité') || titre.includes('huile')) return '🧴';
-    if (titre.includes('sneaker') || titre.includes('sport') || cat.includes('chaussure')) return '👟';
-    if (titre.includes('chemise') || titre.includes('polo') || cat.includes('vêtement')) return '👔';
-    if (titre.includes('cuir')) return '👞';
-    if (code === 'CI') return '🌾';
-    if (code === 'SN') return '🥜';
-    if (code === 'MA') return '🫒';
-    if (code === 'GH') return '🍫';
-    if (code === 'CN') return '📦';
-    if (code === 'TR') return '🧵';
-    if (code === 'BR') return '👞';
-    return '📦';
-  }
-
-  drapeauParCode(codeIso?: string | null): string {
-    if (!codeIso || codeIso.length !== 2) return '🌐';
-    const c = codeIso.toUpperCase();
-    const d1 = String.fromCodePoint(0x1F1E6 + (c.charCodeAt(0) - 65));
-    const d2 = String.fromCodePoint(0x1F1E6 + (c.charCodeAt(1) - 65));
-    return d1 + d2;
-  }
 }

@@ -47,7 +47,7 @@ class PhaseColisInternational {
       sousTitre: "Consolidation des lots d'achat groupé et palettisation pour l'export.",
       lieuTypique: "Hub d'expédition international (Yiwu / Istanbul)",
       icone: Icons.hub_outlined,
-      couleur: Color(0xFF7C3AED), // Violet hub
+      couleur: Color(0xFF475569), // Ardoise hub
     ),
     PhaseColisInternational(
       numero: 4,
@@ -356,7 +356,7 @@ class _AnimPhase2PriseEnCharge extends StatelessWidget {
 }
 
 // ============================================================================
-// 3. CENTRE DE DÉPART : Tapis roulant de tri & scanner optique laser
+// 3. CENTRE DE DÉPART : Tapis roulant de tri & contrôle des lots
 // ============================================================================
 class _AnimPhase3CentreDepart extends StatelessWidget {
   final AnimationController controller;
@@ -366,10 +366,6 @@ class _AnimPhase3CentreDepart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = controller.value;
-    // Faisceau laser qui balaye verticalement
-    final laserY = (math.sin(t * 2 * math.pi) * 0.5 + 0.5);
-
     return Center(
       child: Stack(
         alignment: Alignment.center,
@@ -380,32 +376,14 @@ class _AnimPhase3CentreDepart extends StatelessWidget {
             height: compact ? 36 : 95,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF7C3AED).withValues(alpha: 0.1),
+              color: const Color(0xFF475569).withValues(alpha: 0.1),
             ),
           ),
           // Hub / Entrepôt de tri
           Icon(
             Icons.hub_rounded,
             size: compact ? 26 : 60,
-            color: const Color(0xFF7C3AED),
-          ),
-          // Faisceau de scan laser cyan/violet
-          Positioned(
-            top: (compact ? 8 : 25) + (laserY * (compact ? 20 : 50)),
-            child: Container(
-              width: compact ? 34 : 78,
-              height: compact ? 1.5 : 2.5,
-              decoration: BoxDecoration(
-                color: const Color(0xFF06B6D4),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF06B6D4).withValues(alpha: 0.8),
-                    blurRadius: compact ? 3 : 6,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-            ),
+            color: const Color(0xFF475569),
           ),
           // Petit colis en cours de scan
           Positioned(
@@ -413,7 +391,7 @@ class _AnimPhase3CentreDepart extends StatelessWidget {
             child: Icon(
               Icons.qr_code_scanner_rounded,
               size: compact ? 12 : 24,
-              color: const Color(0xFF06B6D4),
+              color: const Color(0xFF475569),
             ),
           ),
         ],

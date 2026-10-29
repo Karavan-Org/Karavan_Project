@@ -85,7 +85,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
                       children: [
                         MobileMoneyLogo(operateur: "ORANGE_MONEY", taille: 22),
                         SizedBox(width: 10),
-                        Text("Orange Money 🇲🇱"),
+                        Text("Orange Money"),
                       ],
                     ),
                   ),
@@ -96,7 +96,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
                       children: [
                         MobileMoneyLogo(operateur: "MOOV_MONEY", taille: 22),
                         SizedBox(width: 10),
-                        Text("Moov Money 🇲🇱"),
+                        Text("Moov Money"),
                       ],
                     ),
                   ),
@@ -107,7 +107,7 @@ class _MoyensPaiementSectionState extends State<MoyensPaiementSection> {
                       children: [
                         MobileMoneyLogo(operateur: "WAVE", taille: 22),
                         SizedBox(width: 10),
-                        Text("Wave 🇲🇱"),
+                        Text("Wave"),
                       ],
                     ),
                   ),

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
@@ -259,7 +258,6 @@ const List<String> _calques = ['dune', 'silhouette', 'etoile_gauche', 'etoile_dr
 const Size _cadre = Size(799, 575);
 
 // Repères dans le cadre du logo.
-const Offset _main = Offset(556, 148);
 const Offset _centreGrande = Offset(557, 58);
 const Offset _centreGauche = Offset(513, 111);
 const Offset _centreDroite = Offset(606, 99);
@@ -291,11 +289,6 @@ class _Scene extends StatelessWidget {
 
     return Stack(
       children: [
-        Positioned.fill(
-          child: CustomPaint(
-            painter: _HaloPainter(progress: progress, isDark: isDark),
-          ),
-        ),
         Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -314,7 +307,6 @@ class _Scene extends StatelessWidget {
                           children: [
                             _dune(),
                             _silhouette(echelle, couleurEncre),
-                            _poussiereDoree(echelle),
                             _etoile('etoile_gauche', _centreGauche, 0.35),
                             _etoile('etoile_droite', _centreDroite, 0.39),
                             _etoile('etoile_grande', _centreGrande, 0.44, scintille: true),
@@ -397,17 +389,6 @@ class _Scene extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  /// Fines paillettes dorées qui s'élèvent de la main tendue vers les étoiles.
-  Widget _poussiereDoree(double echelle) {
-    final t = _phase(progress, 0.28, 0.52);
-    if (t <= 0 || t >= 1) return const SizedBox.shrink();
-    return Positioned.fill(
-      child: CustomPaint(
-        painter: _PaillettesPainter(t: t, echelle: echelle, isDark: isDark),
       ),
     );
   }
@@ -499,85 +480,4 @@ class _CoupeHaute extends CustomClipper<Rect> {
 
   @override
   bool shouldReclip(_CoupeHaute old) => old.bas != bas;
-}
-
-/// Halo chaleureux derrière l'emblème : bissap et rose poudre (ocre en thème sombre).
-class _HaloPainter extends CustomPainter {
-  final double progress;
-  final bool isDark;
-
-  _HaloPainter({required this.progress, required this.isDark});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final force = 0.35 * _phase(progress, 0.0, 0.25) +
-        0.65 * _phase(progress, 0.40, 0.64) * (1 - 0.20 * _phase(progress, 0.74, 1.0));
-    if (force <= 0) return;
-    final centre = Offset(size.width / 2, size.height * 0.44);
-    final rayon = size.shortestSide * 0.75;
-    final Color teinte = isDark ? AppTheme.secondary : AppTheme.primary;
-    canvas.drawCircle(
-      centre,
-      rayon,
-      Paint()
-        ..shader = ui.Gradient.radial(centre, rayon, [
-          teinte.withValues(alpha: (isDark ? 0.14 : 0.16) * force),
-          AppTheme.tertiary.withValues(alpha: (isDark ? 0.04 : 0.07) * force),
-          teinte.withValues(alpha: 0.0),
-        ], [0.0, 0.55, 1.0]),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_HaloPainter old) =>
-      old.progress != progress || old.isDark != isDark;
-}
-
-/// Paillettes dorées : de la main vers les étoiles aux couleurs de notre Design System.
-class _PaillettesPainter extends CustomPainter {
-  final double t;
-  final double echelle;
-  final bool isDark;
-
-  _PaillettesPainter({required this.t, required this.echelle, required this.isDark});
-
-  static const _cibles = [
-    _centreGauche,
-    _centreDroite,
-    _centreGrande,
-    Offset(540, 30),
-    Offset(640, 70),
-    Offset(585, 120),
-    Offset(500, 70),
-  ];
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const Color orBrillant = AppTheme.secondary;
-    final Color orDoux = isDark ? AppTheme.darkPrimary : AppTheme.primary;
-
-    for (var i = 0; i < _cibles.length; i++) {
-      final local = ((t - i * 0.06) / 0.6).clamp(0.0, 1.0);
-      if (local <= 0 || local >= 1) continue;
-      final e = Curves.easeOutCubic.transform(local);
-      final cible = _cibles[i];
-      final controle = Offset((_main.dx + cible.dx) / 2 + (i.isEven ? -18 : 18), _main.dy - 10);
-      final u = 1 - e;
-      final p = (_main * (u * u) + controle * (2 * u * e) + cible * (e * e)) * echelle;
-      final alpha = math.sin(local * math.pi);
-      final rayon = (1.6 + (i % 3) * 0.6) * echelle * 2.4;
-      canvas.drawCircle(
-        p,
-        rayon * 2.6,
-        Paint()
-          ..color = orDoux.withValues(alpha: 0.35 * alpha)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
-      );
-      canvas.drawCircle(p, rayon, Paint()..color = orBrillant.withValues(alpha: alpha));
-    }
-  }
-
-  @override
-  bool shouldRepaint(_PaillettesPainter old) =>
-      old.t != t || old.echelle != echelle || old.isDark != isDark;
 }

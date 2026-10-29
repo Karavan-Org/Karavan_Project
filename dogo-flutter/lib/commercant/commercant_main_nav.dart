@@ -356,16 +356,6 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                 return Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Onde / Halo pulsant d'eau autour du bouton central
-                    if (isExpanded)
-                      CustomPaint(
-                        painter: _WavePulsePainter(
-                          progress: _fabController.value,
-                          color: AppTheme.primary,
-                        ),
-                        child: const SizedBox(width: 84, height: 84),
-                      ),
-
                     Container(
                       height: 58,
                       width: 58,
@@ -586,20 +576,13 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                           border: isHovered
                               ? Border.all(color: Colors.white, width: 2.5)
                               : null,
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
-                              color: color.withValues(
-                                  alpha: isHovered ? 0.70 : 0.40),
-                              blurRadius: isHovered ? 24 : 14,
-                              spreadRadius: isHovered ? 4 : 0,
-                              offset: const Offset(0, 4),
+                              color: Color(0x1F000000),
+                              blurRadius: 12,
+                              
+                              offset: Offset(0, 4),
                             ),
-                            if (isHovered)
-                              const BoxShadow(
-                                color: Colors.white,
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
                           ],
                         ),
                         child: Icon(
@@ -756,50 +739,6 @@ class _ArcTrackPainter extends CustomPainter {
 }
 
 /// Peintre pour l'onde pulsante circulaire autour du bouton (+)
-class _WavePulsePainter extends CustomPainter {
-  final double progress;
-  final Color color;
-
-  _WavePulsePainter({
-    required this.progress,
-    required this.color,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final maxRadius = size.width / 2;
-
-    // Vague d'onde 1
-    final waveRadius1 = 30.0 + (maxRadius - 30.0) * progress;
-    final opacity1 = (1.0 - progress).clamp(0.0, 1.0) * 0.45;
-    final paint1 = Paint()
-      ..color = color.withValues(alpha: opacity1)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0;
-
-    canvas.drawCircle(center, waveRadius1, paint1);
-
-    // Vague d'onde 2 (déphasée)
-    final progress2 = (progress - 0.2).clamp(0.0, 1.0) / 0.8;
-    if (progress2 > 0) {
-      final waveRadius2 = 30.0 + (maxRadius - 30.0) * progress2;
-      final opacity2 = (1.0 - progress2).clamp(0.0, 1.0) * 0.28;
-      final paint2 = Paint()
-        ..color = color.withValues(alpha: opacity2)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0;
-
-      canvas.drawCircle(center, waveRadius2, paint2);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _WavePulsePainter oldDelegate) {
-    return oldDelegate.progress != progress;
-  }
-}
-
 /// Peintre pour les ondes et vagues d'eau concentriques autour de chaque élément de l'arc
 class _ItemWaveRipplePainter extends CustomPainter {
   final double animationValue;

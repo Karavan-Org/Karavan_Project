@@ -14,7 +14,7 @@ void main() {
   });
 
   test('ApiConfig configure correctement les paramètres Google Sign-In', () {
-    expect(ApiConfig.googleClientId, equals('462534787008-glu9glf6979ldlth5dc2g9l6sjmnboah.apps.googleusercontent.com'));
+    expect(ApiConfig.googleClientId, equals('462534787008-7c48fkvh3n0nu65po72p005qr5qo05ot.apps.googleusercontent.com'));
     expect(ApiConfig.googleAuth, equals('/api/auth/google'));
     expect(ApiConfig.googleCompleter, equals('/api/auth/google/completer'));
     expect(ApiConfig.googleDemanderOtp, equals('/api/auth/google/demander-otp'));

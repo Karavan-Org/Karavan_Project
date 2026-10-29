@@ -106,10 +106,7 @@ class SelecteurPays extends StatelessWidget {
                   ),
                   const Icon(Icons.arrow_drop_down_rounded, color: AppTheme.bissap, size: 26),
                 ] else ...[
-                  const Text(
-                    "🌐",
-                    style: TextStyle(fontSize: 18),
-                  ),
+                  Icon(Icons.public, size: 20, color: couleurAttenue),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(

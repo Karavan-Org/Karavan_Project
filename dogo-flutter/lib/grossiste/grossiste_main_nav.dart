@@ -366,16 +366,6 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                 return Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Onde / Halo pulsant d'eau autour du bouton central
-                    if (isExpanded)
-                      CustomPaint(
-                        painter: _WavePulsePainter(
-                          progress: _fabController.value,
-                          color: AppTheme.primary,
-                        ),
-                        child: const SizedBox(width: 84, height: 84),
-                      ),
-
                     Container(
                       height: 58,
                       width: 58,
@@ -595,13 +585,12 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                                 : Colors.white.withValues(alpha: 0.9),
                             width: isHovered ? 3.0 : 2.2,
                           ),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
-                              color: color.withValues(
-                                  alpha: isHovered ? 0.65 : 0.40),
-                              blurRadius: isHovered ? 18 : 10,
-                              spreadRadius: isHovered ? 4 : 1,
-                              offset: const Offset(0, 4),
+                              color: Color(0x1F000000),
+                              blurRadius: 12,
+                              
+                              offset: Offset(0, 4),
                             ),
                           ],
                         ),
@@ -757,39 +746,6 @@ class _ArcTrackPainter extends CustomPainter {
 }
 
 /// Onde pulsante concentrique d'eau autour du bouton central (+)
-class _WavePulsePainter extends CustomPainter {
-  final double progress;
-  final Color color;
-
-  _WavePulsePainter({
-    required this.progress,
-    required this.color,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final maxRadius = size.width / 2;
-
-    for (int i = 1; i <= 2; i++) {
-      final ringProgress = (progress * 1.2 - (i * 0.25)).clamp(0.0, 1.0);
-      if (ringProgress <= 0) continue;
-
-      final paint = Paint()
-        ..color = color.withValues(alpha: (1.0 - ringProgress) * 0.35)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.0 * (1.0 - ringProgress);
-
-      canvas.drawCircle(center, maxRadius * ringProgress, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _WavePulsePainter oldDelegate) {
-    return oldDelegate.progress != progress;
-  }
-}
-
 /// Peintre d'ondes aquatiques concentriques continues autour de chaque item de l'arc
 class _ItemWaveRipplePainter extends CustomPainter {
   final double animationValue;

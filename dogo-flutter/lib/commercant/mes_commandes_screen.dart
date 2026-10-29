@@ -611,18 +611,11 @@ class _MesCommandesScreenState extends State<MesCommandesScreen> with Actualisat
                               : AppTheme.danger))
                       : (activeCmd.etapeActive >= 4 ? AppTheme.olive : AppTheme.ocre),
                   borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
-                      color: (activeCmd.annulee
-                              ? (activeCmd.remboursement?.execute == true
-                                  ? AppTheme.oliveProfond
-                                  : (activeCmd.remboursement?.enTraitement == true
-                                      ? AppTheme.ocreProfond
-                                      : AppTheme.danger))
-                              : (activeCmd.etapeActive >= 4 ? AppTheme.olive : AppTheme.ocre))
-                          .withValues(alpha: 0.28),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      color: Color(0x1F000000),
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
                     ),
                   ],
                 ),

@@ -126,4 +126,19 @@ class AdminSecuriteServiceTest {
         ErreurMetier err = assertThrows(ErreurMetier.class, () -> service.verifierCode(1L, "1234"));
         assertEquals(CodeErreur.ACCES_REFUSE, err.code());
     }
+
+    @Test
+    void code_oublie_redefini_avec_mot_de_passe_de_connexion() {
+        admin.definirCodeSecurite(encodeur.encode("1111"), horloge.instant());
+        when(utilisateurs.findById(1L)).thenReturn(Optional.of(admin));
+
+        ErreurMetier err = assertThrows(ErreurMetier.class,
+                () -> service.configurerCode(1L, "2222", null, "MauvaisMdp"));
+        assertEquals(CodeErreur.CODE_SECURITE_INVALIDE, err.code());
+        assertTrue(encodeur.matches("1111", admin.getCodeSecuriteHash()));
+
+        when(utilisateurs.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        service.configurerCode(1L, "2222", null, "Dogo2026!");
+        assertTrue(encodeur.matches("2222", admin.getCodeSecuriteHash()));
+    }
 }

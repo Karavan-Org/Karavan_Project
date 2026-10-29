@@ -64,7 +64,7 @@ class ApiConfig {
   static const String googleDemanderOtp = '/api/auth/google/demander-otp';
   static const String googleClientId = String.fromEnvironment(
     'google_client_id',
-    defaultValue: '462534787008-glu9glf6979ldlth5dc2g9l6sjmnboah.apps.googleusercontent.com',
+    defaultValue: '462534787008-7c48fkvh3n0nu65po72p005qr5qo05ot.apps.googleusercontent.com',
   );
 
   // --- Endpoints Dossier KYC (Grossiste / Courtier) ---

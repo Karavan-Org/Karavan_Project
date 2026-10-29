@@ -1,11 +1,42 @@
 // ==============================================================================
-// BARRE LATÉRALE KARAVAN (DESIGN SYSTEM OFFICIEL & MODE MINIATURE COLLAPSIBLE)
-// Palette officielle Karavan :
-// - Vert Forêt / Brand Dark : #183630
-// - Bissap / Cuir Camel : #AC7F5E & #8E6445
-// - Ocre Sahélien Doré : #EEA823
-// - Olive Validation : #34C759
+// BARRE LATÉRALE KARAVAN — panneau « verre » sur fond terre (design system Karavan)
+// Couleurs tirées exclusivement des tokens du design system (styles.scss) :
+// - Panneau : --terre, nuancé de --primary
+// - Onglet actif : --bg-app, le fond même de la page (body) : il s'y fond, ouvert comme en rail
+// - Badges & accents : --secondary (ocre), --success (validation)
+// - Pilules : rayon 30px comme les boutons du design system
 // ==============================================================================
+
+// Verre dépoli des pilules et pastilles
+$verre: rgba(255, 255, 255, 0.08);
+$verre-survol: rgba(255, 255, 255, 0.14);
+$verre-bordure: rgba(255, 255, 255, 0.1);
+$texte-clair: rgba(255, 255, 255, 0.92);
+$texte-doux: rgba(255, 255, 255, 0.55);
+$rayon-pilule: 30px;
+$rayon-courbe: 16px; // Congés inversés de l'onglet actif
+
+// L'hôte réserve la largeur du rail (12px de marge + 68px) : ouverte au survol, la barre
+// passe par-dessus la page sans la décaler (le globe 3D n'est pas recalculé)
+:host {
+  display: block;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+:host(.survol) {
+  width: 80px;
+
+  .sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      18px 0 40px rgba(0, 0, 0, 0.18);
+  }
+}
 
 .sidebar {
   display: flex;
@@ -14,111 +45,139 @@
   width: 240px;
   height: calc(100vh - 24px);
   margin: 12px 0 12px 12px;
-  background: linear-gradient(180deg, #183630 0%, #112621 55%, #0B1A17 100%);
-  border: 1px solid rgba(238, 168, 35, 0.12);
-  border-radius: 24px;
-  color: #F8FAFC;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 28%, var(--terre)) 0%,
+    var(--terre) 50%,
+    color-mix(in srgb, var(--terre) 80%, #000) 100%
+  );
+  border: 1px solid $verre-bordure;
+  border-right: none; // L'onglet actif rejoint le contenu sans trait
+  border-radius: 28px 0 0 28px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: $texte-clair;
   font-family: var(--font-texte, system-ui, -apple-system, sans-serif);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              padding 0.3s ease,
-              transform 0.3s ease;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: visible; // Permet aux tooltips de flotter à droite en mode miniature
   z-index: 100;
 
   // ----------------------------------------------------------------------------
-  // MODE MINIATURE RÉDUIT (FERMÉ PAR DÉFAUT)
+  // MODE MINIATURE RÉDUIT (FERMÉ PAR DÉFAUT) : rail de pastilles rondes
   // ----------------------------------------------------------------------------
   &.sidebar-reduite {
-    width: 72px;
+    width: 68px;
 
     .brand-header {
-      padding: 16px 8px;
+      padding: 16px 0 10px;
       justify-content: center;
-      cursor: pointer;
 
+      .brand-monogramme,
       .brand-logo {
-        width: 38px;
-        height: 38px;
+        width: 40px;
+        height: 40px;
       }
     }
 
     .nav-container {
-      padding: 12px 8px;
-      align-items: center;
+      padding: 12px 0 12px 14px;
+    }
 
-      .nav-list {
-        align-items: center;
-      }
+    .nav-list {
+      gap: 10px;
 
       .nav-list-item {
         width: 100%;
         display: flex;
-        justify-content: center;
       }
 
       .nav-item {
-        width: 46px;
-        height: 46px;
+        width: 40px;
+        height: 40px;
+        margin: 0;
         padding: 0;
         justify-content: center;
-        border-radius: 14px;
+        border-radius: 50%;
 
+        // Onglet actif : la pastille s'étire jusqu'au bord et se fond dans la page
         &.active {
-          background: linear-gradient(135deg, #AC7F5E 0%, #8E6445 100%);
-          border: 1px solid rgba(238, 168, 35, 0.4);
-          box-shadow: 0 0 16px rgba(172, 127, 94, 0.55);
+          width: 100%;
+          justify-content: flex-start;
+          padding-left: 10px;
+          border-radius: $rayon-pilule 0 0 $rayon-pilule;
         }
 
         .nav-icon {
-          font-size: 22px;
-          width: 22px;
-          height: 22px;
-          margin: 0;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
         }
       }
     }
 
-    .toggle-collapse-bar {
-      padding: 8px 6px;
-      justify-content: center;
+    .sidebar-footer {
+      padding: 12px 0;
+      align-items: center;
+    }
 
-      .collapse-btn {
-        width: 44px;
-        height: 44px;
-        padding: 0;
-        justify-content: center;
-        border-radius: 50%;
-      }
+    .toggle-collapse-bar .collapse-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 50%;
     }
   }
 
   // ----------------------------------------------------------------------------
-  // 1. EN-TÊTE : LOGO & BRAND
+  // 1. EN-TÊTE : MONOGRAMME & BRAND
   // ----------------------------------------------------------------------------
   .brand-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 20px 18px 14px;
+    gap: 10px;
+    padding: 18px 14px 10px 12px;
     flex-shrink: 0;
     cursor: pointer;
     position: relative;
 
+    // Logo officiel Karavan
     .brand-logo {
       width: 42px;
       height: 42px;
-      object-fit: contain;
       flex-shrink: 0;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.06);
-      padding: 4px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      transition: transform 0.25s ease;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     &:hover .brand-logo {
+      transform: scale(1.06);
+    }
+
+    // Monogramme de secours dans un disque de verre
+    .brand-monogramme {
+      width: 42px;
+      height: 42px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: $verre-survol;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--secondary);
+      font-family: var(--font-titre);
+      font-size: 20px;
+      font-weight: 800;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: transform 0.25s ease;
+    }
+
+    &:hover .brand-monogramme {
       transform: scale(1.06);
     }
 
@@ -126,41 +185,44 @@
       display: flex;
       flex-direction: column;
       flex: 1;
+      min-width: 0;
 
       .brand-name {
-        font-size: 19px;
+        font-family: var(--font-titre);
+        font-size: 17px;
         font-weight: 800;
-        color: #FAF8F5;
-        letter-spacing: -0.3px;
+        color: #FFFFFF;
+        letter-spacing: -0.2px;
       }
 
       .brand-tag {
-        font-size: 9.5px;
+        font-size: 9px;
         font-weight: 700;
-        color: #EEA823; // Ocre Karavan
+        color: var(--secondary);
         letter-spacing: 1px;
         text-transform: uppercase;
         margin-top: 1px;
       }
     }
 
+    // Petit bouton rond de repli (chevron)
     .btn-mini-close-top {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: $verre-survol;
+      border: 1px solid $verre-bordure;
       border-radius: 50%;
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
+      padding: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #94A3B8;
+      color: #FFFFFF;
       cursor: pointer;
-      transition: all 0.2s ease;
+      flex-shrink: 0;
+      transition: background 0.2s ease, transform 0.2s ease;
 
       &:hover {
-        background: #AC7F5E;
-        color: #FFFFFF;
-        border-color: #EEA823;
+        background: var(--primary);
         transform: scale(1.1);
       }
 
@@ -173,9 +235,7 @@
   }
 
   .sidebar-divider {
-    height: 1px;
-    background: linear-gradient(90deg, rgba(238, 168, 35, 0.3) 0%, rgba(255, 255, 255, 0.05) 100%);
-    margin: 0 16px 8px;
+    display: none; // Le panneau verre se suffit, pas de séparateur
   }
 
   // ----------------------------------------------------------------------------
@@ -184,34 +244,32 @@
   .nav-container {
     flex: 1;
     overflow-y: auto;
-    overflow-x: visible;
-    padding: 10px 12px;
+    overflow-x: hidden;
+    // Pas de marge à droite : l'onglet actif doit toucher le bord du panneau
+    padding: 10px 0 10px 12px;
     display: flex;
     flex-direction: column;
     gap: 16px;
+    scrollbar-width: none;
 
     &::-webkit-scrollbar {
-      width: 4px;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: rgba(238, 168, 35, 0.2);
-      border-radius: 4px;
+      display: none;
     }
   }
 
   .nav-section {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 
     .section-title {
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 800;
-      color: #8C9E98;
+      color: $texte-doux;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
-      padding: 0 8px;
-      margin: 0 0 2px 0;
+      letter-spacing: 0.9px;
+      padding: 0 10px;
+      margin: 0;
     }
   }
 
@@ -221,33 +279,39 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
 
     .nav-list-item {
       position: relative;
     }
 
+    // Pilule de verre
     .nav-item {
       position: relative;
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 9px 12px;
-      border-radius: 12px;
-      color: #D1DBD7;
+      gap: 10px;
+      height: 38px;
+      margin-right: 12px;
+      padding: 0 12px 0 10px;
+      border-radius: $rayon-pilule;
+      background: $verre;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: $texte-clair;
       text-decoration: none;
       font-size: 13px;
       font-weight: 600;
-      transition: all 0.2s ease;
+      outline: none;
+      transition: background 0.25s ease, color 0.25s ease, border-radius 0.25s ease;
       cursor: pointer;
 
-      &:hover {
-        background: rgba(172, 127, 94, 0.16);
-        color: #FAF8F5;
+      &:focus-visible {
+        box-shadow: 0 0 0 2px var(--secondary);
+      }
 
-        .nav-icon {
-          color: #EEA823;
-        }
+      &:hover {
+        background: color-mix(in srgb, var(--primary) 45%, transparent);
+        color: #FFFFFF;
 
         .floating-tooltip {
           opacity: 1;
@@ -256,30 +320,59 @@
         }
       }
 
-      // --- ITEM ACTIF : DESIGN SYSTEM KARAVAN (Bissap & Ocre) ---
+      // --- ONGLET ACTIF : pilule claire qui se fond dans la zone de contenu ---
       &.active {
-        background: linear-gradient(135deg, #AC7F5E 0%, #8E6445 100%);
-        color: #FFFFFF;
-        border: 1px solid rgba(238, 168, 35, 0.35);
-        box-shadow: 0 4px 16px rgba(172, 127, 94, 0.45);
+        margin-right: 0;
+        background: var(--bg-app);
+        border-color: transparent;
+        border-radius: $rayon-pilule 0 0 $rayon-pilule;
+        color: var(--terre);
+        font-weight: 800;
 
-        .nav-icon {
-          color: #FFFFFF;
+        &:focus-visible {
+          box-shadow: inset 0 0 0 2px var(--secondary);
         }
 
-        .nav-badge {
-          background: #EEA823;
-          color: #183630;
-          font-weight: 800;
+        .nav-icon {
+          color: var(--primary);
+        }
+
+        // Congés inversés au-dessus et au-dessous du raccord avec le contenu
+        &::before,
+        &::after {
+          content: '';
+          position: absolute;
+          right: 0;
+          width: $rayon-courbe;
+          height: $rayon-courbe;
+          pointer-events: none;
+        }
+
+        &::before {
+          bottom: 100%;
+          background: radial-gradient(
+            circle at 0 0,
+            transparent calc(#{$rayon-courbe} - 0.5px),
+            var(--bg-app) $rayon-courbe
+          );
+        }
+
+        &::after {
+          top: 100%;
+          background: radial-gradient(
+            circle at 0 100%,
+            transparent calc(#{$rayon-courbe} - 0.5px),
+            var(--bg-app) $rayon-courbe
+          );
         }
       }
 
       .nav-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
+        font-size: 19px;
+        width: 19px;
+        height: 19px;
         flex-shrink: 0;
-        color: #A3B5AF;
+        color: $texte-clair;
         transition: color 0.2s ease;
       }
 
@@ -291,33 +384,34 @@
       }
 
       .nav-badge {
-        font-size: 11px;
+        font-size: 10.5px;
         font-weight: 800;
-        background: #EEA823;
-        color: #183630;
-        padding: 2px 7px;
+        background: var(--secondary);
+        color: var(--terre);
+        padding: 1px 7px;
         border-radius: 10px;
         margin-left: auto;
 
         &.mini-badge {
           position: absolute;
-          top: 4px;
-          right: 4px;
-          padding: 1px 5px;
+          top: -3px;
+          right: -3px;
+          padding: 0 5px;
           font-size: 9px;
+          border: 1.5px solid var(--terre);
         }
       }
 
-      // --- TOOLTIP FLOTTANT EN MODE MINIATURE (Design System Karavan) ---
+      // --- TOOLTIP FLOTTANT EN MODE MINIATURE ---
       .floating-tooltip {
         position: absolute;
-        left: 54px;
+        left: 50px;
         top: 50%;
         transform: translateY(-50%) translateX(0px);
-        background: #183630;
-        color: #FAF8F5;
-        border: 1px solid rgba(238, 168, 35, 0.35);
-        border-radius: 8px;
+        background: var(--terre);
+        color: #FFFFFF;
+        border: 1px solid $verre-bordure;
+        border-radius: $rayon-pilule;
         padding: 6px 12px;
         font-size: 12px;
         font-weight: 700;
@@ -325,7 +419,7 @@
         pointer-events: none;
         opacity: 0;
         visibility: hidden;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
         transition: opacity 0.2s ease, transform 0.2s ease;
         z-index: 1000;
       }
@@ -339,10 +433,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 12px 14px;
-    background: rgba(0, 0, 0, 0.15);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 0 0 24px 24px;
+    padding: 12px 12px 14px;
     flex-shrink: 0;
 
     .security-pin-bar {
@@ -351,23 +442,25 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 7px 10px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(238, 168, 35, 0.15);
-        border-radius: 12px;
-        color: #D1DBD7;
+        padding: 7px 12px;
+        background: $verre;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: $rayon-pilule;
+        color: $texte-clair;
         font-size: 11.5px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: background 0.2s ease;
 
         &:hover {
-          background: rgba(172, 127, 94, 0.2);
-          border-color: #EEA823;
+          background: color-mix(in srgb, var(--primary) 45%, transparent);
         }
 
         .sec-icon {
-          font-size: 13px;
+          font-size: 15px;
+          width: 15px;
+          height: 15px;
+          color: var(--secondary);
         }
 
         .sec-text {
@@ -378,15 +471,14 @@
         .sec-badge {
           font-size: 10px;
           font-weight: 700;
-          padding: 2px 6px;
-          border-radius: 6px;
+          padding: 2px 8px;
+          border-radius: $rayon-pilule;
           background: rgba(255, 255, 255, 0.1);
-          color: #94A3B8;
+          color: $texte-doux;
 
           &.sec-badge-ok {
-            background: rgba(52, 199, 89, 0.18);
-            color: #34C759; // Olive Karavan
-            border: 1px solid rgba(52, 199, 89, 0.4);
+            background: color-mix(in srgb, var(--success) 22%, transparent);
+            color: var(--success);
           }
         }
       }
@@ -402,19 +494,17 @@
         align-items: center;
         gap: 8px;
         padding: 7px 12px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        color: #D1DBD7;
+        background: $verre;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: $rayon-pilule;
+        color: $texte-clair;
         font-size: 12px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: background 0.2s ease;
 
         &:hover {
-          background: rgba(172, 127, 94, 0.25);
-          color: #EEA823;
-          border-color: #EEA823;
+          background: color-mix(in srgb, var(--primary) 45%, transparent);
         }
 
         .collapse-icon {
@@ -433,10 +523,14 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 6px 2px;
+      padding: 6px;
+      border-radius: $rayon-pilule;
+      background: rgba(0, 0, 0, 0.18);
 
       &.user-footer-mini {
-        justify-content: center;
+        flex-direction: column;
+        background: transparent;
+        padding: 0;
 
         .avatar {
           cursor: pointer;
@@ -444,12 +538,11 @@
       }
 
       .avatar {
-        width: 34px;
-        height: 34px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #AC7F5E 0%, #8E6445 100%);
+        background: var(--primary);
         color: #FFFFFF;
-        border: 1.5px solid #EEA823;
         font-size: 12px;
         font-weight: 800;
         display: flex;
@@ -467,7 +560,7 @@
         .user-name {
           font-size: 12.5px;
           font-weight: 700;
-          color: #FAF8F5;
+          color: #FFFFFF;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -475,7 +568,7 @@
 
         .user-role {
           font-size: 10.5px;
-          color: #A3B5AF;
+          color: $texte-doux;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -485,18 +578,18 @@
       .logout-btn {
         background: transparent;
         border: none;
-        color: #8C9E98;
+        color: $texte-doux;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 4px;
-        border-radius: 6px;
-        transition: all 0.2s ease;
+        padding: 6px;
+        border-radius: 50%;
+        transition: color 0.2s ease, background 0.2s ease;
 
         &:hover {
-          color: #EF4444;
-          background: rgba(239, 68, 68, 0.12);
+          color: var(--danger);
+          background: color-mix(in srgb, var(--danger) 15%, transparent);
         }
 
         mat-icon {

@@ -1,8 +1,4 @@
 <div class="karavan-view dogo-view finance-view">
-  
-  <!-- Cercles d'ambiance 3D organiques en arrière-plan -->
-  <div class="ambient-glow glow-top-left"></div>
-  <div class="ambient-glow glow-bottom-right"></div>
 
   <!-- En-tête -->
   <header class="view-header">
@@ -29,19 +25,19 @@
 
     <div class="wallet-inner">
       
-      <!-- Vitrine 3D Principale du Portefeuille Séquestre -->
+      <!-- Synthèse du compte séquestre -->
       <div class="wallet-hero-showcase-row">
-        <!-- Colonne Gauche : Titres, Badges & Solde 3D -->
+        <!-- Titres et solde -->
         <div class="wallet-hero-left">
           <div class="wallet-top-header">
             <span class="badge-institutionnel">
-              <span class="pulse-dot"></span> SÉQUESTRE OFFICIEL KARAVAN • GESTION BANCAIRE NATIONALE
+              <span class="pulse-dot"></span> Compte séquestre Karavan
             </span>
             <h2 class="wallet-main-title">Portefeuille Séquestre & Trésorerie Centrale</h2>
             <p class="wallet-sub-title">Fonds marchands protégés • Garanties de livraison • Commissions Karavan prélevées</p>
           </div>
 
-          <!-- Solde Imposant avec relief 3D -->
+          <!-- Solde -->
           <div class="wallet-balance-zone">
             <span class="balance-tag">TOTAL ACTUELLEMENT PROTÉGÉ SOUS SÉQUESTRE</span>
             <div class="balance-number">
@@ -52,11 +48,6 @@
               <span>{{ bloques().length }} séquestre(s) sous mandat actif · Fonds sécurisés contre tout litige</span>
             </div>
           </div>
-        </div>
-
-        <!-- Colonne Droite : L'Animation 3D Matérielle & Légère du Portefeuille Karavan -->
-        <div class="wallet-hero-right">
-          <app-portefeuille-3d [soldeAffiche]="tableau()?.totalBloque ?? 0"></app-portefeuille-3d>
         </div>
       </div>
 

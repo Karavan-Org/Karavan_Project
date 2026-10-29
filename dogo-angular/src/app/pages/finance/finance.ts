@@ -7,7 +7,6 @@ import jsPDF from 'jspdf';
 import { LIBELLES_GROUPE, dateCourte, fcfa, ligneCsv, messageErreur, telechargerTexte } from '../../core/api';
 import { AdminApiService, Remboursement, Sequestre, TableauSequestres } from '../../core/services/admin-api.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Portefeuille3dComponent } from '../../components/portefeuille-3d/portefeuille-3d.component';
 
 export interface FinanceTransaction {
   source: Sequestre;
@@ -37,7 +36,7 @@ export interface GatewayBalance {
 @Component({
   selector: 'app-finance',
   standalone: true,
-  imports: [CommonModule, MatIconModule, Portefeuille3dComponent],
+  imports: [CommonModule, MatIconModule],
   templateUrl: './finance.html',
   styleUrl: './finance.scss'
 })
