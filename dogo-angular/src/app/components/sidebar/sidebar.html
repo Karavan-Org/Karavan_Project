@@ -11,9 +11,9 @@
     [title]="estReduite() ? 'Cliquer pour ouvrir le menu' : 'Cliquer pour réduire le menu'"
   >
     <img
-      src="assets/logo_karavan.png"
-      alt="Logo Karavan"
       class="brand-logo"
+      src="assets/logo_karavan.png"
+      alt="Karavan"
     />
 
     <div class="brand-info" *ngIf="!estReduite()">
@@ -96,7 +96,7 @@
         class="security-pin-btn"
         (click)="securite.ouvrirConfiguration()"
         title="Code de sécurité à 4 chiffres (requis pour chaque validation)">
-        <span class="sec-icon">🔒</span>
+        <mat-icon class="sec-icon">lock</mat-icon>
         <span class="sec-text">Code sécurité :</span>
         <span class="sec-badge" [class.sec-badge-ok]="securite.statut()?.configure">
           {{ securite.statut()?.configure ? 'Actif' : 'À configurer' }}
