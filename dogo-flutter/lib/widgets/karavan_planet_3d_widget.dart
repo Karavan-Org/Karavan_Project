@@ -70,7 +70,7 @@ class _KaravanPlanet3DWidgetState extends State<KaravanPlanet3DWidget> {
             gradient: RadialGradient(
               colors: [
                 AppTheme.primary.withValues(alpha: 0.22),
-                AppTheme.accentGold.withValues(alpha: 0.12),
+                AppTheme.doreKaravan.withValues(alpha: 0.12),
                 Colors.transparent,
               ],
               stops: const [0.35, 0.7, 1.0],
@@ -80,7 +80,7 @@ class _KaravanPlanet3DWidgetState extends State<KaravanPlanet3DWidget> {
             child: Icon(
               Icons.public,
               size: 130,
-              color: AppTheme.accentGold.withValues(alpha: 0.85),
+              color: AppTheme.doreKaravan.withValues(alpha: 0.85),
             ),
           ),
         ),
@@ -122,7 +122,7 @@ class _KaravanPlanet3DWidgetState extends State<KaravanPlanet3DWidget> {
                 height: 32,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentGold),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.doreKaravan),
                 ),
               ),
             ),
