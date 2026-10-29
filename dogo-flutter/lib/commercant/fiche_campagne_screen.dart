@@ -1,4 +1,5 @@
 import '../widgets/image_produit.dart';
+import '../widgets/drapeau_pays_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
@@ -687,7 +688,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
                         _buildInfoLigne(
                           icon: Icons.flight_takeoff,
                           titre: "Provenance & Fret",
-                          valeur: widget.paysOrigine,
+                          valeurWidget: DrapeauBadge(pays: widget.paysOrigine, compact: true),
                         ),
                         Divider(height: 20, color: AppTheme.couleurBordure(context)),
                         _buildInfoLigne(
@@ -856,7 +857,8 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
   Widget _buildInfoLigne({
     required IconData icon,
     required String titre,
-    required String valeur,
+    String? valeur,
+    Widget? valeurWidget,
   }) {
     return Row(
       children: [
@@ -878,10 +880,13 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
                 style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
               ),
               const SizedBox(height: 2),
-              Text(
-                valeur,
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.couleurTexte(context)),
-              ),
+              if (valeurWidget != null)
+                valeurWidget
+              else
+                Text(
+                  valeur ?? '—',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.couleurTexte(context)),
+                ),
             ],
           ),
         ),

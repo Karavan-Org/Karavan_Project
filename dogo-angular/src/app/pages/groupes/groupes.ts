@@ -16,6 +16,7 @@ import {
 } from '../../core/services/admin-api.service';
 import { AnnuaireService } from '../../core/services/annuaire.service';
 import { AuthService } from '../../core/services/auth.service';
+import { DrapeauPaysComponent } from '../../components/drapeau-pays/drapeau-pays.component';
 
 type Onglet = 'TOUS' | 'A_MODERER' | 'BROUILLON' | 'OUVERT' | 'ACHEMINEMENT' | 'TERMINE' | 'ARRETE';
 
@@ -49,7 +50,7 @@ export interface Acheteur {
 @Component({
   selector: 'app-groupes',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, DrapeauPaysComponent],
   templateUrl: './groupes.html',
   styleUrl: './groupes.scss'
 })

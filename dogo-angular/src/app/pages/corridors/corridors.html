@@ -316,7 +316,12 @@
               <div>
                 <span class="groupe-ref">Groupe #{{ g.id }}</span>
                 <h4 class="groupe-titre">{{ g.titre }}</h4>
-                <p class="groupe-produit">{{ g.produit?.nom }} · {{ g.produit?.paysOrigine || '?' }} ➔ Bamako</p>
+                <p class="groupe-produit">
+                  {{ g.produit?.nom }} ·
+                  <app-drapeau-pays [pays]="g.produit?.paysOrigine" [largeur]="16" [hauteur]="11"></app-drapeau-pays>
+                  {{ g.produit?.paysOrigine || 'Origine' }} ➔
+                  <app-drapeau-pays [pays]="'ML'" [largeur]="16" [hauteur]="11"></app-drapeau-pays> Bamako
+                </p>
               </div>
               <span class="badge" [ngClass]="estEligible(g) ? 'green' : 'yellow'">
                 {{ estEligible(g) ? '100% Atteint' : progression(g) + '% En cours' }}

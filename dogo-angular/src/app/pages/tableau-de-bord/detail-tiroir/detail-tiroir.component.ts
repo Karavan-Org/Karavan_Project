@@ -10,11 +10,12 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { GroupeDetailVue } from '../tableau-de-bord.service';
+import { DrapeauPaysComponent } from '../../../components/drapeau-pays/drapeau-pays.component';
 
 @Component({
   selector: 'app-detail-tiroir',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule],
+  imports: [CommonModule, RouterLink, MatIconModule, DrapeauPaysComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (groupe) {
@@ -56,7 +57,7 @@ import { GroupeDetailVue } from '../tableau-de-bord.service';
               <h4>{{ groupe.produitNom }}</h4>
               <span class="categorie-badge">{{ groupe.categorieNom || 'Importation' }}</span>
               <div class="origine-ligne">
-                <mat-icon>public</mat-icon>
+                <app-drapeau-pays [pays]="groupe.paysOrigine?.codeIso || groupe.paysOrigine?.nomFr" [largeur]="20" [hauteur]="14"></app-drapeau-pays>
                 <span>
                   Origine : <strong>{{ groupe.paysOrigine?.nomFr || 'Non renseignée' }}</strong>
                   @if (groupe.paysOrigine?.codeIso) { ({{ groupe.paysOrigine?.codeIso }}) }

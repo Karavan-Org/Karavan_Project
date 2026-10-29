@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/drapeau_pays_widget.dart';
 import 'favoris_service.dart';
 import 'fiche_campagne_screen.dart';
 
@@ -335,13 +336,16 @@ class _GroupesGrossisteScreenState extends State<GroupesGrossisteScreen> {
                                               const Icon(Icons.verified, size: 14, color: Color(0xFF1E88E5)),
                                             ],
                                           ),
-                                          const SizedBox(height: 1),
-                                          Text(
-                                            "Origine : ${groupe.paysOrigine}",
-                                            style: TextStyle(
-                                              fontSize: 11.5,
-                                              color: couleurAttenue,
-                                            ),
+                                          const SizedBox(height: 3),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                "Origine : ",
+                                                style: TextStyle(fontSize: 11.5, color: couleurAttenue),
+                                              ),
+                                              DrapeauBadge(pays: groupe.paysOrigine, compact: true),
+                                            ],
                                           ),
                                         ],
                                       ),

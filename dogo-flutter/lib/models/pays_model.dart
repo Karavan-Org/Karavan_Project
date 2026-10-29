@@ -33,9 +33,12 @@ class PaysModel {
   /// Drapeau approximatif ou emoji drapeau à partir du code ISO à 2 lettres
   String get drapeauEmoji {
     if (codeIso.length != 2) return '🌐';
-    final int premier = codeIso.codeUnitAt(0) - 0x41 + 0x1F1E6;
-    final int second = codeIso.codeUnitAt(1) - 0x41 + 0x1F1E6;
+    final int premier = codeIso.toUpperCase().codeUnitAt(0) - 0x41 + 0x1F1E6;
+    final int second = codeIso.toUpperCase().codeUnitAt(1) - 0x41 + 0x1F1E6;
     return String.fromCharCode(premier) + String.fromCharCode(second);
   }
+
+  /// URL officielle du drapeau (FlagCDN)
+  String get urlDrapeau => 'https://flagcdn.com/w40/${codeIso.toLowerCase()}.png';
 }
 

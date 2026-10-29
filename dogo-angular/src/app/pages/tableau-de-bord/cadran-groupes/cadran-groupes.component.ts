@@ -14,6 +14,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { GroupeCadranVue } from '../tableau-de-bord.service';
+import { DrapeauPaysComponent } from '../../../components/drapeau-pays/drapeau-pays.component';
 
 export interface CarteCadran3D {
   groupe: GroupeCadranVue;
@@ -34,7 +35,7 @@ export interface CarteCadran3D {
 @Component({
   selector: 'app-cadran-groupes',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, DrapeauPaysComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="cadran-horizontal-scene" (wheel)="onMolette($event)">
@@ -78,7 +79,9 @@ export interface CarteCadran3D {
               >
                 <!-- En-tête de la carte : Drapeau + #ID -->
                 <div class="carte-top-row">
-                  <span class="carte-drapeau">{{ item.drapeau }}</span>
+                  <span class="carte-drapeau">
+                    <app-drapeau-pays [pays]="item.groupe.paysOrigine?.codeIso || item.nomPays" [largeur]="24" [hauteur]="16"></app-drapeau-pays>
+                  </span>
                   <span class="carte-id">#{{ item.groupe.id }}</span>
                 </div>
 
@@ -277,8 +280,8 @@ export interface CarteCadran3D {
       position: absolute;
       width: 128px;
       height: 166px;
-      background: linear-gradient(145deg, rgba(24, 54, 48, 0.94) 0%, rgba(14, 32, 28, 0.98) 100%);
-      border: 1.5px solid rgba(238, 168, 35, 0.25);
+      background: linear-gradient(145deg, #183630 0%, #0F221E 100%);
+      border: 1.5px solid rgba(238, 168, 35, 0.35);
       border-radius: 16px;
       padding: 10px;
       display: flex;
@@ -286,8 +289,7 @@ export interface CarteCadran3D {
       justify-content: space-between;
       color: #FFFFFF;
       cursor: pointer;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(12px);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 
       // Positionnement initial sur l'arc 3D via variables CSS matérielles
       transform: translateX(var(--base-tx)) translateZ(var(--base-tz)) rotateY(var(--base-ry)) scale(var(--base-scale));
@@ -310,16 +312,16 @@ export interface CarteCadran3D {
       }
 
       // QUEL QUE SOIT L'ÉLÉMENT TOUCHÉ PAR LE CURSEUR (milieu, gauche, droite) :
-      // CET ÉLÉMENT BONDIT INSTANTANÉMENT VERS L'AVANT AU TOUT PREMIER PLAN !
+      // CET ÉLÉMENT BONDIT VERS L'AVANT AU PREMIER PLAN SANS CHEVAUCHER LES AUTRES !
       &:hover,
       &.carte-survolee {
-        transform: translateX(var(--base-tx)) translateY(-34px) translateZ(120px) rotateY(calc(var(--offset) * 3deg)) scale(1.30) !important;
+        transform: translateX(var(--base-tx)) translateY(-18px) translateZ(48px) scale(1.10) !important;
         opacity: 1 !important;
-        z-index: 1000 !important;
+        z-index: 100 !important;
         border-color: #EEA823 !important;
-        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.88),
-                    0 0 36px rgba(238, 168, 35, 0.85),
-                    inset 0 0 18px rgba(172, 127, 94, 0.5) !important;
+        box-shadow: 0 20px 44px rgba(0, 0, 0, 0.85),
+                    0 0 28px rgba(238, 168, 35, 0.75),
+                    inset 0 0 14px rgba(172, 127, 94, 0.4) !important;
       }
     }
 
@@ -331,7 +333,9 @@ export interface CarteCadran3D {
       font-weight: 700;
 
       .carte-drapeau {
-        font-size: 19px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         line-height: 1;
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
       }
@@ -658,11 +662,11 @@ export class CadranGroupesComponent implements OnChanges {
       const groupe = this.groupesFiltres[idx];
       if (!groupe) continue;
 
-      const angleDeg = offset * 14;
-      const translateX = offset * 144;
+      const angleDeg = offset * 12;
+      const translateX = offset * 168;
       const translateZ = -Math.abs(offset) * 44;
-      const scale = offset === 0 ? 1.06 : Math.max(0.74, 1 - Math.abs(offset) * 0.08);
-      const opacity = offset === 0 ? 1 : Math.max(0.55, 1 - Math.abs(offset) * 0.15);
+      const scale = offset === 0 ? 1.05 : Math.max(0.78, 1 - Math.abs(offset) * 0.07);
+      const opacity = offset === 0 ? 1 : Math.max(0.60, 1 - Math.abs(offset) * 0.12);
       const zIndex = 30 - Math.abs(offset);
 
       const drapeau = this.drapeauParCode(groupe.paysOrigine?.codeIso) || groupe.drapeau || '🌐';

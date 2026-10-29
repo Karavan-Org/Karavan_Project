@@ -175,7 +175,9 @@
                 <div class="activite-flux-item">
                   <div class="activite-visuel">
                     @if (act.type === 'GROUPE') {
-                      <span class="drapeau-pastille">{{ act.drapeau || '🌐' }}</span>
+                      <span class="drapeau-pastille">
+                        <app-drapeau-pays [pays]="act.drapeau" [largeur]="20" [hauteur]="14"></app-drapeau-pays>
+                      </span>
                     } @else {
                       <div class="avatar-pastille">
                         <mat-icon>person</mat-icon>

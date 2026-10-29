@@ -1,5 +1,6 @@
 import '../widgets/tab_navigation_scope.dart';
 import '../widgets/image_produit.dart';
+import '../widgets/drapeau_pays_widget.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bouton_bascule_theme.dart';
@@ -188,13 +189,22 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                               color: isSelected ? AppTheme.terre : AppTheme.couleurBordure(context),
                             ),
                           ),
-                          child: Text(
-                            p,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                              color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (p != "Tous") ...[
+                                DrapeauPays(pays: p, largeur: 16, hauteur: 11),
+                                const SizedBox(width: 5),
+                              ],
+                              Text(
+                                p,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                  color: isSelected ? Colors.white : AppTheme.couleurTexte(context),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -355,20 +365,9 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppTheme.secondary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          g.paysOrigine,
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.ocreProfond,
-                          ),
-                        ),
+                      DrapeauBadge(
+                        pays: g.paysOrigine,
+                        compact: true,
                       ),
                       const Spacer(),
                       IconButton(
