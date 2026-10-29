@@ -88,6 +88,32 @@ class GroupePaysValidationTest {
     }
 
     @Test
+    void creationAccepteeAvecNomDePaysFrancais() {
+        when(identite.exigerActif(10L)).thenReturn(new IdentiteApi.ActeurInfo(10L, "GROSSISTE", "ACTIF", "Grossiste", "+22370000010"));
+        when(catalogue.produit(1L)).thenReturn(Optional.of(new CatalogueApi.ProduitInfo(1L, 10L, 1L, "Cat", "Produit", "", "Turquie", null, java.util.List.of())));
+        Pays turquie = new Pays("TR", "TUR", "Turquie", 38.9637, 35.2433, true);
+        when(paysRepository.findAll()).thenReturn(java.util.List.of(turquie));
+        when(paysRepository.findById("TR")).thenReturn(Optional.of(turquie));
+
+        GroupeAchat gSimule = new GroupeAchat(null, 10L, 1L, "Titre", "TR", 100, BigDecimal.valueOf(1150),
+                Instant.parse("2026-10-28T12:00:00Z"), Instant.parse("2026-11-28T12:00:00Z"));
+        org.springframework.test.util.ReflectionTestUtils.setField(gSimule, "id", 99L);
+        when(groupes.save(any(GroupeAchat.class))).thenReturn(gSimule);
+        when(groupes.findById(any())).thenReturn(Optional.of(gSimule));
+        when(grilles.findByGroupeId(any())).thenReturn(Optional.of(new ml.dogo.groupeachat.persistence.GrilleTarifaire(99L, new ml.dogo.groupeachat.domain.CalculPrix.Composantes(BigDecimal.valueOf(1000), BigDecimal.valueOf(100), BigDecimal.valueOf(50), BigDecimal.ZERO, BigDecimal.ZERO), BigDecimal.valueOf(0.05))));
+        when(conditions.findByGroupeId(any())).thenReturn(Optional.of(new ml.dogo.groupeachat.persistence.ConditionCommerciale(99L, 15, "politique", 5)));
+
+        GroupeService.Demande demande = new GroupeService.Demande(
+                "Titre", 1L, 100, Instant.parse("2026-11-28T12:00:00Z"),
+                BigDecimal.valueOf(1000), BigDecimal.valueOf(100), BigDecimal.valueOf(50), BigDecimal.ZERO,
+                15, "politique", 5, null); // paysOrigineCode null -> hérité de produit.paysOrigine ("Turquie")
+
+        GroupeService.GroupeVue vue = groupeService.creer(10L, demande);
+        assertEquals("TR", vue.paysOrigineCode());
+        assertEquals("Turquie", vue.paysOrigineNom());
+    }
+
+    @Test
     void publicationRefuseeSiGroupeSansPays() {
         // Un ancien groupe sans pays_origine_code
         GroupeAchat g = new GroupeAchat(

@@ -100,7 +100,7 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
       }
 
       // 3. Détection par le stockage isolé propre à cet onglet (sessionStorage web)
-      final sessionOnglet = getSessionStorageItem('dogo_tab_espace');
+      final sessionOnglet = getSessionStorageItem('karavan_tab_espace') ?? getSessionStorageItem('dogo_tab_espace');
       if (sessionOnglet != null && sessionOnglet.isNotEmpty) {
         return sessionOnglet.toLowerCase();
       }

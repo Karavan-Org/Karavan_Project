@@ -152,6 +152,32 @@ public class TableauDeBordAdminService {
     private final GroupeService groupeService;
     private final Clock horloge;
     private final org.springframework.jdbc.core.JdbcTemplate jdbc;
+    private final PaysService paysService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public TableauDeBordAdminService(GroupeAchatRepository groupes,
+                                     PaysRepository paysRepository,
+                                     EtapeAcheminementRepository etapes,
+                                     GrilleTarifaireRepository grilles,
+                                     ConditionCommercialeRepository conditions,
+                                     CatalogueApi catalogue,
+                                     IdentiteApi identite,
+                                     GroupeService groupeService,
+                                     Clock horloge,
+                                     org.springframework.jdbc.core.JdbcTemplate jdbc,
+                                     PaysService paysService) {
+        this.groupes = groupes;
+        this.paysRepository = paysRepository;
+        this.etapes = etapes;
+        this.grilles = grilles;
+        this.conditions = conditions;
+        this.catalogue = catalogue;
+        this.identite = identite;
+        this.groupeService = groupeService;
+        this.horloge = horloge;
+        this.jdbc = jdbc;
+        this.paysService = paysService != null ? paysService : new PaysService(paysRepository);
+    }
 
     public TableauDeBordAdminService(GroupeAchatRepository groupes,
                                      PaysRepository paysRepository,
@@ -163,16 +189,8 @@ public class TableauDeBordAdminService {
                                      GroupeService groupeService,
                                      Clock horloge,
                                      org.springframework.jdbc.core.JdbcTemplate jdbc) {
-        this.groupes = groupes;
-        this.paysRepository = paysRepository;
-        this.etapes = etapes;
-        this.grilles = grilles;
-        this.conditions = conditions;
-        this.catalogue = catalogue;
-        this.identite = identite;
-        this.groupeService = groupeService;
-        this.horloge = horloge;
-        this.jdbc = jdbc;
+        this(groupes, paysRepository, etapes, grilles, conditions, catalogue, identite, groupeService, horloge, jdbc,
+                new PaysService(paysRepository));
     }
 
     /**
@@ -212,6 +230,29 @@ public class TableauDeBordAdminService {
         }
 
         // 3. Répartition par pays d'origine
+        // Auto-assignation pour les groupes qui n'avaient pas encore leur pays renseigné en base
+        try {
+            List<GroupeAchat> tousGroupes = groupes.findAll();
+            boolean modifie = false;
+            for (GroupeAchat g : tousGroupes) {
+                if (g.getPaysOrigineCode() == null) {
+                    Optional<CatalogueApi.ProduitInfo> prod = catalogue.produit(g.getProduitId());
+                    if (prod.isPresent() && prod.get().paysOrigine() != null && !prod.get().paysOrigine().isBlank()) {
+                        Optional<Pays> pOpt = paysService.resoudre(prod.get().paysOrigine());
+                        if (pOpt.isPresent()) {
+                            g.assignerPaysOrigine(pOpt.get().getCodeIso());
+                            groupes.save(g);
+                            modifie = true;
+                        }
+                    }
+                }
+            }
+            if (modifie) {
+                groupes.flush();
+            }
+        } catch (Exception ignored) {
+        }
+
         List<Object[]> paysLignes = groupes.compterParPaysOrigine();
         long totalAvecPays = 0;
         Map<String, Long> comptesParCode = new HashMap<>();
@@ -382,10 +423,7 @@ public class TableauDeBordAdminService {
         for (GroupeAchat g : liste) {
             PaysVue pVue = null;
             if (g.getPaysOrigineCode() != null) {
-                Pays p = paysCache.get(g.getPaysOrigineCode().toUpperCase());
-                if (p != null) {
-                    pVue = PaysVue.de(p);
-                }
+                pVue = paysService.resoudre(g.getPaysOrigineCode()).map(PaysVue::de).orElse(null);
             }
 
             double progression = g.getQuantiteCible() > 0
@@ -419,10 +457,7 @@ public class TableauDeBordAdminService {
             if (prodInfo.isPresent()) {
                 photoUrl = prodInfo.get().photoUrl();
                 if (pVue == null && prodInfo.get().paysOrigine() != null) {
-                    Pays p = paysCache.get(prodInfo.get().paysOrigine().trim().toUpperCase());
-                    if (p != null) {
-                        pVue = PaysVue.de(p);
-                    }
+                    pVue = paysService.resoudre(prodInfo.get().paysOrigine()).map(PaysVue::de).orElse(null);
                 }
             }
 
@@ -466,9 +501,9 @@ public class TableauDeBordAdminService {
 
         PaysVue pVue = null;
         if (g.getPaysOrigineCode() != null) {
-            pVue = paysRepository.findById(g.getPaysOrigineCode().toUpperCase())
-                    .map(PaysVue::de)
-                    .orElse(null);
+            pVue = paysService.resoudre(g.getPaysOrigineCode()).map(PaysVue::de).orElse(null);
+        } else if (p.paysOrigine() != null) {
+            pVue = paysService.resoudre(p.paysOrigine()).map(PaysVue::de).orElse(null);
         }
 
         double progression = g.getQuantiteCible() > 0

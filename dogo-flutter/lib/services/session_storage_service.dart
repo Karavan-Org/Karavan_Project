@@ -12,9 +12,9 @@ class SessionStorageService {
   SessionStorageService._();
   static final SessionStorageService instance = SessionStorageService._();
 
-  static const String _cleRefreshToken = 'dogo_refresh_token';
-  static const String _cleProfil = 'dogo_user_profil';
-  static const String _cleDernierEspace = 'dogo_dernier_espace';
+  static const String _cleRefreshToken = 'karavan_refresh_token';
+  static const String _cleProfil = 'karavan_user_profil';
+  static const String _cleDernierEspace = 'karavan_dernier_espace';
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
@@ -46,11 +46,11 @@ class SessionStorageService {
     if (kIsWeb) {
       await _effacerJetonsWeb();
     } else {
-      setSessionStorageItem('dogo_tab_refresh_token', refreshToken);
+      setSessionStorageItem('karavan_tab_refresh_token', refreshToken);
     }
-    setSessionStorageItem('dogo_tab_profil', profilJson);
+    setSessionStorageItem('karavan_tab_profil', profilJson);
     if (espace != null) {
-      setSessionStorageItem('dogo_tab_espace', espace);
+      setSessionStorageItem('karavan_tab_espace', espace);
       _dernierEspaceEnMemoire = espace;
       // 2. Stockage persistant cloisonné par rôle pour préserver les sessions distinctes
       try {
@@ -76,7 +76,7 @@ class SessionStorageService {
     final profilJson = jsonEncode(profil.toJson());
     final espace = _espaceDuRole(profil.roleActeur);
 
-    setSessionStorageItem('dogo_tab_profil', profilJson);
+    setSessionStorageItem('karavan_tab_profil', profilJson);
     if (espace != null) {
       try {
         await _storage.write(key: '${_cleProfil}_$espace', value: profilJson);
@@ -95,13 +95,15 @@ class SessionStorageService {
       return null;
     }
     // 1. Priorité absolue : le jeton propre à cet onglet (survit au F5 de cet onglet uniquement)
-    final tabToken = getSessionStorageItem('dogo_tab_refresh_token');
+    final tabToken = getSessionStorageItem('karavan_tab_refresh_token') ??
+        getSessionStorageItem('dogo_tab_refresh_token');
     if (tabToken != null && tabToken.isNotEmpty) {
       return tabToken;
     }
 
     // 2. Priorité par espace : si l'onglet cible un espace particulier (/commercant, /grossiste, /courtier)
     final espace = detecterEspaceUrlOnglet() ??
+        getSessionStorageItem('karavan_tab_espace') ??
         getSessionStorageItem('dogo_tab_espace') ??
         _dernierEspaceEnMemoire;
     if (espace != null && espace.isNotEmpty) {
@@ -125,7 +127,8 @@ class SessionStorageService {
   /// Restaure le profil utilisateur mis en cache
   Future<UtilisateurProfil?> lireProfil() async {
     // 1. Priorité absolue : profil de cet onglet
-    final tabProfilStr = getSessionStorageItem('dogo_tab_profil');
+    final tabProfilStr = getSessionStorageItem('karavan_tab_profil') ??
+        getSessionStorageItem('dogo_tab_profil');
     if (tabProfilStr != null && tabProfilStr.isNotEmpty) {
       try {
         final map = jsonDecode(tabProfilStr) as Map<String, dynamic>;
@@ -135,6 +138,7 @@ class SessionStorageService {
 
     // 2. Priorité par espace ciblé par l'onglet
     final espace = detecterEspaceUrlOnglet() ??
+        getSessionStorageItem('karavan_tab_espace') ??
         getSessionStorageItem('dogo_tab_espace') ??
         _dernierEspaceEnMemoire;
     if (espace != null && espace.isNotEmpty) {
@@ -163,7 +167,7 @@ class SessionStorageService {
   Future<void> sauvegarderDernierEspace(String espace) async {
     final e = espace.toLowerCase();
     _dernierEspaceEnMemoire = e;
-    setSessionStorageItem('dogo_tab_espace', e);
+    setSessionStorageItem('karavan_tab_espace', e);
     try {
       await _storage.write(key: _cleDernierEspace, value: e);
     } catch (_) {}
@@ -179,7 +183,8 @@ class SessionStorageService {
     }
 
     // 2. Détection par le stockage isolé de l'onglet (sessionStorage)
-    final tabEspace = getSessionStorageItem('dogo_tab_espace');
+    final tabEspace = getSessionStorageItem('karavan_tab_espace') ??
+        getSessionStorageItem('dogo_tab_espace');
     if (tabEspace != null && tabEspace.isNotEmpty) {
       _dernierEspaceEnMemoire = tabEspace.toLowerCase();
       return _dernierEspaceEnMemoire;
@@ -207,6 +212,9 @@ class SessionStorageService {
     final espace = _dernierEspaceEnMemoire;
     _dernierEspaceEnMemoire = null;
 
+    removeSessionStorageItem('karavan_tab_refresh_token');
+    removeSessionStorageItem('karavan_tab_profil');
+    removeSessionStorageItem('karavan_tab_espace');
     removeSessionStorageItem('dogo_tab_refresh_token');
     removeSessionStorageItem('dogo_tab_profil');
     removeSessionStorageItem('dogo_tab_espace');
@@ -251,12 +259,14 @@ class SessionStorageService {
       }
       // Clé primaire par UID si disponible pour ne pas bloquer un nouveau compte ayant le même numéro
       if (utilisateurId != null && utilisateurId > 0) {
-        final keyId = 'dogo_guide_${role.toLowerCase()}_vu_uid_$utilisateurId';
-        final valId = await _storage.read(key: keyId);
+        final keyId = 'karavan_guide_${role.toLowerCase()}_vu_uid_$utilisateurId';
+        final valId = await _storage.read(key: keyId) ??
+            await _storage.read(key: 'dogo_guide_${role.toLowerCase()}_vu_uid_$utilisateurId');
         return valId == 'true';
       }
-      final key = 'dogo_guide_${role.toLowerCase()}_vu_$identifiant';
-      final val = await _storage.read(key: key);
+      final key = 'karavan_guide_${role.toLowerCase()}_vu_$identifiant';
+      final val = await _storage.read(key: key) ??
+          await _storage.read(key: 'dogo_guide_${role.toLowerCase()}_vu_$identifiant');
       return val == 'true';
     } catch (_) {
       return false;
@@ -267,9 +277,9 @@ class SessionStorageService {
   Future<void> marquerGuideVu(String role, String identifiant, {int? utilisateurId}) async {
     try {
       if (utilisateurId != null && utilisateurId > 0) {
-        await _storage.write(key: 'dogo_guide_${role.toLowerCase()}_vu_uid_$utilisateurId', value: 'true');
+        await _storage.write(key: 'karavan_guide_${role.toLowerCase()}_vu_uid_$utilisateurId', value: 'true');
       }
-      final key = 'dogo_guide_${role.toLowerCase()}_vu_$identifiant';
+      final key = 'karavan_guide_${role.toLowerCase()}_vu_$identifiant';
       await _storage.write(key: key, value: 'true');
     } catch (_) {}
   }
@@ -280,7 +290,7 @@ class SessionStorageService {
     try {
       final all = await _storage.readAll();
       for (final k in all.keys) {
-        if (k.startsWith('dogo_guide_')) {
+        if (k.startsWith('karavan_guide_') || k.startsWith('dogo_guide_')) {
           await _storage.delete(key: k);
         }
       }
@@ -291,10 +301,12 @@ class SessionStorageService {
   Future<void> reinitialiserGuide(String role, String identifiant, {int? utilisateurId}) async {
     try {
       if (utilisateurId != null && utilisateurId > 0) {
+        await _storage.delete(key: 'karavan_guide_${role.toLowerCase()}_vu_uid_$utilisateurId');
         await _storage.delete(key: 'dogo_guide_${role.toLowerCase()}_vu_uid_$utilisateurId');
       }
-      final key = 'dogo_guide_${role.toLowerCase()}_vu_$identifiant';
+      final key = 'karavan_guide_${role.toLowerCase()}_vu_$identifiant';
       await _storage.delete(key: key);
+      await _storage.delete(key: 'dogo_guide_${role.toLowerCase()}_vu_$identifiant');
     } catch (_) {}
   }
 

@@ -12,7 +12,7 @@ import '../services/auth_service.dart';
 import '../widgets/avatar_profil_interactif.dart';
 import '../widgets/bouton_bascule_theme.dart';
 
-/// Écran du Profil Grossiste fidèle à la maquette Figma Dogo (Frame "profil" Grossiste)
+/// Écran du Profil Grossiste fidèle à la maquette Figma Karavan (Frame "profil" Grossiste)
 /// Nom : Aliou Traoré
 /// Rôle : Grossiste
 /// Badge : Compte vérifié

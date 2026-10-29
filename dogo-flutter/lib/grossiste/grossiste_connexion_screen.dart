@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/mot_de_passe_oublie_modal.dart';
 import 'package:flutter/services.dart';
@@ -74,7 +74,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
         pin: motDePasse,
       );
       if (profil.type != 'GROSSISTE') {
-        AuthService.instance.deconnecter();
+        await AuthService.instance.deconnecter();
         throw const ApiException(
             statusCode: 403,
             message: "Ce numéro n'est pas celui d'un compte Grossiste");
@@ -406,7 +406,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
 
                   const SizedBox(height: 18),
 
-                  // Continuer avec Google (rôle grossiste avec confirmation 2FA)
+                  // Continuer avec Google (rôle grossiste)
                   const BoutonGoogleSignIn(role: RoleActeur.grossiste),
 
                   const SizedBox(height: 36),

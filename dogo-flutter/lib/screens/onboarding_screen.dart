@@ -2,7 +2,7 @@ import '../widgets/bouton_bascule_theme.dart';
 import 'package:flutter/material.dart';
 import '../models/role_acteur.dart';
 import '../theme/app_theme.dart';
-import '../widgets/dogo_planet_3d_widget.dart';
+import '../widgets/karavan_planet_3d_widget.dart';
 import '../widgets/karavan_logo.dart';
 import '../commercant/commercant_connexion_screen.dart';
 import '../grossiste/grossiste_connexion_screen.dart';
@@ -183,7 +183,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                 // --- ANIMATION 3D THREE.JS (PLANÈTE, CARGO SUR MER, AVION, CARTON) ---
                 const Expanded(
-                  child: DogoPlanet3DWidget(),
+                  child: KaravanPlanet3DWidget(),
                 ),
 
                 // --- CARTE INFÉRIEURE AVEC TEXTE DYNAMIQUE DU RÔLE ---

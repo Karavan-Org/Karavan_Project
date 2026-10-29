@@ -27,7 +27,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
  * <p>Même base et mêmes prérequis que {@link FluxPrincipalIT} (MySQL local, base {@code dogo_test}).
  */
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:mysql://localhost:3306/dogo_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true",
+        "spring.datasource.url=jdbc:mysql://localhost:3306/karavan_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true",
         "spring.flyway.clean-disabled=false",
         "dogo.retrait.max-tentatives=3"})
 @AutoConfigureMockMvc

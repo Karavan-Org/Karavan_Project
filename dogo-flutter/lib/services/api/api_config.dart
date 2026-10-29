@@ -22,7 +22,7 @@ class ApiConfig {
       final ip = _ipParam.trim();
       final scheme = (ip.startsWith('http://') || ip.startsWith('https://')) ? '' : 'http://';
       final sansScheme = ip.replaceFirst(RegExp(r'^https?://'), '');
-      // Une URL https (https://api.dogo.ml) garde son port implicite 443, sauf --dart-define=port explicite.
+      // Une URL https (https://api.karavan.ml) garde son port implicite 443, sauf --dart-define=port explicite.
       final portImplicite = ip.startsWith('https://') && !const bool.hasEnvironment('port');
       final portSuffix = (sansScheme.contains(':') || portImplicite) ? '' : ':$_portParam';
       final completeUrl = '$scheme$ip$portSuffix';
@@ -57,10 +57,15 @@ class ApiConfig {
   static const String renvoyerOtp = '/api/auth/renvoyer-otp';
   static const String demandeResetMdp = '/api/auth/mot-de-passe-oublie/demande';
   static const String reinitialiserMdp = '/api/auth/mot-de-passe-oublie/reinitialiser';
+
+  // --- Endpoints Google OAuth2 (Fédération d'identité & Inscription RG-07) ---
   static const String googleAuth = '/api/auth/google';
   static const String googleCompleter = '/api/auth/google/completer';
   static const String googleDemanderOtp = '/api/auth/google/demander-otp';
-  static const String googleClientId = String.fromEnvironment('google_client_id', defaultValue: '');
+  static const String googleClientId = String.fromEnvironment(
+    'google_client_id',
+    defaultValue: '462534787008-glu9glf6979ldlth5dc2g9l6sjmnboah.apps.googleusercontent.com',
+  );
 
   // --- Endpoints Dossier KYC (Grossiste / Courtier) ---
   static const String kyc = '/api/kyc';

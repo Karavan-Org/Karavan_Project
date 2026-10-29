@@ -1,6 +1,6 @@
 import 'role_acteur.dart';
 
-/// Profil de l'utilisateur connecté selon le contrat Spring Boot (ml.dogo.identite)
+/// Profil de l'utilisateur connecté selon le contrat Spring Boot (Karavan / identite)
 class UtilisateurProfil {
   final int id;
   final String type; // COMMERCANT, GROSSISTE, COURTIER, ADMINISTRATEUR

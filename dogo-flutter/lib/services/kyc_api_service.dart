@@ -4,7 +4,7 @@ import 'api/api_config.dart';
 import 'api/api_exception.dart';
 import 'auth_service.dart';
 
-/// Types de pièces acceptés par le backend (ml.dogo.identite.domain.TypeDocument)
+/// Types de pièces acceptés par le backend (Karavan TypeDocument)
 enum TypeDocumentKyc { pieceIdentite, registreCommerce, nif, licenceTransit, releveBancaire, autre }
 
 extension TypeDocumentKycCode on TypeDocumentKyc {

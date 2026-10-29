@@ -255,7 +255,7 @@ class AuthService {
     );
   }
 
-  /// Authentification via ID Token Google (RG-07)
+  /// Authentification via jeton Google OAuth2 (RG-07)
   /// Renvoie soit {'statut': 'CONNECTE', 'profil': ...} soit {'statut': 'PROFIL_INCOMPLET', 'jetonInscription': ...}
   Future<Map<String, dynamic>> authentifierGoogle(String idToken, {String? deviceId}) async {
     final response = await ApiClient.instance.postSansAuth(
@@ -296,7 +296,7 @@ class AuthService {
     return response;
   }
 
-  /// Étape 1 : Demande de code OTP pour finaliser l'inscription Google
+  /// Étape 1 : Demande de code OTP SMS pour finaliser l'inscription Google
   Future<Map<String, dynamic>> demanderOtpGoogleCompleter({
     required String jetonInscription,
     required String telephone,
@@ -312,7 +312,7 @@ class AuthService {
     return response is Map<String, dynamic> ? response : {};
   }
 
-  /// Étape 2 : Vérification OTP et finalisation de l'inscription / fusion Google
+  /// Étape 2 : Validation du code OTP et création / fusion du compte Google Karavan
   Future<UtilisateurProfil> completerGoogleEtConnecter({
     required String jetonInscription,
     required String telephone,
@@ -322,28 +322,32 @@ class AuthService {
     String? quartierBamako,
     String? deviceId,
   }) async {
+    final body = {
+      'jetonInscription': jetonInscription,
+      'telephone': telephone,
+      'codeOtp': codeOtp,
+      if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
+      if (nomBoutique != null) 'nomBoutique': nomBoutique,
+      if (quartierBamako != null) 'quartierBamako': quartierBamako,
+      'deviceId': deviceId ?? 'flutter-device-client',
+    };
+
     final response = await ApiClient.instance.postSansAuth(
       ApiConfig.googleCompleter,
-      body: {
-        'jetonInscription': jetonInscription,
-        'telephone': telephone,
-        'codeOtp': codeOtp,
-        if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
-        if (nomBoutique != null) 'nomBoutique': nomBoutique,
-        if (quartierBamako != null) 'quartierBamako': quartierBamako,
-        'deviceId': deviceId ?? 'flutter-device-client',
-      },
+      body: body,
       headers: _entetesPlateforme,
     );
 
     if (response is! Map<String, dynamic> || response['jeton'] is! String) {
       throw const ApiException(
         statusCode: 0,
-        message: 'Réponse inattendue lors de la complétion du compte Google.',
+        message: 'Échec de finalisation du compte Google Karavan.',
       );
     }
 
-    ApiClient.instance.definirJeton(response['jeton'] as String);
+    final jeton = response['jeton'] as String;
+    ApiClient.instance.definirJeton(jeton);
+
     final profil = UtilisateurProfil.fromJson(
         response['profil'] as Map<String, dynamic>? ?? {});
     profilNotifier.value = profil;
@@ -353,6 +357,7 @@ class AuthService {
       refreshToken: refreshToken ?? '',
       profil: profil,
     );
+
     return profil;
   }
 

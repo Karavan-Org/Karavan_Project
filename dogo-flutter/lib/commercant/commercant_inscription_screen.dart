@@ -370,7 +370,7 @@ class _CommercantInscriptionScreenState
 
               const SizedBox(height: 18),
 
-              // S'inscrire rapidement avec Google
+              // S'inscrire rapidement avec Google (v7+)
               BoutonGoogleSignIn(role: widget.role, libelle: "S'inscrire avec Google"),
 
               const SizedBox(height: 24),

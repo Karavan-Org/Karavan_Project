@@ -75,7 +75,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     try {
       if (typeof google !== 'undefined' && google.accounts?.id) {
         google.accounts.id.initialize({
-          client_id: '1234567890-karavan-admin.apps.googleusercontent.com',
+          client_id: '462534787008-glu9glf6979ldlth5dc2g9l6sjmnboah.apps.googleusercontent.com',
           callback: (response: any) => this.gererReponseGoogle(response.credential),
           auto_select: false,
           cancel_on_tap_outside: true

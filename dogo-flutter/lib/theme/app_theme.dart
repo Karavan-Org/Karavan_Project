@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // --- PALETTE GRAPHIQUE HISTORIQUE DOGO ---
+  // --- PALETTE GRAPHIQUE OFFICIELLE KARAVAN ---
   static const Color primary = Color(0xFFAC7F5E);
   static const Color primaryDark = Color(0xFF8E6445);
   static const Color secondary = Color(0xFFE6A823);
@@ -130,7 +130,7 @@ class AppTheme {
   static Color couleurBandeauNavigation(BuildContext context) =>
       estSombre(context) ? const Color(0xFF140D0B) : terre;
 
-  // --- TYPOGRAPHIE INTER OFFICIELLE DOGO ---
+  // --- TYPOGRAPHIE INTER OFFICIELLE KARAVAN ---
   static TextStyle styleTitreGrand(BuildContext context, {FontWeight graisse = FontWeight.w700, Color? couleur}) =>
       TextStyle(
         fontFamily: policeTitre,

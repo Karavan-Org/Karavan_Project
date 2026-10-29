@@ -273,6 +273,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() groupes: GroupeCadranVue[] = [];
   @Input() paysFiltre: string | null = null;
   @Output() paysChoisi = new EventEmitter<string | null>();
+  @Output() groupeChoisi = new EventEmitter<GroupeCadranVue>();
 
   private globeInstance: any = null;
   autoRotationActive = true;
@@ -326,12 +327,19 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         .arcEndLat('endLat')
         .arcEndLng('endLng')
         .arcColor('color')
-        .arcAltitude(0.22)
+        .arcAltitude(0.26)
         .arcStroke('stroke')
-        .arcDashLength(0.4)
-        .arcDashGap(0.2)
+        .arcDashLength(0.5)
+        .arcDashGap(0.14)
         .arcDashInitialGap(() => Math.random())
-        .arcDashAnimateTime(2000)
+        .arcDashAnimateTime(1600)
+        .ringsData([])
+        .ringLat('lat')
+        .ringLng('lng')
+        .ringColor((d: any) => (t: number) => `rgba(${d.rgb || '238, 168, 35'}, ${Math.max(0, 1 - t)})`)
+        .ringMaxRadius(5)
+        .ringPropagationSpeed(2)
+        .ringRepeatPeriod(1000)
         .htmlElementsData([])
         .htmlElement((d: any) => {
           const el = document.createElement('div');
@@ -361,7 +369,12 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
                 <div style="width:5px; height:5px; border-radius:50%; background:${couleur}; box-shadow:0 0 6px ${couleur}; margin-top:1px;"></div>
               </div>
             `;
-            el.onclick = () => this.selectionnerPays(d.codeIso);
+            el.onclick = () => {
+              this.selectionnerPays(d.codeIso);
+              if (d.groupePrincipal) {
+                this.groupeChoisi.emit(d.groupePrincipal);
+              }
+            };
           }
           return el;
         });
@@ -415,6 +428,13 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (!this.globeInstance) return;
 
     const arcs: ArcData[] = [];
+    const rings: any[] = [
+      {
+        lat: this.BAMAKO_LAT,
+        lng: this.BAMAKO_LNG,
+        rgb: '52, 199, 89'
+      }
+    ];
     const htmlPoints: any[] = [
       {
         lat: this.BAMAKO_LAT,
@@ -435,35 +455,93 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
       FR: '#64748B'  // Ardoise neutre
     };
 
+    const paletteRgb: Record<string, string> = {
+      CI: '238, 168, 35',
+      SN: '172, 127, 94',
+      MA: '217, 119, 6',
+      GH: '245, 158, 11',
+      CN: '225, 29, 72',
+      TR: '234, 88, 12',
+      BR: '52, 199, 89',
+      FR: '100, 116, 139'
+    };
+
+    // Indexation de tous les pays à afficher (depuis repartitionPays et depuis les groupes actifs)
+    const paysMap = new Map<string, { codeIso: string; nomFr: string; latitude: number; longitude: number; nombreGroupes: number }>();
+
     for (const pays of this.repartitionPays) {
       if (pays.latitude && pays.longitude) {
-        const couleur = paletteCouleurs[pays.codeIso] || '#EEA823';
-        arcs.push({
-          startLat: pays.latitude,
-          startLng: pays.longitude,
-          endLat: this.BAMAKO_LAT,
-          endLng: this.BAMAKO_LNG,
-          color: [couleur, '#34C759'],
-          name: pays.nomFr,
-          codeIso: pays.codeIso,
-          nombreGroupes: pays.nombreGroupes,
-          stroke: 1.8
-        });
-
-        htmlPoints.push({
-          lat: pays.latitude,
-          lng: pays.longitude,
-          name: pays.nomFr,
-          codeIso: pays.codeIso,
-          nombreGroupes: pays.nombreGroupes,
-          couleur: couleur,
-          drapeau: this.drapeauParCode(pays.codeIso),
-          isHub: false
+        paysMap.set(pays.codeIso.toUpperCase(), {
+          codeIso: pays.codeIso.toUpperCase(),
+          nomFr: pays.nomFr,
+          latitude: pays.latitude,
+          longitude: pays.longitude,
+          nombreGroupes: pays.nombreGroupes || 1
         });
       }
     }
 
+    // Inclusion garantie de chaque groupe ayant un pays d'origine avec coordonnées
+    for (const g of this.groupes || []) {
+      const p = g.paysOrigine;
+      if (p && p.codeIso && p.latitude && p.longitude) {
+        const code = p.codeIso.toUpperCase();
+        if (!paysMap.has(code)) {
+          paysMap.set(code, {
+            codeIso: code,
+            nomFr: p.nomFr || code,
+            latitude: p.latitude,
+            longitude: p.longitude,
+            nombreGroupes: 1
+          });
+        }
+      }
+    }
+
+    for (const pays of paysMap.values()) {
+      const couleur = paletteCouleurs[pays.codeIso] || '#EEA823';
+      const groupesDuPays = (this.groupes || []).filter(
+        g => g.paysOrigine?.codeIso?.toUpperCase() === pays.codeIso
+      );
+      const groupePrincipal = groupesDuPays[0] || null;
+      const nbGroupes = Math.max(pays.nombreGroupes, groupesDuPays.length);
+
+      const rgbVal = paletteRgb[pays.codeIso] || '238, 168, 35';
+
+      arcs.push({
+        startLat: pays.latitude,
+        startLng: pays.longitude,
+        endLat: this.BAMAKO_LAT,
+        endLng: this.BAMAKO_LNG,
+        color: [couleur, '#34C759'],
+        name: pays.nomFr,
+        codeIso: pays.codeIso,
+        nombreGroupes: nbGroupes,
+        stroke: this.paysFiltre === pays.codeIso ? 3.4 : 2.6
+      });
+
+      rings.push({
+        lat: pays.latitude,
+        lng: pays.longitude,
+        rgb: rgbVal
+      });
+
+      htmlPoints.push({
+        lat: pays.latitude,
+        lng: pays.longitude,
+        name: pays.nomFr,
+        codeIso: pays.codeIso,
+        nombreGroupes: nbGroupes,
+        couleur: couleur,
+        drapeau: this.drapeauParCode(pays.codeIso),
+        isHub: false,
+        groupes: groupesDuPays,
+        groupePrincipal: groupePrincipal
+      });
+    }
+
     this.globeInstance.arcsData(arcs);
+    this.globeInstance.ringsData(rings);
     this.globeInstance.htmlElementsData(htmlPoints);
   }
 
@@ -495,13 +573,18 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private animerCameraVersPays(codeIso: string): void {
-    const pays = this.repartitionPays.find(p => p.codeIso === codeIso);
-    if (pays && pays.latitude && pays.longitude && this.globeInstance) {
+    const code = codeIso?.toUpperCase();
+    const paysRep = this.repartitionPays.find(p => p.codeIso.toUpperCase() === code);
+    const paysGrp = this.groupes.map(g => g.paysOrigine).find(p => p?.codeIso?.toUpperCase() === code);
+    const lat = paysRep?.latitude ?? paysGrp?.latitude;
+    const lng = paysRep?.longitude ?? paysGrp?.longitude;
+
+    if (lat != null && lng != null && this.globeInstance) {
       this.globeInstance.pointOfView(
         {
-          lat: (pays.latitude + this.BAMAKO_LAT) / 2,
-          lng: (pays.longitude + this.BAMAKO_LNG) / 2,
-          altitude: 1.62
+          lat: lat * 0.72 + this.BAMAKO_LAT * 0.28,
+          lng: lng * 0.72 + this.BAMAKO_LNG * 0.28,
+          altitude: 1.68
         },
         1200
       );

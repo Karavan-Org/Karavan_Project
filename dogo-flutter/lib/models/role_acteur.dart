@@ -1,4 +1,4 @@
-﻿/// Les 3 acteurs de l'écosystème Karavan
+/// Les 3 acteurs de l'écosystème Karavan
 enum RoleActeur {
   commercant(
     libelle: 'Commerçant',
@@ -33,4 +33,10 @@ enum RoleActeur {
     required this.titreAccueil,
     required this.sousTitreAccueil,
   });
+
+  String get codeBackend => switch (this) {
+        RoleActeur.commercant => 'COMMERCANT',
+        RoleActeur.grossiste => 'GROSSISTE',
+        RoleActeur.courtier => 'COURTIER',
+      };
 }
