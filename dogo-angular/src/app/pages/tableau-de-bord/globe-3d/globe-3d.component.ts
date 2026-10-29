@@ -327,12 +327,19 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         .arcEndLat('endLat')
         .arcEndLng('endLng')
         .arcColor('color')
-        .arcAltitude(0.24)
+        .arcAltitude(0.26)
         .arcStroke('stroke')
-        .arcDashLength(0.45)
-        .arcDashGap(0.18)
+        .arcDashLength(0.5)
+        .arcDashGap(0.14)
         .arcDashInitialGap(() => Math.random())
-        .arcDashAnimateTime(1800)
+        .arcDashAnimateTime(1600)
+        .ringsData([])
+        .ringLat('lat')
+        .ringLng('lng')
+        .ringColor((d: any) => (t: number) => `rgba(${d.rgb || '238, 168, 35'}, ${Math.max(0, 1 - t)})`)
+        .ringMaxRadius(5)
+        .ringPropagationSpeed(2)
+        .ringRepeatPeriod(1000)
         .htmlElementsData([])
         .htmlElement((d: any) => {
           const el = document.createElement('div');
@@ -421,6 +428,13 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (!this.globeInstance) return;
 
     const arcs: ArcData[] = [];
+    const rings: any[] = [
+      {
+        lat: this.BAMAKO_LAT,
+        lng: this.BAMAKO_LNG,
+        rgb: '52, 199, 89'
+      }
+    ];
     const htmlPoints: any[] = [
       {
         lat: this.BAMAKO_LAT,
@@ -439,6 +453,17 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
       TR: '#EA580C', // Terre d'Orient
       BR: '#34C759', // Vert olive
       FR: '#64748B'  // Ardoise neutre
+    };
+
+    const paletteRgb: Record<string, string> = {
+      CI: '238, 168, 35',
+      SN: '172, 127, 94',
+      MA: '217, 119, 6',
+      GH: '245, 158, 11',
+      CN: '225, 29, 72',
+      TR: '234, 88, 12',
+      BR: '52, 199, 89',
+      FR: '100, 116, 139'
     };
 
     // Indexation de tous les pays à afficher (depuis repartitionPays et depuis les groupes actifs)
@@ -481,6 +506,8 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
       const groupePrincipal = groupesDuPays[0] || null;
       const nbGroupes = Math.max(pays.nombreGroupes, groupesDuPays.length);
 
+      const rgbVal = paletteRgb[pays.codeIso] || '238, 168, 35';
+
       arcs.push({
         startLat: pays.latitude,
         startLng: pays.longitude,
@@ -490,7 +517,13 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         name: pays.nomFr,
         codeIso: pays.codeIso,
         nombreGroupes: nbGroupes,
-        stroke: 2.2
+        stroke: this.paysFiltre === pays.codeIso ? 3.4 : 2.6
+      });
+
+      rings.push({
+        lat: pays.latitude,
+        lng: pays.longitude,
+        rgb: rgbVal
       });
 
       htmlPoints.push({
@@ -508,6 +541,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
 
     this.globeInstance.arcsData(arcs);
+    this.globeInstance.ringsData(rings);
     this.globeInstance.htmlElementsData(htmlPoints);
   }
 

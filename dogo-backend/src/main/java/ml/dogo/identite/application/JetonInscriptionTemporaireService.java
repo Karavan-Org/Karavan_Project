@@ -52,6 +52,69 @@ public class JetonInscriptionTemporaireService {
                 .compact();
     }
 
+    /** Émet un jeton temporaire d'inscription pour un profil Auth0 incomplet. */
+    public String emettreAuth0(Auth0UserInfo info) {
+        Instant maintenant = Instant.now();
+        Instant expiration = maintenant.plus(DUREE_VALIDITE);
+
+        return Jwts.builder()
+                .subject(info.sub())
+                .claim("email", info.email())
+                .claim("emailVerified", info.emailVerified())
+                .claim("nom", info.nom())
+                .claim("photoUrl", info.photoUrl())
+                .claim("type", "AUTH0_INSCRIPTION_TEMP")
+                .issuedAt(Date.from(maintenant))
+                .expiration(Date.from(expiration))
+                .signWith(cleSignature)
+                .compact();
+    }
+
+    /** Valide le jeton temporaire et extrait les informations du profil Auth0. */
+    public Auth0UserInfo validerAuth0(String jeton) {
+        if (jeton == null || jeton.isBlank()) {
+            throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, "RG-07",
+                    "Jeton d'inscription temporaire absent");
+        }
+        if (jetonsConsommes.contains(jeton)) {
+            throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, "RG-07",
+                    "Ce jeton d'inscription a déjà été utilisé");
+        }
+
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(cleSignature)
+                    .build()
+                    .parseSignedClaims(jeton)
+                    .getPayload();
+
+            String type = claims.get("type", String.class);
+            if (!"AUTH0_INSCRIPTION_TEMP".equals(type) && !"GOOGLE_INSCRIPTION_TEMP".equals(type)) {
+                throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, "RG-07",
+                        "Type de jeton invalide");
+            }
+
+            String sub = claims.getSubject();
+            String email = claims.get("email", String.class);
+            Boolean emailVerified = claims.get("emailVerified", Boolean.class);
+            String nom = claims.get("nom", String.class);
+            String photoUrl = claims.get("photoUrl", String.class);
+
+            return new Auth0UserInfo(
+                    sub,
+                    email,
+                    Boolean.TRUE.equals(emailVerified),
+                    nom != null ? nom : "Utilisateur Auth0",
+                    photoUrl
+            );
+        } catch (ErreurMetier em) {
+            throw em;
+        } catch (Exception e) {
+            throw new ErreurMetier(CodeErreur.NON_AUTHENTIFIE, "RG-07",
+                    "Jeton d'inscription Auth0 expiré ou invalide : veuillez vous réauthentifier");
+        }
+    }
+
     /** Valide le jeton temporaire et extrait les informations du profil Google. */
     public GoogleIdTokenInfo valider(String jeton) {
         if (jeton == null || jeton.isBlank()) {

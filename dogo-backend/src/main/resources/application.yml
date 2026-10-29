@@ -78,3 +78,7 @@ dogo:
     dossier: ${DOGO_STOCKAGE:./donnees/fichiers}
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
+  auth0:
+    client-id: ${AUTH0_CLIENT_ID:aRbZilGECDhT0ASJW4QckMPIYkWZumq0}
+    domain: ${AUTH0_DOMAIN:dev-rat6iuh8y06rijeb.us.auth0.com}
+    audience: ${AUTH0_AUDIENCE:https://dev-rat6iuh8y06rijeb.us.auth0.com/api/v2/}

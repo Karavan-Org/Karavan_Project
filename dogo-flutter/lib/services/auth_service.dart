@@ -255,11 +255,11 @@ class AuthService {
     );
   }
 
-  /// Authentification via ID Token Google (RG-07)
+  /// Authentification via jeton Auth0 (RG-07)
   /// Renvoie soit {'statut': 'CONNECTE', 'profil': ...} soit {'statut': 'PROFIL_INCOMPLET', 'jetonInscription': ...}
-  Future<Map<String, dynamic>> authentifierGoogle(String idToken, {String? deviceId}) async {
+  Future<Map<String, dynamic>> authentifierAuth0(String idToken, {String? deviceId}) async {
     final response = await ApiClient.instance.postSansAuth(
-      ApiConfig.googleAuth,
+      ApiConfig.auth0Auth,
       body: {
         'idToken': idToken,
         'deviceId': deviceId ?? 'flutter-device-client',
@@ -270,7 +270,7 @@ class AuthService {
     if (response is! Map<String, dynamic>) {
       throw const ApiException(
         statusCode: 0,
-        message: 'Réponse inattendue du serveur lors de la connexion Google.',
+        message: 'Réponse inattendue du serveur lors de la connexion Auth0.',
       );
     }
 
@@ -296,13 +296,13 @@ class AuthService {
     return response;
   }
 
-  /// Étape 1 : Demande de code OTP pour finaliser l'inscription Google
-  Future<Map<String, dynamic>> demanderOtpGoogleCompleter({
+  /// Étape 1 : Demande de code OTP pour finaliser l'inscription Auth0
+  Future<Map<String, dynamic>> demanderOtpAuth0Completer({
     required String jetonInscription,
     required String telephone,
   }) async {
     final response = await ApiClient.instance.postSansAuth(
-      ApiConfig.googleDemanderOtp,
+      ApiConfig.auth0DemanderOtp,
       body: {
         'jetonInscription': jetonInscription,
         'telephone': telephone,
@@ -312,8 +312,8 @@ class AuthService {
     return response is Map<String, dynamic> ? response : {};
   }
 
-  /// Étape 2 : Vérification OTP et finalisation de l'inscription / fusion Google
-  Future<UtilisateurProfil> completerGoogleEtConnecter({
+  /// Étape 2 : Vérification OTP et finalisation de l'inscription / fusion Auth0
+  Future<UtilisateurProfil> completerAuth0EtConnecter({
     required String jetonInscription,
     required String telephone,
     required String codeOtp,
@@ -323,7 +323,7 @@ class AuthService {
     String? deviceId,
   }) async {
     final response = await ApiClient.instance.postSansAuth(
-      ApiConfig.googleCompleter,
+      ApiConfig.auth0Completer,
       body: {
         'jetonInscription': jetonInscription,
         'telephone': telephone,
@@ -339,7 +339,7 @@ class AuthService {
     if (response is! Map<String, dynamic> || response['jeton'] is! String) {
       throw const ApiException(
         statusCode: 0,
-        message: 'Réponse inattendue lors de la complétion du compte Google.',
+        message: 'Réponse inattendue lors de la complétion du compte Auth0.',
       );
     }
 
@@ -353,8 +353,41 @@ class AuthService {
       refreshToken: refreshToken ?? '',
       profil: profil,
     );
+
     return profil;
   }
+
+  /// Rétrocompatibilité : redirection Google vers Auth0
+  Future<Map<String, dynamic>> authentifierGoogle(String idToken, {String? deviceId}) =>
+      authentifierAuth0(idToken, deviceId: deviceId);
+
+  Future<Map<String, dynamic>> demanderOtpGoogleCompleter({
+    required String jetonInscription,
+    required String telephone,
+  }) =>
+      demanderOtpAuth0Completer(
+        jetonInscription: jetonInscription,
+        telephone: telephone,
+      );
+
+  Future<UtilisateurProfil> completerGoogleEtConnecter({
+    required String jetonInscription,
+    required String telephone,
+    required String codeOtp,
+    String? typeActeur,
+    String? nomBoutique,
+    String? quartierBamako,
+    String? deviceId,
+  }) =>
+      completerAuth0EtConnecter(
+        jetonInscription: jetonInscription,
+        telephone: telephone,
+        codeOtp: codeOtp,
+        typeActeur: typeActeur,
+        nomBoutique: nomBoutique,
+        quartierBamako: quartierBamako,
+        deviceId: deviceId,
+      );
 
   /// Upload d'une photo de profil (JPEG, PNG, WEBP) vers le serveur (stockage sécurisé)
   Future<String> uploaderPhotoProfil(Uint8List octets,

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/mot_de_passe_oublie_modal.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../services/validateur_mot_de_passe.dart';
-import '../widgets/bouton_google_signin.dart';
+import '../widgets/bouton_auth0_signin.dart';
 import '../models/role_acteur.dart';
 import '../theme/app_theme.dart';
 import 'grossiste_acces.dart';
@@ -74,7 +74,7 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
         pin: motDePasse,
       );
       if (profil.type != 'GROSSISTE') {
-        AuthService.instance.deconnecter();
+        await AuthService.instance.deconnecter();
         throw const ApiException(
             statusCode: 403,
             message: "Ce numéro n'est pas celui d'un compte Grossiste");
@@ -406,8 +406,8 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
 
                   const SizedBox(height: 18),
 
-                  // Continuer avec Google (rôle grossiste avec confirmation 2FA)
-                  const BoutonGoogleSignIn(role: RoleActeur.grossiste),
+                  // Continuer avec Auth0 (rôle grossiste avec confirmation 2FA)
+                  const BoutonAuth0SignIn(role: RoleActeur.grossiste),
 
                   const SizedBox(height: 36),
                   GestureDetector(
