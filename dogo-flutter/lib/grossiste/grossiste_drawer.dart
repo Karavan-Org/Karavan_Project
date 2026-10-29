@@ -103,11 +103,11 @@ class _GrossisteDrawerState extends State<GrossisteDrawer> {
                           decoration: BoxDecoration(
                             color: AppTheme.primary,
                             borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
-                                color: AppTheme.primary.withValues(alpha: 0.3),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
+                                color: Color(0x1F000000),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
                               ),
                             ],
                           ),

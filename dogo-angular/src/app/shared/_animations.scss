@@ -91,16 +91,6 @@
   }
 }
 
-// Halo pulsant pour boutons d'audit ou alertes
-@keyframes glowPulse {
-  0%, 100% {
-    box-shadow: 0 4px 14px rgba(172, 127, 94, 0.35);
-  }
-  50% {
-    box-shadow: 0 6px 22px rgba(172, 127, 94, 0.55), 0 0 12px rgba(238, 168, 35, 0.3);
-  }
-}
-
 // --- 2. CLASSES UTILITAIRES DE TRANSITION & ÉLÉVATION ---
 
 .animate-enter {

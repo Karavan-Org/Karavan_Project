@@ -1,26 +1,32 @@
-import { Component, ElementRef, ViewChildren, QueryList, inject, signal, effect } from '@angular/core';
+import { Component, ElementRef, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { AdminSecuriteService } from '../../core/services/admin-securite.service';
 import { messageErreur } from '../../core/api';
+
+/** Groupe de 4 cases auquel appartient un chiffre saisi */
+type Cible = 'confirmation' | 'ancien' | 'nouveau' | 'confirmer';
 
 @Component({
   selector: 'app-modal-securite-code',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   templateUrl: './modal-securite-code.component.html',
   styleUrl: './modal-securite-code.component.scss'
 })
 export class ModalSecuriteCodeComponent {
   readonly securite = inject(AdminSecuriteService);
-
-  @ViewChildren('digitInput') digitInputs!: QueryList<ElementRef<HTMLInputElement>>;
+  private readonly hote = inject<ElementRef<HTMLElement>>(ElementRef);
 
   // Chiffres saisis pour la confirmation (tableau de 4 caractères)
   chiffresConfirmation: string[] = ['', '', '', ''];
 
   // Formulaire de configuration
-  ancienCode = '';
+  ancienCode: string[] = ['', '', '', ''];
+  // Code oublié : ré-authentification par le mot de passe de connexion
+  viaMotDePasse = false;
+  motDePasse = '';
   nouveauCode: string[] = ['', '', '', ''];
   confirmationCode: string[] = ['', '', '', ''];
 
@@ -40,7 +46,9 @@ export class ModalSecuriteCodeComponent {
 
   reinitialiserChamps(): void {
     this.chiffresConfirmation = ['', '', '', ''];
-    this.ancienCode = '';
+    this.ancienCode = ['', '', '', ''];
+    this.viaMotDePasse = false;
+    this.motDePasse = '';
     this.nouveauCode = ['', '', '', ''];
     this.confirmationCode = ['', '', '', ''];
     this.messageErreur.set('');
@@ -48,53 +56,96 @@ export class ModalSecuriteCodeComponent {
     this.enCours.set(false);
   }
 
+  /** Premier champ de la modale : première case, ou mot de passe en mode « code oublié » */
   focusPremier(): void {
-    if (this.digitInputs && this.digitInputs.first) {
-      this.digitInputs.first.nativeElement.focus();
+    this.hote.nativeElement.querySelector<HTMLInputElement>('.modal-card input')?.focus();
+  }
+
+  private tableau(cible: Cible): string[] {
+    switch (cible) {
+      case 'confirmation': return this.chiffresConfirmation;
+      case 'ancien': return this.ancienCode;
+      case 'nouveau': return this.nouveauCode;
+      default: return this.confirmationCode;
+    }
+  }
+
+  /** Toutes les cases visibles, dans l'ordre : le focus enchaîne d'un groupe au suivant. */
+  private cases(): HTMLInputElement[] {
+    return Array.from(this.hote.nativeElement.querySelectorAll<HTMLInputElement>('input.digit-box'));
+  }
+
+  private focusCase(depuis: HTMLInputElement, decalage: number): void {
+    const cases = this.cases();
+    const suivante = cases[cases.indexOf(depuis) + decalage];
+    if (suivante) {
+      suivante.focus();
+      suivante.select();
     }
   }
 
   // Gestion de la saisie case par case avec focus automatique
-  onDigitInput(event: any, index: number, cible: 'confirmation' | 'nouveau' | 'confirmer'): void {
+  onDigitInput(event: Event, index: number, cible: Cible): void {
     const input = event.target as HTMLInputElement;
-    const valeur = input.value;
+    const tableau = this.tableau(cible);
+    const chiffres = input.value.replace(/\D/g, '');
 
-    // Gestion du collage (ex: coller '1234')
-    if (valeur.length > 1) {
-      const nettoye = valeur.replace(/\D/g, '').slice(0, 4);
-      for (let i = 0; i < nettoye.length; i++) {
-        if (cible === 'confirmation') this.chiffresConfirmation[i] = nettoye[i];
-        else if (cible === 'nouveau') this.nouveauCode[i] = nettoye[i];
-        else if (cible === 'confirmer') this.confirmationCode[i] = nettoye[i];
-      }
+    if (!chiffres) {
+      tableau[index] = '';
+      input.value = '';
       return;
     }
 
-    if (/^\d$/.test(valeur)) {
-      if (cible === 'confirmation') this.chiffresConfirmation[index] = valeur;
-      else if (cible === 'nouveau') this.nouveauCode[index] = valeur;
-      else if (cible === 'confirmer') this.confirmationCode[index] = valeur;
-
-      // Saut automatique vers la case suivante
-      if (index < 3) {
-        const inputsArray = this.digitInputs.toArray();
-        inputsArray[index + 1]?.nativeElement.focus();
-      }
+    // Collage (ex : « 1234 ») : répartit les chiffres sur les cases suivantes du groupe
+    if ((event as InputEvent).inputType === 'insertFromPaste' && chiffres.length > 1) {
+      const colles = chiffres.slice(0, 4 - index);
+      for (let i = 0; i < colles.length; i++) tableau[index + i] = colles[i];
+      input.value = tableau[index];
+      this.focusCase(input, colles.length);
     } else {
-      input.value = '';
-      if (cible === 'confirmation') this.chiffresConfirmation[index] = '';
-      else if (cible === 'nouveau') this.nouveauCode[index] = '';
-      else if (cible === 'confirmer') this.confirmationCode[index] = '';
+      // Frappe : le dernier chiffre tapé remplace le précédent
+      tableau[index] = chiffres.slice(-1);
+      input.value = tableau[index];
+      this.focusCase(input, 1);
+    }
+
+    if (cible === 'confirmation' && this.codeConfirmationComplet()) {
+      this.validerConfirmation();
     }
   }
 
-  onKeyDown(event: KeyboardEvent, index: number, cible: 'confirmation' | 'nouveau' | 'confirmer'): void {
-    if (event.key === 'Backspace') {
-      const tableau = cible === 'confirmation' ? this.chiffresConfirmation : (cible === 'nouveau' ? this.nouveauCode : this.confirmationCode);
-      if (!tableau[index] && index > 0) {
-        const inputsArray = this.digitInputs.toArray();
-        inputsArray[index - 1]?.nativeElement.focus();
+  onKeyDown(event: KeyboardEvent, index: number, cible: Cible): void {
+    const input = event.target as HTMLInputElement;
+    switch (event.key) {
+      case 'Backspace': {
+        // Case déjà vide : on recule et on efface la case précédente
+        if (!this.tableau(cible)[index]) {
+          event.preventDefault();
+          const cases = this.cases();
+          const precedente = cases[cases.indexOf(input) - 1];
+          if (precedente) {
+            precedente.value = '';
+            precedente.dispatchEvent(new Event('input'));
+            precedente.focus();
+          }
+        }
+        break;
       }
+      case 'ArrowLeft':
+        event.preventDefault();
+        this.focusCase(input, -1);
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        this.focusCase(input, 1);
+        break;
+      case 'Enter':
+        if (cible === 'confirmation') {
+          this.validerConfirmation();
+        } else if (this.codeNouveauComplet()) {
+          this.enregistrerConfiguration();
+        }
+        break;
     }
   }
 
@@ -130,8 +181,11 @@ export class ModalSecuriteCodeComponent {
 
   // Sauvegarder la configuration du code
   enregistrerConfiguration(): void {
+    if (this.enCours()) return;
+
     const nouveau = this.nouveauCode.join('');
     const confirmation = this.confirmationCode.join('');
+    const ancien = this.ancienCode.join('');
 
     if (nouveau.length !== 4 || confirmation.length !== 4) {
       this.messageErreur.set('Le code doit comporter exactement 4 chiffres.');
@@ -143,15 +197,23 @@ export class ModalSecuriteCodeComponent {
       return;
     }
 
-    if (this.securite.statut()?.configure && (!this.ancienCode || this.ancienCode.length !== 4)) {
-      this.messageErreur.set("Veuillez saisir votre ancien code de sécurité à 4 chiffres.");
-      return;
+    if (this.securite.statut()?.configure) {
+      if (this.viaMotDePasse && !this.motDePasse) {
+        this.messageErreur.set('Veuillez saisir votre mot de passe de connexion.');
+        return;
+      }
+      if (!this.viaMotDePasse && !/^\d{4}$/.test(ancien)) {
+        this.messageErreur.set("Veuillez saisir votre ancien code de sécurité à 4 chiffres.");
+        return;
+      }
     }
 
     this.enCours.set(true);
     this.messageErreur.set('');
 
-    this.securite.configurerCode(nouveau, this.ancienCode || undefined).subscribe({
+    const ancienEnvoye = this.viaMotDePasse ? undefined : ancien || undefined;
+    const motDePasse = this.viaMotDePasse ? this.motDePasse : undefined;
+    this.securite.configurerCode(nouveau, ancienEnvoye, motDePasse).subscribe({
       next: () => {
         this.enCours.set(false);
         this.messageSucces.set('Code de sécurité à 4 chiffres enregistré avec succès !');
@@ -166,8 +228,15 @@ export class ModalSecuriteCodeComponent {
     });
   }
 
+  basculerMotDePasse(actif: boolean): void {
+    this.viaMotDePasse = actif;
+    this.ancienCode = ['', '', '', ''];
+    this.motDePasse = '';
+    this.messageErreur.set('');
+    setTimeout(() => this.focusPremier());
+  }
+
   fermer(): void {
     this.securite.fermerModal();
   }
 }
-

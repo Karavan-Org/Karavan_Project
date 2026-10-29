@@ -67,3 +67,6 @@ $RECYCLE.BIN/
 .packages
 .pub-cache/
 .pub/
+
+# Client OAuth Google (contient client_secret)
+dogo-flutter/android/app/google-service.json

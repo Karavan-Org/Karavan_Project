@@ -207,8 +207,8 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.couleurSucces(context),
                     borderRadius: BorderRadius.circular(22),
-                    boxShadow: [
-                      BoxShadow(color: AppTheme.olive.withValues(alpha: 0.30), blurRadius: 15, offset: const Offset(0, 6)),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x1F000000), blurRadius: 12, offset: Offset(0, 6)),
                     ],
                   ),
                   child: Row(

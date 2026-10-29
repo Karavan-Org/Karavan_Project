@@ -31,6 +31,7 @@ import { CadranGroupesComponent } from './cadran-groupes/cadran-groupes.componen
 import { DetailTiroirComponent } from './detail-tiroir/detail-tiroir.component';
 import { ModalAssignerPaysComponent } from './modal-assigner-pays/modal-assigner-pays.component';
 import { DrapeauPaysComponent } from '../../components/drapeau-pays/drapeau-pays.component';
+import { PaysResolverService } from '../../core/services/pays-resolver.service';
 
 @Component({
   selector: 'app-tableau-de-bord',
@@ -59,6 +60,7 @@ export class TableauDeBordComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly paysResolver = inject(PaysResolverService);
 
   readonly resume = signal<ResumeTableauDeBord | null>(null);
   readonly groupes = signal<GroupeCadranVue[]>([]);
@@ -111,7 +113,15 @@ export class TableauDeBordComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: r => {
-          this.resume.set(r);
+          if (r && r.repartitionPays) {
+            const repartition = r.repartitionPays.map(p => {
+              const res = this.paysResolver.resoudre(p.codeIso || p.nomFr);
+              return res.reconnu ? { ...p, nomFr: res.nomFr } : p;
+            });
+            this.resume.set({ ...r, repartitionPays: repartition });
+          } else {
+            this.resume.set(r);
+          }
           this.cdr.markForCheck();
         },
         error: () => {
@@ -125,7 +135,16 @@ export class TableauDeBordComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: grps => {
-          this.groupes.set(grps || []);
+          const normalises = (grps || []).map(g => {
+            if (g.paysOrigine?.codeIso || g.paysOrigine?.nomFr) {
+              const res = this.paysResolver.resoudre(g.paysOrigine.codeIso || g.paysOrigine.nomFr);
+              if (res.reconnu) {
+                return { ...g, paysOrigine: { ...g.paysOrigine, nomFr: res.nomFr } };
+              }
+            }
+            return g;
+          });
+          this.groupes.set(normalises);
           this.chargement = false;
           this.cdr.markForCheck();
         },
@@ -140,7 +159,11 @@ export class TableauDeBordComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: pays => {
-          this.listePays.set(pays || []);
+          const normalises = (pays || []).map(p => {
+            const res = this.paysResolver.resoudre(p.codeIso || p.nomFr);
+            return res.reconnu ? { ...p, nomFr: res.nomFr } : p;
+          });
+          this.listePays.set(normalises);
           this.cdr.markForCheck();
         }
       });
@@ -172,11 +195,6 @@ export class TableauDeBordComponent implements OnInit {
           this.cdr.markForCheck();
         }
       });
-  }
-
-  ouvrirPanneauStats(): void {
-    this.tbService.ouvrirPanneauStats();
-    this.cdr.markForCheck();
   }
 
   fermerPanneauStats(): void {

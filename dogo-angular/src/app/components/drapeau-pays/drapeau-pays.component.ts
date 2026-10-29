@@ -1,153 +1,104 @@
-import { Component, Input, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, Input, computed, inject, signal } from '@angular/core';
 import { PaysResolverService } from '../../core/services/pays-resolver.service';
 
+/**
+ * Drapeau d'un pays (SVG flag-icons embarqué, aucun appel réseau) avec nom français officiel.
+ * Accepte un code ISO 2 ou 3 lettres, un nom français ou anglais. Une saisie non reconnue
+ * affiche un globe neutre et le texte tel quel, jamais un pays deviné.
+ */
 @Component({
   selector: 'app-drapeau-pays',
   standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (badge) {
-      <span class="drapeau-badge-pill" [class.badge-compact]="compact">
-        <span class="drapeau-img-wrapper" [style.width.px]="largeur" [style.height.px]="hauteur">
-          @if (!erreur()) {
-            <img
-              [src]="urlDrapeau()"
-              [alt]="info().nomFr"
-              class="drapeau-img"
-              (error)="erreur.set(true)"
-              loading="lazy"
-            />
-          } @else {
-            <span class="drapeau-fallback">{{ info().codeIso }}</span>
-          }
-        </span>
-        <span class="drapeau-nom">{{ info().nomFr }}</span>
-        @if (avecCode) {
-          <span class="drapeau-code">({{ info().codeIso }})</span>
+    <span class="drapeau" [class.badge]="badge" [class.compact]="compact" [title]="info().nomFr">
+      <span
+        class="cadre"
+        [style.width.px]="largeur"
+        [style.height.px]="hauteur"
+        role="img"
+        [attr.aria-label]="info().nomFr || 'Pays non renseigné'">
+        @if (info().reconnu) {
+          <span [class]="'fi fi-' + info().codeIso.toLowerCase()"></span>
+        } @else {
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" /></svg>
         }
       </span>
-    } @else {
-      <span class="drapeau-inline-wrapper" [class.inline-flex]="avecNom || avecCode">
-        <span class="drapeau-img-wrapper" [style.width.px]="largeur" [style.height.px]="hauteur">
-          @if (!erreur()) {
-            <img
-              [src]="urlDrapeau()"
-              [alt]="info().nomFr"
-              class="drapeau-img"
-              (error)="erreur.set(true)"
-              loading="lazy"
-            />
-          } @else {
-            <span class="drapeau-fallback">{{ info().codeIso }}</span>
-          }
-        </span>
-        @if (avecNom) {
-          <span class="drapeau-nom">{{ info().nomFr }}</span>
-        }
-        @if (avecCode) {
-          <span class="drapeau-code">({{ info().codeIso }})</span>
-        }
-      </span>
-    }
+      @if ((avecNom || badge) && info().nomFr) {
+        <span class="nom">{{ info().nomFr }}</span>
+      }
+      @if (avecCode && info().reconnu) {
+        <span class="code">{{ info().codeIso }}</span>
+      }
+    </span>
   `,
   styles: [`
-    :host {
-      display: inline-flex;
-      align-items: center;
-      vertical-align: middle;
-    }
+    :host { display: inline-flex; align-items: center; vertical-align: middle; }
 
-    .drapeau-img-wrapper {
+    .drapeau { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+
+    .cadre {
+      position: relative;
+      flex-shrink: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      border-radius: 2px;
       overflow: hidden;
-      border-radius: 3.5px;
-      border: 1px solid rgba(0, 0, 0, 0.14);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
-      background-color: rgba(255, 255, 255, 0.15);
-      flex-shrink: 0;
-    }
+      background: var(--surface-alt, #F3F4F6);
+      box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.14);
 
-    .drapeau-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+      .fi { width: 100%; height: 100%; line-height: 1; background-size: cover; }
 
-    .drapeau-fallback {
-      font-size: 10px;
-      font-weight: 800;
-      color: inherit;
-      line-height: 1;
-      text-transform: uppercase;
-    }
-
-    .drapeau-inline-wrapper.inline-flex {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .drapeau-badge-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 8px;
-      border-radius: 8px;
-      background: rgba(172, 127, 94, 0.10);
-      border: 1px solid rgba(172, 127, 94, 0.25);
-      color: inherit;
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.2;
-
-      &.badge-compact {
-        padding: 2px 6px;
-        gap: 4px;
-        font-size: 11px;
+      svg {
+        width: 80%;
+        height: 80%;
+        fill: none;
+        stroke: var(--text-muted, #6B7280);
+        stroke-width: 1.6;
       }
     }
 
-    .drapeau-nom {
-      font-weight: 700;
+    .nom {
+      font-size: 0.92em;
+      font-weight: 600;
+      color: var(--text-main, #1F2937);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .drapeau-code {
-      font-weight: 800;
-      opacity: 0.75;
-      font-size: 0.9em;
+    .code {
+      font-size: 0.78em;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-muted, #6B7280);
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border, #E5E7EB);
+      background: var(--surface, #FFFFFF);
+
+      &.compact { padding: 2px 6px; gap: 5px; font-size: 12px; }
     }
   `]
 })
 export class DrapeauPaysComponent {
   private readonly paysResolver = inject(PaysResolverService);
+  private readonly saisie = signal('');
 
   @Input() set pays(valeur: string | null | undefined) {
-    this._paysSaisie.set(valeur ?? '');
-    this.erreur.set(false);
+    this.saisie.set(valeur ?? '');
   }
 
-  @Input() largeur = 22;
+  @Input() largeur = 20;
   @Input() hauteur = 15;
   @Input() avecNom = false;
   @Input() avecCode = false;
   @Input() badge = false;
   @Input() compact = false;
 
-  private readonly _paysSaisie = signal<string>('ML');
-  readonly erreur = signal<boolean>(false);
-
-  readonly info = computed(() => {
-    return this.paysResolver.resoudre(this._paysSaisie());
-  });
-
-  readonly urlDrapeau = computed(() => {
-    const info = this.info();
-    const l = this.largeur > 30 ? 80 : 40;
-    return `https://flagcdn.com/w${l}/${info.codeIso.toLowerCase()}.png`;
-  });
+  readonly info = computed(() => this.paysResolver.resoudre(this.saisie()));
 }
-

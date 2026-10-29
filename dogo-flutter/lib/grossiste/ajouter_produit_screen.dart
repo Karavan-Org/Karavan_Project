@@ -561,9 +561,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         categorieId: _selectedCategorieId,
         nom: _nomController.text.trim(),
         description: _descController.text.trim(),
-        paysOrigine: _paysOrigineController.text.trim().isNotEmpty
-            ? _paysOrigineController.text.trim()
-            : "Mali",
+        // Nom officiel du pays plutôt que la saisie brute (« cn » → « Chine »)
+        paysOrigine: PaysResolverService.instance.resoudre(_paysOrigineController.text).estReconnu
+            ? PaysResolverService.instance.resoudre(_paysOrigineController.text).nomFr
+            : _paysOrigineController.text.trim(),
         photoUrl: photoUrlFinale,
         prixGros: num.tryParse(
             _prixController.text.trim().replaceAll(RegExp(r'[\s ]'), '')),
@@ -852,7 +853,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                   ),
                                 ),
                                 prefixIconConstraints: const BoxConstraints(minWidth: 46, minHeight: 40),
-                                suffixIcon: val.text.trim().isNotEmpty
+                                suffixIcon: info.estReconnu
                                     ? Padding(
                                         padding: const EdgeInsets.only(right: 10),
                                         child: Row(
@@ -869,7 +870,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                                 "${info.nomFr} (${info.codeIso})",
                                                 style: const TextStyle(
                                                   fontSize: 11.5,
-                                                  fontWeight: FontWeight.w700,
+                                                  fontWeight: FontWeight.w600,
                                                   color: AppTheme.bissap,
                                                 ),
                                               ),
@@ -894,6 +895,11 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                   borderSide: const BorderSide(color: AppTheme.primary, width: 2),
                                 ),
                               ),
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? "Pays d'origine requis"
+                                  : PaysResolverService.instance.resoudre(v).estReconnu
+                                      ? null
+                                      : "Pays non reconnu (ex : Chine, Turquie, CN, TUR)",
                             );
                           },
                         ),

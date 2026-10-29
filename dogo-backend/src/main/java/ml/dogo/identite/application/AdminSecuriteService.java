@@ -45,17 +45,32 @@ public class AdminSecuriteService {
 
     @Transactional
     public void configurerCode(long adminId, String nouveauCode, String ancienCode) {
+        configurerCode(adminId, nouveauCode, ancienCode, null);
+    }
+
+    /**
+     * Code oublié : l'administrateur peut redéfinir son code en se ré-authentifiant avec son mot de
+     * passe de connexion à la place de l'ancien code.
+     */
+    @Transactional
+    public void configurerCode(long adminId, String nouveauCode, String ancienCode, String motDePasse) {
         validerFormatCode(nouveauCode);
 
         Administrateur admin = trouverAdmin(adminId);
 
-        // Si le code est déjà configuré, l'ancien code est obligatoire pour autoriser la modification
+        // Si le code est déjà configuré, l'ancien code (ou le mot de passe de connexion) est obligatoire
         if (admin.hasCodeSecurite()) {
-            if (ancienCode == null || ancienCode.isBlank()) {
+            if (motDePasse != null && !motDePasse.isBlank()) {
+                if (!admin.hasMotDePasse() || !encodeur.matches(motDePasse, admin.getMotDePasseHash())) {
+                    audit.tracer(adminId, "ECHEC_MODIFICATION_CODE_SECURITE", null,
+                            "Tentative de réinitialisation avec un mot de passe erroné");
+                    throw new ErreurMetier(CodeErreur.CODE_SECURITE_INVALIDE, "RG-SEC-02",
+                            "Mot de passe de connexion incorrect.");
+                }
+            } else if (ancienCode == null || ancienCode.isBlank()) {
                 throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-SEC-01",
-                        "L'ancien code de sécurité à 4 chiffres est obligatoire pour le modifier.");
-            }
-            if (!encodeur.matches(ancienCode, admin.getCodeSecuriteHash())) {
+                        "L'ancien code de sécurité à 4 chiffres (ou votre mot de passe) est obligatoire pour le modifier.");
+            } else if (!encodeur.matches(ancienCode, admin.getCodeSecuriteHash())) {
                 audit.tracer(adminId, "ECHEC_MODIFICATION_CODE_SECURITE", null,
                         "Tentative de modification avec un ancien code erroné");
                 throw new ErreurMetier(CodeErreur.CODE_SECURITE_INVALIDE, "RG-SEC-02",

@@ -1,6 +1,8 @@
 // Charte graphique Karavan officielle.
 @use '@angular/material' as mat;
 @use './app/shared/animations' as anim;
+// Drapeaux ISO 3166-1 (SVG 4:3 embarqués, aucun CDN)
+@use 'flag-icons/sass/flag-icons' with ($flag-icons-use-square: false);
 @import 'intl-tel-input/dist/css/intlTelInput.css';
 
 :root {

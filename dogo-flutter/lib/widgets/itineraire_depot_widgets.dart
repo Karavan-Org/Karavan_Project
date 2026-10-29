@@ -152,14 +152,14 @@ class FlecheGps extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.bissap.withValues(alpha: 0.45),
-            blurRadius: 14,
-            spreadRadius: 2,
+            color: Color(0x1F000000),
+            blurRadius: 12,
+            
           ),
         ],
       ),

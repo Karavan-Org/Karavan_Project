@@ -76,10 +76,6 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
   late AnimationController _doigtController;
   late Animation<double> _doigtTranslation;
 
-  // Contrôleur pour l'animation du halo pulsant autour de l'élément cible
-  late AnimationController _pulsationController;
-  late Animation<double> _pulsationScale;
-
   late List<_EtapeGuideData> _etapes;
 
   @override
@@ -96,16 +92,6 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
     _doigtTranslation = Tween<double>(begin: 0.0, end: 8.0).animate(
       CurvedAnimation(parent: _doigtController, curve: Curves.easeInOut),
     );
-
-    // Animation du halo pulsant autour de la cible
-    _pulsationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat();
-
-    _pulsationScale = Tween<double>(begin: 0.95, end: 1.25).animate(
-      CurvedAnimation(parent: _pulsationController, curve: Curves.easeOut),
-    );
   }
 
   @override
@@ -117,7 +103,6 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
   @override
   void dispose() {
     _doigtController.dispose();
-    _pulsationController.dispose();
     super.dispose();
   }
 
@@ -760,34 +745,16 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
     );
   }
 
-  /// Halo / projecteur lumineux pulsant qui encadre l'élément ciblé
+  /// Cadre fixe qui encadre l'élément ciblé
   Widget _buildHaloCible(double width, double height, bool isCircle) {
-    return AnimatedBuilder(
-      animation: _pulsationController,
-      builder: (context, child) {
-        return Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
-            borderRadius: isCircle ? null : BorderRadius.circular(16),
-            border: Border.all(
-              color: AppTheme.ocre,
-              width: 2.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.ocre.withValues(
-                  alpha: (0.30 + 0.35 * (1.0 - _pulsationScale.value / 1.25))
-                      .clamp(0.0, 1.0),
-                ),
-                blurRadius: 12 * _pulsationScale.value,
-                spreadRadius: 2.5 * _pulsationScale.value,
-              ),
-            ],
-          ),
-        );
-      },
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
+        borderRadius: isCircle ? null : BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.ocre, width: 2),
+      ),
     );
   }
 
@@ -810,12 +777,6 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
         shape: BoxShape.circle,
         border: Border.all(color: AppTheme.ocre, width: 2.5),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x55E6A823),
-            blurRadius: 16,
-            spreadRadius: 2,
-            offset: Offset(0, 3),
-          ),
           BoxShadow(
             color: Color(0x33000000),
             blurRadius: 10,

@@ -298,13 +298,12 @@ class ZonePortefeuilleNeumorphic extends StatelessWidget {
                         ? const [AppTheme.darkPrimaryDark, AppTheme.darkPrimaryDark, AppTheme.darkPrimaryDark]
                         : (couleurBouton ?? const [AppTheme.bissap, AppTheme.bissapProfond, AppTheme.bissapProfond]),
                     ),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
-                        color: (couleurBouton?.last ?? AppTheme.bissapProfond)
-                            .withValues(alpha: 0.40),
-                        offset: const Offset(0, 8),
-                        blurRadius: 18,
-                        spreadRadius: 0,
+                        color: Color(0x1F000000),
+                        offset: Offset(0, 8),
+                        blurRadius: 12,
+                        
                       ),
                     ],
                   ),

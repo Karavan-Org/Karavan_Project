@@ -23,6 +23,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    encoding: UTF-8
   servlet:
     multipart:
       max-file-size: 5MB
@@ -77,7 +78,7 @@ dogo:
   stockage:
     dossier: ${DOGO_STOCKAGE:./donnees/fichiers}
   google:
-    client-id: ${GOOGLE_CLIENT_ID:462534787008-glu9glf6979ldlth5dc2g9l6sjmnboah.apps.googleusercontent.com}
+    client-id: ${GOOGLE_CLIENT_ID:462534787008-7c48fkvh3n0nu65po72p005qr5qo05ot.apps.googleusercontent.com}
 
 smsgate:
   actif: ${SMSGATE_ACTIF:true}

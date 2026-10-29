@@ -55,11 +55,11 @@ export class AdminSecuriteService {
   /**
    * Configure ou met à jour le code de sécurité à 4 chiffres.
    */
-  configurerCode(nouveauCode: string, ancienCode?: string): Observable<any> {
+  configurerCode(nouveauCode: string, ancienCode?: string, motDePasse?: string): Observable<any> {
     return this.http
       .post<any>(
         `${API_URL}/admin/securite/configurer`,
-        { nouveauCode, ancienCode },
+        { nouveauCode, ancienCode, motDePasse },
         { withCredentials: true }
       )
       .pipe(

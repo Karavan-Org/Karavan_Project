@@ -81,24 +81,7 @@
       background: #FFFFFF;
       border: 1px solid #E2E8F0;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      cursor: pointer;
       user-select: none;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-      }
-
-      &.capsule-utilisateurs:hover {
-        border-color: #AC7F5E;
-        background: #FAF8F5;
-      }
-
-      &.capsule-colis:hover {
-        border-color: #EEA823;
-        background: #FFFDF7;
-      }
 
       .icone-animee {
         font-size: 16px;
@@ -160,7 +143,6 @@
         background: #AC7F5E;
         color: #FFFFFF;
         border-color: #AC7F5E;
-        box-shadow: 0 0 12px rgba(172, 127, 94, 0.45);
       }
 
       .icon-analytics {
@@ -248,34 +230,6 @@
       }
     }
 
-    .admin-avatar-pill {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
-
-      .avatar-cercle {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #AC7F5E 0%, #8E6445 100%);
-        border: 1.5px solid #EEA823;
-        color: #FFFFFF;
-        font-size: 13px;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(172, 127, 94, 0.35);
-      }
-
-      .avatar-chevron {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-        color: #64748B;
-      }
-    }
   }
 }
 
@@ -317,57 +271,7 @@
   }
 
   // --------------------------------------------------------------------------
-  // B. MINI-DÉCLENCHEUR FLOTTANT DISCRET (QUAND LES STATS SONT FERMÉES)
-  // --------------------------------------------------------------------------
-  .mini-capsule-stats-stage {
-    position: absolute;
-    left: 20px;
-    top: 20px;
-    z-index: 45;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(24, 54, 48, 0.85);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(238, 168, 35, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-
-    &:hover {
-      background: #AC7F5E;
-      border-color: #EEA823;
-      transform: scale(1.1);
-      box-shadow: 0 8px 24px rgba(172, 127, 94, 0.5);
-    }
-
-    &:active {
-      transform: scale(0.95);
-    }
-
-    .orb-icone {
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    .point-vert-pulse {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #34C759; // Olive Karavan
-      box-shadow: 0 0 6px #34C759;
-      animation: pulseGreen 2s infinite;
-    }
-  }
-
-  // --------------------------------------------------------------------------
-  // C. PANNEAU FLOTTANT DES STATISTIQUES (QUAND OUVERT)
+  // B. PANNEAU FLOTTANT DES STATISTIQUES (QUAND OUVERT)
   // --------------------------------------------------------------------------
   .tiroir-stats-gauche {
     position: absolute;

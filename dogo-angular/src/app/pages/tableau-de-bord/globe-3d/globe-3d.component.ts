@@ -11,12 +11,18 @@ import {
   Output,
   PLATFORM_ID,
   SimpleChanges,
-  ViewChild
+  ViewChild,
+  inject
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
 import { GroupeCadranVue, RepartitionPaysVue } from '../tableau-de-bord.service';
+import { PaysResolverService } from '../../../core/services/pays-resolver.service';
+
+function echapperHtml(texte: string): string {
+  return String(texte ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+}
 
 interface ArcData {
   startLat: number;
@@ -37,21 +43,14 @@ interface ArcData {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="globe-container">
-      <!-- Anneaux orbitaux concentriques / Radar halo -->
-      <div class="orbital-rings-backdrop">
-        <div class="orbital-ring ring-1"></div>
-        <div class="orbital-ring ring-2"></div>
-        <div class="orbital-ring ring-3"></div>
-      </div>
-
       <!-- Canevas WebGL Globe 3D -->
       <div #globeDiv class="globe-viewport"></div>
 
       <!-- Superposition des commandes du globe -->
       <div class="globe-overlay-top">
         <div class="hub-badge">
-          <span class="pulsing-dot"></span>
-          <span class="hub-label">Hub Karavan : <strong>Bamako, Mali</strong></span>
+          <span class="fi fi-ml hub-drapeau"></span>
+          <span class="hub-label">Hub de destination : <strong>Bamako, Mali</strong></span>
         </div>
 
         <div class="globe-actions">
@@ -94,45 +93,9 @@ interface ArcData {
       width: 100%;
       height: 100%;
       min-height: 520px;
-      background: radial-gradient(circle at 50% 50%, #172544 0%, #0b1325 65%, #050a14 100%);
-      border-radius: 24px;
+      background: linear-gradient(180deg, #13212F 0%, #0C1620 100%);
+      border-radius: 16px;
       overflow: hidden;
-    }
-
-    .orbital-rings-backdrop {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      z-index: 1;
-      overflow: hidden;
-    }
-
-    .orbital-ring {
-      position: absolute;
-      border-radius: 50%;
-      pointer-events: none;
-
-      &.ring-1 {
-        width: 480px;
-        height: 480px;
-        border: 1.5px solid rgba(238, 168, 35, 0.22);
-        box-shadow: 0 0 50px rgba(238, 168, 35, 0.15);
-      }
-
-      &.ring-2 {
-        width: 680px;
-        height: 680px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-      }
-
-      &.ring-3 {
-        width: 880px;
-        height: 880px;
-        border: 1px dashed rgba(255, 255, 255, 0.05);
-      }
     }
 
     .globe-viewport {
@@ -162,31 +125,22 @@ interface ArcData {
     .hub-badge {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      background: rgba(24, 54, 48, 0.88);
-      backdrop-filter: blur(10px);
-      padding: 7px 15px;
-      border-radius: 30px;
-      border: 1px solid rgba(238, 168, 35, 0.3);
-      color: #FAF8F5;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.96);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      color: #1F2937;
       font-size: 12.5px;
       pointer-events: auto;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
 
-    .pulsing-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #34C759; // Olive Karavan
-      box-shadow: 0 0 10px #34C759;
-      animation: pulse 1.8s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.8); }
-      70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(52, 199, 89, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+    .hub-drapeau {
+      width: 18px;
+      height: 13px;
+      border-radius: 2px;
+      box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
     }
 
     .globe-actions {
@@ -199,36 +153,31 @@ interface ArcData {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(24, 54, 48, 0.85);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(238, 168, 35, 0.25);
-      color: #FAF8F5;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #E5E7EB;
       font-size: 12px;
       font-weight: 600;
-      padding: 6px 13px;
-      border-radius: 20px;
+      padding: 6px 12px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: background 0.15s ease, border-color 0.15s ease;
 
       mat-icon {
         font-size: 16px;
         width: 16px;
         height: 16px;
-        color: #EEA823;
       }
 
       &:hover {
-        background: #AC7F5E;
-        border-color: #EEA823;
-        color: #FFFFFF;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(172, 127, 94, 0.4);
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.28);
       }
 
       &.active {
-        border-color: #EEA823;
-        background: rgba(172, 127, 94, 0.35);
-        color: #EEA823;
+        background: #FFFFFF;
+        border-color: #FFFFFF;
+        color: #111827;
       }
     }
 
@@ -239,19 +188,19 @@ interface ArcData {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #AC7F5E;
-      border: 1px solid #EEA823;
-      color: #FAF8F5;
+      background: #FFFFFF;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      color: #1F2937;
       font-size: 12px;
-      padding: 5px 12px;
-      border-radius: 20px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      padding: 5px 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
       z-index: 10;
 
       .btn-fermer-filtre {
         background: transparent;
         border: none;
-        color: #FAF8F5;
+        color: #6B7280;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -275,6 +224,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Output() paysChoisi = new EventEmitter<string | null>();
   @Output() groupeChoisi = new EventEmitter<GroupeCadranVue>();
 
+  private readonly paysResolver = inject(PaysResolverService);
   private globeInstance: any = null;
   autoRotationActive = true;
   private resizeObserver: ResizeObserver | null = null;
@@ -318,57 +268,38 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         .height(hauteur)
         .backgroundColor('rgba(0, 0, 0, 0)')
         .showAtmosphere(true)
-        .atmosphereColor('#EEA823')
-        .atmosphereAltitude(0.18)
+        .atmosphereColor('#A9BCD0')
+        .atmosphereAltitude(0.1)
         .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
-        .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
         .arcStartLat('startLat')
         .arcStartLng('startLng')
         .arcEndLat('endLat')
         .arcEndLng('endLng')
         .arcColor('color')
-        .arcAltitude(0.26)
+        .arcAltitude(0.2)
         .arcStroke('stroke')
-        .arcDashLength(0.5)
-        .arcDashGap(0.14)
-        .arcDashInitialGap(() => Math.random())
-        .arcDashAnimateTime(1600)
-        .ringsData([])
-        .ringLat('lat')
-        .ringLng('lng')
-        .ringColor((d: any) => (t: number) => `rgba(${d.rgb || '238, 168, 35'}, ${Math.max(0, 1 - t)})`)
-        .ringMaxRadius(5)
-        .ringPropagationSpeed(2)
-        .ringRepeatPeriod(1000)
         .htmlElementsData([])
         .htmlElement((d: any) => {
           const el = document.createElement('div');
           el.style.transform = 'translate(-50%, -100%)';
-          el.style.cursor = 'pointer';
-
-          if (d.isHub) {
-            el.innerHTML = `
-              <div style="display:flex; flex-direction:column; align-items:center;">
-                <div style="background:#183630; color:#FFFFFF; padding:4px 9px; border-radius:14px; font-size:11px; font-weight:800; box-shadow:0 0 16px rgba(52,199,89,0.8); border:1.5px solid #34C759; white-space:nowrap; display:flex; align-items:center; gap:5px;">
-                  <span>🇲🇱</span>
-                  <span>Hub Bamako</span>
-                </div>
-                <div style="width:2px; height:8px; background:#34C759;"></div>
-                <div style="width:6px; height:6px; border-radius:50%; background:#34C759; box-shadow:0 0 8px #34C759;"></div>
+          el.style.cursor = d.isHub ? 'default' : 'pointer';
+          const code = d.isHub ? 'ml' : String(d.codeIso).toLowerCase().replace(/[^a-z]/g, '');
+          const libelle = d.isHub ? 'Bamako' : echapperHtml(d.name);
+          const compteur = d.isHub
+            ? '<span style="color:#6B7280; font-weight:500;">Destination</span>'
+            : `<span style="color:#6B7280; font-weight:500;">${d.nombreGroupes} groupe${d.nombreGroupes > 1 ? 's' : ''}</span>`;
+          el.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <div style="background:#FFFFFF; color:#111827; padding:4px 8px; border-radius:6px; font:600 11px/1.2 var(--font-texte, sans-serif); border:1px solid rgba(15,23,42,0.08); box-shadow:0 2px 6px rgba(0,0,0,0.3); white-space:nowrap; display:flex; align-items:center; gap:6px;">
+                <span class="fi fi-${code}" style="width:16px; height:12px; border-radius:2px; box-shadow:inset 0 0 0 0.5px rgba(0,0,0,0.15);"></span>
+                <span>${libelle}</span>
+                ${compteur}
               </div>
-            `;
-          } else {
-            const couleur = d.couleur || '#EEA823';
-            el.innerHTML = `
-              <div style="display:flex; flex-direction:column; align-items:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                <div style="background:rgba(24, 54, 48, 0.94); color:#FFFFFF; padding:3px 8px; border-radius:14px; font-size:11px; font-weight:700; box-shadow:0 0 14px ${couleur}, 0 4px 10px rgba(0,0,0,0.5); border:1.5px solid ${couleur}; white-space:nowrap; display:flex; align-items:center; gap:5px;">
-                  <img src="https://flagcdn.com/w40/${d.codeIso.toLowerCase()}.png" style="width:16px; height:11px; border-radius:2px; box-shadow:0 1px 2px rgba(0,0,0,0.4); object-fit:cover; display:inline-block;" alt="${d.codeIso}" onerror="this.style.display='none'" />
-                  <span>${d.name}</span>
-                </div>
-                <div style="width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid ${couleur}; margin-top:-1px;"></div>
-                <div style="width:5px; height:5px; border-radius:50%; background:${couleur}; box-shadow:0 0 6px ${couleur}; margin-top:1px;"></div>
-              </div>
-            `;
+              <div style="width:1px; height:8px; background:rgba(255,255,255,0.7);"></div>
+              <div style="width:5px; height:5px; border-radius:50%; background:#FFFFFF;"></div>
+            </div>
+          `;
+          if (!d.isHub) {
             el.onclick = () => {
               this.selectionnerPays(d.codeIso);
               if (d.groupePrincipal) {
@@ -409,15 +340,18 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.http.get('/assets/geo/ne_110m_admin_0_countries.geojson').subscribe({
       next: (geoJson: any) => {
         if (!this.globeInstance) return;
+        // Frontières fines ; seuls le Mali et les pays d'origine des groupes sont légèrement teintés
         this.globeInstance
-          .hexPolygonsData(geoJson.features)
-          .hexPolygonResolution(3)
-          .hexPolygonMargin(0.3)
-          .hexPolygonColor((d: any) => {
-            const code = d.properties?.ISO_A2 || d.properties?.ADM0_A3;
-            if (code === 'MLI' || code === 'ML') return '#34C759'; // Mali : Olive officiel Karavan
-            const aDesGroupes = this.repartitionPays.some(p => p.codeIso === code);
-            return aDesGroupes ? '#EEA823' : 'rgba(255, 255, 255, 0.08)'; // Ocre Karavan
+          .polygonsData(geoJson.features)
+          .polygonAltitude(0.004)
+          .polygonSideColor(() => 'rgba(0, 0, 0, 0)')
+          .polygonStrokeColor(() => 'rgba(255, 255, 255, 0.22)')
+          .polygonCapColor((d: any) => {
+            // Natural Earth code France/Norvège en ISO_A2 = -99 : ISO_A2_EH porte le vrai code
+            const code = d.properties?.ISO_A2_EH || d.properties?.ISO_A2;
+            if (code === 'ML') return 'rgba(255, 255, 255, 0.35)';
+            const aDesGroupes = this.repartitionPays.some(p => p.codeIso?.toUpperCase() === code);
+            return aDesGroupes ? 'rgba(238, 168, 35, 0.35)' : 'rgba(0, 0, 0, 0)';
           });
       },
       error: () => {}
@@ -428,13 +362,6 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (!this.globeInstance) return;
 
     const arcs: ArcData[] = [];
-    const rings: any[] = [
-      {
-        lat: this.BAMAKO_LAT,
-        lng: this.BAMAKO_LNG,
-        rgb: '52, 199, 89'
-      }
-    ];
     const htmlPoints: any[] = [
       {
         lat: this.BAMAKO_LAT,
@@ -443,28 +370,6 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         isHub: true
       }
     ];
-
-    const paletteCouleurs: Record<string, string> = {
-      CI: '#EEA823', // Ocre Karavan
-      SN: '#AC7F5E', // Bissap Karavan
-      MA: '#D97706', // Ocre terre
-      GH: '#F59E0B', // Ambre doré
-      CN: '#E11D48', // Rouge grenat
-      TR: '#EA580C', // Terre d'Orient
-      BR: '#34C759', // Vert olive
-      FR: '#64748B'  // Ardoise neutre
-    };
-
-    const paletteRgb: Record<string, string> = {
-      CI: '238, 168, 35',
-      SN: '172, 127, 94',
-      MA: '217, 119, 6',
-      GH: '245, 158, 11',
-      CN: '225, 29, 72',
-      TR: '234, 88, 12',
-      BR: '52, 199, 89',
-      FR: '100, 116, 139'
-    };
 
     // Indexation de tous les pays à afficher (depuis repartitionPays et depuis les groupes actifs)
     const paysMap = new Map<string, { codeIso: string; nomFr: string; latitude: number; longitude: number; nombreGroupes: number }>();
@@ -499,41 +404,32 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
 
     for (const pays of paysMap.values()) {
-      const couleur = paletteCouleurs[pays.codeIso] || '#EEA823';
       const groupesDuPays = (this.groupes || []).filter(
         g => g.paysOrigine?.codeIso?.toUpperCase() === pays.codeIso
       );
       const groupePrincipal = groupesDuPays[0] || null;
       const nbGroupes = Math.max(pays.nombreGroupes, groupesDuPays.length);
-
-      const rgbVal = paletteRgb[pays.codeIso] || '238, 168, 35';
+      const estFiltre = this.paysFiltre === pays.codeIso;
+      const nomFr = this.paysResolver.resoudre(pays.codeIso).nomFr || pays.nomFr;
 
       arcs.push({
         startLat: pays.latitude,
         startLng: pays.longitude,
         endLat: this.BAMAKO_LAT,
         endLng: this.BAMAKO_LNG,
-        color: [couleur, '#34C759'],
-        name: pays.nomFr,
+        color: estFiltre ? ['rgba(238, 168, 35, 0.9)', 'rgba(255, 255, 255, 0.9)'] : ['rgba(238, 168, 35, 0.55)', 'rgba(255, 255, 255, 0.55)'],
+        name: nomFr,
         codeIso: pays.codeIso,
         nombreGroupes: nbGroupes,
-        stroke: this.paysFiltre === pays.codeIso ? 3.4 : 2.6
-      });
-
-      rings.push({
-        lat: pays.latitude,
-        lng: pays.longitude,
-        rgb: rgbVal
+        stroke: estFiltre ? 0.9 : 0.5
       });
 
       htmlPoints.push({
         lat: pays.latitude,
         lng: pays.longitude,
-        name: pays.nomFr,
+        name: nomFr,
         codeIso: pays.codeIso,
         nombreGroupes: nbGroupes,
-        couleur: couleur,
-        drapeau: this.drapeauParCode(pays.codeIso),
         isHub: false,
         groupes: groupesDuPays,
         groupePrincipal: groupePrincipal
@@ -541,7 +437,6 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
 
     this.globeInstance.arcsData(arcs);
-    this.globeInstance.ringsData(rings);
     this.globeInstance.htmlElementsData(htmlPoints);
   }
 
@@ -591,11 +486,4 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
   }
 
-  private drapeauParCode(codeIso?: string | null): string {
-    if (!codeIso || codeIso.length !== 2) return '🌐';
-    const c = codeIso.toUpperCase();
-    const d1 = String.fromCodePoint(0x1F1E6 + (c.charCodeAt(0) - 65));
-    const d2 = String.fromCodePoint(0x1F1E6 + (c.charCodeAt(1) - 65));
-    return d1 + d2;
-  }
 }

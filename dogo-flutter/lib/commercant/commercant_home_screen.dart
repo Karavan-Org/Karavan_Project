@@ -425,7 +425,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            "Fret Chine 🇨🇳 & Turquie 🇹🇷 vers Bamako avec fonds sécurisés sous séquestre.",
+                            "Fret Chine et Turquie vers Bamako avec fonds sécurisés sous séquestre.",
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.85),
                               fontSize: 12,

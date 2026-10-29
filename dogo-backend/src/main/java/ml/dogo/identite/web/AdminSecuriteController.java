@@ -21,12 +21,15 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/admin/securite")
+// Tout administrateur, quelles que soient ses permissions, gère son propre code de sécurité
+@PreAuthorize("hasRole('ADMINISTRATEUR')")
 public class AdminSecuriteController {
 
     public record ConfigurerCodeRequete(
             @NotBlank @Pattern(regexp = "^\\d{4}$", message = "Le code doit comporter exactement 4 chiffres")
             String nouveauCode,
-            String ancienCode
+            String ancienCode,
+            String motDePasse
     ) {}
 
     public record VerifierCodeRequete(
@@ -41,16 +44,14 @@ public class AdminSecuriteController {
     }
 
     @GetMapping("/statut")
-    @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'KYC_VALIDER', 'AUDIT_LIRE', 'RECEPTION_VALIDER', 'REMBOURSEMENT_APPROUVER')")
     public AdminSecuriteService.StatutSecuriteVue statut(@AuthenticationPrincipal UtilisateurCourant moi) {
         return adminSecurite.obtenirStatut(moi.id());
     }
 
     @PostMapping("/configurer")
-    @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'KYC_VALIDER', 'AUDIT_LIRE', 'RECEPTION_VALIDER', 'REMBOURSEMENT_APPROUVER')")
     public ResponseEntity<Map<String, Object>> configurer(@AuthenticationPrincipal UtilisateurCourant moi,
                                                           @Valid @RequestBody ConfigurerCodeRequete r) {
-        adminSecurite.configurerCode(moi.id(), r.nouveauCode(), r.ancienCode());
+        adminSecurite.configurerCode(moi.id(), r.nouveauCode(), r.ancienCode(), r.motDePasse());
         return ResponseEntity.ok(Map.of(
                 "statut", "SUCCES",
                 "message", "Code de sécurité à 4 chiffres configuré avec succès.",
@@ -59,7 +60,6 @@ public class AdminSecuriteController {
     }
 
     @PostMapping("/verifier")
-    @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'COMPTE_SUSPENDRE', 'KYC_VALIDER', 'AUDIT_LIRE', 'RECEPTION_VALIDER', 'REMBOURSEMENT_APPROUVER')")
     public ResponseEntity<Map<String, Object>> verifier(@AuthenticationPrincipal UtilisateurCourant moi,
                                                         @Valid @RequestBody VerifierCodeRequete r) {
         adminSecurite.verifierCode(moi.id(), r.code());

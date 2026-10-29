@@ -2,7 +2,7 @@
 // BARRE LATÉRALE KARAVAN — panneau « verre » sur fond terre (design system Karavan)
 // Couleurs tirées exclusivement des tokens du design system (styles.scss) :
 // - Panneau : --terre, nuancé de --primary
-// - Onglet actif : --bg-app (se fond dans la zone de contenu), icône --primary
+// - Onglet actif : --bg-app, le fond même de la page (body) : il s'y fond, ouvert comme en rail
 // - Badges & accents : --secondary (ocre), --success (validation)
 // - Pilules : rayon 30px comme les boutons du design system
 // ==============================================================================
@@ -15,6 +15,28 @@ $texte-clair: rgba(255, 255, 255, 0.92);
 $texte-doux: rgba(255, 255, 255, 0.55);
 $rayon-pilule: 30px;
 $rayon-courbe: 16px; // Congés inversés de l'onglet actif
+
+// L'hôte réserve la largeur du rail (12px de marge + 68px) : ouverte au survol, la barre
+// passe par-dessus la page sans la décaler (le globe 3D n'est pas recalculé)
+:host {
+  display: block;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+:host(.survol) {
+  width: 80px;
+
+  .sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      18px 0 40px rgba(0, 0, 0, 0.18);
+  }
+}
 
 .sidebar {
   display: flex;
@@ -32,9 +54,7 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
   border: 1px solid $verre-bordure;
   border-right: none; // L'onglet actif rejoint le contenu sans trait
   border-radius: 28px 0 0 28px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    -6px 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
   color: $texte-clair;
   font-family: var(--font-texte, system-ui, -apple-system, sans-serif);
   transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -47,9 +67,6 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
   // ----------------------------------------------------------------------------
   &.sidebar-reduite {
     width: 68px;
-    border-right: 1px solid $verre-bordure;
-    border-radius: 28px;
-    margin-right: 12px;
 
     .brand-header {
       padding: 16px 0 10px;
@@ -63,18 +80,15 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
     }
 
     .nav-container {
-      padding: 12px 0;
-      align-items: center;
+      padding: 12px 0 12px 14px;
     }
 
     .nav-list {
-      align-items: center;
       gap: 10px;
 
       .nav-list-item {
         width: 100%;
         display: flex;
-        justify-content: center;
       }
 
       .nav-item {
@@ -85,15 +99,12 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
         justify-content: center;
         border-radius: 50%;
 
-        // Pastille active : disque clair, icône primaire, sans débord
+        // Onglet actif : la pastille s'étire jusqu'au bord et se fond dans la page
         &.active {
-          border-radius: 50%;
-          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-
-          &::before,
-          &::after {
-            display: none;
-          }
+          width: 100%;
+          justify-content: flex-start;
+          padding-left: 10px;
+          border-radius: $rayon-pilule 0 0 $rayon-pilule;
         }
 
         .nav-icon {
@@ -290,8 +301,13 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
       text-decoration: none;
       font-size: 13px;
       font-weight: 600;
-      transition: background 0.2s ease, color 0.2s ease;
+      outline: none;
+      transition: background 0.25s ease, color 0.25s ease, border-radius 0.25s ease;
       cursor: pointer;
+
+      &:focus-visible {
+        box-shadow: 0 0 0 2px var(--secondary);
+      }
 
       &:hover {
         background: color-mix(in srgb, var(--primary) 45%, transparent);
@@ -312,6 +328,10 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
         border-radius: $rayon-pilule 0 0 $rayon-pilule;
         color: var(--terre);
         font-weight: 800;
+
+        &:focus-visible {
+          box-shadow: inset 0 0 0 2px var(--secondary);
+        }
 
         .nav-icon {
           color: var(--primary);

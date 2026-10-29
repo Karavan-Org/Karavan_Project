@@ -16,6 +16,7 @@ import {
   PaysReference,
   TableauDeBordService
 } from '../tableau-de-bord.service';
+import { PaysResolverService } from '../../../core/services/pays-resolver.service';
 
 @Component({
   selector: 'app-modal-assigner-pays',
@@ -70,7 +71,7 @@ import {
                     <option value="" disabled selected>Choisir un pays...</option>
                     @for (p of listePays; track p.codeIso) {
                       <option [value]="p.codeIso">
-                        {{ drapeau(p.codeIso) }} {{ p.nomFr }} ({{ p.codeIso }})
+                        {{ nomPays(p) }} ({{ p.codeIso }})
                       </option>
                     }
                   </select>
@@ -348,6 +349,12 @@ export class ModalAssignerPaysComponent implements OnInit {
 
   private readonly service = inject(TableauDeBordService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly paysResolver = inject(PaysResolverService);
+
+  nomPays(p: PaysReference): string {
+    const res = this.paysResolver.resoudre(p.codeIso || p.nomFr);
+    return res.reconnu ? res.nomFr : p.nomFr;
+  }
 
   chargement = true;
   groupesSansPays: GroupeCadranVue[] = [];
@@ -395,11 +402,5 @@ export class ModalAssignerPaysComponent implements OnInit {
     });
   }
 
-  drapeau(codeIso: string): string {
-    if (!codeIso || codeIso.length !== 2) return '🌐';
-    const p = codeIso.toUpperCase().charCodeAt(0) - 65 + 0x1F1E6;
-    const s = codeIso.toUpperCase().charCodeAt(1) - 65 + 0x1F1E6;
-    return String.fromCodePoint(p, s);
-  }
 }
 

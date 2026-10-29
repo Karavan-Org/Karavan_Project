@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostBinding, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { AdminApiService } from '../../core/services/admin-api.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { CommonModule } from '@angular/common';
@@ -7,7 +7,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 import { AdminSecuriteService } from '../../core/services/admin-securite.service';
 import { PERMISSIONS_PAGES } from '../../core/permissions';
-import { TableauDeBordService } from '../../pages/tableau-de-bord/tableau-de-bord.service';
 
 interface MenuItem {
   label: string;
@@ -39,15 +38,37 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private readonly api = inject(AdminApiService);
   private readonly notifications = inject(NotificationService);
   readonly securite = inject(AdminSecuriteService);
-  private readonly tbService = inject(TableauDeBordService);
   private minuterie?: ReturnType<typeof setInterval>;
 
   /**
-   * Mode miniature/réduit : FERMÉ PAR DÉFAUT conformément à la demande utilisateur.
-   * La barre apparaît/s'agrandit uniquement lorsque l'on clique dessus,
-   * et se referme en mode miniature lorsqu'on la ferme.
+   * Mode miniature/réduit : FERMÉ PAR DÉFAUT. La barre s'ouvre au survol (temporairement)
+   * ou au clic (durablement), et revient en rail quand on la ferme.
    */
-  readonly estReduite = signal<boolean>(true);
+  private readonly replieeManuellement = signal(true);
+
+  /** Ouverture temporaire au survol : la barre passe par-dessus le contenu sans le décaler */
+  private readonly ouverteAuSurvol = signal(false);
+  private minuterieSurvol?: ReturnType<typeof setTimeout>;
+
+  readonly estReduite = computed(() => this.replieeManuellement() && !this.ouverteAuSurvol());
+
+  @HostBinding('class.survol')
+  get enSurvol(): boolean {
+    return this.ouverteAuSurvol();
+  }
+
+  @HostListener('mouseenter')
+  onSurvolEntree(): void {
+    if (!this.replieeManuellement()) return;
+    // Léger délai : un simple passage de la souris n'ouvre pas la barre
+    this.minuterieSurvol = setTimeout(() => this.ouverteAuSurvol.set(true), 120);
+  }
+
+  @HostListener('mouseleave')
+  onSurvolSortie(): void {
+    clearTimeout(this.minuterieSurvol);
+    this.ouverteAuSurvol.set(false);
+  }
 
   /** Compteurs de badges (relus périodiquement) */
   readonly kycEnAttente = signal(0);
@@ -55,8 +76,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Par défaut : TOUJOURS fermé en mode miniature (rail compact à icônes)
-    // S'ouvre uniquement au clic explicite de l'utilisateur.
-    this.estReduite.set(true);
+    // S'ouvre au survol ou au clic explicite de l'utilisateur.
+    this.replieeManuellement.set(true);
 
     this.chargerBadges();
     this.minuterie = setInterval(() => this.chargerBadges(), 60_000);
@@ -64,18 +85,22 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearInterval(this.minuterie);
+    clearTimeout(this.minuterieSurvol);
   }
 
   basculerReduite(): void {
-    this.estReduite.set(!this.estReduite());
+    this.replieeManuellement.set(!this.estReduite());
+    this.ouverteAuSurvol.set(false);
   }
 
   ouvrirSidebar(): void {
-    this.estReduite.set(false);
+    this.replieeManuellement.set(false);
+    this.ouverteAuSurvol.set(false);
   }
 
   fermerSidebar(): void {
-    this.estReduite.set(true);
+    this.replieeManuellement.set(true);
+    this.ouverteAuSurvol.set(false);
   }
 
   onSidebarClick(event: MouseEvent): void {
@@ -124,12 +149,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   parRoute(_: number, item: MenuItem): string {
     return item.route;
-  }
-
-  onItemClick(item: MenuItem): void {
-    if (item.route === '/admin' && this.router.url === '/admin') {
-      this.tbService.basculerPanneauStats();
-    }
   }
 
   private readonly menu: MenuSection[] = [

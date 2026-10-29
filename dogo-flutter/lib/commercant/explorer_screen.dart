@@ -1,6 +1,7 @@
 import '../widgets/tab_navigation_scope.dart';
 import '../widgets/image_produit.dart';
 import '../widgets/drapeau_pays_widget.dart';
+import '../services/pays_resolver_service.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bouton_bascule_theme.dart';
@@ -27,11 +28,17 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   /// et ne proposent jamais une valeur sans résultat.
   static String _cle(String s) => s.trim().toLowerCase();
 
+  /// « CN », « China » et « Chine » désignent le même pays : une seule puce, au nom officiel.
+  static String _clePays(String s) {
+    final info = PaysResolverService.instance.resoudre(s);
+    return info.estReconnu ? info.codeIso : _cle(s);
+  }
+
   List<String> get _pays {
     final vus = <String, String>{};
     for (final c in FavorisService.instance.toutesLesCampagnes) {
       final p = c.paysOrigine.trim();
-      if (p.isNotEmpty) vus.putIfAbsent(_cle(p), () => p);
+      if (p.isNotEmpty) vus.putIfAbsent(_clePays(p), () => PaysResolverService.instance.resoudre(p).nomFr);
     }
     return ["Tous", ...vus.values];
   }
@@ -106,7 +113,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             if (_categorieActive != "Tous" && _cle(c.categorie) != _cle(_categorieActive)) {
               return false;
             }
-            if (_paysActif != "Tous" && _cle(c.paysOrigine) != _cle(_paysActif)) {
+            if (_paysActif != "Tous" && _clePays(c.paysOrigine) != _clePays(_paysActif)) {
               return false;
             }
             if (_searchQuery.isNotEmpty) {
@@ -333,13 +340,11 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.black.withValues(alpha: 0.25)
-                  : const Color(0x062C241E),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
+              color: Color(0x1F000000),
+              blurRadius: 12,
+              offset: Offset(0, 3),
             ),
           ],
         ),

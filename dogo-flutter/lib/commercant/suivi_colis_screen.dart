@@ -378,11 +378,11 @@ class _SuiviColisScreenState extends State<SuiviColisScreen> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(28),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
-                  color: phaseCourante.couleur.withValues(alpha: 0.28),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
+                  color: Color(0x1F000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 8),
                 ),
               ],
             ),
