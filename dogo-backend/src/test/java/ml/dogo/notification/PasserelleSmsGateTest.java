@@ -51,3 +51,4 @@ class PasserelleSmsGateTest {
         assertThat(gate.envoyer("+22370123456", "Code 9876")).isTrue();
     }
 }
+

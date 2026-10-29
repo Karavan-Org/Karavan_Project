@@ -12,6 +12,7 @@ import 'screens/splash_launch_screen.dart';
 import 'models/role_acteur.dart';
 import 'services/api/api_config.dart';
 import 'services/lien_groupe.dart';
+import 'services/google_sign_in_service.dart';
 import 'services/theme_service.dart';
 import 'theme/app_theme.dart';
 
@@ -20,6 +21,10 @@ void main() async {
 
   // Chargement de la préférence de thème (clair/sombre)
   await ThemeService.instance.initialiser();
+
+  // Initialisation précoce du service Google Sign-In v7+ (Web & Android)
+  GoogleSignInService.instance.definirNavigatorKey(KaravanApp.navigatorKey);
+  await GoogleSignInService.instance.initialiser();
 
   // Configuration de la barre de statut système
   SystemChrome.setSystemUIOverlayStyle(
@@ -40,6 +45,8 @@ typedef DogoApp = KaravanApp;
 class KaravanApp extends StatelessWidget {
   const KaravanApp({super.key});
 
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   /// Lien d'invitation ouvert depuis l'extérieur : https://karavan.ml/groupe/12 arrive en « /groupe/12 »,
   /// karavan://groupe/12 en « /12 ».
   static int? _groupeDuLien(String? route) {
@@ -55,6 +62,7 @@ class KaravanApp extends StatelessWidget {
       valueListenable: ThemeService.instance.themeModeNotifier,
       builder: (context, themeMode, _) {
         return MaterialApp(
+          navigatorKey: KaravanApp.navigatorKey,
           title: 'Karavan',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,

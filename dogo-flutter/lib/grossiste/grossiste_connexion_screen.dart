@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../services/validateur_mot_de_passe.dart';
-import '../widgets/bouton_auth0_signin.dart';
+import '../widgets/bouton_google_signin.dart';
 import '../models/role_acteur.dart';
 import '../theme/app_theme.dart';
 import 'grossiste_acces.dart';
@@ -406,8 +406,8 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
 
                   const SizedBox(height: 18),
 
-                  // Continuer avec Auth0 (rôle grossiste avec confirmation 2FA)
-                  const BoutonAuth0SignIn(role: RoleActeur.grossiste),
+                  // Continuer avec Google (rôle grossiste)
+                  const BoutonGoogleSignIn(role: RoleActeur.grossiste),
 
                   const SizedBox(height: 36),
                   GestureDetector(

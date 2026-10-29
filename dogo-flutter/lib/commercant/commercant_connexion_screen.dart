@@ -1,5 +1,5 @@
 import '../widgets/bouton_bascule_theme.dart';
-import '../widgets/bouton_auth0_signin.dart';
+import '../widgets/bouton_google_signin.dart';
 import '../widgets/mot_de_passe_oublie_modal.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
@@ -488,8 +488,8 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
 
               const SizedBox(height: 18),
 
-              // Continuer avec Auth0 (fédération d'identité & inscription)
-              BoutonAuth0SignIn(role: widget.role),
+              // Continuer avec Google (fédération Google Identity Services v7+)
+              BoutonGoogleSignIn(role: widget.role),
 
               const SizedBox(height: 24),
 

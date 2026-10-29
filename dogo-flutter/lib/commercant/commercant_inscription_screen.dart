@@ -1,5 +1,5 @@
 import '../widgets/bouton_bascule_theme.dart';
-import '../widgets/bouton_auth0_signin.dart';
+import '../widgets/bouton_google_signin.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -370,8 +370,8 @@ class _CommercantInscriptionScreenState
 
               const SizedBox(height: 18),
 
-              // S'inscrire rapidement avec Auth0
-              BoutonAuth0SignIn(role: widget.role, libelle: "S'inscrire avec Auth0"),
+              // S'inscrire rapidement avec Google (v7+)
+              BoutonGoogleSignIn(role: widget.role, libelle: "S'inscrire avec Google"),
 
               const SizedBox(height: 24),
 

@@ -140,3 +140,4 @@ public class PasserelleSmsGate implements PasserelleSms {
         public record TextMessage(String text) {}
     }
 }
+

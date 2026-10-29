@@ -57,19 +57,15 @@ class ApiConfig {
   static const String renvoyerOtp = '/api/auth/renvoyer-otp';
   static const String demandeResetMdp = '/api/auth/mot-de-passe-oublie/demande';
   static const String reinitialiserMdp = '/api/auth/mot-de-passe-oublie/reinitialiser';
-  // --- Endpoints Auth0 (Fédération d'identité & Inscription) ---
-  static const String auth0Auth = '/api/auth/auth0';
-  static const String auth0Completer = '/api/auth/auth0/completer';
-  static const String auth0DemanderOtp = '/api/auth/auth0/demander-otp';
-  static const String auth0ClientId = String.fromEnvironment('auth0_client_id', defaultValue: 'aRbZilGECDhT0ASJW4QckMPIYkWZumq0');
-  static const String auth0Domain = String.fromEnvironment('auth0_domain', defaultValue: 'dev-rat6iuh8y06rijeb.us.auth0.com');
-  static const String auth0Audience = String.fromEnvironment('auth0_audience', defaultValue: 'https://dev-rat6iuh8y06rijeb.us.auth0.com/api/v2/');
 
-  // Alias conservés pour compatibilité
-  static const String googleAuth = auth0Auth;
-  static const String googleCompleter = auth0Completer;
-  static const String googleDemanderOtp = auth0DemanderOtp;
-  static const String googleClientId = auth0ClientId;
+  // --- Endpoints Google OAuth2 (Fédération d'identité & Inscription RG-07) ---
+  static const String googleAuth = '/api/auth/google';
+  static const String googleCompleter = '/api/auth/google/completer';
+  static const String googleDemanderOtp = '/api/auth/google/demander-otp';
+  static const String googleClientId = String.fromEnvironment(
+    'google_client_id',
+    defaultValue: '462534787008-glu9glf6979ldlth5dc2g9l6sjmnboah.apps.googleusercontent.com',
+  );
 
   // --- Endpoints Dossier KYC (Grossiste / Courtier) ---
   static const String kyc = '/api/kyc';

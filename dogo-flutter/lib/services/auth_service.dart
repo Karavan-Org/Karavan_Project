@@ -25,26 +25,8 @@ class AuthService {
   Map<String, String> get _entetesPlateforme =>
       kIsWeb ? const {'X-Client-Platform': 'flutter-web'} : const {};
 
-  /// Restaure la session au démarrage à partir de flutter_secure_storage ou retour Auth0 URL
+  /// Restaure la session au démarrage à partir de flutter_secure_storage
   Future<UtilisateurProfil?> restaurerSession() async {
-    // 0. Détection d'un retour d'authentification Auth0 via l'URL Web (fragment hash #id_token=... ou query param)
-    if (kIsWeb) {
-      final uri = Uri.base;
-      String? idToken = uri.queryParameters['id_token'];
-      if ((idToken == null || idToken.isEmpty) && uri.fragment.isNotEmpty) {
-        final frag = Uri.splitQueryString(uri.fragment.replaceFirst(RegExp(r'^/?'), ''));
-        idToken = frag['id_token'];
-      }
-      if (idToken != null && idToken.isNotEmpty) {
-        try {
-          final res = await authentifierAuth0(idToken);
-          if (res['statut'] == 'CONNECTE' && res['profil'] is UtilisateurProfil) {
-            return res['profil'] as UtilisateurProfil;
-          }
-        } catch (_) {}
-      }
-    }
-
     final refreshToken =
         kIsWeb ? null : await SessionStorageService.instance.lireRefreshToken();
     if (!kIsWeb && (refreshToken == null || refreshToken.isEmpty)) {
@@ -273,11 +255,11 @@ class AuthService {
     );
   }
 
-  /// Authentification via jeton Auth0 (RG-07)
+  /// Authentification via jeton Google OAuth2 (RG-07)
   /// Renvoie soit {'statut': 'CONNECTE', 'profil': ...} soit {'statut': 'PROFIL_INCOMPLET', 'jetonInscription': ...}
-  Future<Map<String, dynamic>> authentifierAuth0(String idToken, {String? deviceId}) async {
+  Future<Map<String, dynamic>> authentifierGoogle(String idToken, {String? deviceId}) async {
     final response = await ApiClient.instance.postSansAuth(
-      ApiConfig.auth0Auth,
+      ApiConfig.googleAuth,
       body: {
         'idToken': idToken,
         'deviceId': deviceId ?? 'flutter-device-client',
@@ -288,7 +270,7 @@ class AuthService {
     if (response is! Map<String, dynamic>) {
       throw const ApiException(
         statusCode: 0,
-        message: 'Réponse inattendue du serveur lors de la connexion Auth0.',
+        message: 'Réponse inattendue du serveur lors de la connexion Google.',
       );
     }
 
@@ -314,13 +296,13 @@ class AuthService {
     return response;
   }
 
-  /// Étape 1 : Demande de code OTP pour finaliser l'inscription Auth0
-  Future<Map<String, dynamic>> demanderOtpAuth0Completer({
+  /// Étape 1 : Demande de code OTP SMS pour finaliser l'inscription Google
+  Future<Map<String, dynamic>> demanderOtpGoogleCompleter({
     required String jetonInscription,
     required String telephone,
   }) async {
     final response = await ApiClient.instance.postSansAuth(
-      ApiConfig.auth0DemanderOtp,
+      ApiConfig.googleDemanderOtp,
       body: {
         'jetonInscription': jetonInscription,
         'telephone': telephone,
@@ -330,8 +312,8 @@ class AuthService {
     return response is Map<String, dynamic> ? response : {};
   }
 
-  /// Étape 2 : Vérification OTP et finalisation de l'inscription / fusion Auth0
-  Future<UtilisateurProfil> completerAuth0EtConnecter({
+  /// Étape 2 : Validation du code OTP et création / fusion du compte Google Karavan
+  Future<UtilisateurProfil> completerGoogleEtConnecter({
     required String jetonInscription,
     required String telephone,
     required String codeOtp,
@@ -340,28 +322,32 @@ class AuthService {
     String? quartierBamako,
     String? deviceId,
   }) async {
+    final body = {
+      'jetonInscription': jetonInscription,
+      'telephone': telephone,
+      'codeOtp': codeOtp,
+      if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
+      if (nomBoutique != null) 'nomBoutique': nomBoutique,
+      if (quartierBamako != null) 'quartierBamako': quartierBamako,
+      'deviceId': deviceId ?? 'flutter-device-client',
+    };
+
     final response = await ApiClient.instance.postSansAuth(
-      ApiConfig.auth0Completer,
-      body: {
-        'jetonInscription': jetonInscription,
-        'telephone': telephone,
-        'codeOtp': codeOtp,
-        if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
-        if (nomBoutique != null) 'nomBoutique': nomBoutique,
-        if (quartierBamako != null) 'quartierBamako': quartierBamako,
-        'deviceId': deviceId ?? 'flutter-device-client',
-      },
+      ApiConfig.googleCompleter,
+      body: body,
       headers: _entetesPlateforme,
     );
 
     if (response is! Map<String, dynamic> || response['jeton'] is! String) {
       throw const ApiException(
         statusCode: 0,
-        message: 'Réponse inattendue lors de la complétion du compte Auth0.',
+        message: 'Échec de finalisation du compte Google Karavan.',
       );
     }
 
-    ApiClient.instance.definirJeton(response['jeton'] as String);
+    final jeton = response['jeton'] as String;
+    ApiClient.instance.definirJeton(jeton);
+
     final profil = UtilisateurProfil.fromJson(
         response['profil'] as Map<String, dynamic>? ?? {});
     profilNotifier.value = profil;
@@ -374,38 +360,6 @@ class AuthService {
 
     return profil;
   }
-
-  /// Rétrocompatibilité : redirection Google vers Auth0
-  Future<Map<String, dynamic>> authentifierGoogle(String idToken, {String? deviceId}) =>
-      authentifierAuth0(idToken, deviceId: deviceId);
-
-  Future<Map<String, dynamic>> demanderOtpGoogleCompleter({
-    required String jetonInscription,
-    required String telephone,
-  }) =>
-      demanderOtpAuth0Completer(
-        jetonInscription: jetonInscription,
-        telephone: telephone,
-      );
-
-  Future<UtilisateurProfil> completerGoogleEtConnecter({
-    required String jetonInscription,
-    required String telephone,
-    required String codeOtp,
-    String? typeActeur,
-    String? nomBoutique,
-    String? quartierBamako,
-    String? deviceId,
-  }) =>
-      completerAuth0EtConnecter(
-        jetonInscription: jetonInscription,
-        telephone: telephone,
-        codeOtp: codeOtp,
-        typeActeur: typeActeur,
-        nomBoutique: nomBoutique,
-        quartierBamako: quartierBamako,
-        deviceId: deviceId,
-      );
 
   /// Upload d'une photo de profil (JPEG, PNG, WEBP) vers le serveur (stockage sécurisé)
   Future<String> uploaderPhotoProfil(Uint8List octets,
