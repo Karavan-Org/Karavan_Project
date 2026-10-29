@@ -19,7 +19,7 @@ import '../widgets/onglet_navigation.dart';
 import '../widgets/tab_navigation_scope.dart';
 import '../widgets/didacticiel_guide_overlay.dart';
 
-/// Navigation principale Commerçant reproduisant fidèlement la maquette Figma Dogo
+/// Navigation principale Commerçant reproduisant fidèlement la maquette Figma Karavan
 /// avec animation FLUTTER FAB en ARC DE CERCLE (Radial / Semicircular Speed Dial)
 /// et effet de vague / ondulation organique autour du bouton central (+) :
 /// - Onglet 1 : Accueil (Vitrine des offres groupées et arrivages)

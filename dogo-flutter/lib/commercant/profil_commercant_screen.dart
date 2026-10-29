@@ -19,7 +19,7 @@ import '../utils/format.dart';
 import '../models/participation_model.dart';
 import '../services/groupe_api_service.dart';
 
-/// Écran du Profil Commerçant fidèle à la maquette Figma Dogo (Frame "profil")
+/// Écran du Profil Commerçant fidèle à la maquette Figma Karavan (Frame "profil")
 /// Nom & Téléphone : issus de la session connectée (repli Hawa Dagno)
 /// Badges : [Commerçant] [Niveau X (cliquable avec détail des avantages)]
 /// Stats : Nb commandes réelles & économies estimées

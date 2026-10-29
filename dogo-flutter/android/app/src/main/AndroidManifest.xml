@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.dogo_app">
+    package="com.example.karavan_app">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Itinéraire vers le dépôt affiché dans l'application (lib/widgets/itineraire_depot.dart) -->
@@ -41,13 +41,13 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="dogo.ml" android:pathPrefix="/groupe/" />
+                <data android:scheme="https" android:host="karavan.ml" android:pathPrefix="/groupe/" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="dogo" android:host="groupe" />
+                <data android:scheme="karavan" android:host="groupe" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

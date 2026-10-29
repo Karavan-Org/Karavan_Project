@@ -55,7 +55,7 @@ class _CommercantOtpScreenState extends State<CommercantOtpScreen> {
     _demarrerTimer();
     // Pré-remplir automatiquement le code en mode simulation/test
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Le backend ne renvoie le code qu'en profil demo (dogo.otp.afficher-dans-reponse)
+      // Le backend ne renvoie le code qu'en profil demo (karavan.otp.afficher-dans-reponse ou dogo.otp)
       final codeToFill = _codeSimulationCourant ?? '';
       if (codeToFill.length >= 4) {
         for (int i = 0; i < 4; i++) {

@@ -198,7 +198,7 @@ class _SelecteurEmplacementCarteDialogState
                     TileLayer(
                       urlTemplate:
                           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'ml.dogo.app',
+                      userAgentPackageName: 'com.example.karavan_app',
                     ),
                     MarkerLayer(
                       markers: [

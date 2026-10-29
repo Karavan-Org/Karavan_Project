@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test("Lien d'invitation : lien web, schéma dogo://, code et numéro", () {
+  test("Lien d'invitation : lien web, schéma karavan://, code et numéro", () {
     expect(LienGroupe.extraireId(LienGroupe.lien(42)), 42);
+    expect(LienGroupe.extraireId('karavan://groupe/7'), 7);
     expect(LienGroupe.extraireId('dogo://groupe/7'), 7);
+    expect(LienGroupe.extraireId('Rejoignez-nous : https://karavan.ml/groupe/15 merci'), 15);
     expect(LienGroupe.extraireId('Rejoignez-nous : https://dogo.ml/groupe/15 merci'), 15);
+    expect(LienGroupe.extraireId('karavan-9'), 9);
     expect(LienGroupe.extraireId('dogo-9'), 9);
     expect(LienGroupe.extraireId(' 31 '), 31);
     expect(LienGroupe.extraireId('bonjour'), isNull);

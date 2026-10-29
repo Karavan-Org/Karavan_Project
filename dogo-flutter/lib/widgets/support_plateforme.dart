@@ -3,7 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api/api_client.dart';
 import '../theme/app_theme.dart';
 
-/// Coordonnées du support, servies par le backend (/api/public/contact, configurées par DOGO_SUPPORT_*).
+/// Coordonnées du support, servies par le backend (/api/public/contact, configurées par KARAVAN_SUPPORT_*).
 class ContactPlateforme {
   final String telephone;
   final String whatsapp;

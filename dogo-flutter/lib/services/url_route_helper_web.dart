@@ -14,6 +14,7 @@ void synchroniserUrlWeb(String chemin) {
     }
     final espace = chemin.replaceAll('/', '').trim().toLowerCase();
     if (espace.isNotEmpty) {
+      web.window.sessionStorage.setItem('karavan_tab_espace', espace);
       web.window.sessionStorage.setItem('dogo_tab_espace', espace);
     }
   } catch (_) {}

@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'api/api_client.dart';
 import 'api/api_config.dart';
@@ -45,7 +45,7 @@ class PaiementApiService {
   String genererCleIdempotence() {
     final rand = Random.secure();
     final randomHex = List.generate(12, (_) => rand.nextInt(16).toRadixString(16)).join();
-    return 'dogo-pay-${DateTime.now().millisecondsSinceEpoch}-$randomHex';
+    return 'karavan-pay-${DateTime.now().millisecondsSinceEpoch}-$randomHex';
   }
 
   /// Initie le paiement sécurisé de la participation avec compte séquestre

@@ -40,8 +40,8 @@ typedef DogoApp = KaravanApp;
 class KaravanApp extends StatelessWidget {
   const KaravanApp({super.key});
 
-  /// Lien d'invitation ouvert depuis l'extérieur : https://dogo.ml/groupe/12 arrive en « /groupe/12 »,
-  /// dogo://groupe/12 en « /12 ».
+  /// Lien d'invitation ouvert depuis l'extérieur : https://karavan.ml/groupe/12 arrive en « /groupe/12 »,
+  /// karavan://groupe/12 en « /12 ».
   static int? _groupeDuLien(String? route) {
     if (route == null) return null;
     final chemin = Uri.tryParse(route)?.path ?? route;

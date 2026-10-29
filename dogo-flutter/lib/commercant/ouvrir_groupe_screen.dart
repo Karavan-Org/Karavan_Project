@@ -26,7 +26,7 @@ class OuvrirGroupeScreen extends StatefulWidget {
           autofocus: true,
           decoration: const InputDecoration(
             labelText: "Lien ou code du groupe",
-            hintText: "https://dogo.ml/groupe/12 ou DOGO-12",
+            hintText: "https://karavan.ml/groupe/12 ou KARAVAN-12",
           ),
         ),
         actions: [

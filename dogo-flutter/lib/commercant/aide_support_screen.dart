@@ -4,7 +4,7 @@ import '../services/auth_service.dart';
 import '../services/session_storage_service.dart';
 import '../widgets/support_plateforme.dart';
 
-/// Écran Aide & Support Commerçant (WhatsApp direct, FAQ et assistance Dogo Mali)
+/// Écran Aide & Support Commerçant (WhatsApp direct, FAQ et assistance Karavan Mali)
 class AideSupportScreen extends StatelessWidget {
   const AideSupportScreen({super.key});
 

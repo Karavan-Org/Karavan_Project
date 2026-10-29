@@ -13,7 +13,7 @@ import '../widgets/avatar_profil_interactif.dart';
 import '../widgets/bouton_bascule_theme.dart';
 import '../services/notification_api_service.dart';
 
-/// Écran du Profil Courtier fidèle à la maquette Figma Dogo (Frame "profil" Courtier)
+/// Écran du Profil Courtier fidèle à la maquette Figma Karavan (Frame "profil" Courtier)
 /// Nom : Amadou Touré
 /// Rôle : Courtier
 /// Badge : Compte vérifié

@@ -8,7 +8,8 @@ class ThemeService {
   ThemeService._internal();
   static final ThemeService instance = ThemeService._internal();
 
-  static const String _cleTheme = 'dogo_theme_mode';
+  static const String _cleTheme = 'karavan_theme_mode';
+  static const String _cleThemeLegacy = 'dogo_theme_mode';
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   /// Notifieur réactif écouté par la racine MaterialApp
@@ -28,12 +29,15 @@ class ThemeService {
   Future<void> initialiser() async {
     try {
       // 1. Lire d'abord depuis le stockage web de l'onglet
-      String? valeur = getSessionStorageItem(_cleTheme);
+      String? valeur = getSessionStorageItem(_cleTheme) ?? getSessionStorageItem(_cleThemeLegacy);
       // 2. Sinon lire depuis le stockage sécurisé persistant
       if (valeur == null || valeur.isEmpty) {
-        valeur = await _storage
-            .read(key: _cleTheme)
-            .timeout(const Duration(milliseconds: 300), onTimeout: () => null);
+        valeur = (await _storage
+                .read(key: _cleTheme)
+                .timeout(const Duration(milliseconds: 300), onTimeout: () => null)) ??
+            (await _storage
+                .read(key: _cleThemeLegacy)
+                .timeout(const Duration(milliseconds: 300), onTimeout: () => null));
       }
       if (valeur == 'dark') {
         themeModeNotifier.value = ThemeMode.dark;

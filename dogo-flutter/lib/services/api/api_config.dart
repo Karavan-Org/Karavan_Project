@@ -22,7 +22,7 @@ class ApiConfig {
       final ip = _ipParam.trim();
       final scheme = (ip.startsWith('http://') || ip.startsWith('https://')) ? '' : 'http://';
       final sansScheme = ip.replaceFirst(RegExp(r'^https?://'), '');
-      // Une URL https (https://api.dogo.ml) garde son port implicite 443, sauf --dart-define=port explicite.
+      // Une URL https (https://api.karavan.ml) garde son port implicite 443, sauf --dart-define=port explicite.
       final portImplicite = ip.startsWith('https://') && !const bool.hasEnvironment('port');
       final portSuffix = (sansScheme.contains(':') || portImplicite) ? '' : ':$_portParam';
       final completeUrl = '$scheme$ip$portSuffix';

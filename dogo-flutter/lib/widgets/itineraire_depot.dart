@@ -1022,7 +1022,7 @@ class _ItineraireDepotState extends State<ItineraireDepot>
       children: [
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'ml.dogo.app',
+          userAgentPackageName: 'com.example.karavan_app',
         ),
         if (it != null)
           PolylineLayer(polylines: [

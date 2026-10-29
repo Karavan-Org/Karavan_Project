@@ -5,8 +5,8 @@ import 'package:karavan_app/screens/splash_launch_screen.dart';
 import 'package:karavan_app/screens/onboarding_screen.dart';
 
 void main() {
-  testWidgets('DogoApp démarre sur SplashLaunchScreen', (WidgetTester tester) async {
-    await tester.pumpWidget(const DogoApp());
+  testWidgets('KaravanApp démarre sur SplashLaunchScreen', (WidgetTester tester) async {
+    await tester.pumpWidget(const KaravanApp());
     expect(find.byType(SplashLaunchScreen), findsOneWidget);
   });
 
