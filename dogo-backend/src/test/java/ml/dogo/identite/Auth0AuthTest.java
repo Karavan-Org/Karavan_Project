@@ -63,3 +63,4 @@ public class Auth0AuthTest {
         assertThat(res.sub()).isEqualTo("auth0|nouveau-456");
     }
 }
+

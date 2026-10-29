@@ -82,3 +82,13 @@ dogo:
     client-id: ${AUTH0_CLIENT_ID:aRbZilGECDhT0ASJW4QckMPIYkWZumq0}
     domain: ${AUTH0_DOMAIN:dev-rat6iuh8y06rijeb.us.auth0.com}
     audience: ${AUTH0_AUDIENCE:https://dev-rat6iuh8y06rijeb.us.auth0.com/api/v2/}
+
+smsgate:
+  actif: ${SMSGATE_ACTIF:true}
+  local-url: ${SMSGATE_LOCAL_URL:http://192.168.11.15:8080}
+  public-url: ${SMSGATE_PUBLIC_URL:http://154.118.156.78:8080}
+  username: ${SMSGATE_USERNAME:sms}
+  password: ${SMSGATE_PASSWORD:MZKakNJa}
+  device-id: ${SMSGATE_DEVICE_ID:ffffffffa25ede61000001a17e61d348}
+  sim-number: ${SMSGATE_SIM_NUMBER:1}
+  timeout-ms: 4000

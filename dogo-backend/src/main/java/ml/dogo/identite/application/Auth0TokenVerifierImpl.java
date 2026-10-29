@@ -268,3 +268,4 @@ public class Auth0TokenVerifierImpl implements Auth0TokenVerifier {
         return new Auth0UserInfo(sub, email, emailVerified, nom, picture);
     }
 }
+

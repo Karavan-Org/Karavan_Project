@@ -13,3 +13,4 @@ public interface Auth0TokenVerifier {
      */
     Auth0UserInfo verifier(String token);
 }
+
