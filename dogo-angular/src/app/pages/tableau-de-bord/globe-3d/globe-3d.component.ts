@@ -327,12 +327,12 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         .arcEndLat('endLat')
         .arcEndLng('endLng')
         .arcColor('color')
-        .arcAltitude(0.22)
+        .arcAltitude(0.24)
         .arcStroke('stroke')
-        .arcDashLength(0.4)
-        .arcDashGap(0.2)
+        .arcDashLength(0.45)
+        .arcDashGap(0.18)
         .arcDashInitialGap(() => Math.random())
-        .arcDashAnimateTime(2000)
+        .arcDashAnimateTime(1800)
         .htmlElementsData([])
         .htmlElement((d: any) => {
           const el = document.createElement('div');
@@ -352,66 +352,14 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
             `;
           } else {
             const couleur = d.couleur || '#EEA823';
-            const g = d.groupePrincipal;
-            const nbGroupes = d.groupes?.length || d.nombreGroupes || 1;
-            const multiBadge = nbGroupes > 1 ? `<span style="background:rgba(255,255,255,0.18); color:#E2E8F0; font-size:9px; padding:1px 4px; border-radius:4px; font-weight:700;">+${nbGroupes - 1}</span>` : '';
-
-            let infoGroupeHtml = '';
-            if (g) {
-              const titreCourt = g.titre.length > 24 ? g.titre.slice(0, 23) + '…' : g.titre;
-              const prixFmt = g.prixUnitaire ? Number(g.prixUnitaire).toLocaleString('fr-FR') : '';
-              const progVal = Math.round(g.progressionPourcentage ?? 0);
-              infoGroupeHtml = `
-                <div style="margin-top:4px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.12); display:flex; flex-direction:column; gap:2px;">
-                  <div style="display:flex; align-items:center; justify-content:space-between; gap:4px;">
-                    <span style="font-size:11px; font-weight:800; color:#FFFFFF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:125px;" title="${g.titre}">
-                      ${titreCourt}
-                    </span>
-                    <span style="font-size:9px; color:${couleur}; font-weight:800; background:rgba(238,168,35,0.18); padding:1px 5px; border-radius:4px; border:0.5px solid ${couleur}66;">
-                      #${g.id}
-                    </span>
-                  </div>
-                  <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:9px; margin-top:1px;">
-                    <span style="color:#EEA823; font-weight:700;">${prixFmt} FCFA</span>
-                    <span style="color:#34C759; font-weight:700;">${progVal}%</span>
-                  </div>
-                  <div style="width:100%; height:3px; background:rgba(255,255,255,0.15); border-radius:2px; overflow:hidden; margin-top:2px;">
-                    <div style="width:${Math.min(100, progVal)}%; height:100%; background:linear-gradient(90deg, ${couleur}, #34C759); border-radius:2px;"></div>
-                  </div>
-                </div>
-              `;
-            }
-
             el.innerHTML = `
-              <div class="globe-pin-bubble" style="
-                display:flex; flex-direction:column; align-items:center; transition:transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-                filter: drop-shadow(0 4px 12px rgba(0,0,0,0.65));
-              " onmouseover="this.style.transform='scale(1.15) translateY(-4px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
-                <div style="
-                  background:rgba(18, 38, 34, 0.95);
-                  backdrop-filter:blur(6px);
-                  color:#FFFFFF;
-                  padding:5px 9px;
-                  border-radius:12px;
-                  box-shadow:0 0 16px ${couleur}66, inset 0 1px 0 rgba(255,255,255,0.15);
-                  border:1.5px solid ${couleur};
-                  min-width:120px;
-                  max-width:180px;
-                ">
-                  <div style="display:flex; align-items:center; justify-content:space-between; gap:5px;">
-                    <div style="display:flex; align-items:center; gap:4px;">
-                      <img src="https://flagcdn.com/w40/${d.codeIso.toLowerCase()}.png" 
-                           style="width:15px; height:10px; border-radius:2px; object-fit:cover; display:inline-block;" 
-                           alt="${d.codeIso}" 
-                           onerror="this.style.display='none'" />
-                      <span style="font-size:11px; font-weight:800; color:#FFFFFF; letter-spacing:0.2px;">${d.name}</span>
-                    </div>
-                    ${multiBadge}
-                  </div>
-                  ${infoGroupeHtml}
+              <div style="display:flex; flex-direction:column; align-items:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="background:rgba(24, 54, 48, 0.94); color:#FFFFFF; padding:3px 8px; border-radius:14px; font-size:11px; font-weight:700; box-shadow:0 0 14px ${couleur}, 0 4px 10px rgba(0,0,0,0.5); border:1.5px solid ${couleur}; white-space:nowrap; display:flex; align-items:center; gap:5px;">
+                  <img src="https://flagcdn.com/w40/${d.codeIso.toLowerCase()}.png" style="width:16px; height:11px; border-radius:2px; box-shadow:0 1px 2px rgba(0,0,0,0.4); object-fit:cover; display:inline-block;" alt="${d.codeIso}" onerror="this.style.display='none'" />
+                  <span>${d.name}</span>
                 </div>
                 <div style="width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid ${couleur}; margin-top:-1px;"></div>
-                <div style="width:5px; height:5px; border-radius:50%; background:${couleur}; box-shadow:0 0 8px ${couleur}; margin-top:1px;"></div>
+                <div style="width:5px; height:5px; border-radius:50%; background:${couleur}; box-shadow:0 0 6px ${couleur}; margin-top:1px;"></div>
               </div>
             `;
             el.onclick = () => {
@@ -542,7 +490,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
         name: pays.nomFr,
         codeIso: pays.codeIso,
         nombreGroupes: nbGroupes,
-        stroke: 1.8
+        stroke: 2.2
       });
 
       htmlPoints.push({
