@@ -358,21 +358,25 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
 
             let infoGroupeHtml = '';
             if (g) {
-              const titreCourt = g.titre.length > 22 ? g.titre.slice(0, 21) + '…' : g.titre;
+              const titreCourt = g.titre.length > 24 ? g.titre.slice(0, 23) + '…' : g.titre;
               const prixFmt = g.prixUnitaire ? Number(g.prixUnitaire).toLocaleString('fr-FR') : '';
+              const progVal = Math.round(g.progressionPourcentage ?? 0);
               infoGroupeHtml = `
                 <div style="margin-top:4px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.12); display:flex; flex-direction:column; gap:2px;">
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:4px;">
-                    <span style="font-size:10px; font-weight:700; color:#FFFFFF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px;" title="${g.titre}">
+                    <span style="font-size:11px; font-weight:800; color:#FFFFFF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:125px;" title="${g.titre}">
                       ${titreCourt}
                     </span>
-                    <span style="font-size:9px; color:${couleur}; font-weight:800; background:rgba(238,168,35,0.18); padding:1px 4px; border-radius:4px; border:0.5px solid ${couleur}66;">
+                    <span style="font-size:9px; color:${couleur}; font-weight:800; background:rgba(238,168,35,0.18); padding:1px 5px; border-radius:4px; border:0.5px solid ${couleur}66;">
                       #${g.id}
                     </span>
                   </div>
-                  <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:9px;">
-                    <span style="color:#EEA823; font-weight:700;">${prixFmt} F</span>
-                    <span style="color:#34C759; font-weight:700;">${g.progression}%</span>
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:9px; margin-top:1px;">
+                    <span style="color:#EEA823; font-weight:700;">${prixFmt} FCFA</span>
+                    <span style="color:#34C759; font-weight:700;">${progVal}%</span>
+                  </div>
+                  <div style="width:100%; height:3px; background:rgba(255,255,255,0.15); border-radius:2px; overflow:hidden; margin-top:2px;">
+                    <div style="width:${Math.min(100, progVal)}%; height:100%; background:linear-gradient(90deg, ${couleur}, #34C759); border-radius:2px;"></div>
                   </div>
                 </div>
               `;
@@ -387,12 +391,12 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
                   background:rgba(18, 38, 34, 0.95);
                   backdrop-filter:blur(6px);
                   color:#FFFFFF;
-                  padding:4px 8px;
+                  padding:5px 9px;
                   border-radius:12px;
                   box-shadow:0 0 16px ${couleur}66, inset 0 1px 0 rgba(255,255,255,0.15);
                   border:1.5px solid ${couleur};
-                  min-width:115px;
-                  max-width:165px;
+                  min-width:120px;
+                  max-width:180px;
                 ">
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:5px;">
                     <div style="display:flex; align-items:center; gap:4px;">

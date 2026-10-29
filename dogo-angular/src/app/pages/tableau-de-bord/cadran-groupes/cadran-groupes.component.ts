@@ -108,16 +108,19 @@ export interface CarteCadran3D {
                   }
                 </div>
 
-                <!-- En-tête de la carte : Drapeau + #ID -->
+                <!-- En-tête de la carte : Drapeau + Pays d'origine + #ID -->
                 <div class="carte-top-row">
-                  <span class="carte-drapeau">
-                    <app-drapeau-pays [pays]="item.groupe.paysOrigine?.codeIso || item.nomPays" [largeur]="24" [hauteur]="16"></app-drapeau-pays>
-                  </span>
+                  <div class="carte-pays-pill" [title]="'Origine : ' + item.nomPays">
+                    <app-drapeau-pays [pays]="item.groupe.paysOrigine?.codeIso || item.nomPays" [largeur]="16" [hauteur]="11"></app-drapeau-pays>
+                    <span class="carte-pays-nom">{{ item.nomPays }}</span>
+                  </div>
                   <span class="carte-id">#{{ item.groupe.id }}</span>
                 </div>
 
-                <!-- Nom du pays d'origine -->
-                <div class="carte-pays">{{ item.nomPays }}</div>
+                <!-- Nom réel du groupe / produit -->
+                <div class="carte-titre-groupe" [title]="item.groupe.titre">
+                  {{ item.groupe.titre }}
+                </div>
 
                 <!-- Image produit / Miniature -->
                 <div class="carte-media">
@@ -335,8 +338,8 @@ export interface CarteCadran3D {
     // 3. Carte individuelle sur l'arc 3D
     .carte-groupe-3d {
       position: absolute;
-      width: 128px;
-      height: 166px;
+      width: 142px;
+      height: 184px;
       background: linear-gradient(145deg, rgba(24, 54, 48, 0.94) 0%, rgba(14, 32, 28, 0.98) 100%);
       border: 1.5px solid rgba(238, 168, 35, 0.25);
       border-radius: 16px;
@@ -454,31 +457,52 @@ export interface CarteCadran3D {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 6px;
       font-size: 11px;
       font-weight: 700;
 
-      .carte-drapeau {
-        font-size: 19px;
-        line-height: 1;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+      .carte-pays-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        padding: 2px 6px;
+        max-width: 95px;
+        overflow: hidden;
+
+        .carte-pays-nom {
+          font-size: 10px;
+          font-weight: 600;
+          color: #E2E8F0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
       }
 
       .carte-id {
         color: #EEA823;
         letter-spacing: 0.5px;
         font-size: 11px;
+        font-weight: 800;
       }
     }
 
-    .carte-pays {
+    .carte-titre-groupe {
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 800;
       color: #FFFFFF;
-      white-space: nowrap;
+      line-height: 1.25;
+      margin: 4px 0 2px 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-top: 2px;
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+      min-height: 28px;
     }
 
     .carte-media {
@@ -859,11 +883,11 @@ export class CadranGroupesComponent implements OnChanges {
 
     if (this.deltaX < -seuilDistance || vitesse < -seuilVitesse) {
       // Glissement vers la gauche -> Avancer vers la droite (groupe suivant)
-      const pas = Math.min(3, Math.max(1, Math.round(-this.deltaX / 144)));
+      const pas = Math.min(3, Math.max(1, Math.round(-this.deltaX / 156)));
       this.avancerDe(pas);
     } else if (this.deltaX > seuilDistance || vitesse > seuilVitesse) {
       // Glissement vers la droite -> Reculer vers la gauche (groupe précédent)
-      const pas = Math.min(3, Math.max(1, Math.round(this.deltaX / 144)));
+      const pas = Math.min(3, Math.max(1, Math.round(this.deltaX / 156)));
       this.reculerDe(pas);
     }
 
@@ -982,8 +1006,8 @@ export class CadranGroupesComponent implements OnChanges {
       const groupe = this.groupesFiltres[idx];
       if (!groupe) continue;
 
-      const angleDeg = offset * 14;
-      const translateX = offset * 144;
+      const angleDeg = offset * 13;
+      const translateX = offset * 156;
       const translateZ = -Math.abs(offset) * 44;
       const scale = offset === 0 ? 1.06 : Math.max(0.74, 1 - Math.abs(offset) * 0.08);
       const opacity = offset === 0 ? 1 : Math.max(0.55, 1 - Math.abs(offset) * 0.15);
