@@ -18,6 +18,14 @@ UPDATE produit SET nom_produit = 'Huile d''Argan Cosmétique Bio' WHERE nom_prod
 UPDATE produit SET nom_produit = 'Beurre de Karité & Cacao Pur' WHERE nom_produit LIKE '%Beurre de Karit%';
 UPDATE produit SET nom_produit = 'Chaussures Cuir Véritable Artisanal' WHERE nom_produit LIKE '%Chaussures Cuir%';
 
+UPDATE produit SET description = 'Flacons 250ml d''huile d''argan pure pressée à froid' WHERE nom_produit LIKE '%Huile d''Argan%';
+UPDATE produit SET description = 'Mocassins et sandales cuir tanné artisanal brésilien' WHERE nom_produit LIKE '%Chaussures Cuir%';
+UPDATE produit SET description = 'Pots de karité brut naturel et poudre de cacao ghanéen' WHERE nom_produit LIKE '%Beurre de Karit%';
+UPDATE produit SET description = 'Véritable tissu Wax Bazin riche 100% coton teinté' WHERE nom_produit LIKE '%Wax%';
+UPDATE produit SET description = 'Chemises habillées et polos coton mercerisé d''Istanbul' WHERE nom_produit LIKE '%Chemises%';
+
+UPDATE condition_commerciale SET politique_annulation = 'Remboursement intégral sous séquestre garanti' WHERE politique_annulation LIKE '%s?questre%';
+
 UPDATE categorie SET nom_categorie = 'Vêtements', description = 'Prêt-à-porter homme, femme, enfant' WHERE id = 2;
 UPDATE categorie SET nom_categorie = 'Électronique', description = 'Téléphones, accessoires, petit électroménager' WHERE id = 3;
 UPDATE categorie SET description = 'Ustensiles, décoration, linge de maison' WHERE id = 4;
