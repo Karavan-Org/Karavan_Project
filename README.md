@@ -1,6 +1,6 @@
-# Dɔgɔ
+# Karavan
 
-Dɔgɔ est une plateforme d'achats groupés qui relie commerçants, grossistes et courtiers pour l'importation de marchandises vers le Mali. L'application mobile accompagne les opérations métier ; une console Angular sert à l'administration ; une API Spring Boot applique les règles de gestion.
+Karavan est une plateforme d'achats groupés qui relie commerçants, grossistes et courtiers pour l'importation de marchandises vers le Mali. L'application mobile accompagne les opérations métier ; une console Angular sert à l'administration ; une API Spring Boot applique les règles de gestion.
 
 ## Applications
 
