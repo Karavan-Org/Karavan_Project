@@ -304,12 +304,15 @@
   display: flex;
   flex-direction: column;
 
-  // Le Globe 3D réaliste WebGL occupe tout le volume de la scène
+  // Le Globe 3D réaliste WebGL occupe la zone supérieure de la scène,
+  // surélevé de façon à ce que l'Afrique, les corridors et les pins
+  // restent parfaitement dégagés au-dessus des cartes du cadran !
   .globe-3d-scene-container {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 120px;
     z-index: 10;
   }
 

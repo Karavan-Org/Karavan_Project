@@ -354,7 +354,7 @@ export class Globe3dComponent implements AfterViewInit, OnChanges, OnDestroy {
             el.innerHTML = `
               <div style="display:flex; flex-direction:column; align-items:center; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
                 <div style="background:rgba(24, 54, 48, 0.94); color:#FFFFFF; padding:3px 8px; border-radius:14px; font-size:11px; font-weight:700; box-shadow:0 0 14px ${couleur}, 0 4px 10px rgba(0,0,0,0.5); border:1.5px solid ${couleur}; white-space:nowrap; display:flex; align-items:center; gap:5px;">
-                  <span style="font-size:13px;">${d.drapeau || '📍'}</span>
+                  <img src="https://flagcdn.com/w40/${d.codeIso.toLowerCase()}.png" style="width:16px; height:11px; border-radius:2px; box-shadow:0 1px 2px rgba(0,0,0,0.4); object-fit:cover; display:inline-block;" alt="${d.codeIso}" onerror="this.style.display='none'" />
                   <span>${d.name}</span>
                 </div>
                 <div style="width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid ${couleur}; margin-top:-1px;"></div>

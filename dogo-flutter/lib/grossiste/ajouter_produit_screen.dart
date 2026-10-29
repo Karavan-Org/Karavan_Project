@@ -4,7 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import '../services/catalogue_api_service.dart';
+import '../services/pays_resolver_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/drapeau_pays_widget.dart';
 import 'variante_produit_dialog.dart';
 import 'camera_helper.dart';
 import 'creer_groupe_grossiste_screen.dart';
@@ -827,10 +829,73 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: _buildTextField(
-                          controller: _paysOrigineController,
-                          label: "Pays d'origine",
-                          icon: Icons.flag_rounded,
+                        child: ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _paysOrigineController,
+                          builder: (context, val, _) {
+                            final info = PaysResolverService.instance.resoudre(val.text);
+                            return TextFormField(
+                              controller: _paysOrigineController,
+                              decoration: InputDecoration(
+                                labelText: "Pays d'origine *",
+                                hintText: "Ex : Turquie, Chine, Mali, Brésil...",
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(left: 12, right: 8),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      DrapeauPays(
+                                        pays: val.text,
+                                        largeur: 24,
+                                        hauteur: 16,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                prefixIconConstraints: const BoxConstraints(minWidth: 46, minHeight: 40),
+                                suffixIcon: val.text.trim().isNotEmpty
+                                    ? Padding(
+                                        padding: const EdgeInsets.only(right: 10),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.bissap.withValues(alpha: 0.12),
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(color: AppTheme.bissap.withValues(alpha: 0.3)),
+                                              ),
+                                              child: Text(
+                                                "${info.nomFr} (${info.codeIso})",
+                                                style: const TextStyle(
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppTheme.bissap,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : null,
+                                filled: true,
+                                fillColor: AppTheme.couleurCarte(context),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(color: AppTheme.couleurBordure(context)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],

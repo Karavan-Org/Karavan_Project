@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/pays_model.dart';
 import '../theme/app_theme.dart';
+import 'drapeau_pays_widget.dart';
 
 /// Sélecteur de pays d'origine avec recherche plein texte et support de l'identité Karavan.
 class SelecteurPays extends StatelessWidget {
@@ -86,9 +87,10 @@ class SelecteurPays extends StatelessWidget {
                   const SizedBox(width: 12),
                   Text("Chargement des pays...", style: TextStyle(color: couleurAttenue, fontSize: 14)),
                 ] else if (paysSelectionne != null) ...[
-                  Text(
-                    paysSelectionne!.drapeauEmoji,
-                    style: const TextStyle(fontSize: 20),
+                  DrapeauPays(
+                    pays: paysSelectionne!.codeIso,
+                    largeur: 24,
+                    hauteur: 17,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -251,7 +253,11 @@ class _FeuilleSelectionPaysState extends State<_FeuilleSelectionPays> {
                 final estActuel = widget.actuel?.codeIso == p.codeIso;
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                  leading: Text(p.drapeauEmoji, style: const TextStyle(fontSize: 22)),
+                  leading: DrapeauPays(
+                    pays: p.codeIso,
+                    largeur: 26,
+                    hauteur: 18,
+                  ),
                   title: Text(
                     p.nomFr,
                     style: TextStyle(

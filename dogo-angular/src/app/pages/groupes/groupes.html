@@ -52,7 +52,13 @@
               (click)="selectionner(g)">
               <td>
                 <strong>#{{ g.id }} · {{ g.titre }}</strong>
-                <small>{{ g.produit.nom }} · {{ g.produit.paysOrigine || '?' }} ➔ Bamako · limite {{ dateCourte(g.dateLimite) }}</small>
+                <small>
+                  {{ g.produit.nom }} ·
+                  <app-drapeau-pays [pays]="g.produit.paysOrigine" [largeur]="16" [hauteur]="11"></app-drapeau-pays>
+                  {{ g.produit.paysOrigine || 'Origine' }} ➔
+                  <app-drapeau-pays [pays]="'ML'" [largeur]="16" [hauteur]="11"></app-drapeau-pays> Bamako ·
+                  limite {{ dateCourte(g.dateLimite) }}
+                </small>
               </td>
               <td (click)="$event.stopPropagation()">
                 <a class="lien" [routerLink]="['/utilisateurs', g.grossiste.id]">{{ g.grossiste.nom }}</a>
@@ -91,7 +97,10 @@
 
           <dl class="proprietes">
             <dt>Produit</dt><dd>{{ g.produit.nom }} ({{ g.produit.categorie }})</dd>
-            <dt>Origine</dt><dd>{{ g.produit.paysOrigine || '—' }}</dd>
+            <dt>Origine</dt>
+            <dd>
+              <app-drapeau-pays [pays]="g.produit.paysOrigine" [largeur]="18" [hauteur]="12" [avecNom]="true"></app-drapeau-pays>
+            </dd>
             <dt>Grossiste</dt><dd><a class="lien" [routerLink]="['/utilisateurs', g.grossiste.id]">{{ g.grossiste.nom }}</a></dd>
             <dt>Courtier</dt>
             <dd>

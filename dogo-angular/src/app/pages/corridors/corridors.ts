@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { AdminSecuriteService } from '../../core/services/admin-securite.service';
+import { DrapeauPaysComponent } from '../../components/drapeau-pays/drapeau-pays.component';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import jsPDF from 'jspdf';
@@ -39,7 +40,7 @@ const ETATS_ACHEMINEMENT = ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE'];
 @Component({
   selector: 'app-corridors',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, DrapeauPaysComponent],
   templateUrl: './corridors.html',
   styleUrl: './corridors.scss'
 })

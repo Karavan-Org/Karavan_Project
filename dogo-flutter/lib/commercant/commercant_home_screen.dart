@@ -1,4 +1,5 @@
 import '../widgets/image_produit.dart';
+import '../widgets/drapeau_pays_widget.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bouton_bascule_theme.dart';
@@ -888,6 +889,15 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                         ),
                       ),
                     ),
+                    // Badge Drapeau Pays d'origine
+                    Positioned(
+                      bottom: 6,
+                      right: 6,
+                      child: DrapeauBadge(
+                        pays: groupe.paysOrigine,
+                        compact: true,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -1135,11 +1145,13 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                       const SizedBox(height: 4),
                       Row(
                         children: [
+                          DrapeauBadge(pays: groupe.paysOrigine, compact: true),
+                          const SizedBox(width: 8),
                           const Icon(Icons.verified, size: 12, color: AppTheme.olive),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              "Posté par : ${groupe.courtierNom}",
+                              groupe.courtierNom,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(

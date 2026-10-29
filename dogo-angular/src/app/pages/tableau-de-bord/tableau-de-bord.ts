@@ -30,6 +30,7 @@ import { Globe3dComponent } from './globe-3d/globe-3d.component';
 import { CadranGroupesComponent } from './cadran-groupes/cadran-groupes.component';
 import { DetailTiroirComponent } from './detail-tiroir/detail-tiroir.component';
 import { ModalAssignerPaysComponent } from './modal-assigner-pays/modal-assigner-pays.component';
+import { DrapeauPaysComponent } from '../../components/drapeau-pays/drapeau-pays.component';
 
 @Component({
   selector: 'app-tableau-de-bord',
@@ -41,7 +42,8 @@ import { ModalAssignerPaysComponent } from './modal-assigner-pays/modal-assigner
     Globe3dComponent,
     CadranGroupesComponent,
     DetailTiroirComponent,
-    ModalAssignerPaysComponent
+    ModalAssignerPaysComponent,
+    DrapeauPaysComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tableau-de-bord.html',

@@ -1,4 +1,5 @@
 import '../widgets/image_produit.dart';
+import '../widgets/drapeau_pays_widget.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/groupe_api_service.dart';
@@ -452,13 +453,10 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _pays.isNotEmpty ? _pays : widget.paysOrigine,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark ? Colors.white60 : AppTheme.textMuted,
-                              ),
+                            const SizedBox(height: 4),
+                            DrapeauBadge(
+                              pays: _pays.isNotEmpty ? _pays : widget.paysOrigine,
+                              compact: true,
                             ),
                             const SizedBox(height: 4),
                             Text(
