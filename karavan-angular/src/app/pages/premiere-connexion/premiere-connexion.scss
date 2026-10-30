@@ -1,0 +1,48 @@
+// Complète login.scss : une seule colonne, libellés visibles au-dessus des champs
+.carte-premiere-connexion {
+  max-width: 480px;
+  min-height: 0;
+}
+
+.libelle {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.input-wrapper input {
+  padding-left: 14px !important;
+}
+
+.aide {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+
+  &.aide-ok {
+    color: var(--success);
+  }
+}
+
+.case-afficher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 14px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.lien-deconnexion {
+  display: block;
+  margin: 14px auto 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}

@@ -1,33 +1,34 @@
-# Dɔgɔ
+# Karavan
 
-Dɔgɔ est une plateforme d'achats groupés qui relie commerçants, grossistes et courtiers pour l'importation de marchandises vers le Mali. L'application mobile accompagne les opérations métier ; une console Angular sert à l'administration ; une API Spring Boot applique les règles de gestion.
+Karavan est une plateforme d'achats groupés qui relie commerçants, grossistes et courtiers pour l'importation de marchandises vers le Mali. L'application mobile accompagne les opérations métier ; une console Angular sert à l'administration ; une API Spring Boot applique les règles de gestion.
 
 ## Applications
 
 | Dossier | Application | Technologies |
 |---|---|---|
-| `dogo-flutter/` | Application commerçant, grossiste et courtier | Flutter / Dart |
-| `dogo-angular/` | Console d'administration | Angular 22 / TypeScript |
-| `dogo-backend/` | API, authentification, règles métier et persistance | Java 21 / Spring Boot 3.5 / MySQL / Flyway |
+| `karavan-flutter/` | Application commerçant, grossiste et courtier | Flutter / Dart |
+| `karavan-angular/` | Console d'administration | Angular 22 / TypeScript |
+| `karavan-backend/` | API, authentification, règles métier et persistance | Java 25 / Spring Boot 3.5 / MySQL / Flyway |
 
 Le backend est organisé en monolithe modulaire. Les principaux modules sont l'identité, le catalogue, les groupes d'achat, les participations, la finance, la logistique, les litiges, les notifications et l'audit.
 
 ## Démarrage local
 
-Prérequis : JDK 21, Maven 3.9+, MySQL 8, Node.js/npm et Flutter. Créer une base MySQL locale `dogo`, puis lancer le backend avec le profil `local` (il utilise `root` / `1234` par défaut uniquement dans ce profil). Le profil par défaut est `prod` et refuse de démarrer sans secrets et origines CORS de production valides. `DOGO_COOKIE_SECURE=true` et des origines CORS HTTPS exactes sont obligatoires en production.
+Prérequis : JDK 25 LTS, Maven 3.9+, MySQL 8, Node.js/npm et Flutter. Créer une base MySQL locale `karavan`, puis lancer le backend avec le profil `local` (il utilise `root` / `1234` par défaut uniquement dans ce profil). Le profil par défaut est `prod` et refuse de démarrer sans secrets et origines CORS de production valides. `DOGO_COOKIE_SECURE=true` et des origines CORS HTTPS exactes sont obligatoires en production.
 
-Lancer le backend en mode démonstration depuis `dogo-backend/` :
+Lancer le backend en mode démonstration depuis `karavan-backend/` :
 
 ```powershell
-mvn spring-boot:run "-Dspring-boot.run.profiles=demo"
+Set-Location karavan-backend
+mvn spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
-Le serveur écoute sur `http://localhost:8080`. Le profil `demo` ajoute des comptes de démonstration, expose l'OTP d'inscription et simule les SMS et Mobile Money. Il est réservé au développement et à la soutenance ; ne pas l'activer en production. La configuration des variables et les comptes de démonstration sont décrits dans [dogo-backend/README.md](dogo-backend/README.md).
+Le serveur écoute sur `http://localhost:8080`.
 
 Lancer la console Angular dans un autre terminal :
 
 ```powershell
-Set-Location dogo-angular
+Set-Location karavan-angular
 npm ci
 npm start
 ```
@@ -37,12 +38,12 @@ Ouvrir `http://localhost:4200`.
 Lancer l'application Flutter dans un autre terminal :
 
 ```powershell
-Set-Location dogo-flutter
+Set-Location karavan-flutter
 flutter pub get
-flutter run -d chrome
+flutter run -d chrome --web-port=3000
 ```
 
-Par défaut, Flutter Web appelle l'API sur `http://localhost:8080`. Sur un téléphone ou un émulateur, définir l'adresse API avec les options `--dart-define` décrites dans `dogo-flutter/lib/services/api/api_config.dart`.
+Par défaut, Flutter Web appelle l'API sur `http://localhost:8080`. Sur un téléphone ou un émulateur, définir l'adresse API avec les options `--dart-define` décrites dans `karavan-flutter/lib/services/api/api_config.dart`.
 
 ## Vérifications
 
@@ -50,27 +51,28 @@ Exécuter les contrôles depuis le dossier de chaque application :
 
 ```powershell
 # Flutter
+Set-Location karavan-flutter
 flutter analyze
 flutter test
 
 # Angular
+Set-Location karavan-angular
 npm test -- --watch=false
 npm run build
 
 # Backend
+Set-Location karavan-backend
 mvn test
 ```
-
-`mvn verify` lance aussi les tests d'intégration MySQL. Ils vident et reconstruisent la base `dogo_test` : ne les lancer que si cette base est jetable.
 
 ## Documentation
 
 - [Architecture et séquences métier](docs/ARCHITECTURE.md)
-- [Contrats API](dogo-backend/docs/API.md)
-- [Présentation détaillée du backend et parcours de démonstration](dogo-backend/README.md)
+- [Contrats API](karavan-backend/docs/API.md)
+- [Présentation détaillée du backend et parcours de démonstration](karavan-backend/README.md)
 - [Diagramme de classes](docs/diagrams/diagramClass.xml)
 - [Diagramme de cas d'utilisation](docs/diagrams/DiagramsUseCase.xml)
-- [Identité visuelle](docs/images/Design%20System.svg)
+- [Identité visuelle](docs/images/Design%20System.png)
 
 ## Limites et sécurité à traiter
 

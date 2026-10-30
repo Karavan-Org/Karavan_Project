@@ -2,7 +2,7 @@
 
 ## Organisation du code
 
-Le dépôt regroupe trois applications déployables séparément : `dogo-flutter` pour le client mobile/Web, `dogo-angular` pour la console d'administration et `dogo-backend` pour l'API. Les ressources de conception et les documents transverses restent dans `docs/`.
+Le dépôt regroupe trois applications déployables séparément : `karavan-flutter` pour le client mobile/Web, `karavan-angular` pour la console d'administration et `karavan-backend` pour l'API. Les ressources de conception et les documents transverses restent dans `docs/`.
 
 ### Backend
 
@@ -14,7 +14,7 @@ Dans Flutter, `lib/<rôle>/` regroupe les parcours par acteur, `lib/services/` l
 
 Dans Angular, `src/app/core/` contient l'authentification, les gardes, les intercepteurs et les clients API; `pages/` contient les écrans d'administration; `shared/` et `components/` hébergent les éléments réutilisables. Les composants d'écran ne doivent pas accéder directement au stockage backend.
 
-Les migrations et les ressources de configuration restent dans `dogo-backend/src/main/resources/`; les tests restent près de leurs modules dans `src/test/` ou `dogo-flutter/test/`. Les données locales, secrets et sorties de compilation ne doivent pas être ajoutés à la racine du dépôt.
+Les migrations et les ressources de configuration restent dans `karavan-backend/src/main/resources/`; les tests restent près de leurs modules dans `src/test/` ou `karavan-flutter/test/`. Les données locales, secrets et sorties de compilation ne doivent pas être ajoutés à la racine du dépôt.
 
 ## Vue d'ensemble
 
@@ -29,7 +29,7 @@ Console Angular ─────────┘                    │
 
 Le backend est un monolithe modulaire déployé comme une seule application. Les règles métier résident dans les services et les domaines du backend ; les deux clients consomment ses contrats HTTP. Le schéma et son historique sont gérés par Flyway.
 
-Les frontières de modules et les couches sont décrites dans [dogo-backend/README.md](../dogo-backend/README.md). Les fichiers [diagramClass.xml](diagrams/diagramClass.xml) et [DiagramsUseCase.xml](diagrams/DiagramsUseCase.xml) sont des diagrammes à ouvrir avec diagrams.net.
+Les frontières de modules et les couches sont décrites dans [karavan-backend/README.md](../karavan-backend/README.md). Les fichiers [diagramClass.xml](diagrams/diagramClass.xml) et [DiagramsUseCase.xml](diagrams/DiagramsUseCase.xml) sont des diagrammes à ouvrir avec diagrams.net.
 
 ## Création d'un groupe et paiement
 
@@ -90,5 +90,5 @@ Les chemins ci-dessus sont ceux du contrat documenté. Les appels externes à un
 
 - Le diagramme de classes se trouve dans `docs/diagrams/diagramClass.xml`.
 - Le diagramme de cas d'utilisation se trouve dans `docs/diagrams/DiagramsUseCase.xml`.
-- Les séquences ci-dessus illustrent les routes réellement documentées dans `dogo-backend/docs/API.md` et le parcours de démonstration.
+- Les séquences ci-dessus illustrent les routes réellement documentées dans `karavan-backend/docs/API.md` et le parcours de démonstration.
 - Avant une soutenance, vérifier dans diagrams.net que les diagrammes XML correspondent aux modules et aux routes actuels ; ils ne sont pas générés automatiquement depuis le code.

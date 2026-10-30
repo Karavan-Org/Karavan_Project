@@ -1,0 +1,358 @@
+/* Variables de couleurs Karavan / DoGo Design System */
+$primary: var(--primary);
+$primary-hover: var(--primary-hover);
+$bg-light: var(--bg-app);
+$text-dark: var(--text-main);
+$text-muted: var(--text-muted);
+$border-color: var(--border);
+$error-color: var(--danger);
+
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(172, 127, 94, 0.12) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 85%, rgba(238, 168, 35, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(24, 54, 48, 0.05) 0%, transparent 70%),
+    var(--bg-app);
+  padding: 24px;
+  font-family: var(--font-texte);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.login-card {
+  display: flex;
+  width: 100%;
+  max-width: 920px;
+  min-height: 540px;
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(172, 127, 94, 0.2);
+  box-shadow:
+    0 25px 60px -12px rgba(57, 40, 36, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  overflow: hidden;
+  animation: loginCardPop 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+/* --- Section Gauche (Formulaire) --- */
+.form-section {
+  flex: 1;
+  padding: 45px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  @media (max-width: 500px) {
+    padding: 30px 20px;
+  }
+
+  .form-header {
+    margin-bottom: 22px;
+
+    h2 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #2D231C;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+      font-size: 13.5px;
+      color: $text-muted;
+      margin: 0;
+      line-height: 1.4;
+    }
+  }
+
+  .login-form {
+    display: flex;
+    flex-direction: column;
+
+    .form-group {
+      margin-bottom: 18px;
+
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        border: 1.5px solid $border-color;
+        border-radius: 10px;
+        background-color: #ffffff;
+        transition: all 0.22s ease;
+
+        .icon {
+          position: absolute;
+          left: 14px;
+          color: $text-muted;
+          display: flex;
+          align-items: center;
+          transition: all 0.22s ease;
+          pointer-events: none;
+        }
+
+        input {
+          width: 100%;
+          padding: 13px 14px 13px 44px;
+          border: none;
+          background: transparent;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #2D231C;
+          outline: none;
+          box-sizing: border-box;
+
+          // Élimine le fond bleu pâle de l'autofill navigateur
+          &:-webkit-autofill,
+          &:-webkit-autofill:hover,
+          &:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+            -webkit-text-fill-color: #2D231C !important;
+            font-weight: 600 !important;
+          }
+
+          &.is-invalid {
+            border-color: $error-color;
+          }
+        }
+
+        &:focus-within {
+          border-color: #8F6243;
+          box-shadow: 0 4px 16px rgba(172, 127, 94, 0.15), 0 0 0 3px rgba(172, 127, 94, 0.16);
+
+          .icon {
+            color: #8F6243;
+            transform: scale(1.1);
+          }
+        }
+      }
+
+      .error-msg {
+        color: $error-color;
+        font-size: 11.5px;
+        margin-top: 5px;
+        font-weight: 600;
+      }
+    }
+
+    .form-options {
+      font-size: 12.5px;
+      color: $text-muted;
+      margin: 0 0 20px 0;
+      line-height: 1.45;
+    }
+
+    .server-error {
+      background-color: var(--danger-light);
+      color: $error-color;
+      padding: 10px 12px;
+      border: 1px solid rgba(192, 57, 43, 0.2);
+      border-radius: 8px;
+      font-size: 12.5px;
+      margin-bottom: 16px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .btn-submit {
+      background: linear-gradient(135deg, #8F6243 0%, #754D31 100%);
+      color: #ffffff;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(143, 98, 67, 0.28);
+      transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(143, 98, 67, 0.4);
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.98) translateY(1px);
+      }
+
+      &:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
+    }
+
+    /* Bouton Google Sign-In */
+    .google-signin-wrapper {
+      margin-top: 14px;
+
+      .btn-google {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 11px 16px;
+        background-color: #ffffff;
+        color: #3C4043;
+        border: 1.5px solid #dadce0;
+        border-radius: 10px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          background-color: #F8FAFC;
+          border-color: #8F6243;
+          box-shadow: 0 2px 8px rgba(60, 64, 67, 0.12);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .google-icon {
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+}
+
+/* --- Section Droite (Illustration Vague avec Mascotte) --- */
+.illustration-section {
+  flex: 1.1;
+  position: relative;
+  background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-dark-hover) 55%, var(--primary) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  overflow: hidden;
+
+  /* Effet de vague arrondie blanche sur la gauche (exactement comme la capture) */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -15%;
+    width: 30%;
+    height: 120%;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.08);
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+
+  .illustration-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+
+    .hero-img {
+      max-width: 68%;
+      max-height: 280px;
+      padding: 24px;
+      background: #FAF6F0;
+      border-radius: 32px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.2);
+      filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
+      animation: floatMascot 4.5s ease-in-out infinite;
+      object-fit: contain;
+    }
+  }
+}
+
+/* Mode Google Complétion */
+.google-user-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8f9fa;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+
+  .google-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #4285f4;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .google-user-info {
+    display: flex;
+    flex-direction: column;
+
+    strong {
+      font-size: 14.5px;
+      color: var(--text-main);
+    }
+
+    small {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+  }
+}
+
+.info-encart {
+  background: rgba(172, 127, 94, 0.10);
+  border: 1px solid rgba(172, 127, 94, 0.3);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-main);
+}
+
+@keyframes loginCardPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes floatMascot {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}

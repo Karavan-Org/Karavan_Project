@@ -1,0 +1,94 @@
+<div class="page-container">
+
+  <header class="header">
+    <div>
+      <h1>Équipe d'administration</h1>
+      <p>L'administrateur principal crée les administrateurs et leur attribue une fonction : elle fixe ce qu'ils peuvent faire.</p>
+    </div>
+    <button class="btn-sec" type="button" [disabled]="chargement()" (click)="charger()">Actualiser</button>
+  </header>
+
+  <section class="kpi-grid">
+    <div class="kpi-card" *ngFor="let f of fonctions()">
+      <span class="title">{{ f.libelle }}</span>
+      <div class="number">{{ parRole().get(f.role) ?? 0 }}</div>
+      <span class="sub">{{ f.mission }}</span>
+    </div>
+  </section>
+
+  <p class="message erreur" *ngIf="erreur()">{{ erreur() }}</p>
+
+  <div class="layout-grid">
+    <main class="card">
+      <div class="card-header">
+        <h2>Administrateurs</h2>
+        <span class="sub-filter">{{ liste().length }} compte(s)</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Administrateur</th><th>Matricule</th><th>Fonction</th><th>Statut</th><th>Créé le</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="chargement()"><td colspan="5">Chargement…</td></tr>
+            <tr *ngFor="let a of liste()">
+              <td>
+                <div class="user-row-cell">
+                  <div class="user-avatar-mini purple">
+                    <img *ngIf="a.photoUrl" [src]="urlImage(a.photoUrl)" [alt]="a.nom" class="avatar-mini-img" />
+                    <span *ngIf="!a.photoUrl">{{ a.nom.slice(0, 2).toUpperCase() }}</span>
+                  </div>
+                  <div class="user-row-info">
+                    <a class="lien" [routerLink]="['/utilisateurs', a.id]">{{ a.nom }}</a>
+                    <small>{{ a.telephone }}<ng-container *ngIf="a.email"> · {{ a.email }}</ng-container></small>
+                  </div>
+                </div>
+              </td>
+              <td>{{ a.matricule }}</td>
+              <td><span class="badge violet">{{ a.fonction }}</span></td>
+              <td>
+                <span class="badge" [ngClass]="a.statut === 'ACTIF' ? 'green' : 'red'">{{ libellesCompte[a.statut] ?? a.statut }}</span>
+                <span class="badge orange" *ngIf="a.motDePasseProvisoire" title="Le mot de passe provisoire n'a pas encore été remplacé">
+                  Première connexion en attente
+                </span>
+              </td>
+              <td>{{ dateCourte(a.dateCreation) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <aside class="card">
+      <h3>Nouvel administrateur</h3>
+      <p *ngIf="!peutCreer" class="vide">Seul l'administrateur principal peut créer un compte administrateur (RG-06).</p>
+      <form class="formulaire" (ngSubmit)="creer()" #f="ngForm" *ngIf="peutCreer">
+        <label>Nom complet <input name="nom" required autocomplete="off" [(ngModel)]="nouveau.nom" /></label>
+        <label>Téléphone <input name="telephone" type="tel" required autocomplete="off" [(ngModel)]="nouveau.telephone" /></label>
+        <label>E-mail (facultatif) <input name="email" type="email" email autocomplete="off" [(ngModel)]="nouveau.email" /></label>
+        <label>Matricule agent <input name="matricule" required autocomplete="off" [(ngModel)]="nouveau.matricule" /></label>
+        <label>
+          Fonction
+          <select name="role" [(ngModel)]="nouveau.role">
+            <option *ngFor="let fct of attribuables()" [value]="fct.role">{{ fct.libelle }}</option>
+          </select>
+        </label>
+        <div class="fonction-detail" *ngIf="fonction(nouveau.role) as fct">
+          <p class="vide">{{ fct.mission }}</p>
+          <ul class="permissions">
+            <li *ngFor="let p of fct.permissions">{{ libellesPermission[p] ?? p }}</li>
+          </ul>
+        </div>
+        <label>
+          Mot de passe provisoire
+          <input name="motDePasse" type="password" required autocomplete="new-password" [(ngModel)]="nouveau.motDePasse" />
+          <small class="vide">À communiquer à l'administrateur : il devra le remplacer à sa première connexion.</small>
+        </label>
+        <p class="message" [class.erreur]="echec()" *ngIf="message()">{{ message() }}</p>
+        <div class="actions">
+          <button class="btn-primary" type="submit" [disabled]="envoi() || f.invalid">Créer le compte</button>
+        </div>
+      </form>
+    </aside>
+  </div>
+</div>

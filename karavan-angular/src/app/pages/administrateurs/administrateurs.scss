@@ -1,0 +1,32 @@
+@use '../../shared/page';
+
+// Ce que permet la fonction choisie, sous le sélecteur
+.fonction-detail {
+  margin: -4px 0 4px;
+
+  p {
+    margin: 0 0 6px;
+  }
+}
+
+.permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--primary-tint);
+    color: var(--primary);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+}
+
+td .badge + .badge {
+  margin-left: 6px;
+}

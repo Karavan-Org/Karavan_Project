@@ -1,0 +1,10 @@
+target/
+.mvn/
+*.log
+.git
+.gitignore
+.env
+.idea
+*.iml
+$tmp
+

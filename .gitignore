@@ -15,10 +15,12 @@ out/
 # ==========================================
 donnees/
 uploads/
+scratch/
 *.log
 *.sqlite
 *.db
 db_dump_*.sql
+*_backup_*.sql
 
 # ==========================================
 # Environnement & Secrets
@@ -69,4 +71,4 @@ $RECYCLE.BIN/
 .pub/
 
 # Client OAuth Google (contient client_secret)
-dogo-flutter/android/app/google-service.json
+karavan-flutter/android/app/google-service.json

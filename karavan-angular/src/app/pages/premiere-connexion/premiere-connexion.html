@@ -1,0 +1,57 @@
+<div class="login-container">
+  <div class="login-card carte-premiere-connexion">
+    <div class="form-section">
+      <div class="form-header">
+        <h2>Première connexion</h2>
+        <p class="subtitle">
+          Bienvenue{{ nom ? ' ' + nom : '' }}. Votre mot de passe actuel est provisoire :
+          choisissez votre propre mot de passe pour accéder à la console.
+        </p>
+      </div>
+
+      <form class="login-form" (ngSubmit)="valider()" autocomplete="off">
+        <div class="form-group">
+          <label class="libelle" for="mdp-provisoire">Mot de passe provisoire</label>
+          <div class="input-wrapper">
+            <input id="mdp-provisoire" name="ancien" [type]="afficher ? 'text' : 'password'"
+                   [(ngModel)]="ancien" autocomplete="current-password" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="libelle" for="mdp-nouveau">Nouveau mot de passe</label>
+          <div class="input-wrapper">
+            <input id="mdp-nouveau" name="nouveau" [type]="afficher ? 'text' : 'password'"
+                   [(ngModel)]="nouveau" autocomplete="new-password" required />
+          </div>
+          <p class="aide" [class.aide-ok]="robuste">
+            8 à 64 caractères, avec au moins une majuscule, une minuscule et un chiffre.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="libelle" for="mdp-confirmation">Confirmation</label>
+          <div class="input-wrapper">
+            <input id="mdp-confirmation" name="confirmation" [type]="afficher ? 'text' : 'password'"
+                   [(ngModel)]="confirmation" autocomplete="new-password" required />
+          </div>
+        </div>
+
+        <label class="case-afficher">
+          <input type="checkbox" name="afficher" [(ngModel)]="afficher" />
+          Afficher les mots de passe
+        </label>
+
+        @if (erreur()) {
+          <div class="server-error" role="alert">{{ erreur() }}</div>
+        }
+
+        <button type="submit" class="btn-submit" [disabled]="enCours()">
+          {{ enCours() ? 'Enregistrement…' : 'Enregistrer mon mot de passe' }}
+        </button>
+
+        <button type="button" class="lien-deconnexion" (click)="seDeconnecter()">Se déconnecter</button>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,215 @@
+<div class="modal-backdrop" *ngIf="securite.modalOuverte()" (click)="fermer()">
+  <div class="modal-card" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+
+    <!-- MODE 1 : CONFIRMATION D'UNE ACTION SENSIBLE -->
+    <ng-container *ngIf="securite.modalMode() === 'CONFIRMATION'">
+      <div class="modal-header" [class.danger-header]="securite.configAction()?.danger">
+        <div class="icon-circle">
+          <mat-icon>{{ securite.configAction()?.icone || 'lock' }}</mat-icon>
+        </div>
+        <div class="header-text">
+          <h3>{{ securite.configAction()?.titre || 'Confirmation de sécurité' }}</h3>
+          <p class="subtitle">Code de validation administrateur</p>
+        </div>
+        <button type="button" class="btn-close" (click)="fermer()" aria-label="Fermer">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="note" [class.note-danger]="securite.configAction()?.danger">
+          <mat-icon class="note-icon">{{ securite.configAction()?.danger ? 'warning' : 'info' }}</mat-icon>
+          <p>{{ securite.configAction()?.description }}</p>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">Code de sécurité</label>
+          <div class="digits-wrapper">
+            <input
+              *ngFor="let digit of [0, 1, 2, 3]; let i = index"
+              type="password"
+              inputmode="numeric"
+              class="digit-box"
+              [attr.aria-label]="'Chiffre ' + (i + 1)"
+              (focus)="$any($event.target).select()"
+              [value]="chiffresConfirmation[i]"
+              (input)="onDigitInput($event, i, 'confirmation')"
+              (keydown)="onKeyDown($event, i, 'confirmation')"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div class="message message-erreur" *ngIf="messageErreur()" role="alert">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ messageErreur() }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="fermer()" [disabled]="enCours()">
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          [class.btn-danger]="securite.configAction()?.danger"
+          [disabled]="!codeConfirmationComplet() || enCours()"
+          (click)="validerConfirmation()">
+          {{ enCours() ? 'Vérification…' : (securite.configAction()?.actionTexte || 'Valider') }}
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- MODE 2 : CONFIGURATION DU CODE DE SÉCURITÉ -->
+    <ng-container *ngIf="securite.modalMode() === 'CONFIGURATION'">
+      <div class="modal-header">
+        <div class="icon-circle">
+          <mat-icon>shield</mat-icon>
+        </div>
+        <div class="header-text">
+          <h3>{{ securite.statut()?.configure ? 'Modifier mon code de sécurité' : 'Configurer mon code de sécurité' }}</h3>
+          <p class="subtitle">Protection des actions administratives Karavan</p>
+        </div>
+        <button type="button" class="btn-close" (click)="fermer()" aria-label="Fermer">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="note">
+          <mat-icon class="note-icon">info</mat-icon>
+          <p *ngIf="securite.statut()?.configure">
+            Ce code personnel à 4 chiffres vous sera demandé avant chaque action sensible :
+            validation KYC, suspension de compte, notification groupée, litiges financiers.
+          </p>
+          <p *ngIf="!securite.statut()?.configure">
+            Première connexion : saisissez le code provisoire remis à l'ouverture de votre compte,
+            puis choisissez votre code personnel. Il vous sera demandé avant chaque action sensible
+            et le code provisoire ne fonctionnera plus.
+          </p>
+        </div>
+
+        <!-- Premier paramétrage : code provisoire à remplacer -->
+        <div class="form-group" *ngIf="!securite.statut()?.configure">
+          <label class="field-label">Code provisoire</label>
+          <div class="digits-wrapper">
+            <input
+              *ngFor="let digit of [0, 1, 2, 3]; let i = index"
+              type="password"
+              inputmode="numeric"
+              class="digit-box"
+              [attr.aria-label]="'Code provisoire, chiffre ' + (i + 1)"
+              (focus)="$any($event.target).select()"
+              [value]="ancienCode[i]"
+              (input)="onDigitInput($event, i, 'ancien')"
+              (keydown)="onKeyDown($event, i, 'ancien')"
+              autocomplete="off"
+              data-lpignore="true"
+            />
+          </div>
+        </div>
+
+        <!-- Ancien code si déjà configuré (ou mot de passe de connexion si oublié) -->
+        <div class="form-group" *ngIf="securite.statut()?.configure && !viaMotDePasse">
+          <div class="label-ligne">
+            <label class="field-label">Code actuel</label>
+            <button type="button" class="lien" (click)="basculerMotDePasse(true)">Code oublié ?</button>
+          </div>
+          <div class="digits-wrapper">
+            <input
+              *ngFor="let digit of [0, 1, 2, 3]; let i = index"
+              type="password"
+              inputmode="numeric"
+              class="digit-box"
+              [attr.aria-label]="'Code actuel, chiffre ' + (i + 1)"
+              (focus)="$any($event.target).select()"
+              [value]="ancienCode[i]"
+              (input)="onDigitInput($event, i, 'ancien')"
+              (keydown)="onKeyDown($event, i, 'ancien')"
+              autocomplete="off"
+              data-lpignore="true"
+            />
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="securite.statut()?.configure && viaMotDePasse">
+          <div class="label-ligne">
+            <label class="field-label" for="mot-de-passe-confirmation">Mot de passe de connexion</label>
+            <button type="button" class="lien" (click)="basculerMotDePasse(false)">Je connais mon code</button>
+          </div>
+          <input
+            id="mot-de-passe-confirmation"
+            type="password"
+            class="champ-texte"
+            name="mot-de-passe-confirmation"
+            autocomplete="current-password"
+            [(ngModel)]="motDePasse"
+          />
+        </div>
+
+        <!-- Nouveau code -->
+        <div class="form-group">
+          <label class="field-label">Nouveau code</label>
+          <div class="digits-wrapper">
+            <input
+              *ngFor="let digit of [0, 1, 2, 3]; let i = index"
+              type="password"
+              inputmode="numeric"
+              class="digit-box"
+              [attr.aria-label]="'Nouveau code, chiffre ' + (i + 1)"
+              (focus)="$any($event.target).select()"
+              [value]="nouveauCode[i]"
+              (input)="onDigitInput($event, i, 'nouveau')"
+              (keydown)="onKeyDown($event, i, 'nouveau')"
+              autocomplete="new-password"
+            />
+          </div>
+        </div>
+
+        <!-- Confirmer le nouveau code -->
+        <div class="form-group">
+          <label class="field-label">Confirmation du nouveau code</label>
+          <div class="digits-wrapper">
+            <input
+              *ngFor="let digit of [0, 1, 2, 3]; let i = index"
+              type="password"
+              inputmode="numeric"
+              class="digit-box"
+              [attr.aria-label]="'Confirmation, chiffre ' + (i + 1)"
+              (focus)="$any($event.target).select()"
+              [value]="confirmationCode[i]"
+              (input)="onDigitInput($event, i, 'confirmer')"
+              (keydown)="onKeyDown($event, i, 'confirmer')"
+              autocomplete="new-password"
+            />
+          </div>
+        </div>
+
+        <div class="message message-erreur" *ngIf="messageErreur()" role="alert">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ messageErreur() }}</span>
+        </div>
+
+        <div class="message message-succes" *ngIf="messageSucces()" role="status">
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ messageSucces() }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="fermer()" [disabled]="enCours()">
+          Fermer
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="!codeNouveauComplet() || enCours()"
+          (click)="enregistrerConfiguration()">
+          {{ enCours() ? 'Enregistrement…' : 'Enregistrer le code' }}
+        </button>
+      </div>
+    </ng-container>
+
+  </div>
+</div>

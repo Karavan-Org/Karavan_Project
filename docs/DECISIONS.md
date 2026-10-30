@@ -169,3 +169,31 @@ La maquette cible (image Figma de référence) présente :
   - Mémorisation de l'état réduit dans `localStorage` (`karavan_sidebar_reduite`).
 - **Bouton « Retour au Tableau de bord »** :
   - Présent en en-tête global sur toutes les pages administratives secondaires (`/utilisateurs`, `/groupes`, `/finance`, etc.) pour revenir instantanément au Globe 3D et au cadran d'accueil en un seul clic.
+
+
+## ADR-023 : Administrateur principal unique et mot de passe provisoire obligatoire
+
+### Contexte
+Les bases contenaient des comptes administrateurs de démonstration (`+22370000001` à `+22370000005`, mot de passe partagé) et la console affichait des identifiants pré-remplis. La plateforme doit démarrer avec un seul responsable identifié, qui constitue ensuite son équipe.
+
+### Décisions Prises
+
+#### 1. Migration V26 (`V26__administrateur_principal.sql`)
+- Suppression de tous les administrateurs existants et de leurs données propres (sessions, notifications, moyens de paiement, codes OTP, portefeuille vide).
+- Le journal d'audit (RG-66, RG-67) n'est pas modifié : il est en ajout seul et chaîné ; ses lignes gardent l'identifiant de l'ancien acteur.
+- Les décisions KYC et de publication déjà prises sont conservées ; leur auteur devient `NULL` (inconnu) plutôt que d'être réattribué à quelqu'un qui ne les a pas prises (`validation_compte.administrateur_id` et `validation_groupe.administrateur_id` deviennent nullables).
+- Création de l'**administrateur principal** : Salif Modibo Keita, `+22375250430`, `salifmodibok@gmail.com`, fonction `TECHNIQUE`, matricule `ADM-0001`, mot de passe provisoire `1234`.
+- Le chargeur de démonstration (`ChargeurDemo`, profil `demo`) ne crée plus aucun administrateur ; l'amorçage par variables `DOGO_ADMIN_*` est supprimé.
+
+#### 2. Mot de passe provisoire (RG-07b)
+- Colonne `utilisateur.mot_de_passe_provisoire`, levée pour l'administrateur principal et pour chaque administrateur créé depuis la console.
+- Tant qu'elle est levée, `FiltreMotDePasseProvisoire` refuse toute route hors `GET /api/moi`, `POST /api/moi/mot-de-passe`, `POST /api/moi/deconnexion` et `/api/auth/**` (403, code `MOT_DE_PASSE_PROVISOIRE`).
+- Le nouveau mot de passe d'un administrateur doit être robuste (8 à 64 caractères, majuscule, minuscule, chiffre) et différent de l'actuel ; l'ancien mot de passe est toujours exigé.
+- Console Angular : page plein écran `/premiere-connexion`, imposée par les gardes de route et par l'intercepteur HTTP ; reconnexion automatique après le changement (le backend ferme toutes les sessions du compte).
+
+#### 3. Fonctions administratives (RG-06)
+- `TECHNIQUE` est réservé à l'administrateur principal : il est le seul à créer des administrateurs et ne peut pas attribuer cette fonction.
+- Les autres fonctions (`VALIDATION`, `FINANCE`, `SUPPORT`, `LOGISTIQUE`) fixent les permissions de l'administrateur. Source unique : `AuthService.permissionsAdministratives`, exposée par `GET /api/admin/fonctions-administratives` et affichée dans la console au moment de la création.
+
+#### 4. Code de sécurité à 4 chiffres
+- Distinct du mot de passe : au premier paramétrage, l'administrateur saisit le code provisoire `1234` puis choisit son code personnel (voir ADR-022, RG-SEC-03).

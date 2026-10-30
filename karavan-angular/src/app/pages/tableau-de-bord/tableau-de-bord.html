@@ -1,0 +1,254 @@
+<div class="supervision-dashboard-container">
+  <!-- 1. EN-TÊTE SUPÉRIEUR DU TABLEAU DE BORD -->
+  <header class="dashboard-topbar">
+    <div class="topbar-titre-bloc">
+      <div class="titre-avec-badge">
+        <h1 class="main-titre">Groupes lancés</h1>
+        <span class="badge-compteur">{{ resume()?.totalGroupes ?? groupes().length }}</span>
+      </div>
+      <p class="sous-titre-cadran">
+        Faites tourner le cadran pour parcourir les groupes ; cliquez sur une carte pour ouvrir son détail.
+      </p>
+    </div>
+
+    <!-- Côté droit : indicateurs + statistiques + recherche + notifications (le profil est dans la barre latérale) -->
+    <div class="topbar-droite-actions">
+      <!-- 1. Micro-stat Utilisateurs (indicateur)-->
+      <button type="button" class="micro-stat-capsule capsule-utilisateurs"
+              (click)="ouvrirPanneau('UTILISATEURS')" title="Voir les utilisateurs, leur état et leurs actions">
+        <span class="icone-animee icone-pulse-users">👥</span>
+        <span class="capsule-chiffre-bloc">
+          <span class="valeur-chiffre">{{ (resume()?.utilisateurs?.total ?? 0).toLocaleString('fr-FR') }}</span>
+          <span class="libelle-texte">utilisateurs</span>
+        </span>
+      </button>
+
+      <!-- 2. Micro-stat Colis / Convois : ouvre la liste des groupes lancés -->
+      <button type="button" class="micro-stat-capsule capsule-colis"
+              (click)="ouvrirPanneau('CONVOIS')" title="Voir les groupes lancés et leurs informations">
+        <span class="icone-animee icone-bounce-box">📦</span>
+        <span class="capsule-chiffre-bloc">
+          <span class="valeur-chiffre">{{ resume()?.totalGroupes ?? groupes().length }}</span>
+          <span class="libelle-texte">convois</span>
+        </span>
+      </button>
+
+      <!-- 3. Unique accès au panneau de statistiques générales -->
+      <button
+        type="button"
+        class="btn-stats-icone-seule"
+        (click)="basculerPanneauStats()"
+        [class.actif]="panneauStatsOuvert()"
+        title="Afficher / Masquer les statistiques générales"
+        aria-label="Statistiques"
+      >
+        <mat-icon class="icon-analytics">query_stats</mat-icon>
+      </button>
+
+      <!-- Barre de recherche -->
+      <div class="recherche-champ-box">
+        <mat-icon class="search-ico">search</mat-icon>
+        <input
+          type="search"
+          placeholder="Rechercher un groupe, un produit..."
+          [ngModel]="rechercheTexte()"
+          (ngModelChange)="rechercheTexte.set($event)"
+        />
+      </div>
+
+      <!-- Cloche de notification -->
+      <div class="notif-bell-wrapper">
+        <button
+          type="button"
+          class="notif-btn"
+          (click)="basculerNotifications()"
+          [attr.aria-expanded]="notificationsOuvertes()"
+          [attr.aria-label]="notifications.nonLues() ? 'Notifications : ' + notifications.nonLues() + ' non lue(s)' : 'Notifications'"
+          title="Notifications"
+        >
+          <mat-icon>{{ notifications.nonLues() ? 'notifications_active' : 'notifications_none' }}</mat-icon>
+          @if (notifications.nonLues()) {
+            <span class="notif-point-rouge"></span>
+          }
+        </button>
+
+        @if (notificationsOuvertes()) {
+          <div class="notif-panneau" role="dialog" aria-label="Notifications">
+            <div class="notif-entete">
+              <span>Notifications</span>
+              @if (notifications.nonLues()) {
+                <button type="button" class="notif-lien" (click)="notifications.toutMarquerLu()">Tout marquer comme lu</button>
+              }
+            </div>
+            @for (n of notifications.notifications().slice(0, 8); track n.id) {
+              <button type="button" class="notif-item" [class.non-lue]="n.statut !== 'LUE'" (click)="notifications.marquerLue(n)">
+                <span class="notif-texte">{{ n.contenu }}</span>
+                <span class="notif-date">{{ formatTempsEcoule(n.date) }}</span>
+              </button>
+            } @empty {
+              <p class="notif-vide">Aucune notification.</p>
+            }
+          </div>
+        }
+      </div>
+
+    </div>
+  </header>
+
+  <!-- 2. SCÈNE PRINCIPALE 3D : PANNEAU DE STATISTIQUES DISCRET ET INTÉGRÉ -->
+  <div class="scene-principale-wrapper">
+    <main class="globe-cadran-stage">
+      <!-- A. Le Globe 3D réaliste WebGL (Globe.gl / Three.js) occupant tout l'espace -->
+      <div class="globe-3d-scene-container">
+        <app-globe-3d
+          [groupes]="groupesAffiches()"
+          [repartitionPays]="resume()?.repartitionPays || []"
+          [paysFiltre]="paysFiltre()"
+          (paysChoisi)="onPaysChoisi($event)"
+          (groupeChoisi)="onGroupeClique($event)"
+        ></app-globe-3d>
+      </div>
+
+      <!-- B. PANNEAU DE STATISTIQUES FLOTTANT (QUAND OUVERT, SE FERME PAR LA CROIX) -->
+      @if (panneauStatsOuvert()) {
+        <aside class="tiroir-stats-gauche">
+          <div class="stats-header-bar">
+            <div class="stats-titre-group">
+              <h2 class="stats-titre">Statistiques générales</h2>
+              <p class="stats-sous-titre">Vue d'ensemble de la plateforme</p>
+            </div>
+            <button
+              type="button"
+              class="btn-fermer-stats"
+              (click)="fermerPanneauStats()"
+              title="Fermer les statistiques"
+              aria-label="Fermer"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <!-- 2 Cartes KPIs principales : Utilisateurs totaux + Groupes lancés -->
+          <div class="kpis-cartes-colonne">
+            <!-- Carte 1 : Utilisateurs totaux -->
+            <div class="kpi-stat-card">
+              <div class="kpi-icon-rond bleu-clair">
+                <mat-icon>people_outline</mat-icon>
+              </div>
+              <div class="kpi-info-bloc">
+                <span class="kpi-label">Utilisateurs totaux</span>
+                <div class="kpi-chiffre-ligne">
+                  <span class="kpi-valeur">
+                    {{ (resume()?.utilisateurs?.total ?? 0).toLocaleString('fr-FR') }}
+                  </span>
+                  <span class="kpi-detail">
+                    {{ resume()?.utilisateurs?.clients ?? 0 }} commerçants ·
+                    {{ resume()?.utilisateurs?.grossistes ?? 0 }} grossistes ·
+                    {{ resume()?.utilisateurs?.courtiers ?? 0 }} courtiers
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carte 2 : Groupes lancés -->
+            <div class="kpi-stat-card">
+              <div class="kpi-icon-rond bleu-nuit">
+                <mat-icon>shopping_bag</mat-icon>
+              </div>
+              <div class="kpi-info-bloc">
+                <span class="kpi-label">Groupes lancés</span>
+                <div class="kpi-chiffre-ligne">
+                  <span class="kpi-valeur">
+                    {{ (resume()?.totalGroupes ?? groupes().length).toLocaleString('fr-FR') }}
+                  </span>
+                  <span class="kpi-detail">{{ resume()?.groupesLancesMois ?? 0 }} lancés ce mois-ci</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section Activité Récente -->
+          <div class="activite-recente-section">
+            <div class="section-titre-box">
+              <h3 class="sec-titre">Activité récente</h3>
+              <span class="sec-sous-titre">Derniers groupes et utilisateurs</span>
+            </div>
+
+            <div class="activite-flux-liste">
+              @for (act of resume()?.activiteRecente || []; track (act.type + '-' + act.id + '-' + $index)) {
+                <div class="activite-flux-item">
+                  <div class="activite-visuel">
+                    @if (act.type === 'GROUPE') {
+                      <span class="drapeau-pastille">
+                        <app-drapeau-pays [pays]="act.drapeau" [largeur]="20" [hauteur]="14"></app-drapeau-pays>
+                      </span>
+                    } @else {
+                      <div class="avatar-pastille">
+                        <mat-icon>person</mat-icon>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="activite-corps">
+                    <span class="activite-titre-texte">{{ act.titre }}</span>
+                    <span class="activite-sous-texte">{{ act.sousTitre }}</span>
+                  </div>
+
+                  <div class="activite-meta">
+                    <span class="temps-relatif">{{ formatTempsEcoule(act.date) }}</span>
+                    <span class="point-en-ligne"></span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </aside>
+      }
+
+      <!-- C. Cadran rotatif 3D horizontal des groupes :
+           - rotationChange : tourne le cadran sans ouvrir le tiroir
+           - groupeClique : ouvre/ferme le tiroir au clic sur la carte
+      -->
+      <div class="cadran-horizontal-overlay">
+        <app-cadran-groupes
+          [groupes]="groupesAffiches()"
+          [paysFiltre]="paysFiltre()"
+          [groupeSelectionneId]="groupeDetail()?.id || null"
+          (rotationChange)="onRotationCadran($event)"
+          (groupeClique)="onGroupeClique($event)"
+          (groupeFerme)="fermerDetail()"
+        ></app-cadran-groupes>
+      </div>
+    </main>
+  </div>
+
+  <!-- 3. TIROIR LATÉRAL DROIT : FICHE DE DÉTAIL D'UN PRODUIT/GROUPE -->
+  @if (groupeDetail()) {
+    <app-detail-tiroir
+      [groupe]="groupeDetail()!"
+      (fermer)="fermerDetail()"
+      (assignerPays)="ouvrirModalRattrapage()"
+    ></app-detail-tiroir>
+  }
+
+  <!-- Tiroirs ouverts depuis les capsules de l'en-tête -->
+  @if (panneauOuvert() === 'UTILISATEURS') {
+    <app-panneau-utilisateurs (fermer)="fermerPanneau()"></app-panneau-utilisateurs>
+  }
+  @if (panneauOuvert() === 'CONVOIS') {
+    <app-panneau-convois
+      [groupes]="groupes()"
+      (fermer)="fermerPanneau()"
+      (groupeChoisi)="ouvrirGroupeDepuisPanneau($event)"
+    ></app-panneau-convois>
+  }
+
+  <!-- 4. MODAL D'ASSIGNATION DE PAYS D'ORIGINE POUR RATTRAPAGE -->
+  @if (modalRattrapageOuverte) {
+    <app-modal-assigner-pays
+      [listePays]="listePays()"
+      (onFermer)="fermerModalRattrapage()"
+      (onPaysAssigne)="apresAssignationPays()"
+    ></app-modal-assigner-pays>
+  }
+</div>

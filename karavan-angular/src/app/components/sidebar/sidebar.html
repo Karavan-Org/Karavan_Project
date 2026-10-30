@@ -1,0 +1,144 @@
+<aside
+  class="sidebar"
+  [class.sidebar-reduite]="estReduite()"
+  (click)="onSidebarClick($event)"
+>
+
+  <!-- 1. En-tête : Logo et Identité Karavan (cliquer dessus bascule l'état ouvert/fermé) -->
+  <div
+    class="brand-header"
+    (click)="$event.stopPropagation(); basculerReduite()"
+    [title]="estReduite() ? 'Cliquer pour ouvrir le menu' : 'Cliquer pour réduire le menu'"
+  >
+    <img
+      class="brand-logo"
+      src="assets/logo_karavan.png"
+      alt="Karavan"
+    />
+
+    <div class="brand-info" *ngIf="!estReduite()">
+      <span class="brand-name">Karavan</span>
+      <span class="brand-tag">Console d'administration</span>
+    </div>
+  </div>
+
+  <div class="sidebar-divider" *ngIf="!estReduite()"></div>
+
+  <!-- 2. Navigation principale -->
+  <nav class="nav-container" aria-label="Navigation principale">
+
+    <div *ngFor="let section of sections(); trackBy: parTitre" class="nav-section">
+
+      <!-- Titre de section visible uniquement en mode étendu -->
+      <h2 class="section-title" *ngIf="!estReduite()">
+        {{ section.title }}
+      </h2>
+
+      <ul class="nav-list">
+        <li *ngFor="let item of section.items; trackBy: parRoute" class="nav-list-item">
+
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            [routerLinkActiveOptions]="{ exact: item.route === '/admin' }"
+            class="nav-item"
+            [attr.aria-label]="item.label">
+
+            <mat-icon class="nav-icon">
+              {{ item.icon }}
+            </mat-icon>
+
+            <!-- Libellé visible en mode étendu -->
+            <span class="nav-label" *ngIf="!estReduite()">
+              {{ item.label }}
+            </span>
+
+            <!-- Badge numérique -->
+            <span
+              *ngIf="item.badge"
+              class="nav-badge"
+              [class.mini-badge]="estReduite()">
+              {{ item.badge }}
+            </span>
+
+            <!-- Tooltip flottant au survol en mode miniature (style Karavan) -->
+            <span class="floating-tooltip" *ngIf="estReduite()">
+              {{ item.label }}
+            </span>
+
+          </a>
+
+        </li>
+      </ul>
+
+    </div>
+
+  </nav>
+
+  <!-- 3. Pied de barre latérale -->
+  <div class="sidebar-footer">
+    <!-- Code de sécurité à 4 chiffres : libellé complet en mode étendu, pastille d'alerte en rail -->
+    <div class="security-pin-bar">
+      <button
+        type="button"
+        class="security-pin-btn"
+        [class.security-pin-mini]="estReduite()"
+        (click)="$event.stopPropagation(); securite.ouvrirConfiguration()"
+        [attr.aria-label]="securite.statut()?.configure ? 'Modifier mon code de sécurité' : 'Configurer mon code de sécurité'"
+        title="Code de sécurité à 4 chiffres (requis pour chaque action sensible)">
+        <mat-icon class="sec-icon">{{ securite.statut()?.configure ? 'lock' : 'lock_open' }}</mat-icon>
+        <ng-container *ngIf="!estReduite()">
+          <span class="sec-text">Code de sécurité</span>
+          <span class="sec-badge" [class.sec-badge-ok]="securite.statut()?.configure">
+            {{ securite.statut()?.configure ? 'Actif' : 'À configurer' }}
+          </span>
+        </ng-container>
+        <span class="sec-alerte" *ngIf="estReduite() && !securite.statut()?.configure" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <!-- Bouton de bascule Réduire / Agrandir la barre latérale -->
+    <div class="toggle-collapse-bar">
+      <button
+        type="button"
+        class="collapse-btn"
+        (click)="$event.stopPropagation(); basculerReduite()"
+        [title]="estReduite() ? 'Agrandir le menu latéral' : 'Réduire le menu en miniature'"
+      >
+        <mat-icon class="collapse-icon">
+          {{ estReduite() ? 'chevron_right' : 'chevron_left' }}
+        </mat-icon>
+        <span class="collapse-label" *ngIf="!estReduite()">
+          Réduire le menu
+        </span>
+      </button>
+    </div>
+
+    <!-- Profil administrateur connecté -->
+    <div class="user-footer" [class.user-footer-mini]="estReduite()">
+      <div class="avatar" [title]="adminProfile.name">
+        {{ adminProfile.initials }}
+      </div>
+
+      <div class="user-details" *ngIf="!estReduite()">
+        <span class="user-name">
+          {{ adminProfile.name }}
+        </span>
+        <span class="user-role">
+          {{ adminProfile.role }}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        class="logout-btn"
+        aria-label="Déconnexion"
+        title="Déconnexion"
+        (click)="deconnecter()">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+  </div>
+
+</aside>

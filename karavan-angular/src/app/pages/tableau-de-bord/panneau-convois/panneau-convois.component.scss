@@ -1,0 +1,73 @@
+@use '../tiroir-liste';
+
+.groupe {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 12px;
+
+  &:hover { background: #FAF8F5; }
+  &:focus-visible { outline: 2px solid #EEA823; }
+}
+
+.ligne-haut {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.origine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B5E55;
+}
+
+.titre {
+  font-size: 14px;
+  font-weight: 800;
+  color: #2D231C;
+
+  small { font-size: 11.5px; font-weight: 700; color: #EEA823; }
+}
+
+.jauge {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: #F1EEEA;
+  overflow: hidden;
+
+  .remplie {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #AC7F5E, #EEA823);
+  }
+}
+
+.infos {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #6B5E55;
+
+  strong { color: #8F6243; }
+
+  &.secondaires {
+    font-size: 11.5px;
+    color: #8C7E74;
+
+    span { display: inline-flex; align-items: center; gap: 3px; }
+    mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  }
+}

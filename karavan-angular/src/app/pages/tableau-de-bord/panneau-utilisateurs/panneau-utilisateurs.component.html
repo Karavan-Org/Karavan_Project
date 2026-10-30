@@ -1,0 +1,107 @@
+<div class="tiroir-backdrop" (click)="fermer.emit()"></div>
+<aside class="tiroir-panneau" role="dialog" aria-label="Utilisateurs de la plateforme">
+  <div class="tiroir-entete">
+    <div>
+      <span class="sous-titre">Utilisateurs de la plateforme</span>
+      <h3>{{ membres().length }} compte{{ membres().length > 1 ? 's' : '' }}</h3>
+    </div>
+    <button type="button" class="btn-fermer" (click)="fermer.emit()" aria-label="Fermer">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="chiffres">
+    <div class="chiffre"><strong>{{ parStatut()['ACTIF'] ?? 0 }}</strong><span>Actifs</span></div>
+    <div class="chiffre"><strong>{{ parStatut()['EN_ATTENTE'] ?? 0 }}</strong><span>En attente</span></div>
+    <div class="chiffre"><strong>{{ parStatut()['SUSPENDU'] ?? 0 }}</strong><span>Suspendus</span></div>
+    <div class="chiffre"><strong>{{ parStatut()['DESACTIVE'] ?? 0 }}</strong><span>Désactivés</span></div>
+  </div>
+
+  <div class="filtres">
+    <div class="pastilles">
+      @for (t of types; track t) {
+        <button type="button" class="pastille" [class.active]="filtreType() === t" (click)="filtreType.set(t)">
+          {{ libelleFiltre(t) }} · {{ parType()[t] ?? 0 }}
+        </button>
+      }
+    </div>
+    <input type="search" placeholder="Rechercher un nom, un numéro, une boutique…"
+           [value]="recherche()" (input)="recherche.set($any($event.target).value)" />
+  </div>
+
+  <div class="tiroir-corps">
+    @if (!auditLisible) {
+      <p class="note">Les actions sur la plateforme proviennent du journal d'audit, réservé à l'administrateur principal.</p>
+    }
+    @if (erreur()) {
+      <p class="etat-vide">{{ erreur() }}</p>
+    } @else if (chargement() && !membres().length) {
+      <p class="etat-vide">Chargement…</p>
+    } @else if (!affiches().length) {
+      <p class="etat-vide">Aucun utilisateur ne correspond.</p>
+    }
+
+    <ul class="liste">
+      @for (m of affiches(); track m.id) {
+        <li class="ligne">
+          <button type="button" class="utilisateur" (click)="basculer(m)" [attr.aria-expanded]="deplie() === m.id">
+            <span class="avatar" aria-hidden="true">{{ initiales(m.nom) }}</span>
+            <span class="infos">
+              <span class="nom">{{ m.nom }}</span>
+              <span class="meta">
+                {{ libellesType[m.type] ?? m.type }} · {{ m.telephone }}
+                @if (m.entreprise) { · {{ m.entreprise }} }
+              </span>
+              @if (auditLisible) {
+                <span class="meta">
+                  @if (derniereAction(m); as a) {
+                    {{ nombreActions(m) }} action{{ nombreActions(m) > 1 ? 's' : '' }} · dernière : {{ dateRelative(a.date).toLowerCase() }}
+                  } @else {
+                    Aucune action tracée récemment
+                  }
+                </span>
+              }
+            </span>
+            <span class="etat" [ngClass]="couleurStatut(m.statut)">{{ libellesCompte[m.statut] ?? m.statut }}</span>
+            <mat-icon class="chevron">{{ deplie() === m.id ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+
+          @if (deplie() === m.id) {
+            <div class="detail">
+              <dl>
+                <div><dt>Inscrit le</dt><dd>{{ dateCourte(m.dateCreation) }}</dd></div>
+                @for (d of m.details; track d.libelle) {
+                  <div><dt>{{ d.libelle }}</dt><dd>{{ d.valeur }}</dd></div>
+                }
+              </dl>
+
+              @if (auditLisible) {
+                @if (actions(m).length) {
+                  <ol class="actions">
+                    @for (a of actions(m); track a.id) {
+                      <li>
+                        <span class="action-entete">
+                          <span class="action-libelle">{{ libelleAction(a.action) }}</span>
+                          <time [attr.datetime]="a.date">{{ dateCourte(a.date) }}</time>
+                        </span>
+                        @if (a.apres || a.avant) {
+                          <span class="action-detail">{{ a.apres || a.avant }}</span>
+                        }
+                      </li>
+                    }
+                  </ol>
+                } @else {
+                  <p class="meta">Aucune action dans les 500 dernières lignes du journal.</p>
+                }
+              }
+
+              <a class="lien-fiche" [routerLink]="['/utilisateurs', m.id]" (click)="fermer.emit()">
+                <mat-icon>open_in_new</mat-icon> Ouvrir la fiche complète
+              </a>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  </div>
+</aside>

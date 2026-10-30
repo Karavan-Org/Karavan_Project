@@ -1,0 +1,458 @@
+import 'package:flutter/foundation.dart';
+import '../models/utilisateur_profil.dart';
+import 'api/api_client.dart';
+import 'api/api_config.dart';
+import 'api/api_exception.dart';
+import 'session_storage_service.dart';
+
+export '../models/utilisateur_profil.dart';
+
+/// Service d'Authentification gérant les sessions, JWT et profils
+class AuthService {
+  AuthService._() {
+    ApiClient.instance.onRefreshRequired = rafraichirJeton;
+  }
+  static final AuthService instance = AuthService._();
+
+  final ValueNotifier<UtilisateurProfil?> profilNotifier =
+      ValueNotifier<UtilisateurProfil?>(null);
+
+  UtilisateurProfil? get profilActuel => profilNotifier.value;
+  bool get estConnecte =>
+      profilNotifier.value != null && ApiClient.instance.estAuthentifie;
+
+  Map<String, String> get _entetesPlateforme =>
+      kIsWeb ? const {'X-Client-Platform': 'flutter-web'} : const {};
+
+  /// Active le jeton JWT en mémoire et persiste la session localement.
+  Future<UtilisateurProfil> _enregistrerSession(
+      Map<String, dynamic> response) async {
+    final jeton = response['jeton'] as String?;
+    final refreshToken = response['refreshToken'] as String?;
+    final profil = UtilisateurProfil.fromJson(
+        response['profil'] as Map<String, dynamic>? ?? {});
+
+    ApiClient.instance.definirJeton(jeton);
+    profilNotifier.value = profil;
+
+    await SessionStorageService.instance.sauvegarderSession(
+      refreshToken: refreshToken ?? '',
+      profil: profil,
+    );
+    return profil;
+  }
+
+  /// Restaure la session au démarrage à partir de flutter_secure_storage
+  Future<UtilisateurProfil?> restaurerSession() async {
+    final refreshToken =
+        kIsWeb ? null : await SessionStorageService.instance.lireRefreshToken();
+    if (!kIsWeb && (refreshToken == null || refreshToken.isEmpty)) {
+      return null;
+    }
+
+    try {
+      final response = await ApiClient.instance.postSansAuth(
+        ApiConfig.refresh,
+        body: kIsWeb ? null : {'refreshToken': refreshToken},
+        headers: _entetesPlateforme,
+      );
+
+      if (response is Map<String, dynamic>) {
+        final profilJson = response['profil'] as Map<String, dynamic>? ?? {};
+        final type = (profilJson['type'] as String? ?? '').toUpperCase();
+        if (type == 'ADMINISTRATEUR') {
+          // Ne jamais ouvrir une session d'administration Angular dans l'application B2B Flutter
+          await _effacerSessionLocale();
+          return null;
+        }
+        return await _enregistrerSession(response);
+      }
+    } on ApiException catch (e) {
+      // Session expirée ou révoquée sur le serveur. Sans réseau (statusCode 0), on garde le
+      // refresh token : la session sera restaurée au prochain lancement avec connexion.
+      if (e.statusCode != 0) {
+        await _effacerSessionLocale();
+      }
+    } catch (_) {
+      await _effacerSessionLocale();
+    }
+    return null;
+  }
+
+  /// Oublie la session sur cet appareil, sans appel réseau.
+  Future<void> _effacerSessionLocale() async {
+    await SessionStorageService.instance.effacerSession();
+    ApiClient.instance.deconnecter();
+    profilNotifier.value = null;
+  }
+
+  /// Rafraîchissement automatique de l'access token sur interception 401
+  Future<bool> rafraichirJeton() async {
+    final refreshToken =
+        kIsWeb ? null : await SessionStorageService.instance.lireRefreshToken();
+    if (!kIsWeb && (refreshToken == null || refreshToken.isEmpty)) {
+      return false;
+    }
+
+    try {
+      final response = await ApiClient.instance.postSansAuth(
+        ApiConfig.refresh,
+        body: kIsWeb ? null : {'refreshToken': refreshToken},
+        headers: _entetesPlateforme,
+      );
+
+      if (response is Map<String, dynamic>) {
+        final jeton = response['jeton'] as String?;
+        final nouveauRefreshToken = response['refreshToken'] as String?;
+        final profilJson = response['profil'] as Map<String, dynamic>?;
+
+        ApiClient.instance.definirJeton(jeton);
+        if (profilJson != null) {
+          final profil = UtilisateurProfil.fromJson(profilJson);
+          profilNotifier.value = profil;
+          await SessionStorageService.instance.sauvegarderSession(
+            refreshToken: nouveauRefreshToken ?? '',
+            profil: profil,
+          );
+        }
+        return true;
+      }
+    } on ApiException catch (e) {
+      // Refresh token refusé : la session est terminée. Surtout pas deconnecter() ici : ses appels
+      // authentifiés recevraient un 401 et attendraient ce même rafraîchissement (interblocage).
+      if (e.statusCode != 0) {
+        await _effacerSessionLocale();
+      }
+    } catch (_) {
+      await _effacerSessionLocale();
+    }
+    return false;
+  }
+
+  /// Connexion par téléphone et mot de passe (RG-07) isolée selon l'espace choisi
+  Future<UtilisateurProfil> connecter({
+    required String telephone,
+    String? motDePasse,
+    String? pin,
+    String? deviceId,
+    String? typeActeur,
+  }) async {
+    final secret = (motDePasse != null && motDePasse.isNotEmpty)
+        ? motDePasse
+        : (pin ?? '');
+    final response = await ApiClient.instance.post(
+      ApiConfig.connexion,
+      body: {
+        'telephone': telephone,
+        'motDePasse': secret,
+        'pin': secret,
+        'deviceId': deviceId ?? 'flutter-device-client',
+        if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
+      },
+      headers: _entetesPlateforme,
+    );
+
+    if (response is! Map<String, dynamic> || response['jeton'] is! String) {
+      throw const ApiException(
+          statusCode: 0,
+          message:
+              'Réponse inattendue du serveur Karavan lors de la connexion.');
+    }
+
+    return _enregistrerSession(response);
+  }
+
+  /// Inscription d'un nouvel utilisateur selon son rôle (RG-01 à RG-03)
+  Future<Map<String, dynamic>> inscrire({
+    required String typeActeur, // COMMERCANT, GROSSISTE, COURTIER
+    required String telephone,
+    required String nom,
+    String? motDePasse,
+    String? pin,
+    String? nomBoutique,
+    String? quartierBamako,
+    String? numeroNif,
+    String? nomBoutiqueMarche,
+    String? registreCommerce,
+    String? nomSocieteImport,
+    String? licenceTransit,
+    String? adresseDepot,
+  }) async {
+    final secret = (motDePasse != null && motDePasse.isNotEmpty)
+        ? motDePasse
+        : (pin ?? '');
+    final body = {
+      'type': typeActeur.toUpperCase(),
+      'telephone': telephone,
+      'nom': nom,
+      'motDePasse': secret,
+      'pin': secret,
+      if (nomBoutique != null) 'nomBoutique': nomBoutique,
+      if (quartierBamako != null) 'quartierBamako': quartierBamako,
+      if (numeroNif != null) 'numeroNif': numeroNif,
+      if (nomBoutiqueMarche != null) 'nomBoutiqueMarche': nomBoutiqueMarche,
+      if (registreCommerce != null) 'registreCommerce': registreCommerce,
+      if (nomSocieteImport != null) 'nomSocieteImport': nomSocieteImport,
+      if (licenceTransit != null) 'licenceTransit': licenceTransit,
+      if (adresseDepot != null) 'adresseDepot': adresseDepot,
+    };
+
+    final response =
+        await ApiClient.instance.post(ApiConfig.inscription, body: body);
+    return response is Map<String, dynamic> ? response : {};
+  }
+
+  /// Vérification de l'OTP reçu par SMS (RG-02)
+  Future<Map<String, dynamic>> verifierOtp({
+    required String telephone,
+    required String code,
+  }) async {
+    final response = await ApiClient.instance.post(
+      ApiConfig.verifierOtp,
+      body: {
+        'telephone': telephone,
+        'code': code,
+      },
+    );
+    return response is Map<String, dynamic> ? response : {};
+  }
+
+  /// Demande le renvoi d'un nouveau code OTP par SMS (RG-02)
+  Future<Map<String, dynamic>> renvoyerOtp({
+    required String telephone,
+  }) async {
+    final response = await ApiClient.instance.post(
+      ApiConfig.renvoyerOtp,
+      body: {
+        'telephone': telephone,
+      },
+    );
+    return response is Map<String, dynamic> ? response : {};
+  }
+
+  /// Demande de réinitialisation de mot de passe par SMS OTP (mot de passe oublié)
+  Future<Map<String, dynamic>> demanderReinitialisationMotDePasse({
+    required String telephone,
+    String? typeActeur,
+  }) async {
+    final rep = await ApiClient.instance.postSansAuth(
+      ApiConfig.demandeResetMdp,
+      body: {
+        'telephone': telephone,
+        if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
+      },
+      headers: _entetesPlateforme,
+    );
+    return rep is Map<String, dynamic> ? rep : <String, dynamic>{};
+  }
+
+  /// Validation du code OTP et définition du nouveau mot de passe
+  Future<void> reinitialiserMotDePasse({
+    required String telephone,
+    required String code,
+    required String nouveauMotDePasse,
+    String? typeActeur,
+  }) async {
+    await ApiClient.instance.postSansAuth(
+      ApiConfig.reinitialiserMdp,
+      body: {
+        'telephone': telephone,
+        'code': code,
+        'nouveauMotDePasse': nouveauMotDePasse,
+        if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
+      },
+      headers: _entetesPlateforme,
+    );
+  }
+
+  /// Authentification via jeton Google OAuth2 (RG-07) cloisonnée par rôle
+  /// Renvoie soit {'statut': 'CONNECTE', 'profil': ...} soit {'statut': 'PROFIL_INCOMPLET', 'jetonInscription': ...}
+  Future<Map<String, dynamic>> authentifierGoogle(
+    String idToken, {
+    String? deviceId,
+    String? typeActeur,
+    String? mode,
+  }) async {
+    final response = await ApiClient.instance.postSansAuth(
+      ApiConfig.googleAuth,
+      body: {
+        'idToken': idToken,
+        'deviceId': deviceId ?? 'flutter-device-client',
+        if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
+        if (mode != null) 'mode': mode.toUpperCase(),
+      },
+      headers: _entetesPlateforme,
+    );
+
+    if (response is! Map<String, dynamic>) {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Réponse inattendue du serveur lors de la connexion Google.',
+      );
+    }
+
+    final String? jeton = response['jeton'] as String?;
+    if (jeton != null && jeton.isNotEmpty) {
+      final profil = await _enregistrerSession(response);
+      return {'statut': 'CONNECTE', 'profil': profil, 'jeton': jeton};
+    }
+
+    return response;
+  }
+
+  /// Étape 1 : Demande de code OTP SMS pour finaliser l'inscription Google
+  Future<Map<String, dynamic>> demanderOtpGoogleCompleter({
+    required String jetonInscription,
+    required String telephone,
+    String? typeActeur,
+  }) async {
+    final response = await ApiClient.instance.postSansAuth(
+      ApiConfig.googleDemanderOtp,
+      body: {
+        'jetonInscription': jetonInscription,
+        'telephone': telephone,
+        if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
+      },
+      headers: _entetesPlateforme,
+    );
+    return response is Map<String, dynamic> ? response : {};
+  }
+
+  /// Étape 2 : Validation du code OTP et création / fusion du compte Google Karavan
+  Future<UtilisateurProfil> completerGoogleEtConnecter({
+    required String jetonInscription,
+    required String telephone,
+    required String codeOtp,
+    String? typeActeur,
+    String? nomBoutique,
+    String? quartierBamako,
+    String? deviceId,
+  }) async {
+    final body = {
+      'jetonInscription': jetonInscription,
+      'telephone': telephone,
+      'codeOtp': codeOtp,
+      if (typeActeur != null) 'typeActeur': typeActeur.toUpperCase(),
+      if (nomBoutique != null) 'nomBoutique': nomBoutique,
+      if (quartierBamako != null) 'quartierBamako': quartierBamako,
+      'deviceId': deviceId ?? 'flutter-device-client',
+    };
+
+    final response = await ApiClient.instance.postSansAuth(
+      ApiConfig.googleCompleter,
+      body: body,
+      headers: _entetesPlateforme,
+    );
+
+    if (response is! Map<String, dynamic> || response['jeton'] is! String) {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Échec de finalisation du compte Google Karavan.',
+      );
+    }
+
+    return _enregistrerSession(response);
+  }
+
+  /// Upload d'une photo de profil (JPEG, PNG, WEBP) vers le serveur (stockage sécurisé)
+  Future<String> uploaderPhotoProfil(Uint8List octets,
+      {String nom = 'avatar.jpg'}) async {
+    final response = await ApiClient.instance.postMultipart(
+      ApiConfig.photoProfil,
+      fileBytes: octets,
+      filename: nom,
+      fieldName: 'photo',
+    );
+
+    String photoUrl = '';
+    if (response is Map<String, dynamic>) {
+      photoUrl = response['photoUrl'] as String? ?? '';
+    } else if (response is String) {
+      photoUrl = response;
+    }
+
+    if (photoUrl.isNotEmpty && profilActuel != null) {
+      final maj = profilActuel!.copyWith(photoUrl: photoUrl);
+      profilNotifier.value = maj;
+      await SessionStorageService.instance.sauvegarderProfil(maj);
+    }
+    return photoUrl;
+  }
+
+  /// Supprime la photo de profil personnalisée
+  Future<void> supprimerPhotoProfil() async {
+    await ApiClient.instance.patch(
+      ApiConfig.moi,
+      body: {'photoUrl': ''},
+    );
+    if (profilActuel != null) {
+      final maj = profilActuel!.sansPhoto();
+      profilNotifier.value = maj;
+      await SessionStorageService.instance.sauvegarderProfil(maj);
+    }
+  }
+
+  /// Recharge le profil depuis le serveur (synchronise toutes les informations fraîches)
+  Future<UtilisateurProfil?> rechargerProfil() async {
+    if (!ApiClient.instance.estAuthentifie) return profilActuel;
+    try {
+      final response = await ApiClient.instance.get(ApiConfig.moi);
+      if (response is Map<String, dynamic>) {
+        final nouveau = UtilisateurProfil.fromJson(response);
+        final maj = (profilActuel != null)
+            ? profilActuel!.copyWith(
+                id: nouveau.id,
+                nom: nouveau.nom.isNotEmpty ? nouveau.nom : profilActuel!.nom,
+                telephone: nouveau.telephone.isNotEmpty
+                    ? nouveau.telephone
+                    : profilActuel!.telephone,
+                photoUrl: nouveau.photoUrl,
+                statut: nouveau.statut,
+                nomStructure:
+                    nouveau.nomStructure ?? profilActuel!.nomStructure,
+                quartier: nouveau.quartier ?? profilActuel!.quartier,
+              )
+            : nouveau;
+
+        profilNotifier.value = maj;
+        await SessionStorageService.instance.sauvegarderProfil(maj);
+        return maj;
+      }
+    } catch (_) {}
+    return profilActuel;
+  }
+
+  /// Modification du mot de passe utilisateur (RG-07)
+  Future<void> changerMotDePasse({
+    required String ancienMotDePasse,
+    required String nouveauMotDePasse,
+  }) async {
+    await ApiClient.instance.post(
+      ApiConfig.changerMotDePasse,
+      body: {
+        'ancienMotDePasse': ancienMotDePasse,
+        'nouveauMotDePasse': nouveauMotDePasse,
+      },
+    );
+  }
+
+  /// Déconnexion révoquant le refresh token côté serveur et effaçant le stockage sécurisé
+  Future<void> deconnecter() async {
+    final rt = await SessionStorageService.instance.lireRefreshToken();
+    try {
+      if (kIsWeb || (rt != null && rt.isNotEmpty)) {
+        await ApiClient.instance.postSansAuth(
+          ApiConfig.logout,
+          body: kIsWeb ? null : {'refreshToken': rt},
+          headers: _entetesPlateforme,
+        );
+      }
+      if (ApiClient.instance.estAuthentifie) {
+        await ApiClient.instance.post(ApiConfig.deconnexion, body: {});
+      }
+    } catch (_) {}
+    await SessionStorageService.instance.effacerSession();
+    ApiClient.instance.deconnecter();
+    profilNotifier.value = null;
+  }
+}

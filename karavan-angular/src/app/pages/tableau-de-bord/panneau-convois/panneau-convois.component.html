@@ -1,0 +1,69 @@
+<div class="tiroir-backdrop" (click)="fermer.emit()"></div>
+<aside class="tiroir-panneau" role="dialog" aria-label="Groupes lancés">
+  <div class="tiroir-entete">
+    <div>
+      <span class="sous-titre">Convois</span>
+      <h3>{{ parStatut()['TOUS'] }} groupe{{ parStatut()['TOUS'] > 1 ? 's' : '' }} lancé{{ parStatut()['TOUS'] > 1 ? 's' : '' }}</h3>
+    </div>
+    <button type="button" class="btn-fermer" (click)="fermer.emit()" aria-label="Fermer">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="chiffres">
+    <div class="chiffre"><strong>{{ totaux().ouverts }}</strong><span>Ouverts</span></div>
+    <div class="chiffre"><strong>{{ parStatut()['EN_EXPEDITION'] ?? 0 }}</strong><span>En expédition</span></div>
+    <div class="chiffre"><strong>{{ totaux().pays }}</strong><span>Pays d'origine</span></div>
+    <div class="chiffre"><strong>{{ totaux().progression }} %</strong><span>Remplissage moyen</span></div>
+  </div>
+
+  <div class="filtres">
+    <div class="pastilles">
+      @for (s of statuts(); track s) {
+        <button type="button" class="pastille" [class.active]="filtreStatut() === s" (click)="filtreStatut.set(s)">
+          {{ libelleStatut(s) }} · {{ parStatut()[s] ?? 0 }}
+        </button>
+      }
+    </div>
+    <input type="search" placeholder="Rechercher un groupe, un pays, un grossiste…"
+           [value]="recherche()" (input)="recherche.set($any($event.target).value)" />
+  </div>
+
+  <div class="tiroir-corps">
+    @if (!affiches().length) {
+      <p class="etat-vide">Aucun groupe ne correspond.</p>
+    }
+    <ul class="liste">
+      @for (g of affiches(); track g.id) {
+        <li class="ligne">
+          <button type="button" class="groupe" (click)="groupeChoisi.emit(g)" [attr.aria-label]="'Détail du groupe ' + g.titre">
+            <span class="ligne-haut">
+              <span class="origine">
+                <app-drapeau-pays [pays]="g.paysOrigine?.codeIso || g.paysOrigine?.nomFr" [largeur]="18" [hauteur]="12"></app-drapeau-pays>
+                {{ g.paysOrigine?.nomFr || 'Origine non renseignée' }}
+              </span>
+              <span class="etat" [ngClass]="couleur(g.statut)">{{ libelleStatut(g.statut) }}</span>
+            </span>
+
+            <span class="titre">{{ g.titre }} <small>#{{ g.id }}</small></span>
+
+            <span class="jauge" [attr.aria-label]="g.progressionPourcentage + ' %'">
+              <span class="remplie" [style.width.%]="g.progressionPourcentage || 0"></span>
+            </span>
+            <span class="infos">
+              <span>{{ pieces(g) }} / {{ g.quantiteCible }} pcs · {{ (g.progressionPourcentage || 0) | number:'1.0-0' }} %</span>
+              <strong>{{ fcfa(g.prixUnitaire) }}</strong>
+            </span>
+            <span class="infos secondaires">
+              <span>
+                <mat-icon>warehouse</mat-icon>{{ g.grossiste?.nom || '—' }}
+                @if (g.courtier?.nom) { · <mat-icon>support_agent</mat-icon>{{ g.courtier.nom }} }
+              </span>
+              <span>Échéance {{ dateCourte(g.dateLimite) }}</span>
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
+</aside>

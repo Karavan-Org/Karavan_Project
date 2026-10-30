@@ -1,0 +1,24 @@
+target/
+.vscode/
+.idea/
+*.iml
+*.log
+# documents KYC et images déposés en local par l'application
+donnees/
+uploads/
+
+.env
+.env.*
+*.key
+*.pem
+*.jks
+*.keystore
+
+# Configurations locales et de production avec secrets réels
+application-local.yml
+application-local.properties
+application-prod.yml
+application-prod.properties
+application-*.local.yml
+Thumbs.db
+.DS_Store

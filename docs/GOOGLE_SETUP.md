@@ -60,7 +60,7 @@ Dans **API et services** > **Identifiants**, vous devez créer **3 identifiants 
 5. **Empreinte numérique du certificat SHA-1** :
    - Pour obtenir la clé SHA-1 de debug locale, exécutez dans le terminal :
      ```bash
-     cd dogo-flutter/android
+     cd karavan-flutter/android
      ./gradlew signingReport
      ```
      ou via `keytool` :
@@ -79,7 +79,7 @@ Dans **API et services** > **Identifiants**, vous devez créer **3 identifiants 
 4. **ID de bundle** : `ml.dogo.karavan`.
 5. Cliquez sur **Créer**.
 6. Copiez le **Schéma d'URL inversé** (ex: `com.googleusercontent.apps.1234567890-yyy`).
-7. Dans `dogo-flutter/ios/Runner/Info.plist`, ajoutez :
+7. Dans `karavan-flutter/ios/Runner/Info.plist`, ajoutez :
    ```xml
    <key>CFBundleURLTypes</key>
    <array>
@@ -120,7 +120,7 @@ flutter build apk --dart-define=GOOGLE_CLIENT_ID=1234567890-xxx.apps.googleuserc
 Par défaut, `ApiConfig.googleClientId` lit cette variable via `String.fromEnvironment('GOOGLE_CLIENT_ID')`.
 
 ### Console Angular
-Dans `dogo-angular/src/index.html`, le script Google Identity Services est déjà injecté :
+Dans `karavan-angular/src/index.html`, le script Google Identity Services est déjà injecté :
 ```html
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 ```
