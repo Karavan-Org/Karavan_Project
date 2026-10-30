@@ -129,32 +129,8 @@ class KaravanApp extends StatelessWidget {
           builder: (_) => SplashLaunchScreen(routeInitiale: settings.name),
         );
       },
-      builder: (context, child) {
-        final screenWidth = MediaQuery.sizeOf(context).width;
-        if (screenWidth > 600) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Container(
-            color: isDark ? const Color(0xFF141A18) : const Color(0xFFE8E2D9),
-            alignment: Alignment.center,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.16),
-                      blurRadius: 24,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: ClipRect(child: child ?? const SizedBox.shrink()),
-              ),
-            ),
-          );
-        }
-        return child ?? const SizedBox.shrink();
-      },
+      // Pas de cadre global : chaque page se centre sur grand écran (TransitionCadree, AppTheme)
+      // et les espaces passent en navigation latérale (Responsive).
     );
   },
 );

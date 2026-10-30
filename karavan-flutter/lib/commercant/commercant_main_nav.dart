@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../utils/responsive.dart';
+import '../widgets/navigation_laterale.dart';
 import 'commercant_home_screen.dart';
 import 'explorer_screen.dart';
 import 'mes_commandes_screen.dart';
@@ -160,15 +162,46 @@ class _CommercantMainNavState extends State<CommercantMainNav>
 
   /// L'espace Commerçant est directement ouvert sans aucune étape KYC, tout en restant isolé des autres rôles
   @override
-  Widget build(BuildContext context) => GardeCompteActif(
-        role: RoleActeur.commercant,
-        child: PorteeCiblesDidacticiel(
-          cibles: _ciblesDidacticiel,
-          child: Builder(builder: _construireEspace),
+  Widget build(BuildContext context) => PleineLargeur(
+        child: GardeCompteActif(
+          role: RoleActeur.commercant,
+          child: PorteeCiblesDidacticiel(
+            cibles: _ciblesDidacticiel,
+            child: Builder(builder: _construireEspace),
+          ),
         ),
       );
 
   Widget _construireEspace(BuildContext context) {
+    final laterale = Responsive.navigationLaterale(context);
+    final arc = GeometrieArc(laterale: laterale);
+    final onglets = [
+      _buildNavItem(
+        index: 0,
+        label: "Accueil",
+        activeIcon: Icons.home,
+        inactiveIcon: Icons.home_outlined,
+      ),
+      _buildNavItem(
+        index: 1,
+        label: "Explorer",
+        activeIcon: Icons.explore,
+        inactiveIcon: Icons.explore_outlined,
+      ),
+      _buildNavItem(
+        index: 2,
+        label: "Commandes",
+        activeIcon: Icons.shopping_bag,
+        inactiveIcon: Icons.shopping_bag_outlined,
+      ),
+      _buildNavItem(
+        index: 3,
+        label: "Profil",
+        activeIcon: Icons.person,
+        inactiveIcon: Icons.person_outline,
+      ),
+    ];
+
     return TabNavigationScope(
       onSwitchTab: setTabIndex,
       child: Stack(
@@ -178,14 +211,21 @@ class _CommercantMainNavState extends State<CommercantMainNav>
             body: Stack(
               children: [
                 // 1. Écrans principaux avec IndexedStack (tickers suspendus sur onglets masqués)
-                IndexedStack(
-                  index: _currentIndex,
+                Row(
                   children: [
-                    for (int i = 0; i < _screens.length; i++)
-                      TickerMode(
-                        enabled: _currentIndex == i,
-                        child: _screens[i],
-                      ),
+                    if (laterale) RailNavigation(onglets: onglets),
+                    Expanded(
+                        child: CadrePage(
+                            child: IndexedStack(
+                      index: _currentIndex,
+                      children: [
+                        for (int i = 0; i < _screens.length; i++)
+                          TickerMode(
+                            enabled: _currentIndex == i,
+                            child: _screens[i],
+                          ),
+                      ],
+                    ))),
                   ],
                 ),
 
@@ -217,267 +257,203 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                       return const SizedBox.shrink();
                     }
 
-                    // Rayon de l'arc de cercle (distance entre le centre du FAB et les boutons)
-                    const double radius = 124.0;
-
-                    return Positioned(
-                      bottom: 40,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.bottomCenter,
-                            child: SizedBox(
-                              width: 340,
-                              height: 220,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                alignment: Alignment.bottomCenter,
-                                children: [
-                                  // Trait d'arc de cercle lumineux en arrière-plan
-                                  CustomPaint(
-                                    painter: _ArcTrackPainter(
-                                      progress: _fabController.value,
-                                      radius: radius,
-                                      primaryColor: AppTheme.primary,
-                                    ),
-                                    child:
-                                        const SizedBox(width: 300, height: 180),
-                                  ),
-
-                                  // Item 0 (Gauche - 152°) : ouvrir la fiche du groupe sélectionné
-                                  _buildArcButton(
-                                    index: 0,
-                                    total: 4,
-                                    angleDeg: 152.0,
-                                    radius: radius,
-                                    label: "Rejoindre",
-                                    subLabel: "Détails",
-                                    hoverTooltip:
-                                        "Voir les détails et choisir la quantité",
-                                    icon: Icons.shopping_cart_checkout_rounded,
-                                    color: AppTheme.olive,
-                                    onTap: () {
-                                      _fabController.reverse();
-                                      final groupe = GroupeSelectionService
-                                          .instance.groupeSelectionne;
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => FicheCampagneScreen(
-                                            id: groupe.id,
-                                            titre: groupe.titre,
-                                            sousTitre: groupe.sousTitre,
-                                            imagePath: groupe.imagePath,
-                                            prixGroupe: groupe.prixGroupe,
-                                            prixPublic: groupe.prixPublic,
-                                            quantiteActuelle:
-                                                groupe.quantiteActuelle,
-                                            quantiteObjectif:
-                                                groupe.quantiteObjectif,
-                                            categorie: groupe.categorie,
-                                            paysOrigine: groupe.paysOrigine,
-                                            courtierNom: groupe.courtierNom,
-                                            tempsRestant: groupe.tempsRestant,
-                                            groupe: groupe,
-                                            variantes: groupe.variantes,
-                                            quantiteMin:
-                                                groupe.quantiteMinParCommercant,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-
-                                  // Item 1 (Haut-Gauche - 112°) : Suivi de mes colis (suivi réel dans l'onglet Commandes)
-                                  _buildArcButton(
-                                    index: 1,
-                                    total: 4,
-                                    angleDeg: 112.0,
-                                    radius: radius,
-                                    label: "Suivi Colis",
-                                    subLabel: "Mes commandes",
-                                    hoverTooltip: "🚚 Suivre mes colis",
-                                    icon: Icons.local_shipping_rounded,
-                                    color: AppTheme.primary,
-                                    onTap: () => setTabIndex(2),
-                                  ),
-
-                                  // Item 2 (Haut-Droite - 68°) : Retrait Sécurisé (CodeRetraitCommercantScreen avec QR & PIN)
-                                  _buildArcButton(
-                                    index: 2,
-                                    total: 4,
-                                    angleDeg: 68.0,
-                                    radius: radius,
-                                    label: "Retrait",
-                                    subLabel: "QR & PIN",
-                                    hoverTooltip:
-                                        "🔑 Afficher mon Code QR & PIN",
-                                    icon: Icons.qr_code_2_rounded,
-                                    color: AppTheme.secondary,
-                                    onTap: () {
-                                      _fabController.reverse();
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const CodeRetraitCommercantScreen()),
-                                      );
-                                    },
-                                  ),
-
-                                  // Item 3 (Droite - 28°) : Favoris sauvegardés (MesFavorisScreen)
-                                  _buildArcButton(
-                                    index: 3,
-                                    total: 4,
-                                    angleDeg: 28.0,
-                                    radius: radius,
-                                    label: "Favoris",
-                                    subLabel: "Sauvegardes",
-                                    hoverTooltip: "❤️ Consulter mes Favoris",
-                                    icon: Icons.favorite_rounded,
-                                    color: AppTheme.danger,
-                                    onTap: () {
-                                      _fabController.reverse();
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const MesFavorisScreen()),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            )),
+                    return arc.positionner([
+                      // Trait d'arc de cercle lumineux en arrière-plan
+                      CustomPaint(
+                        painter: _ArcTrackPainter(
+                          progress: _fabController.value,
+                          radius: arc.rayon,
+                          debut: arc.debutTrace,
+                          centre: arc.centreTrace(arc.tailleTrace),
+                          primaryColor: AppTheme.primary,
+                        ),
+                        child: SizedBox.fromSize(size: arc.tailleTrace),
                       ),
-                    );
+
+                      // Item 0 (Gauche - 152°) : ouvrir la fiche du groupe sélectionné
+                      _buildArcButton(
+                        index: 0,
+                        total: 4,
+                        angleDeg: arc.angle(0),
+                        radius: arc.rayon,
+                        label: "Rejoindre",
+                        subLabel: "Détails",
+                        hoverTooltip: "Voir les détails et choisir la quantité",
+                        icon: Icons.shopping_cart_checkout_rounded,
+                        color: AppTheme.olive,
+                        onTap: () {
+                          _fabController.reverse();
+                          final groupe =
+                              GroupeSelectionService.instance.groupeSelectionne;
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => FicheCampagneScreen(
+                                id: groupe.id,
+                                titre: groupe.titre,
+                                sousTitre: groupe.sousTitre,
+                                imagePath: groupe.imagePath,
+                                prixGroupe: groupe.prixGroupe,
+                                prixPublic: groupe.prixPublic,
+                                quantiteActuelle: groupe.quantiteActuelle,
+                                quantiteObjectif: groupe.quantiteObjectif,
+                                categorie: groupe.categorie,
+                                paysOrigine: groupe.paysOrigine,
+                                courtierNom: groupe.courtierNom,
+                                tempsRestant: groupe.tempsRestant,
+                                groupe: groupe,
+                                variantes: groupe.variantes,
+                                quantiteMin: groupe.quantiteMinParCommercant,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      // Item 1 (Haut-Gauche - 112°) : Suivi de mes colis (suivi réel dans l'onglet Commandes)
+                      _buildArcButton(
+                        index: 1,
+                        total: 4,
+                        angleDeg: arc.angle(1),
+                        radius: arc.rayon,
+                        label: "Suivi Colis",
+                        subLabel: "Mes commandes",
+                        hoverTooltip: "🚚 Suivre mes colis",
+                        icon: Icons.local_shipping_rounded,
+                        color: AppTheme.primary,
+                        onTap: () => setTabIndex(2),
+                      ),
+
+                      // Item 2 (Haut-Droite - 68°) : Retrait Sécurisé (CodeRetraitCommercantScreen avec QR & PIN)
+                      _buildArcButton(
+                        index: 2,
+                        total: 4,
+                        angleDeg: arc.angle(2),
+                        radius: arc.rayon,
+                        label: "Retrait",
+                        subLabel: "QR & PIN",
+                        hoverTooltip: "🔑 Afficher mon Code QR & PIN",
+                        icon: Icons.qr_code_2_rounded,
+                        color: AppTheme.secondary,
+                        onTap: () {
+                          _fabController.reverse();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const CodeRetraitCommercantScreen()),
+                          );
+                        },
+                      ),
+
+                      // Item 3 (Droite - 28°) : Favoris sauvegardés (MesFavorisScreen)
+                      _buildArcButton(
+                        index: 3,
+                        total: 4,
+                        angleDeg: arc.angle(3),
+                        radius: arc.rayon,
+                        label: "Favoris",
+                        subLabel: "Sauvegardes",
+                        hoverTooltip: "❤️ Consulter mes Favoris",
+                        icon: Icons.favorite_rounded,
+                        color: AppTheme.danger,
+                        onTap: () {
+                          _fabController.reverse();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const MesFavorisScreen()),
+                          );
+                        },
+                      ),
+                    ]);
                   },
                 ),
+                // 4. Sur grand écran, le bouton central se pose au milieu du rail latéral
+                if (laterale)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: RailNavigation.largeur,
+                    child: Center(child: _boutonCentral()),
+                  ),
               ],
             ),
 
             // Bouton Central Flottant (+) avec rotation fluide et ondulation de vagues
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
-            floatingActionButton: AnimatedBuilder(
-              animation: _fabController,
-              builder: (context, child) {
-                final isExpanded = _fabController.value > 0.05;
-
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      height: 58,
-                      width: 58,
-                      margin: const EdgeInsets.only(top: 8),
-                      child: FloatingActionButton(
-                        key: _ciblesDidacticiel.fabCentral,
-                        heroTag: 'fab-nav-commercant',
-                        onPressed: _toggleFabMenu,
-                        elevation: isExpanded ? 8 : 4,
-                        backgroundColor: isExpanded
-                            ? AppTheme.bissapProfond
-                            : AppTheme.primary,
-                        shape: const CircleBorder(),
-                        child: Transform.rotate(
-                          angle: _rotateAnimation.value,
-                          child: const Icon(
-                            Icons.add,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
+            floatingActionButton: laterale ? null : _boutonCentral(),
 
             // Barre de navigation inférieure conforme au design Figma
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.couleurBandeauNavigation(context),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.estSombre(context)
-                        ? Colors.black.withValues(alpha: 0.35)
-                        : const Color(0x332C241E),
-                    blurRadius: 14,
-                    offset: const Offset(0, -3),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth < 100) {
-                      return const SizedBox(height: 64);
-                    }
-                    return SizedBox(
-                      height: 64,
-                      child: Row(
-                        children: [
-                          // Côté gauche : Accueil + Explorer
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 0,
-                                    label: "Accueil",
-                                    activeIcon: Icons.home,
-                                    inactiveIcon: Icons.home_outlined,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 1,
-                                    label: "Explorer",
-                                    activeIcon: Icons.explore,
-                                    inactiveIcon: Icons.explore_outlined,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+            bottomNavigationBar: laterale
+                ? null
+                : Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.couleurBandeauNavigation(context),
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(24)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.estSombre(context)
+                              ? Colors.black.withValues(alpha: 0.35)
+                              : const Color(0x332C241E),
+                          blurRadius: 14,
+                          offset: const Offset(0, -3),
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth < 100) {
+                            return const SizedBox(height: 64);
+                          }
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 560),
+                              child: SizedBox(
+                                height: 64,
+                                child: Row(
+                                  children: [
+                                    // Côté gauche : Accueil + Explorer
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: onglets[0],
+                                          ),
+                                          Expanded(
+                                            child: onglets[1],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
 
-                          // Espace pour le FAB central (+)
-                          const SizedBox(width: 52),
+                                    // Espace pour le FAB central (+)
+                                    const SizedBox(width: 52),
 
-                          // Côté droit : Commandes + Profil
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 2,
-                                    label: "Commandes",
-                                    activeIcon: Icons.shopping_bag,
-                                    inactiveIcon: Icons.shopping_bag_outlined,
-                                  ),
+                                    // Côté droit : Commandes + Profil
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: onglets[2],
+                                          ),
+                                          Expanded(
+                                            child: onglets[3],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 3,
-                                    label: "Profil",
-                                    activeIcon: Icons.person,
-                                    inactiveIcon: Icons.person_outline,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-              ),
-            ),
+                    ),
+                  ),
           ),
           if (_afficherGuide)
             Positioned.fill(
@@ -490,6 +466,44 @@ class _CommercantMainNavState extends State<CommercantMainNav>
             ),
         ],
       ),
+    );
+  }
+
+  /// Bouton central (+) : amarré à la barre du bas, ou posé au milieu du rail latéral
+  Widget _boutonCentral() {
+    return AnimatedBuilder(
+      animation: _fabController,
+      builder: (context, child) {
+        final isExpanded = _fabController.value > 0.05;
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              height: 58,
+              width: 58,
+              margin: const EdgeInsets.only(top: 8),
+              child: FloatingActionButton(
+                key: _ciblesDidacticiel.fabCentral,
+                heroTag: 'fab-nav-commercant',
+                onPressed: _toggleFabMenu,
+                elevation: isExpanded ? 8 : 4,
+                backgroundColor:
+                    isExpanded ? AppTheme.bissapProfond : AppTheme.primary,
+                shape: const CircleBorder(),
+                child: Transform.rotate(
+                  angle: _rotateAnimation.value,
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -590,7 +604,6 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                             BoxShadow(
                               color: Color(0x1F000000),
                               blurRadius: 12,
-                              
                               offset: Offset(0, 4),
                             ),
                           ],
@@ -695,6 +708,7 @@ class _CommercantMainNavState extends State<CommercantMainNav>
     required IconData inactiveIcon,
   }) {
     return OngletNavigation(
+      key: _ciblesDidacticiel.onglets[index],
       label: label,
       activeIcon: activeIcon,
       inactiveIcon: inactiveIcon,
@@ -714,24 +728,28 @@ class _ArcTrackPainter extends CustomPainter {
   final double progress;
   final double radius;
   final Color primaryColor;
+  final double debut;
+  final Offset centre;
 
   _ArcTrackPainter({
     required this.progress,
     required this.radius,
     required this.primaryColor,
+    required this.debut,
+    required this.centre,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (progress <= 0.05) return;
 
-    final center = Offset(size.width / 2, size.height);
+    final center = centre;
     final rect = Rect.fromCircle(center: center, radius: radius);
 
     // L'arc va de 20° à 160° (en coordonnées trigonométriques au-dessus de l'horizon)
     // En Flutter Canvas : 0 rad = Est, pi rad = Ouest, pi/2 = Sud, -pi/2 = Nord.
     // L'arc au-dessus du centre commence à -pi * 0.9 (Ouest haut) et balaie vers l'Est haut.
-    const startAngle = -math.pi * 0.90;
+    final startAngle = debut;
     final sweepAngle = (math.pi * 0.80) * progress;
 
     final paint = Paint()
@@ -744,7 +762,7 @@ class _ArcTrackPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ArcTrackPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress || oldDelegate.debut != debut;
   }
 }
 

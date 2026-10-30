@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../utils/responsive.dart';
+import '../widgets/navigation_laterale.dart';
 import 'grossiste_dashboard_screen.dart';
 import 'grossiste_catalogue_screen.dart';
 import 'grossiste_commandes_screen.dart';
@@ -165,17 +167,48 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
 
   /// RG-03 : l'espace ne s'ouvre qu'à un compte actif, quel que soit le chemin pour y arriver
   @override
-  Widget build(BuildContext context) => GardeCompteActif(
-        role: RoleActeur.grossiste,
-        child: PorteeCiblesDidacticiel(
-            cibles: _ciblesDidacticiel,
-            child: Builder(builder: _construireEspace)),
+  Widget build(BuildContext context) => PleineLargeur(
+        child: GardeCompteActif(
+          role: RoleActeur.grossiste,
+          child: PorteeCiblesDidacticiel(
+              cibles: _ciblesDidacticiel,
+              child: Builder(builder: _construireEspace)),
+        ),
       );
 
   /// Clés propres à cet espace pour le didacticiel (jamais partagées avec un autre espace)
   final _ciblesDidacticiel = CiblesDidacticiel();
 
   Widget _construireEspace(BuildContext context) {
+    final laterale = Responsive.navigationLaterale(context);
+    final arc = GeometrieArc(laterale: laterale, rayonBarre: 136);
+    final onglets = [
+      _buildNavItem(
+        index: 0,
+        label: "Accueil",
+        activeIcon: Icons.dashboard_rounded,
+        inactiveIcon: Icons.dashboard_outlined,
+      ),
+      _buildNavItem(
+        index: 1,
+        label: "Catalogue",
+        activeIcon: Icons.inventory_2_rounded,
+        inactiveIcon: Icons.inventory_2_outlined,
+      ),
+      _buildNavItem(
+        index: 2,
+        label: "Lots & Ventes",
+        activeIcon: Icons.local_shipping_rounded,
+        inactiveIcon: Icons.local_shipping_outlined,
+      ),
+      _buildNavItem(
+        index: 3,
+        label: "Profil",
+        activeIcon: Icons.storefront_rounded,
+        inactiveIcon: Icons.storefront_outlined,
+      ),
+    ];
+
     return TabNavigationScope(
       onSwitchTab: setTabIndex,
       child: Stack(
@@ -185,14 +218,21 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
             body: Stack(
               children: [
                 // 1. Écrans principaux avec IndexedStack (tickers suspendus sur onglets masqués)
-                IndexedStack(
-                  index: _currentIndex,
+                Row(
                   children: [
-                    for (int i = 0; i < _screens.length; i++)
-                      TickerMode(
-                        enabled: _currentIndex == i,
-                        child: _screens[i],
-                      ),
+                    if (laterale) RailNavigation(onglets: onglets),
+                    Expanded(
+                        child: CadrePage(
+                            child: IndexedStack(
+                      index: _currentIndex,
+                      children: [
+                        for (int i = 0; i < _screens.length; i++)
+                          TickerMode(
+                            enabled: _currentIndex == i,
+                            child: _screens[i],
+                          ),
+                      ],
+                    ))),
                   ],
                 ),
 
@@ -224,274 +264,203 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                       return const SizedBox.shrink();
                     }
 
-                    const double radius = 136.0;
-
-                    return Positioned(
-                      bottom: 40,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.bottomCenter,
-                            child: SizedBox(
-                              width: 340,
-                              height: 220,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                alignment: Alignment.bottomCenter,
-                                children: [
-                                  // Trait d'arc de cercle lumineux en arrière-plan
-                                  CustomPaint(
-                                    painter: _ArcTrackPainter(
-                                      progress: _fabController.value,
-                                      radius: radius,
-                                      primaryColor: AppTheme.primary,
-                                    ),
-                                    child:
-                                        const SizedBox(width: 300, height: 180),
-                                  ),
-
-                                  // Item 0 (Gauche - 152°) : Ajouter Produit
-                                  _buildArcButton(
-                                    index: 0,
-                                    total: 5,
-                                    angleDeg: 160.0,
-                                    radius: radius,
-                                    label: "Produit",
-                                    subLabel: "Nouveau",
-                                    hoverTooltip:
-                                        "📦 Créer & Publier un Article",
-                                    icon: Icons.add_photo_alternate_rounded,
-                                    color: AppTheme.primary,
-                                    onTap: () {
-                                      _fabController.reverse();
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const AjouterProduitScreen()),
-                                      );
-                                    },
-                                  ),
-
-                                  // Item 1 (Haut-Gauche - 112°) : Créer Groupe d'Achat
-                                  _buildArcButton(
-                                    index: 1,
-                                    total: 5,
-                                    angleDeg: 125.0,
-                                    radius: radius,
-                                    label: "Groupe",
-                                    subLabel: "Créer",
-                                    hoverTooltip: "👥 Lancer un groupe d'achat",
-                                    icon: Icons.group_add_rounded,
-                                    color: AppTheme.olive,
-                                    onTap: () {
-                                      _fabController.reverse();
-                                      _creerGroupe(SelectionProduitGrossiste
-                                          .produit.value);
-                                    },
-                                  ),
-
-                                  // Item 2 (Haut-Droite - 68°) : Valider Disponibilité RG-18
-                                  _buildArcButton(
-                                    index: 2,
-                                    total: 5,
-                                    angleDeg: 90.0,
-                                    radius: radius,
-                                    label: "Stock",
-                                    subLabel: "RG-18 (24h)",
-                                    hoverTooltip:
-                                        "⏳ Valider Disponibilité Stock",
-                                    icon: Icons.fact_check_rounded,
-                                    color: AppTheme.secondary,
-                                    onTap: () {
-                                      _fabController.reverse();
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const ValidationStockGrossisteScreen()),
-                                      );
-                                    },
-                                  ),
-
-                                  // Item 4 (Droite - 20°) : Suivi du colis (chaque étape validée notifie l'administrateur)
-                                  _buildArcButton(
-                                    index: 4,
-                                    total: 5,
-                                    angleDeg: 20.0,
-                                    radius: radius,
-                                    label: "Suivi",
-                                    subLabel: "Colis",
-                                    hoverTooltip:
-                                        "📍 Valider les étapes du colis",
-                                    icon: Icons.location_on_rounded,
-                                    color: AppTheme.bissapProfond,
-                                    onTap: () {
-                                      _fabController.reverse();
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const SuiviColisGrossisteScreen()),
-                                      );
-                                    },
-                                  ),
-
-                                  // Item 3 (Droite - 55°) : Expédier Lot au Transitaire
-                                  _buildArcButton(
-                                    index: 3,
-                                    total: 5,
-                                    angleDeg: 55.0,
-                                    radius: radius,
-                                    label: "Expédier",
-                                    subLabel: "Mes lots",
-                                    hoverTooltip:
-                                        "🚚 Lots à préparer pour le courtier",
-                                    icon: Icons.local_shipping_rounded,
-                                    color: AppTheme.olive,
-                                    // Les lots réels (à préparer / expédiés) sont dans l'onglet « Lots & Ventes »
-                                    onTap: () => setTabIndex(2),
-                                  ),
-                                ],
-                              ),
-                            )),
+                    return arc.positionner([
+                      // Trait d'arc de cercle lumineux en arrière-plan
+                      CustomPaint(
+                        painter: _ArcTrackPainter(
+                          progress: _fabController.value,
+                          radius: arc.rayon,
+                          debut: arc.debutTrace,
+                          centre: arc.centreTrace(arc.tailleTrace),
+                          primaryColor: AppTheme.primary,
+                        ),
+                        child: SizedBox.fromSize(size: arc.tailleTrace),
                       ),
-                    );
+
+                      // Item 0 (Gauche - 152°) : Ajouter Produit
+                      _buildArcButton(
+                        index: 0,
+                        total: 5,
+                        angleDeg: 160.0,
+                        radius: arc.rayon,
+                        label: "Produit",
+                        subLabel: "Nouveau",
+                        hoverTooltip: "📦 Créer & Publier un Article",
+                        icon: Icons.add_photo_alternate_rounded,
+                        color: AppTheme.primary,
+                        onTap: () {
+                          _fabController.reverse();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const AjouterProduitScreen()),
+                          );
+                        },
+                      ),
+
+                      // Item 1 (Haut-Gauche - 112°) : Créer Groupe d'Achat
+                      _buildArcButton(
+                        index: 1,
+                        total: 5,
+                        angleDeg: 125.0,
+                        radius: arc.rayon,
+                        label: "Groupe",
+                        subLabel: "Créer",
+                        hoverTooltip: "👥 Lancer un groupe d'achat",
+                        icon: Icons.group_add_rounded,
+                        color: AppTheme.olive,
+                        onTap: () {
+                          _fabController.reverse();
+                          _creerGroupe(SelectionProduitGrossiste.produit.value);
+                        },
+                      ),
+
+                      // Item 2 (Haut-Droite - 68°) : Valider Disponibilité RG-18
+                      _buildArcButton(
+                        index: 2,
+                        total: 5,
+                        angleDeg: 90.0,
+                        radius: arc.rayon,
+                        label: "Stock",
+                        subLabel: "RG-18 (24h)",
+                        hoverTooltip: "⏳ Valider Disponibilité Stock",
+                        icon: Icons.fact_check_rounded,
+                        color: AppTheme.secondary,
+                        onTap: () {
+                          _fabController.reverse();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const ValidationStockGrossisteScreen()),
+                          );
+                        },
+                      ),
+
+                      // Item 4 (Droite - 20°) : Suivi du colis (chaque étape validée notifie l'administrateur)
+                      _buildArcButton(
+                        index: 4,
+                        total: 5,
+                        angleDeg: 20.0,
+                        radius: arc.rayon,
+                        label: "Suivi",
+                        subLabel: "Colis",
+                        hoverTooltip: "📍 Valider les étapes du colis",
+                        icon: Icons.location_on_rounded,
+                        color: AppTheme.bissapProfond,
+                        onTap: () {
+                          _fabController.reverse();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const SuiviColisGrossisteScreen()),
+                          );
+                        },
+                      ),
+
+                      // Item 3 (Droite - 55°) : Expédier Lot au Transitaire
+                      _buildArcButton(
+                        index: 3,
+                        total: 5,
+                        angleDeg: 55.0,
+                        radius: arc.rayon,
+                        label: "Expédier",
+                        subLabel: "Mes lots",
+                        hoverTooltip: "🚚 Lots à préparer pour le courtier",
+                        icon: Icons.local_shipping_rounded,
+                        color: AppTheme.olive,
+                        // Les lots réels (à préparer / expédiés) sont dans l'onglet « Lots & Ventes »
+                        onTap: () => setTabIndex(2),
+                      ),
+                    ]);
                   },
                 ),
+                // 4. Sur grand écran, le bouton central se pose au milieu du rail latéral
+                if (laterale)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: RailNavigation.largeur,
+                    child: Center(child: _boutonCentral()),
+                  ),
               ],
             ),
 
             // Bouton Central Flottant (+) avec rotation fluide et ondulation de vagues
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
-            floatingActionButton: AnimatedBuilder(
-              animation: _fabController,
-              builder: (context, child) {
-                final isExpanded = _fabController.value > 0.05;
-
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      height: 58,
-                      width: 58,
-                      margin: const EdgeInsets.only(top: 8),
-                      child: FloatingActionButton(
-                        key: _ciblesDidacticiel.fabCentral,
-                        heroTag: 'fab-nav-grossiste',
-                        onPressed: _toggleFabMenu,
-                        elevation: isExpanded ? 8 : 4,
-                        backgroundColor: isExpanded
-                            ? AppTheme.bissapProfond
-                            : AppTheme.primary,
-                        shape: const CircleBorder(),
-                        child: Transform.rotate(
-                          angle: _rotateAnimation.value,
-                          // Produit sélectionné sur l'accueil : le (+) annonce la création de son groupe
-                          child: ValueListenableBuilder<Map<String, dynamic>?>(
-                            valueListenable: SelectionProduitGrossiste.produit,
-                            builder: (_, produit, __) => Icon(
-                              produit != null &&
-                                      _currentIndex == 0 &&
-                                      !isExpanded
-                                  ? Icons.group_add_rounded
-                                  : Icons.add,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
+            floatingActionButton: laterale ? null : _boutonCentral(),
 
             // Barre de navigation inférieure conforme au design Figma
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.couleurBandeauNavigation(context),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.estSombre(context)
-                        ? Colors.black.withValues(alpha: 0.35)
-                        : const Color(0x332C241E),
-                    blurRadius: 14,
-                    offset: const Offset(0, -3),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth < 100) {
-                      return const SizedBox(height: 64);
-                    }
-                    return SizedBox(
-                      height: 64,
-                      child: Row(
-                        children: [
-                          // Côté gauche : Tableau de bord + Catalogue
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 0,
-                                    label: "Accueil",
-                                    activeIcon: Icons.dashboard_rounded,
-                                    inactiveIcon: Icons.dashboard_outlined,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 1,
-                                    label: "Catalogue",
-                                    activeIcon: Icons.inventory_2_rounded,
-                                    inactiveIcon: Icons.inventory_2_outlined,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+            bottomNavigationBar: laterale
+                ? null
+                : Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.couleurBandeauNavigation(context),
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(24)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.estSombre(context)
+                              ? Colors.black.withValues(alpha: 0.35)
+                              : const Color(0x332C241E),
+                          blurRadius: 14,
+                          offset: const Offset(0, -3),
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth < 100) {
+                            return const SizedBox(height: 64);
+                          }
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 560),
+                              child: SizedBox(
+                                height: 64,
+                                child: Row(
+                                  children: [
+                                    // Côté gauche : Tableau de bord + Catalogue
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: onglets[0],
+                                          ),
+                                          Expanded(
+                                            child: onglets[1],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
 
-                          // Espace pour le FAB central (+)
-                          const SizedBox(width: 52),
+                                    // Espace pour le FAB central (+)
+                                    const SizedBox(width: 52),
 
-                          // Côté droit : Lots/Commandes + Profil
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 2,
-                                    label: "Lots & Ventes",
-                                    activeIcon: Icons.local_shipping_rounded,
-                                    inactiveIcon: Icons.local_shipping_outlined,
-                                  ),
+                                    // Côté droit : Lots/Commandes + Profil
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: onglets[2],
+                                          ),
+                                          Expanded(
+                                            child: onglets[3],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 3,
-                                    label: "Profil",
-                                    activeIcon: Icons.storefront_rounded,
-                                    inactiveIcon: Icons.storefront_outlined,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-              ),
-            ),
+                    ),
+                  ),
           ),
           if (_afficherGuide)
             Positioned.fill(
@@ -503,6 +472,50 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
             ),
         ],
       ),
+    );
+  }
+
+  /// Bouton central (+) : amarré à la barre du bas, ou posé au milieu du rail latéral
+  Widget _boutonCentral() {
+    return AnimatedBuilder(
+      animation: _fabController,
+      builder: (context, child) {
+        final isExpanded = _fabController.value > 0.05;
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              height: 58,
+              width: 58,
+              margin: const EdgeInsets.only(top: 8),
+              child: FloatingActionButton(
+                key: _ciblesDidacticiel.fabCentral,
+                heroTag: 'fab-nav-grossiste',
+                onPressed: _toggleFabMenu,
+                elevation: isExpanded ? 8 : 4,
+                backgroundColor:
+                    isExpanded ? AppTheme.bissapProfond : AppTheme.primary,
+                shape: const CircleBorder(),
+                child: Transform.rotate(
+                  angle: _rotateAnimation.value,
+                  // Produit sélectionné sur l'accueil : le (+) annonce la création de son groupe
+                  child: ValueListenableBuilder<Map<String, dynamic>?>(
+                    valueListenable: SelectionProduitGrossiste.produit,
+                    builder: (_, produit, __) => Icon(
+                      produit != null && _currentIndex == 0 && !isExpanded
+                          ? Icons.group_add_rounded
+                          : Icons.add,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -595,7 +608,6 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                             BoxShadow(
                               color: Color(0x1F000000),
                               blurRadius: 12,
-                              
                               offset: Offset(0, 4),
                             ),
                           ],
@@ -701,6 +713,7 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
     required IconData inactiveIcon,
   }) {
     return OngletNavigation(
+      key: _ciblesDidacticiel.onglets[index],
       label: label,
       activeIcon: activeIcon,
       inactiveIcon: inactiveIcon,
@@ -715,18 +728,22 @@ class _ArcTrackPainter extends CustomPainter {
   final double progress;
   final double radius;
   final Color primaryColor;
+  final double debut;
+  final Offset centre;
 
   _ArcTrackPainter({
     required this.progress,
     required this.radius,
     required this.primaryColor,
+    required this.debut,
+    required this.centre,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (progress <= 0.05) return;
 
-    final center = Offset(size.width / 2, size.height);
+    final center = centre;
     final paint = Paint()
       ..color = primaryColor.withValues(alpha: 0.28 * progress)
       ..style = PaintingStyle.stroke
@@ -734,7 +751,8 @@ class _ArcTrackPainter extends CustomPainter {
 
     final path = Path();
     final double sweep = (math.pi * 0.72) * progress;
-    const double startAngle = -math.pi * 0.86;
+    // Balayage de 0,72π centré sur la trace de 0,8π de la géométrie
+    final double startAngle = debut + math.pi * 0.04;
 
     path.addArc(
       Rect.fromCircle(center: center, radius: radius),
@@ -747,7 +765,9 @@ class _ArcTrackPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ArcTrackPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.radius != radius;
+    return oldDelegate.progress != progress ||
+        oldDelegate.radius != radius ||
+        oldDelegate.debut != debut;
   }
 }
 

@@ -33,6 +33,9 @@ class CiblesDidacticiel {
   final GlobalKey grossisteCatalogueEnTete = GlobalKey(debugLabel: 'didacticiel.grossisteCatalogueEnTete');
   final GlobalKey grossisteBarreApp = GlobalKey(debugLabel: 'didacticiel.grossisteBarreApp');
 
+  /// Onglets de navigation (barre du bas ou rail latéral selon la largeur), dans l'ordre Accueil → Profil.
+  final List<GlobalKey> onglets = List.generate(4, (i) => GlobalKey(debugLabel: 'didacticiel.onglet$i'));
+
   /// Cibles de l'espace englobant, ou null hors d'un espace : l'étape garde alors sa position par défaut.
   static CiblesDidacticiel? de(BuildContext context) =>
       context.getInheritedWidgetOfExactType<PorteeCiblesDidacticiel>()?.cibles;
@@ -299,13 +302,26 @@ class _DidacticielGuideOverlayState extends State<DidacticielGuideOverlay>
     }
   }
 
+  /// Onglet de navigation visé par l'étape : il est mesuré comme les autres cibles, qu'il soit
+  /// dans la barre du bas ou dans le rail latéral des grands écrans.
+  GlobalKey? _cleOnglet(EmplacementCible emplacement) {
+    final index = switch (emplacement) {
+      EmplacementCible.tabAccueil => 0,
+      EmplacementCible.tabCatalogue => 1,
+      EmplacementCible.tabCommandes => 2,
+      EmplacementCible.tabProfil => 3,
+      _ => null,
+    };
+    return index == null ? null : CiblesDidacticiel.de(context)?.onglets[index];
+  }
+
   /// Résout le rectangle géométrique de la cible à mettre en valeur
   Rect _calculerRectCible(
       _EtapeGuideData etape, Size screenSize, EdgeInsets padding) {
     // 1. Tenter la mesure dynamique via GlobalKey si présente et attachée
-    if (etape.cleGlobale?.currentContext != null) {
-      final renderBox =
-          etape.cleGlobale!.currentContext!.findRenderObject() as RenderBox?;
+    final cle = etape.cleGlobale ?? _cleOnglet(etape.emplacement);
+    if (cle?.currentContext != null) {
+      final renderBox = cle!.currentContext!.findRenderObject() as RenderBox?;
       if (renderBox != null && renderBox.hasSize && renderBox.attached) {
         final overlayBox = context.findRenderObject() as RenderBox?;
         final Offset globalPos = renderBox.localToGlobal(Offset.zero);

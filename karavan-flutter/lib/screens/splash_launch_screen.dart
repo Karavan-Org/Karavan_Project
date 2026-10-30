@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../utils/responsive.dart';
 import '../commercant/commercant_main_nav.dart';
 import '../courtier/courtier_main_nav.dart';
 import '../grossiste/grossiste_main_nav.dart';
@@ -167,7 +168,7 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => destination,
+        pageBuilder: (_, __, ___) => CadrePage(child: destination),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(
             opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
@@ -184,7 +185,8 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
     final bool isDark = AppTheme.estSombre(context);
     final Color fond = isDark ? AppTheme.darkBackground : AppTheme.creme;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
+    // Scène centrée sur fond uni : elle occupe tout l'écran, sans cadre
+    return PleineLargeur(child: AnnotatedRegion<SystemUiOverlayStyle>(
       value: (isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
           .copyWith(statusBarColor: Colors.transparent),
       child: Scaffold(
@@ -245,7 +247,7 @@ class _SplashLaunchScreenState extends State<SplashLaunchScreen>
           ),
         ),
       ),
-    );
+    ));
   }
 }
 

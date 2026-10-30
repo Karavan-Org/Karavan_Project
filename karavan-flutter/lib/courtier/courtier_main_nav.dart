@@ -2,6 +2,8 @@ import '../widgets/tab_navigation_scope.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../utils/responsive.dart';
+import '../widgets/navigation_laterale.dart';
 import 'courtier_dashboard_screen.dart';
 import 'gestion_convoi_screen.dart';
 import 'portefeuille_courtier_screen.dart';
@@ -135,15 +137,46 @@ class _CourtierMainNavState extends State<CourtierMainNav>
 
   /// RG-03 : l'espace ne s'ouvre qu'à un compte actif, quel que soit le chemin pour y arriver
   @override
-  Widget build(BuildContext context) => GardeCompteActif(
-        role: RoleActeur.courtier,
-        child: PorteeCiblesDidacticiel(
-          cibles: _ciblesDidacticiel,
-          child: Builder(builder: _construireEspace),
+  Widget build(BuildContext context) => PleineLargeur(
+        child: GardeCompteActif(
+          role: RoleActeur.courtier,
+          child: PorteeCiblesDidacticiel(
+            cibles: _ciblesDidacticiel,
+            child: Builder(builder: _construireEspace),
+          ),
         ),
       );
 
   Widget _construireEspace(BuildContext context) {
+    final laterale = Responsive.navigationLaterale(context);
+    final arc = GeometrieArc(laterale: laterale);
+    final onglets = [
+      _buildNavItem(
+        index: 0,
+        label: "Accueil",
+        activeIcon: Icons.home_rounded,
+        inactiveIcon: Icons.home_outlined,
+      ),
+      _buildNavItem(
+        index: 1,
+        label: "Convois",
+        activeIcon: Icons.local_shipping_rounded,
+        inactiveIcon: Icons.local_shipping_outlined,
+      ),
+      _buildNavItem(
+        index: 2,
+        label: "Portefeuille",
+        activeIcon: Icons.account_balance_wallet_rounded,
+        inactiveIcon: Icons.account_balance_wallet_outlined,
+      ),
+      _buildNavItem(
+        index: 3,
+        label: "Profil",
+        activeIcon: Icons.business_center_rounded,
+        inactiveIcon: Icons.business_center_outlined,
+      ),
+    ];
+
     return TabNavigationScope(
       onSwitchTab: setTabIndex,
       child: Stack(
@@ -153,14 +186,21 @@ class _CourtierMainNavState extends State<CourtierMainNav>
             body: Stack(
               children: [
                 // 1. Écrans principaux avec IndexedStack (tickers suspendus sur onglets masqués)
-                IndexedStack(
-                  index: _currentIndex,
+                Row(
                   children: [
-                    for (int i = 0; i < _screens.length; i++)
-                      TickerMode(
-                        enabled: _currentIndex == i,
-                        child: _screens[i],
-                      ),
+                    if (laterale) RailNavigation(onglets: onglets),
+                    Expanded(
+                        child: CadrePage(
+                            child: IndexedStack(
+                      index: _currentIndex,
+                      children: [
+                        for (int i = 0; i < _screens.length; i++)
+                          TickerMode(
+                            enabled: _currentIndex == i,
+                            child: _screens[i],
+                          ),
+                      ],
+                    ))),
                   ],
                 ),
 
@@ -192,249 +232,186 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                       return const SizedBox.shrink();
                     }
 
-                    const double radius = 124.0;
-
-                    return Positioned(
-                      bottom: 40,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.bottomCenter,
-                            child: SizedBox(
-                              width: 340,
-                              height: 220,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                alignment: Alignment.bottomCenter,
-                                children: [
-                                  // Trait d'arc de cercle lumineux en arrière-plan
-                                  CustomPaint(
-                                    painter: _ArcTrackPainter(
-                                      progress: _fabController.value,
-                                      radius: radius,
-                                      primaryColor: AppTheme.primary,
-                                    ),
-                                    child:
-                                        const SizedBox(width: 300, height: 180),
-                                  ),
-
-                                  // Item 0 (Gauche - 152°) : Créer un groupe d'achat
-                                  _buildArcButton(
-                                    index: 0,
-                                    total: 4,
-                                    angleDeg: 152.0,
-                                    radius: radius,
-                                    label: "Groupe",
-                                    subLabel: "Nouveau",
-                                    hoverTooltip: "👥 Créer un groupe d'achat",
-                                    icon: Icons.rocket_launch_rounded,
-                                    color: AppTheme.primary,
-                                    onTap: () {
-                                      _fabController.reverse();
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const CreerGroupeCourtierScreen()),
-                                      );
-                                    },
-                                  ),
-
-                                  // Item 1 (Haut-Gauche - 112°) : Scanner Retrait QR/PIN
-                                  _buildArcButton(
-                                    index: 1,
-                                    total: 4,
-                                    angleDeg: 112.0,
-                                    radius: radius,
-                                    label: "Scanner",
-                                    subLabel: "QR & PIN",
-                                    hoverTooltip:
-                                        "📷 Scanner Code & Libérer Séquestre",
-                                    icon: Icons.qr_code_scanner_rounded,
-                                    color: AppTheme.olive,
-                                    onTap: () {
-                                      _fabController.reverse();
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const ScannerRetraitScreen()),
-                                      );
-                                    },
-                                  ),
-
-                                  // Item 2 (Haut-Droite - 68°) : Mise à Jour Transit
-                                  _buildArcButton(
-                                    index: 2,
-                                    total: 4,
-                                    angleDeg: 68.0,
-                                    radius: radius,
-                                    label: "Transit",
-                                    subLabel: "Étapes convoi",
-                                    hoverTooltip:
-                                        "📍 Faire avancer mes convois",
-                                    icon: Icons.cell_tower_rounded,
-                                    color: AppTheme.secondary,
-                                    // Les étapes se pointent dans l'onglet Convois (suivi réel, notifié aux commerçants)
-                                    onTap: () => setTabIndex(1),
-                                  ),
-
-                                  // Item 3 (Droite - 28°) : Retirer Gains Commissions
-                                  _buildArcButton(
-                                    index: 3,
-                                    total: 4,
-                                    angleDeg: 28.0,
-                                    radius: radius,
-                                    label: "Gains",
-                                    subLabel: "Mobile Money",
-                                    hoverTooltip: "💼 Retirer Commissions Fret",
-                                    icon: Icons.account_balance_wallet_rounded,
-                                    color: AppTheme.ocreProfond,
-                                    onTap: () {
-                                      _fabController.reverse();
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const PortefeuilleCourtierScreen()),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            )),
+                    return arc.positionner([
+                      // Trait d'arc de cercle lumineux en arrière-plan
+                      CustomPaint(
+                        painter: _ArcTrackPainter(
+                          progress: _fabController.value,
+                          radius: arc.rayon,
+                          debut: arc.debutTrace,
+                          centre: arc.centreTrace(arc.tailleTrace),
+                          primaryColor: AppTheme.primary,
+                        ),
+                        child: SizedBox.fromSize(size: arc.tailleTrace),
                       ),
-                    );
+
+                      // Item 0 (Gauche - 152°) : Créer un groupe d'achat
+                      _buildArcButton(
+                        index: 0,
+                        total: 4,
+                        angleDeg: arc.angle(0),
+                        radius: arc.rayon,
+                        label: "Groupe",
+                        subLabel: "Nouveau",
+                        hoverTooltip: "👥 Créer un groupe d'achat",
+                        icon: Icons.rocket_launch_rounded,
+                        color: AppTheme.primary,
+                        onTap: () {
+                          _fabController.reverse();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const CreerGroupeCourtierScreen()),
+                          );
+                        },
+                      ),
+
+                      // Item 1 (Haut-Gauche - 112°) : Scanner Retrait QR/PIN
+                      _buildArcButton(
+                        index: 1,
+                        total: 4,
+                        angleDeg: arc.angle(1),
+                        radius: arc.rayon,
+                        label: "Scanner",
+                        subLabel: "QR & PIN",
+                        hoverTooltip: "📷 Scanner Code & Libérer Séquestre",
+                        icon: Icons.qr_code_scanner_rounded,
+                        color: AppTheme.olive,
+                        onTap: () {
+                          _fabController.reverse();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const ScannerRetraitScreen()),
+                          );
+                        },
+                      ),
+
+                      // Item 2 (Haut-Droite - 68°) : Mise à Jour Transit
+                      _buildArcButton(
+                        index: 2,
+                        total: 4,
+                        angleDeg: arc.angle(2),
+                        radius: arc.rayon,
+                        label: "Transit",
+                        subLabel: "Étapes convoi",
+                        hoverTooltip: "📍 Faire avancer mes convois",
+                        icon: Icons.cell_tower_rounded,
+                        color: AppTheme.secondary,
+                        // Les étapes se pointent dans l'onglet Convois (suivi réel, notifié aux commerçants)
+                        onTap: () => setTabIndex(1),
+                      ),
+
+                      // Item 3 (Droite - 28°) : Retirer Gains Commissions
+                      _buildArcButton(
+                        index: 3,
+                        total: 4,
+                        angleDeg: arc.angle(3),
+                        radius: arc.rayon,
+                        label: "Gains",
+                        subLabel: "Mobile Money",
+                        hoverTooltip: "💼 Retirer Commissions Fret",
+                        icon: Icons.account_balance_wallet_rounded,
+                        color: AppTheme.ocreProfond,
+                        onTap: () {
+                          _fabController.reverse();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const PortefeuilleCourtierScreen()),
+                          );
+                        },
+                      ),
+                    ]);
                   },
                 ),
+                // 4. Sur grand écran, le bouton central se pose au milieu du rail latéral
+                if (laterale)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: RailNavigation.largeur,
+                    child: Center(child: _boutonCentral()),
+                  ),
               ],
             ),
 
             // Bouton Central Flottant (+) avec rotation fluide et ondulation de vagues
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
-            floatingActionButton: AnimatedBuilder(
-              animation: _fabController,
-              builder: (context, child) {
-                final isExpanded = _fabController.value > 0.05;
-
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      height: 58,
-                      width: 58,
-                      margin: const EdgeInsets.only(top: 8),
-                      child: FloatingActionButton(
-                        key: _ciblesDidacticiel.fabCentral,
-                        heroTag: 'fab-nav-courtier',
-                        onPressed: _toggleFabMenu,
-                        elevation: isExpanded ? 8 : 4,
-                        backgroundColor: isExpanded
-                            ? AppTheme.bissapProfond
-                            : AppTheme.primary,
-                        shape: const CircleBorder(),
-                        child: Transform.rotate(
-                          angle: _rotateAnimation.value,
-                          child: const Icon(
-                            Icons.add,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
+            floatingActionButton: laterale ? null : _boutonCentral(),
 
             // Barre de navigation inférieure conforme au design Figma
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.couleurBandeauNavigation(context),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.estSombre(context)
-                        ? Colors.black.withValues(alpha: 0.35)
-                        : const Color(0x332C241E),
-                    blurRadius: 14,
-                    offset: const Offset(0, -3),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth < 100) {
-                      return const SizedBox(height: 64);
-                    }
-                    return SizedBox(
-                      height: 64,
-                      child: Row(
-                        children: [
-                          // Côté gauche : Tableau de bord + Convois
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 0,
-                                    label: "Accueil",
-                                    activeIcon: Icons.home_rounded,
-                                    inactiveIcon: Icons.home_outlined,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 1,
-                                    label: "Convois",
-                                    activeIcon: Icons.local_shipping_rounded,
-                                    inactiveIcon: Icons.local_shipping_outlined,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+            bottomNavigationBar: laterale
+                ? null
+                : Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.couleurBandeauNavigation(context),
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(24)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.estSombre(context)
+                              ? Colors.black.withValues(alpha: 0.35)
+                              : const Color(0x332C241E),
+                          blurRadius: 14,
+                          offset: const Offset(0, -3),
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth < 100) {
+                            return const SizedBox(height: 64);
+                          }
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 560),
+                              child: SizedBox(
+                                height: 64,
+                                child: Row(
+                                  children: [
+                                    // Côté gauche : Tableau de bord + Convois
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: onglets[0],
+                                          ),
+                                          Expanded(
+                                            child: onglets[1],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
 
-                          // Espace pour le FAB central (+)
-                          const SizedBox(width: 52),
+                                    // Espace pour le FAB central (+)
+                                    const SizedBox(width: 52),
 
-                          // Côté droit : Portefeuille + Profil
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 2,
-                                    label: "Portefeuille",
-                                    activeIcon:
-                                        Icons.account_balance_wallet_rounded,
-                                    inactiveIcon:
-                                        Icons.account_balance_wallet_outlined,
-                                  ),
+                                    // Côté droit : Portefeuille + Profil
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: onglets[2],
+                                          ),
+                                          Expanded(
+                                            child: onglets[3],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Expanded(
-                                  child: _buildNavItem(
-                                    index: 3,
-                                    label: "Profil",
-                                    activeIcon: Icons.business_center_rounded,
-                                    inactiveIcon:
-                                        Icons.business_center_outlined,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-              ),
-            ),
+                    ),
+                  ),
           ),
           if (_afficherGuide)
             Positioned.fill(
@@ -447,6 +424,44 @@ class _CourtierMainNavState extends State<CourtierMainNav>
             ),
         ],
       ),
+    );
+  }
+
+  /// Bouton central (+) : amarré à la barre du bas, ou posé au milieu du rail latéral
+  Widget _boutonCentral() {
+    return AnimatedBuilder(
+      animation: _fabController,
+      builder: (context, child) {
+        final isExpanded = _fabController.value > 0.05;
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              height: 58,
+              width: 58,
+              margin: const EdgeInsets.only(top: 8),
+              child: FloatingActionButton(
+                key: _ciblesDidacticiel.fabCentral,
+                heroTag: 'fab-nav-courtier',
+                onPressed: _toggleFabMenu,
+                elevation: isExpanded ? 8 : 4,
+                backgroundColor:
+                    isExpanded ? AppTheme.bissapProfond : AppTheme.primary,
+                shape: const CircleBorder(),
+                child: Transform.rotate(
+                  angle: _rotateAnimation.value,
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -539,7 +554,6 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                             BoxShadow(
                               color: Color(0x1F000000),
                               blurRadius: 12,
-                              
                               offset: Offset(0, 4),
                             ),
                           ],
@@ -557,7 +571,8 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppTheme.couleurCarte(context).withValues(alpha: 0.94),
+                          color: AppTheme.couleurCarte(context)
+                              .withValues(alpha: 0.94),
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
@@ -645,6 +660,7 @@ class _CourtierMainNavState extends State<CourtierMainNav>
     required IconData inactiveIcon,
   }) {
     return OngletNavigation(
+      key: _ciblesDidacticiel.onglets[index],
       label: label,
       activeIcon: activeIcon,
       inactiveIcon: inactiveIcon,
@@ -659,18 +675,22 @@ class _ArcTrackPainter extends CustomPainter {
   final double progress;
   final double radius;
   final Color primaryColor;
+  final double debut;
+  final Offset centre;
 
   _ArcTrackPainter({
     required this.progress,
     required this.radius,
     required this.primaryColor,
+    required this.debut,
+    required this.centre,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (progress <= 0.05) return;
 
-    final center = Offset(size.width / 2, size.height);
+    final center = centre;
     final paint = Paint()
       ..color = primaryColor.withValues(alpha: 0.28 * progress)
       ..style = PaintingStyle.stroke
@@ -678,7 +698,8 @@ class _ArcTrackPainter extends CustomPainter {
 
     final path = Path();
     final double sweep = (math.pi * 0.72) * progress;
-    const double startAngle = -math.pi * 0.86;
+    // Balayage de 0,72π centré sur la trace de 0,8π de la géométrie
+    final double startAngle = debut + math.pi * 0.04;
 
     path.addArc(
       Rect.fromCircle(center: center, radius: radius),
@@ -691,7 +712,9 @@ class _ArcTrackPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ArcTrackPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.radius != radius;
+    return oldDelegate.progress != progress ||
+        oldDelegate.radius != radius ||
+        oldDelegate.debut != debut;
   }
 }
 

@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
+import '../utils/responsive.dart';
 
 class AppTheme {
   // --- PALETTE GRAPHIQUE OFFICIELLE KARAVAN ---
@@ -621,11 +623,15 @@ class AppTheme {
         textColor: terre,
         textStyle: sans(10, FontWeight.w700, terre),
       ),
+      // Chaque page est centrée sur une colonne lisible au-delà de la largeur d'un mobile
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.android: TransitionCadree(FadeForwardsPageTransitionsBuilder()),
+          TargetPlatform.windows: TransitionCadree(FadeForwardsPageTransitionsBuilder()),
+          TargetPlatform.linux: TransitionCadree(FadeForwardsPageTransitionsBuilder()),
+          TargetPlatform.fuchsia: TransitionCadree(ZoomPageTransitionsBuilder()),
+          TargetPlatform.iOS: TransitionCadree(CupertinoPageTransitionsBuilder()),
+          TargetPlatform.macOS: TransitionCadree(CupertinoPageTransitionsBuilder()),
         },
       ),
     );
