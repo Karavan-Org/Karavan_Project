@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: karavan-backend
+    runtime: docker
+    rootDir: karavan-backend
+    dockerfilePath: Dockerfile
+    plan: free
+    region: frankfurt
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DOGO_JWT_SECRET
+        generateValue: true
+      - key: DOGO_MM_SECRET
+        generateValue: true
+      - key: DOGO_COOKIE_SECURE
+        value: "true"
+      - key: DOGO_CORS_ORIGINS
+        value: "*"
+

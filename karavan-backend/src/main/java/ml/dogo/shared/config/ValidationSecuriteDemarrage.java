@@ -61,7 +61,8 @@ public class ValidationSecuriteDemarrage implements ApplicationRunner {
             String dbUser = environment.getProperty("spring.datasource.username", "");
             String dbPassword = environment.getProperty("spring.datasource.password", "");
             boolean autoriserRoot = Boolean.parseBoolean(environment.getProperty("DOGO_ALLOW_ROOT_DB", "false"))
-                    || environment.containsProperty("RAILWAY_ENVIRONMENT");
+                    || environment.containsProperty("RAILWAY_ENVIRONMENT")
+                    || environment.containsProperty("RENDER");
             if ((!autoriserRoot && "root".equalsIgnoreCase(dbUser)) || dbPassword == null || dbPassword.length() < 8
                     || "1234".equals(dbPassword)) {
                 throw new IllegalStateException("SÉCURITÉ CRITIQUE : configurez un compte et mot de passe DB dédiés en profil 'prod'.");
