@@ -5,6 +5,7 @@ import '../services/api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../services/validateur_mot_de_passe.dart';
+import 'champ_telephone_international.dart';
 
 /// Modal sécurisé de réinitialisation de mot de passe par vérification SMS OTP (RG-07),
 /// isolé par espace (Commerçant, Grossiste, Courtier).
@@ -67,6 +68,7 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _mdpController = TextEditingController();
   final TextEditingController _confirmerMdpController = TextEditingController();
+  String _telComplet = '';
 
   bool _chargement = false;
   bool _masquerMdp = true;
@@ -77,9 +79,7 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
   void initState() {
     super.initState();
     final init = widget.initialTelephone?.trim() ?? '';
-    _telController = TextEditingController(
-      text: init.isNotEmpty ? (init.startsWith('+223') ? init : '+223 $init') : '+223 ',
-    );
+    _telController = TextEditingController(text: init);
   }
 
   @override
@@ -92,9 +92,10 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
   }
 
   String get _telNettoye => _telController.text.replaceAll(RegExp(r'\s+'), '');
+  String get _telFinal => _telComplet.isNotEmpty ? _telComplet : _telNettoye;
 
   Future<void> _demanderCodeOtp() async {
-    final tel = _telNettoye;
+    final tel = _telFinal;
     if (tel.length < 8) {
       setState(() => _erreur = "Veuillez saisir un numéro de téléphone valide.");
       return;
@@ -153,7 +154,7 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
 
     try {
       await AuthService.instance.reinitialiserMotDePasse(
-        telephone: _telNettoye,
+        telephone: _telFinal,
         code: codeOtp,
         nouveauMotDePasse: nouveauMdp,
         typeActeur: widget.role?.codeBackend,
@@ -184,7 +185,7 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
       );
 
       if (widget.onMotDePasseReinitialise != null) {
-        widget.onMotDePasseReinitialise!(_telNettoye);
+        widget.onMotDePasseReinitialise!(_telFinal);
       }
     } catch (e) {
       if (!mounted) return;
@@ -315,25 +316,14 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
               ),
               const SizedBox(height: 18),
 
-              // Champ Téléphone
-              Text(
-                "Numéro de téléphone Malien (+223)",
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: couleurTexte),
-              ),
-              const SizedBox(height: 8),
-              TextField(
+              // Champ Téléphone international avec indicatifs
+              ChampTelephoneInternational(
                 controller: _telController,
-                keyboardType: TextInputType.phone,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: couleurTexte),
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.phone_iphone_rounded, color: AppTheme.secondary, size: 20),
-                  hintText: "+223 70 00 00 00",
-                  filled: true,
-                  fillColor: estSombre ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF9F9F9),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: couleurBordure)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: couleurBordure)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.secondary, width: 2)),
-                ),
+                borderColor: couleurBordure,
+                accentColor: AppTheme.secondary,
+                onNumeroCompletChange: (complet) {
+                  _telComplet = complet;
+                },
               ),
               const SizedBox(height: 24),
 

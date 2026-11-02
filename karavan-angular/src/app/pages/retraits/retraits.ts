@@ -146,7 +146,7 @@ export class RetraitsComponent implements OnInit, OnDestroy {
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const qr = jsQR(image.data, image.width, image.height, { inversionAttempts: 'dontInvert' });
+        const qr = jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
         if (qr?.data) {
           this.arreterCamera();
           this.validerJeton(qr.data);
@@ -159,8 +159,19 @@ export class RetraitsComponent implements OnInit, OnDestroy {
 
   // ---------------------------------------------------------------- validation
 
+  private extraireJeton(texte: string): string {
+    let t = (texte ?? '').trim();
+    if (t.includes('/')) {
+      t = t.substring(t.lastIndexOf('/') + 1).trim();
+    }
+    if (t.includes(':')) {
+      t = t.substring(t.lastIndexOf(':') + 1).trim();
+    }
+    return t;
+  }
+
   validerLecteur(): void {
-    const code = this.codeLecteur.trim();
+    const code = this.extraireJeton(this.codeLecteur);
     if (code) {
       this.validerJeton(code);
       this.codeLecteur = '';
@@ -168,12 +179,19 @@ export class RetraitsComponent implements OnInit, OnDestroy {
   }
 
   private validerJeton(jeton: string): void {
-    this.valider(this.api.validerRetrait({ qrToken: jeton }) as Observable<RetraitValide>);
+    const clean = this.extraireJeton(jeton);
+    if (!clean) return;
+    this.valider(this.api.validerRetrait({ qrToken: clean }) as Observable<RetraitValide>);
   }
 
   validerPin(): void {
     if (!this.commandeId || !this.pin.trim()) return;
-    this.valider(this.api.validerRetrait({ commandeId: this.commandeId, pin: this.pin.trim() }) as Observable<RetraitValide>);
+    const cleanPin = this.pin.replace(/\s+/g, '').trim();
+    if (cleanPin.length !== 6) {
+      this.afficher('Le code PIN doit comporter exactement 6 chiffres (reçu par SMS).', true);
+      return;
+    }
+    this.valider(this.api.validerRetrait({ commandeId: this.commandeId, pin: cleanPin }) as Observable<RetraitValide>);
   }
 
   choisir(c: CommandePrete): void {

@@ -12,6 +12,8 @@
   </header>
 
   <p class="message erreur" *ngIf="erreur()">{{ erreur() }}</p>
+  <p class="message succes" *ngIf="message() && !echec()">{{ message() }}</p>
+  <p class="message erreur" *ngIf="message() && echec()">{{ message() }}</p>
 
   <div class="layout-grid">
 
@@ -51,21 +53,32 @@
               [class.selection]="g.id === selectionId()"
               (click)="selectionner(g)">
               <td>
-                <strong>#{{ g.id }} · {{ g.titre }}</strong>
-                <small>
-                  {{ g.produit.nom }} ·
-                  <app-drapeau-pays [pays]="g.produit.paysOrigine" [largeur]="16" [hauteur]="11"></app-drapeau-pays>
-                  {{ g.produit.paysOrigine || 'Origine' }} ➔
-                  <app-drapeau-pays [pays]="'ML'" [largeur]="16" [hauteur]="11"></app-drapeau-pays> Bamako ·
-                  limite {{ dateCourte(g.dateLimite) }}
-                </small>
+                <div class="groupe-cell-flex">
+                  <img *ngIf="g.produit?.photoUrl || g.grossiste?.photoUrl" [src]="urlImage(g.produit?.photoUrl || g.grossiste?.photoUrl)" [alt]="g.titre" class="miniature-produit" />
+                  <div class="groupe-cell-text">
+                    <strong>#{{ g.id }} · {{ g.titre }}</strong>
+                    <small>
+                      {{ g.produit.nom }} ·
+                      <app-drapeau-pays [pays]="g.produit.paysOrigine" [largeur]="16" [hauteur]="11"></app-drapeau-pays>
+                      {{ g.produit.paysOrigine || 'Origine' }} ➔
+                      <app-drapeau-pays [pays]="'ML'" [largeur]="16" [hauteur]="11"></app-drapeau-pays> Bamako ·
+                      limite {{ dateCourte(g.dateLimite) }}
+                    </small>
+                  </div>
+                </div>
               </td>
               <td (click)="$event.stopPropagation()">
-                <a class="lien" [routerLink]="['/utilisateurs', g.grossiste.id]">{{ g.grossiste.nom }}</a>
+                <div class="acteur-cell-flex">
+                  <img *ngIf="g.grossiste?.photoUrl" [src]="urlImage(g.grossiste.photoUrl)" [alt]="g.grossiste.nom" class="avatar-mini-img" />
+                  <a class="lien" [routerLink]="['/utilisateurs', g.grossiste.id]">{{ g.grossiste.nom }}</a>
+                </div>
               </td>
               <td (click)="$event.stopPropagation()">
-                <a class="lien" *ngIf="g.courtier; else porteur" [routerLink]="['/utilisateurs', g.courtier.id]">{{ g.courtier.nom }}</a>
-                <ng-template #porteur><small>Le grossiste (sans courtier)</small></ng-template>
+                <div class="acteur-cell-flex">
+                  <img *ngIf="g.courtier?.photoUrl" [src]="urlImage(g.courtier.photoUrl)" [alt]="g.courtier.nom" class="avatar-mini-img" />
+                  <a class="lien" *ngIf="g.courtier; else porteur" [routerLink]="['/utilisateurs', g.courtier.id]">{{ g.courtier.nom }}</a>
+                  <ng-template #porteur><small>Le grossiste (sans courtier)</small></ng-template>
+                </div>
               </td>
               <td>
                 {{ g.quantiteConfirmee }} / {{ g.quantiteCible }}
@@ -91,7 +104,10 @@
       <ng-container *ngIf="selection() as g">
         <section class="card">
           <div class="card-header">
-            <h2>#{{ g.id }} · {{ g.titre }}</h2>
+            <div class="selection-titre-avec-photo">
+              <img *ngIf="g.produit?.photoUrl || g.grossiste?.photoUrl" [src]="urlImage(g.produit?.photoUrl || g.grossiste?.photoUrl)" [alt]="g.titre" class="miniature-produit grande" />
+              <h2>#{{ g.id }} · {{ g.titre }}</h2>
+            </div>
             <span class="badge" [ngClass]="badge(g.statut)">{{ libellesGroupe[g.statut] ?? g.statut }}</span>
           </div>
 
@@ -101,10 +117,19 @@
             <dd>
               <app-drapeau-pays [pays]="g.produit.paysOrigine" [largeur]="18" [hauteur]="12" [avecNom]="true"></app-drapeau-pays>
             </dd>
-            <dt>Grossiste</dt><dd><a class="lien" [routerLink]="['/utilisateurs', g.grossiste.id]">{{ g.grossiste.nom }}</a></dd>
+            <dt>Grossiste</dt>
+            <dd>
+              <div class="acteur-cell-flex">
+                <img *ngIf="g.grossiste?.photoUrl" [src]="urlImage(g.grossiste.photoUrl)" [alt]="g.grossiste.nom" class="avatar-mini-img" />
+                <a class="lien" [routerLink]="['/utilisateurs', g.grossiste.id]">{{ g.grossiste.nom }}</a>
+              </div>
+            </dd>
             <dt>Courtier</dt>
             <dd>
-              <a class="lien" *ngIf="g.courtier; else sansCourtier" [routerLink]="['/utilisateurs', g.courtier.id]">{{ g.courtier.nom }}</a>
+              <div class="acteur-cell-flex" *ngIf="g.courtier; else sansCourtier">
+                <img *ngIf="g.courtier?.photoUrl" [src]="urlImage(g.courtier?.photoUrl)" [alt]="g.courtier.nom" class="avatar-mini-img" />
+                <a class="lien" [routerLink]="['/utilisateurs', g.courtier.id]">{{ g.courtier.nom }}</a>
+              </div>
               <ng-template #sansCourtier>Aucun : le grossiste porte le groupe</ng-template>
             </dd>
             <dt>Prix</dt><dd>{{ fcfa(g.prixUnitaire) }} / pce</dd>

@@ -55,7 +55,14 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
       final aRetirer = await LogistiqueApiService.instance.commandesARetirer();
       final demandee = int.tryParse(widget.codeCommande.replaceAll(RegExp(r'[^0-9]'), ''));
       final choisie = aRetirer.where((c) => (c['id'] as num?)?.toInt() == demandee).firstOrNull ??
-          (aRetirer.length == 1 ? aRetirer.first : null);
+          (demandee != null
+              ? {
+                  'id': demandee,
+                  'produit': widget.nomProduit,
+                  'quantite': widget.quantite,
+                  'pointRetrait': {'nom': widget.pointRetrait},
+                }
+              : (aRetirer.length == 1 ? aRetirer.first : null));
       if (!mounted) return;
       setState(() {
         _aRetirer = aRetirer;

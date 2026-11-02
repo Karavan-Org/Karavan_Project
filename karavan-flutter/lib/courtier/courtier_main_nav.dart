@@ -8,6 +8,7 @@ import 'courtier_dashboard_screen.dart';
 import 'gestion_convoi_screen.dart';
 import 'portefeuille_courtier_screen.dart';
 import 'courtier_profil_screen.dart';
+import '../commercant/explorer_screen.dart';
 import 'creer_groupe_courtier_screen.dart';
 import 'scanner_retrait_screen.dart';
 import '../services/session_storage_service.dart';
@@ -51,8 +52,8 @@ class _CourtierMainNavState extends State<CourtierMainNav>
 
   final List<Widget> _screens = const [
     CourtierDashboardScreen(showBottomNav: false),
+    ExplorerScreen(),
     GestionConvoiScreen(),
-    PortefeuilleCourtierScreen(),
     CourtierProfilScreen(),
   ];
 
@@ -154,53 +155,58 @@ class _CourtierMainNavState extends State<CourtierMainNav>
       _buildNavItem(
         index: 0,
         label: "Accueil",
-        activeIcon: Icons.home_rounded,
+        activeIcon: Icons.home,
         inactiveIcon: Icons.home_outlined,
       ),
       _buildNavItem(
         index: 1,
-        label: "Convois",
-        activeIcon: Icons.local_shipping_rounded,
-        inactiveIcon: Icons.local_shipping_outlined,
+        label: "Explorer",
+        activeIcon: Icons.explore,
+        inactiveIcon: Icons.explore_outlined,
       ),
       _buildNavItem(
         index: 2,
-        label: "Portefeuille",
-        activeIcon: Icons.account_balance_wallet_rounded,
-        inactiveIcon: Icons.account_balance_wallet_outlined,
+        label: "Commandes",
+        activeIcon: Icons.receipt_long,
+        inactiveIcon: Icons.receipt_long_outlined,
       ),
       _buildNavItem(
         index: 3,
         label: "Profil",
-        activeIcon: Icons.business_center_rounded,
-        inactiveIcon: Icons.business_center_outlined,
+        activeIcon: Icons.person,
+        inactiveIcon: Icons.person_outline,
       ),
     ];
 
     return TabNavigationScope(
       onSwitchTab: setTabIndex,
       child: Stack(
+        fit: StackFit.expand,
         children: [
           Scaffold(
             backgroundColor: AppTheme.couleurFond(context),
             body: Stack(
+              fit: StackFit.expand,
               children: [
                 // 1. Écrans principaux avec IndexedStack (tickers suspendus sur onglets masqués)
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (laterale) RailNavigation(onglets: onglets),
                     Expanded(
-                        child: CadrePage(
-                            child: IndexedStack(
-                      index: _currentIndex,
-                      children: [
-                        for (int i = 0; i < _screens.length; i++)
-                          TickerMode(
-                            enabled: _currentIndex == i,
-                            child: _screens[i],
-                          ),
-                      ],
-                    ))),
+                      child: SizedBox.expand(
+                        child: IndexedStack(
+                          index: _currentIndex,
+                          children: [
+                            for (int i = 0; i < _screens.length; i++)
+                              TickerMode(
+                                enabled: _currentIndex == i,
+                                child: _screens[i],
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
 
@@ -253,7 +259,7 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                         radius: arc.rayon,
                         label: "Groupe",
                         subLabel: "Nouveau",
-                        hoverTooltip: "👥 Créer un groupe d'achat",
+                        hoverTooltip: "Créer un groupe d'achat",
                         icon: Icons.rocket_launch_rounded,
                         color: AppTheme.primary,
                         onTap: () {
@@ -274,7 +280,7 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                         radius: arc.rayon,
                         label: "Scanner",
                         subLabel: "QR & PIN",
-                        hoverTooltip: "📷 Scanner Code & Libérer Séquestre",
+                        hoverTooltip: "Scanner Code & Libérer Séquestre",
                         icon: Icons.qr_code_scanner_rounded,
                         color: AppTheme.olive,
                         onTap: () {
@@ -294,7 +300,7 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                         radius: arc.rayon,
                         label: "Transit",
                         subLabel: "Étapes convoi",
-                        hoverTooltip: "📍 Faire avancer mes convois",
+                        hoverTooltip: "Faire avancer mes convois",
                         icon: Icons.cell_tower_rounded,
                         color: AppTheme.secondary,
                         // Les étapes se pointent dans l'onglet Convois (suivi réel, notifié aux commerçants)
@@ -309,7 +315,7 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                         radius: arc.rayon,
                         label: "Gains",
                         subLabel: "Mobile Money",
-                        hoverTooltip: "💼 Retirer Commissions Fret",
+                        hoverTooltip: "Retirer Commissions Fret",
                         icon: Icons.account_balance_wallet_rounded,
                         color: AppTheme.ocreProfond,
                         onTap: () {
@@ -361,54 +367,47 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                     ),
                     child: SafeArea(
                       top: false,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          if (constraints.maxWidth < 100) {
-                            return const SizedBox(height: 64);
-                          }
-                          return Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 560),
-                              child: SizedBox(
-                                height: 64,
-                                child: Row(
-                                  children: [
-                                    // Côté gauche : Tableau de bord + Convois
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: onglets[0],
-                                          ),
-                                          Expanded(
-                                            child: onglets[1],
-                                          ),
-                                        ],
+                      child: SizedBox(
+                        height: 64,
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 560),
+                            child: Row(
+                              children: [
+                                // Côté gauche : Tableau de bord + Convois
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: onglets[0],
                                       ),
-                                    ),
-
-                                    // Espace pour le FAB central (+)
-                                    const SizedBox(width: 52),
-
-                                    // Côté droit : Portefeuille + Profil
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: onglets[2],
-                                          ),
-                                          Expanded(
-                                            child: onglets[3],
-                                          ),
-                                        ],
+                                      Expanded(
+                                        child: onglets[1],
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
+
+                                // Espace pour le FAB central (+)
+                                const SizedBox(width: 52),
+
+                                // Côté droit : Portefeuille + Profil
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: onglets[2],
+                                      ),
+                                      Expanded(
+                                        child: onglets[3],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                     ),
                   ),

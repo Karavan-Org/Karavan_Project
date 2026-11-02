@@ -161,7 +161,7 @@ public class RetraitService {
 
     // ---------------------------------------------------------------------- consultation (Commerçant)
 
-    @Transactional(readOnly = true)
+    @Transactional
     public CodeVue codeRetrait(long commercantId, long commandeId) {
         Commande c = commandes.findById(commandeId).orElseThrow(() -> ErreurMetier.nonTrouve("Commande", commandeId));
         if (c.getCommercantId() != commercantId) {
@@ -170,6 +170,9 @@ public class RetraitService {
         if (c.getStatut() != StatutCommande.EN_ATTENTE_RETRAIT) {
             throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, "RG-53",
                     "Le code de retrait n'est disponible que lorsque la commande est prête à être retirée");
+        }
+        if (codes.findByCommandeId(commandeId).isEmpty()) {
+            genererCode(c, nomDuPoint(c));
         }
         return codeDe(commandeId);
     }
@@ -191,14 +194,26 @@ public class RetraitService {
      */
     @Transactional
     public RetraitVue valider(UtilisateurCourant acteur, Long commandeIdSaisi, String qrToken, String pin) {
-        boolean parQr = qrToken != null && !qrToken.isBlank();
-        boolean parPin = pin != null && !pin.isBlank();
+        String tokenNettoye = null;
+        if (qrToken != null && !qrToken.isBlank()) {
+            tokenNettoye = qrToken.strip();
+            if (tokenNettoye.contains("/")) {
+                tokenNettoye = tokenNettoye.substring(tokenNettoye.lastIndexOf('/') + 1).strip();
+            }
+            if (tokenNettoye.contains(":")) {
+                tokenNettoye = tokenNettoye.substring(tokenNettoye.lastIndexOf(':') + 1).strip();
+            }
+        }
+        String pinNettoye = (pin != null && !pin.isBlank()) ? pin.replaceAll("\\s+", "").strip() : null;
+
+        boolean parQr = tokenNettoye != null && !tokenNettoye.isBlank();
+        boolean parPin = pinNettoye != null && !pinNettoye.isBlank();
         if (parQr == parPin || (parPin && commandeIdSaisi == null)) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-53",
                     "Présentez soit le QR code, soit le numéro de commande avec le PIN");
         }
         long commandeId = parQr
-                ? codes.commandeDuJeton(qrToken.strip()).orElseThrow(RetraitService::codeInvalide)
+                ? codes.commandeDuJeton(tokenNettoye).orElseThrow(RetraitService::codeInvalide)
                 : commandeIdSaisi;
         long groupeId = commandes.groupeDe(commandeId).orElseThrow(RetraitService::codeInvalide);
         GroupeAchatApi.GroupeInfo g = groupeGere(acteur, groupeId);
@@ -215,7 +230,7 @@ public class RetraitService {
         RegleRetrait.verifierUtilisable(code.isUtilise(), code.isBloque(), code.getExpiration(), maintenant);
 
         int max = proprietes.retrait().maxTentatives();
-        if (parPin && !encodeur.matches(pin.strip(), code.getPinHash())) {
+        if (parPin && !encodeur.matches(pinNettoye, code.getPinHash())) {
             int echecs = compteurs.enregistrerEchec(code.getId(), max);
             if (RegleRetrait.doitBloquer(echecs, max)) {
                 throw new ErreurMetier(CodeErreur.CODE_RETRAIT_BLOQUE, "RG-54",

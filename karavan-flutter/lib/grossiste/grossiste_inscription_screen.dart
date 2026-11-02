@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/bouton_bascule_theme.dart';
+import '../widgets/champ_telephone_international.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../commercant/commercant_otp_screen.dart';
@@ -31,6 +32,7 @@ class _GrossisteInscriptionScreenState
   final _emailController = TextEditingController();
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
+  String _telephoneComplet = '';
   bool _pinMasque = true;
   bool _confirmMasque = true;
   bool _chargement = false;
@@ -60,7 +62,8 @@ class _GrossisteInscriptionScreenState
 
   Future<void> _creerCompte() async {
     final entreprise = _entrepriseController.text.trim();
-    final telephone = _telephoneController.text.trim();
+    final localPhone = _telephoneController.text.trim();
+    final telephone = _telephoneComplet.isNotEmpty ? _telephoneComplet : localPhone;
     final email = _emailController.text.trim();
     final pin = _pinController.text.trim();
     final confirm = _confirmPinController.text.trim();
@@ -173,12 +176,15 @@ class _GrossisteInscriptionScreenState
                 controller: _entrepriseController,
               ),
               const SizedBox(height: 12),
-              ChampArrivee(
-                icone: Icons.person_outline,
-                indice: "Numéro de téléphone",
-                obligatoire: true,
+              ChampTelephoneInternational(
                 controller: _telephoneController,
-                clavier: TextInputType.phone,
+                label: "Numéro de téléphone",
+                hintText: "70 12 34 56",
+                borderColor: CouleursArrivee.bordure,
+                accentColor: AppTheme.primary,
+                onNumeroCompletChange: (complet) {
+                  _telephoneComplet = complet;
+                },
               ),
               const SizedBox(height: 12),
               ChampArrivee(

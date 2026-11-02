@@ -57,7 +57,7 @@ class FavorisService {
               child: Text(
                 wasFavori
                     ? "« ${groupe.titre} » retiré des favoris"
-                    : "« ${groupe.titre} » ajouté à vos favoris ❤️",
+                    : "« ${groupe.titre} » ajouté à vos favoris",
                 style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
               ),
             ),

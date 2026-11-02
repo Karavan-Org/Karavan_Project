@@ -1,5 +1,6 @@
 import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/bouton_google_signin.dart';
+import '../widgets/champ_telephone_international.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,6 +34,7 @@ class _CommercantInscriptionScreenState
   final _phoneController = TextEditingController();
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
+  String _telephoneComplet = '';
   bool _obscurePin = true;
   bool _obscureConfirmPin = true;
   bool _isLoading = false;
@@ -61,7 +63,8 @@ class _CommercantInscriptionScreenState
 
   void _validerInscription() async {
     final nom = _nomController.text.trim();
-    final phone = _phoneController.text.trim();
+    final localPhone = _phoneController.text.trim();
+    final phone = _telephoneComplet.isNotEmpty ? _telephoneComplet : localPhone;
     final pin = _pinController.text.trim();
     final confirmPin = _confirmPinController.text.trim();
 
@@ -209,15 +212,16 @@ class _CommercantInscriptionScreenState
 
               const SizedBox(height: 14),
 
-              // 3. CHAMP TÉLÉPHONE
-              _buildFigmaInputField(
-                icon: Icons.phone_outlined,
-                label: "Téléphone Mobile Money",
-                hint: "Ex: +223 70 12 34 56",
+              // 3. CHAMP TÉLÉPHONE INTERNATIONAL AVEC INDICATIFS PAYS (intl_phone_field)
+              ChampTelephoneInternational(
                 controller: _phoneController,
-                keyboardType: TextInputType.phone,
+                label: "Téléphone Mobile Money",
+                hintText: "70 12 34 56",
                 borderColor: borderColor,
-                camelColor: camelColor,
+                accentColor: camelColor,
+                onNumeroCompletChange: (complet) {
+                  _telephoneComplet = complet;
+                },
               ),
 
               const SizedBox(height: 14),

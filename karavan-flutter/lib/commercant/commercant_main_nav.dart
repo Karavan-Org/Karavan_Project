@@ -6,6 +6,7 @@ import '../widgets/navigation_laterale.dart';
 import 'commercant_home_screen.dart';
 import 'explorer_screen.dart';
 import 'mes_commandes_screen.dart';
+import 'favoris_service.dart';
 import 'profil_commercant_screen.dart';
 import 'mes_favoris_screen.dart';
 import 'code_retrait_commercant_screen.dart';
@@ -59,11 +60,13 @@ class _CommercantMainNavState extends State<CommercantMainNav>
   /// Clés propres à cet espace pour le didacticiel guidé
   final _ciblesDidacticiel = CiblesDidacticiel();
 
-  final List<Widget> _screens = const [
-    CommercantHomeScreen(),
-    ExplorerScreen(),
-    MesCommandesScreen(),
-    ProfilCommercantScreen(),
+  final GlobalKey<MesCommandesScreenState> _commandesKey = GlobalKey<MesCommandesScreenState>();
+
+  late final List<Widget> _screens = [
+    const CommercantHomeScreen(),
+    const ExplorerScreen(),
+    MesCommandesScreen(key: _commandesKey),
+    const ProfilCommercantScreen(),
   ];
 
   @override
@@ -149,6 +152,12 @@ class _CommercantMainNavState extends State<CommercantMainNav>
     }
     if (index >= 0 && index < _screens.length) {
       setState(() => _currentIndex = index);
+      if (index == 0 || index == 1) {
+        FavorisService.instance.actualiserDepuisBackend();
+      }
+      if (index == 2) {
+        _commandesKey.currentState?.recharger();
+      }
     }
   }
 
@@ -205,27 +214,32 @@ class _CommercantMainNavState extends State<CommercantMainNav>
     return TabNavigationScope(
       onSwitchTab: setTabIndex,
       child: Stack(
+        fit: StackFit.expand,
         children: [
           Scaffold(
             backgroundColor: AppTheme.couleurFond(context),
             body: Stack(
+              fit: StackFit.expand,
               children: [
                 // 1. Écrans principaux avec IndexedStack (tickers suspendus sur onglets masqués)
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (laterale) RailNavigation(onglets: onglets),
                     Expanded(
-                        child: CadrePage(
-                            child: IndexedStack(
-                      index: _currentIndex,
-                      children: [
-                        for (int i = 0; i < _screens.length; i++)
-                          TickerMode(
-                            enabled: _currentIndex == i,
-                            child: _screens[i],
-                          ),
-                      ],
-                    ))),
+                      child: SizedBox.expand(
+                        child: IndexedStack(
+                          index: _currentIndex,
+                          children: [
+                            for (int i = 0; i < _screens.length; i++)
+                              TickerMode(
+                                enabled: _currentIndex == i,
+                                child: _screens[i],
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
 
@@ -317,7 +331,7 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                         radius: arc.rayon,
                         label: "Suivi Colis",
                         subLabel: "Mes commandes",
-                        hoverTooltip: "🚚 Suivre mes colis",
+                        hoverTooltip: "Suivre mes colis",
                         icon: Icons.local_shipping_rounded,
                         color: AppTheme.primary,
                         onTap: () => setTabIndex(2),
@@ -331,7 +345,7 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                         radius: arc.rayon,
                         label: "Retrait",
                         subLabel: "QR & PIN",
-                        hoverTooltip: "🔑 Afficher mon Code QR & PIN",
+                        hoverTooltip: "Afficher mon Code QR & PIN",
                         icon: Icons.qr_code_2_rounded,
                         color: AppTheme.secondary,
                         onTap: () {
@@ -352,7 +366,7 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                         radius: arc.rayon,
                         label: "Favoris",
                         subLabel: "Sauvegardes",
-                        hoverTooltip: "❤️ Consulter mes Favoris",
+                        hoverTooltip: "Consulter mes Favoris",
                         icon: Icons.favorite_rounded,
                         color: AppTheme.danger,
                         onTap: () {
@@ -403,54 +417,47 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                     ),
                     child: SafeArea(
                       top: false,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          if (constraints.maxWidth < 100) {
-                            return const SizedBox(height: 64);
-                          }
-                          return Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 560),
-                              child: SizedBox(
-                                height: 64,
-                                child: Row(
-                                  children: [
-                                    // Côté gauche : Accueil + Explorer
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: onglets[0],
-                                          ),
-                                          Expanded(
-                                            child: onglets[1],
-                                          ),
-                                        ],
+                      child: SizedBox(
+                        height: 64,
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 560),
+                            child: Row(
+                              children: [
+                                // Côté gauche : Accueil + Explorer
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: onglets[0],
                                       ),
-                                    ),
-
-                                    // Espace pour le FAB central (+)
-                                    const SizedBox(width: 52),
-
-                                    // Côté droit : Commandes + Profil
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: onglets[2],
-                                          ),
-                                          Expanded(
-                                            child: onglets[3],
-                                          ),
-                                        ],
+                                      Expanded(
+                                        child: onglets[1],
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
+
+                                // Espace pour le FAB central (+)
+                                const SizedBox(width: 52),
+
+                                // Côté droit : Commandes + Profil
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: onglets[2],
+                                      ),
+                                      Expanded(
+                                        child: onglets[3],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -713,12 +720,7 @@ class _CommercantMainNavState extends State<CommercantMainNav>
       activeIcon: activeIcon,
       inactiveIcon: inactiveIcon,
       selectionne: _currentIndex == index,
-      onTap: () {
-        if (_fabController.isCompleted) {
-          _fabController.reverse();
-        }
-        setState(() => _currentIndex = index);
-      },
+      onTap: () => setTabIndex(index),
     );
   }
 }

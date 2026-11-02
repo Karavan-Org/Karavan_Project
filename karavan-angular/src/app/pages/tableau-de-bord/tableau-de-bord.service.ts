@@ -49,11 +49,14 @@ export interface ResumeTableauDeBord {
   groupesComplets: number;
   retardsSuivi: number;
   activiteRecente?: ActiviteRecenteVue[];
+  totalSequestreBloque?: number;
+  totalAnnulations?: number;
 }
 
 export interface ActeurVue {
   id: number;
   nom: string;
+  photoUrl?: string | null;
 }
 
 export interface GroupeCadranVue {

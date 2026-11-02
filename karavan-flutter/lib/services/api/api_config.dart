@@ -6,7 +6,7 @@ class ApiConfig {
 
   /// Paramètres passés au démarrage (ex: flutter run --dart-define=ip=10.13.11.11)
   static const String _ipParam = String.fromEnvironment('ip', defaultValue: '');
-  static const String _portParam = String.fromEnvironment('port', defaultValue: '8080');
+  static const String _portParam = String.fromEnvironment('port', defaultValue: '8081');
 
   /// URL de base configurable.
   /// Priorité :
@@ -32,9 +32,9 @@ class ApiConfig {
     if (kIsWeb) {
       return 'http://localhost:8080';
     }
-    // Sur émulateur Android, localhost de la machine hôte est 10.0.2.2
+    // Sur Android, appareil physique via pont adb reverse tcp:8081 tcp:8080 (ou émulateur)
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8080';
+      return 'http://localhost:8081';
     }
     // iOS, macOS, Windows, Linux
     return 'http://localhost:8080';

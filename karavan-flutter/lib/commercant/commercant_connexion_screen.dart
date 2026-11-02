@@ -1,5 +1,6 @@
 import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/bouton_google_signin.dart';
+import '../widgets/champ_telephone_international.dart';
 import '../widgets/mot_de_passe_oublie_modal.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +32,7 @@ class CommercantConnexionScreen extends StatefulWidget {
 class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
   final _phoneController = TextEditingController();
   final _pinController = TextEditingController();
+  String _telephoneComplet = '';
   bool _obscurePin = true;
   bool _rememberMe = true;
   bool _isLoading = false;
@@ -64,7 +66,8 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
 
   void _seConnecter() async {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    final phone = _phoneController.text.trim();
+    final localPhone = _phoneController.text.trim();
+    final phone = _telephoneComplet.isNotEmpty ? _telephoneComplet : localPhone;
     final pin = _pinController.text.trim();
 
     if (phone.isEmpty) {
@@ -353,15 +356,14 @@ class _CommercantConnexionScreenState extends State<CommercantConnexionScreen> {
 
               const SizedBox(height: 26),
 
-              // 2. CHAMP TÉLÉPHONE FIGMA
-              _buildFigmaInputField(
-                icon: Icons.phone_outlined,
-                label: "Téléphone",
-                hint: "Entrez votre numéro de téléphone",
+              // 2. CHAMP TÉLÉPHONE INTERNATIONAL AVEC INDICATIFS PAYS (intl_phone_field)
+              ChampTelephoneInternational(
                 controller: _phoneController,
-                keyboardType: TextInputType.phone,
                 borderColor: borderColor,
-                camelColor: camelColor,
+                accentColor: camelColor,
+                onNumeroCompletChange: (complet) {
+                  _telephoneComplet = complet;
+                },
               ),
 
               const SizedBox(height: 16),

@@ -16,7 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Subscription } from 'rxjs';
 import { GroupeDetailVue } from '../tableau-de-bord.service';
 import { AdminApiService, MembresGroupe } from '../../../core/services/admin-api.service';
-import { messageErreur } from '../../../core/api';
+import { messageErreur, urlImage } from '../../../core/api';
 import { DrapeauPaysComponent } from '../../../components/drapeau-pays/drapeau-pays.component';
 
 @Component({
@@ -47,9 +47,9 @@ import { DrapeauPaysComponent } from '../../../components/drapeau-pays/drapeau-p
         <div class="tiroir-corps">
           <!-- Carte principale du produit -->
           <div class="carte-produit">
-            @if (groupe.produitPhotoUrl && !photoErreur) {
+            @if (photoUrlAffichee && !photoErreur) {
               <img
-                [src]="groupe.produitPhotoUrl"
+                [src]="photoUrlAffichee"
                 [alt]="groupe.produitNom"
                 class="photo-produit"
                 (error)="onPhotoErreur()"
@@ -875,6 +875,12 @@ export class DetailTiroirComponent implements OnChanges {
   private chargementMembres?: Subscription;
 
   photoErreur = false;
+  readonly urlImage = urlImage;
+
+  get photoUrlAffichee(): string {
+    const raw = this.groupe?.produitPhotoUrl || this.groupe?.grossiste?.photoUrl;
+    return raw ? urlImage(raw) : '';
+  }
 
   readonly membres = signal<MembresGroupe | null>(null);
   readonly erreurMembres = signal('');

@@ -14,7 +14,7 @@ export const PERMISSIONS_PAGES: Record<string, string[]> = {
   dashboard: [],
   'kyc-validation': ['KYC_VALIDER'],
   groupes: ['GROUPE_PUBLICATION_VALIDER', 'COMMANDE_AVANCER'],
-  finance: ['REMBOURSEMENT_APPROUVER', 'PORTEFEUILLE_RETIRER'],
+  finance: [],
   corridors: ['POINT_RETRAIT_GERER'],
   retraits: ['RETRAIT_VALIDER'],
   utilisateurs: ['ADMIN_CREER', 'COMPTE_SUSPENDRE'],

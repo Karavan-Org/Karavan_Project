@@ -33,6 +33,9 @@ public class ParticipationService {
     static final Set<StatutParticipation> ACTIVES = EnumSet.of(StatutParticipation.DEMANDEE,
             StatutParticipation.RESERVEE, StatutParticipation.CONFIRMEE);
 
+    static final Set<StatutParticipation> EN_ATTENTE_PAIEMENT = EnumSet.of(
+            StatutParticipation.DEMANDEE, StatutParticipation.RESERVEE);
+
     public record ParticipationVue(long id, long groupeId, String produit, String sku, String taille, String couleur,
                                    int quantite, String statut, BigDecimal prixUnitaire, BigDecimal montant,
                                    Instant expirationReservation, Instant dateCreation, String photoUrl) {
@@ -89,9 +92,9 @@ public class ParticipationService {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-27",
                     "La quantité doit être un entier positif d'au moins " + g.quantiteMinParCommercant());
         }
-        if (participations.existsByGroupeIdAndCommercantIdAndVarianteIdAndStatutIn(groupeId, commercantId, varianteId, ACTIVES)) {
+        if (participations.existsByGroupeIdAndCommercantIdAndVarianteIdAndStatutIn(groupeId, commercantId, varianteId, EN_ATTENTE_PAIEMENT)) {
             throw new ErreurMetier(CodeErreur.CONFLIT, "RG-26",
-                    "Vous participez déjà à ce groupe avec cette variante : annulez d'abord votre participation");
+                    "Vous avez déjà une réservation en attente de paiement pour cette variante : finalisez son paiement ou annulez-la");
         }
         campagne.reserver(groupeId, quantite);
         Instant maintenant = horloge.instant();

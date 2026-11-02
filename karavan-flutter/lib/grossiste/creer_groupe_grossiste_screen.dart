@@ -8,6 +8,7 @@ import '../widgets/image_produit.dart';
 import '../widgets/partage_groupe.dart';
 import '../models/pays_model.dart';
 import '../widgets/selecteur_pays.dart';
+import '../widgets/drapeau_pays_widget.dart';
 
 /// Création d'un groupe d'achat par le Grossiste sur l'un de ses produits, sans courtier :
 /// il achemine lui-même la marchandise. Le prix de gros et le stock du produit pré-remplissent le
@@ -94,16 +95,31 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
   }
 
   void _tenterPreselectionPays() {
-    if (_produit == null || _listePays.isEmpty) return;
+    if (_produit == null) return;
     final brut = _produit!['paysOrigine']?.toString().trim();
     if (brut == null || brut.isEmpty) return;
-    try {
-      final trouve = _listePays.firstWhere(
-        (p) => p.nomFr.toLowerCase() == brut.toLowerCase() || p.codeIso.toLowerCase() == brut.toLowerCase(),
+    if (_listePays.isNotEmpty) {
+      try {
+        final trouve = _listePays.firstWhere(
+          (p) => p.nomFr.toLowerCase() == brut.toLowerCase() ||
+                 p.codeIso.toLowerCase() == brut.toLowerCase() ||
+                 brut.toLowerCase().contains(p.nomFr.toLowerCase()),
+        );
+        _paysSelectionne = trouve;
+        _erreurPays = null;
+        return;
+      } catch (_) {}
+    }
+    if (_paysSelectionne == null) {
+      _paysSelectionne = PaysModel(
+        codeIso: brut.length == 2 ? brut.toUpperCase() : 'ML',
+        nomFr: brut,
+        latitude: 12.6392,
+        longitude: -8.0029,
+        actif: true,
       );
-      _paysSelectionne = trouve;
       _erreurPays = null;
-    } catch (_) {}
+    }
   }
   Future<void> _chargerProduits() async {
     setState(() {
@@ -158,6 +174,9 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
     if (_produit == null) {
       _erreur("Choisissez d'abord un produit");
       return;
+    }
+    if (_paysSelectionne == null) {
+      _tenterPreselectionPays();
     }
     if (_paysSelectionne == null) {
       setState(() => _erreurPays = "Le pays d'origine est obligatoire pour créer un groupe");
@@ -260,16 +279,61 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
               const SizedBox(height: 22),
               _titre("Votre groupe"),
               const SizedBox(height: 10),
-              SelecteurPays(
-                listePays: _listePays,
-                paysSelectionne: _paysSelectionne,
-                onPaysChoisi: (p) => setState(() {
-                  _paysSelectionne = p;
-                  _erreurPays = null;
-                }),
-                messageErreur: _erreurPays,
-                chargement: _chargementPays,
-              ),
+              if (_paysSelectionne != null || (produit['paysOrigine']?.toString().trim().isNotEmpty ?? false))
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.couleurSurfaceDouce(context),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.couleurBordure(context)),
+                  ),
+                  child: Row(
+                    children: [
+                      DrapeauBadge(
+                        pays: _paysSelectionne?.codeIso ?? produit['paysOrigine']?.toString() ?? '',
+                        compact: true,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Pays d'approvisionnement",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.couleurTexteAttenue(context),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _paysSelectionne?.nomFr ?? produit['paysOrigine']?.toString() ?? '',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.couleurTexte(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.check_circle_rounded, color: AppTheme.couleurSucces(context), size: 20),
+                    ],
+                  ),
+                )
+              else
+                SelecteurPays(
+                  listePays: _listePays,
+                  paysSelectionne: _paysSelectionne,
+                  onPaysChoisi: (p) => setState(() {
+                    _paysSelectionne = p;
+                    _erreurPays = null;
+                  }),
+                  messageErreur: _erreurPays,
+                  chargement: _chargementPays,
+                ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _titreController,

@@ -1,233 +1,324 @@
 // ==============================================================================
-// BARRE LATÉRALE KARAVAN — panneau « verre » sur fond terre (design system Karavan)
-// Couleurs tirées exclusivement des tokens du design system (styles.scss) :
-// - Panneau : --terre, nuancé de --primary
-// - Onglet actif : --bg-app, le fond même de la page (body) : il s'y fond, ouvert comme en rail
-// - Badges & accents : --secondary (ocre), --success (validation)
-// - Pilules : rayon 30px comme les boutons du design system
+// BARRE LATÉRALE KARAVAN — DESIGN CAPSULE SOMBRE FLOTTANTE
+// Inspiré directement de la maquette "Teams.co" (capsule moderne, bords arrondis,
+// profil avec halo, indicateur vertical actif, carte widget et bouton déconnexion pilule).
+// Symbiose parfaite avec le contenu de la page : aucun chevauchement/superposition.
 // ==============================================================================
 
-// Verre dépoli des pilules et pastilles
-$verre: rgba(255, 255, 255, 0.08);
-$verre-survol: rgba(255, 255, 255, 0.14);
-$verre-bordure: rgba(255, 255, 255, 0.1);
-$texte-clair: rgba(255, 255, 255, 0.92);
-$texte-doux: rgba(255, 255, 255, 0.55);
-$rayon-pilule: 30px;
-$rayon-courbe: 16px; // Congés inversés de l'onglet actif
+$bg-sidebar: #171826;
+$bg-sidebar-gradient: linear-gradient(180deg, #1C1E2E 0%, #151624 100%);
+$bordure-subtile: rgba(255, 255, 255, 0.08);
+$texte-blanc: #FFFFFF;
+$texte-mute: #9499B8;
+$texte-sombre: #696C84;
+$or-karavan: #EEA823;
+$terre-karavan: #AC7F5E;
+$vert-online: #10B981;
+$rouge-deconnexion: #EF4444;
 
-// L'hôte réserve la largeur du rail (12px de marge + 68px) : ouverte au survol, la barre
-// passe par-dessus la page sans la décaler (le globe 3D n'est pas recalculé)
+$rayon-sidebar: 28px;
+$rayon-pilule: 20px;
+$rayon-squircle: 14px;
+
+// ------------------------------------------------------------------------------
+// HÔTE DU COMPOSANT : DÉFINIT LA LARGEUR DANS LE FLEXBOX DU PARENT
+// ------------------------------------------------------------------------------
 :host {
   display: block;
   flex-shrink: 0;
+  width: 264px;
   position: relative;
-  z-index: 100;
+  z-index: 50;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
-  @media (max-width: 1024px) {
-    width: 68px;
+  &.sidebar-reduite {
+    width: 88px;
+  }
+
+  @media (max-width: 768px) {
+    width: 76px;
   }
 }
 
-:host(.survol) {
-  width: 80px;
-
-  @media (max-width: 1024px) {
-    width: 68px;
-  }
-
-  .sidebar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      18px 0 40px rgba(0, 0, 0, 0.18);
-  }
-}
-
+// ------------------------------------------------------------------------------
+// CONTENEUR CAPSULE PRINCIPALE FLOTTANTE
+// ------------------------------------------------------------------------------
 .sidebar {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  width: 240px;
+  width: 250px;
   height: calc(100vh - 24px);
-  margin: 12px 0 12px 12px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 28%, var(--terre)) 0%,
-    var(--terre) 50%,
-    color-mix(in srgb, var(--terre) 80%, #000) 100%
-  );
-  border: 1px solid $verre-bordure;
-  border-right: none; // L'onglet actif rejoint le contenu sans trait
-  border-radius: 28px 0 0 28px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  color: $texte-clair;
+  margin: 12px 0 12px 14px;
+  background: $bg-sidebar-gradient;
+  border: 1px solid $bordure-subtile;
+  border-radius: $rayon-sidebar;
+  box-shadow: 0 16px 40px rgba(8, 10, 24, 0.35);
+  color: $texte-blanc;
   font-family: var(--font-texte, system-ui, -apple-system, sans-serif);
-  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s ease;
   position: relative;
-  overflow: visible; // Permet aux tooltips de flotter à droite en mode miniature
-  z-index: 100;
+  overflow: visible; // Permet aux tooltips de flotter à droite en mode rail
+  user-select: none;
+  box-sizing: border-box;
 
-  // ----------------------------------------------------------------------------
-  // MODE MINIATURE RÉDUIT (FERMÉ PAR DÉFAUT) : rail de pastilles rondes
-  // ----------------------------------------------------------------------------
+  // --- MODE RÉDUIT (RAIL COMPACT À ICÔNES) ---
   &.sidebar-reduite {
-    width: 68px;
+    width: 74px;
 
     .brand-header {
-      padding: 16px 0 10px;
+      padding: 16px 0 12px;
       justify-content: center;
 
-      .brand-monogramme,
-      .brand-logo {
-        width: 40px;
-        height: 40px;
+      .brand-main {
+        justify-content: center;
       }
     }
 
+    .admin-profile-section {
+      padding: 8px 0 14px;
+      justify-content: center;
+      margin: 0;
+      border: none;
+      background: transparent;
+    }
+
     .nav-container {
-      padding: 12px 0 12px 14px;
+      padding: 8px 0;
+      align-items: center;
     }
 
     .nav-list {
-      gap: 10px;
+      align-items: center;
 
       .nav-list-item {
         width: 100%;
         display: flex;
+        justify-content: center;
       }
 
       .nav-item {
-        width: 40px;
-        height: 40px;
-        margin: 0;
+        width: 44px;
+        height: 44px;
         padding: 0;
         justify-content: center;
-        border-radius: 50%;
+        border-radius: $rayon-squircle;
+        background: transparent;
+        border: 1px solid transparent;
 
-        // Onglet actif : la pastille s'étire jusqu'au bord et se fond dans la page
-        &.active {
-          width: 100%;
-          justify-content: flex-start;
-          padding-left: 10px;
-          border-radius: $rayon-pilule 0 0 $rayon-pilule;
+        &:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.1);
         }
 
-        .nav-icon {
-          font-size: 20px;
-          width: 20px;
-          height: 20px;
+        &.active {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.16);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+
+          .nav-icon {
+            color: $or-karavan;
+          }
         }
       }
     }
 
     .sidebar-footer {
-      padding: 12px 0;
+      padding: 12px 0 14px;
       align-items: center;
-    }
-
-    .toggle-collapse-bar .collapse-btn {
-      width: 40px;
-      height: 40px;
-      padding: 0;
-      justify-content: center;
-      border-radius: 50%;
     }
   }
 
   // ----------------------------------------------------------------------------
-  // 1. EN-TÊTE : MONOGRAMME & BRAND
+  // 1. EN-TÊTE DE MARQUE
   // ----------------------------------------------------------------------------
   .brand-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 18px 14px 10px 12px;
+    justify-content: space-between;
+    padding: 18px 16px 12px 16px;
     flex-shrink: 0;
-    cursor: pointer;
-    position: relative;
 
-    // Logo officiel Karavan
-    .brand-logo {
+    .brand-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      min-width: 0;
+    }
+
+    .brand-logo-wrapper {
+      position: relative;
       width: 42px;
       height: 42px;
       flex-shrink: 0;
-      border-radius: 12px;
-      object-fit: cover;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+      .brand-logo {
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        object-fit: cover;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        transition: transform 0.25s ease;
+      }
+
+      .brand-status-dot {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 10px;
+        height: 10px;
+        background: $vert-online;
+        border: 2px solid #1C1E2E;
+        border-radius: 50%;
+      }
     }
 
     &:hover .brand-logo {
-      transform: scale(1.06);
-    }
-
-    // Monogramme de secours dans un disque de verre
-    .brand-monogramme {
-      width: 42px;
-      height: 42px;
-      flex-shrink: 0;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: $verre-survol;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      color: var(--secondary);
-      font-family: var(--font-titre);
-      font-size: 20px;
-      font-weight: 800;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        0 4px 12px rgba(0, 0, 0, 0.25);
-      transition: transform 0.25s ease;
-    }
-
-    &:hover .brand-monogramme {
-      transform: scale(1.06);
+      transform: scale(1.05);
     }
 
     .brand-info {
       display: flex;
       flex-direction: column;
-      flex: 1;
       min-width: 0;
 
       .brand-name {
-        font-family: var(--font-titre);
-        font-size: 17px;
+        font-family: var(--font-titre, system-ui);
+        font-size: 18px;
         font-weight: 800;
-        color: #FFFFFF;
-        letter-spacing: -0.2px;
+        color: $texte-blanc;
+        letter-spacing: -0.3px;
+        line-height: 1.15;
+
+        .brand-accent {
+          color: $or-karavan;
+        }
       }
 
       .brand-tag {
-        font-size: 9px;
+        font-size: 9.5px;
         font-weight: 700;
-        color: var(--secondary);
-        letter-spacing: 1px;
+        color: $texte-mute;
         text-transform: uppercase;
-        margin-top: 1px;
+        letter-spacing: 0.8px;
+        margin-top: 2px;
       }
     }
 
-  }
+    // Bouton chevron toggle supérieur
+    .btn-toggle-top {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: $texte-mute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      outline: none;
 
-  .sidebar-divider {
-    display: none; // Le panneau verre se suffit, pas de séparateur
+      &:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: $texte-blanc;
+        transform: scale(1.06);
+      }
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
   }
 
   // ----------------------------------------------------------------------------
-  // 2. NAVIGATION PRINCIPALE
+  // 2. SECTION PROFIL ADMINISTRATEUR (Style Dribbble / Teams.co)
+  // ----------------------------------------------------------------------------
+  .admin-profile-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 14px 14px 14px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .profile-avatar-wrapper {
+      position: relative;
+      flex-shrink: 0;
+
+      .profile-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, $or-karavan 0%, $terre-karavan 100%);
+        color: #FFFFFF;
+        font-size: 13px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(238, 168, 35, 0.25);
+        border: 2px solid rgba(255, 255, 255, 0.15);
+      }
+
+      .avatar-online-badge {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: $vert-online;
+        border: 2px solid #1A1C2A;
+      }
+    }
+
+    .profile-meta {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+
+      .profile-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: $texte-blanc;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .profile-role-badge {
+        font-size: 10px;
+        font-weight: 600;
+        color: $or-karavan;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 1px;
+      }
+    }
+  }
+
+  // ----------------------------------------------------------------------------
+  // 3. NAVIGATION PRINCIPALE
   // ----------------------------------------------------------------------------
   .nav-container {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    // Pas de marge à droite : l'onglet actif doit toucher le bord du panneau
-    padding: 10px 0 10px 12px;
+    padding: 0 12px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -241,16 +332,16 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
   .nav-section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 
     .section-title {
-      font-size: 9.5px;
+      font-size: 10px;
       font-weight: 800;
-      color: $texte-doux;
+      color: $texte-sombre;
       text-transform: uppercase;
-      letter-spacing: 0.9px;
-      padding: 0 10px;
-      margin: 0;
+      letter-spacing: 0.8px;
+      padding: 0 12px;
+      margin: 0 0 4px 0;
     }
   }
 
@@ -260,39 +351,41 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
 
     .nav-list-item {
       position: relative;
     }
 
-    // Pilule de verre
     .nav-item {
       position: relative;
       display: flex;
       align-items: center;
-      gap: 10px;
-      height: 38px;
-      margin-right: 12px;
-      padding: 0 12px 0 10px;
-      border-radius: $rayon-pilule;
-      background: $verre;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      color: $texte-clair;
+      gap: 12px;
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 14px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: $texte-mute;
       text-decoration: none;
       font-size: 13px;
       font-weight: 600;
       outline: none;
-      transition: background 0.25s ease, color 0.25s ease, border-radius 0.25s ease;
+      transition: all 0.22s ease;
       cursor: pointer;
 
       &:focus-visible {
-        box-shadow: 0 0 0 2px var(--secondary);
+        box-shadow: 0 0 0 2px $or-karavan;
       }
 
       &:hover {
-        background: color-mix(in srgb, var(--primary) 45%, transparent);
-        color: #FFFFFF;
+        background: rgba(255, 255, 255, 0.05);
+        color: $texte-blanc;
+
+        .nav-icon {
+          color: $texte-blanc;
+        }
 
         .floating-tooltip {
           opacity: 1;
@@ -301,59 +394,36 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
         }
       }
 
-      // --- ONGLET ACTIF : pilule claire qui se fond dans la zone de contenu ---
+      // --- ÉTAT ACTIF (Indicateur vertical latéral comme Sidebar 1) ---
       &.active {
-        margin-right: 0;
-        background: var(--bg-app);
-        border-color: transparent;
-        border-radius: $rayon-pilule 0 0 $rayon-pilule;
-        color: var(--terre);
-        font-weight: 800;
-
-        &:focus-visible {
-          box-shadow: inset 0 0 0 2px var(--secondary);
-        }
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.07);
+        color: $texte-blanc;
+        font-weight: 700;
 
         .nav-icon {
-          color: var(--primary);
+          color: $or-karavan;
         }
 
-        // Congés inversés au-dessus et au-dessous du raccord avec le contenu
-        &::before,
-        &::after {
-          content: '';
+        .active-indicator {
           position: absolute;
-          right: 0;
-          width: $rayon-courbe;
-          height: $rayon-courbe;
-          pointer-events: none;
-        }
-
-        &::before {
-          bottom: 100%;
-          background: radial-gradient(
-            circle at 0 0,
-            transparent calc(#{$rayon-courbe} - 0.5px),
-            var(--bg-app) $rayon-courbe
-          );
-        }
-
-        &::after {
-          top: 100%;
-          background: radial-gradient(
-            circle at 0 100%,
-            transparent calc(#{$rayon-courbe} - 0.5px),
-            var(--bg-app) $rayon-courbe
-          );
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 4px;
+          height: 22px;
+          border-radius: 0 4px 4px 0;
+          background: $or-karavan;
+          box-shadow: 0 0 10px rgba(238, 168, 35, 0.5);
         }
       }
 
       .nav-icon {
-        font-size: 19px;
-        width: 19px;
-        height: 19px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
         flex-shrink: 0;
-        color: $texte-clair;
+        color: $texte-mute;
         transition: color 0.2s ease;
       }
 
@@ -365,42 +435,43 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
       }
 
       .nav-badge {
-        font-size: 10.5px;
+        font-size: 10px;
         font-weight: 800;
-        background: var(--secondary);
-        color: var(--terre);
-        padding: 1px 7px;
+        background: $or-karavan;
+        color: #171826;
+        padding: 2px 7px;
         border-radius: 10px;
         margin-left: auto;
+        box-shadow: 0 2px 6px rgba(238, 168, 35, 0.35);
 
         &.mini-badge {
           position: absolute;
-          top: -3px;
-          right: -3px;
-          padding: 0 5px;
-          font-size: 9px;
-          border: 1.5px solid var(--terre);
+          top: 2px;
+          right: 2px;
+          padding: 0 4px;
+          font-size: 8.5px;
+          border: 1.5px solid #1C1E2E;
         }
       }
 
-      // --- TOOLTIP FLOTTANT EN MODE MINIATURE ---
+      // --- TOOLTIP FLOTTANT EN MODE RAIL ---
       .floating-tooltip {
         position: absolute;
-        left: 50px;
+        left: 56px;
         top: 50%;
         transform: translateY(-50%) translateX(0px);
-        background: var(--terre);
+        background: #1C1E2E;
         color: #FFFFFF;
-        border: 1px solid $verre-bordure;
-        border-radius: $rayon-pilule;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
         padding: 6px 12px;
         font-size: 12px;
-        font-weight: 700;
+        font-weight: 600;
         white-space: nowrap;
         pointer-events: none;
         opacity: 0;
         visibility: hidden;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
         transition: opacity 0.2s ease, transform 0.2s ease;
         z-index: 1000;
       }
@@ -408,196 +479,288 @@ $rayon-courbe: 16px; // Congés inversés de l'onglet actif
   }
 
   // ----------------------------------------------------------------------------
-  // 3. PIED DE BARRE LATÉRALE
+  // 4. PIED DE BARRE LATÉRALE
   // ----------------------------------------------------------------------------
   .sidebar-footer {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px 12px 14px;
+    gap: 10px;
+    padding: 12px 14px 16px;
     flex-shrink: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 
-    .security-pin-bar {
-      .security-pin-btn {
-        width: 100%;
+    // --- CARTE DE SÉCURITÉ WIDGET (Inspiré de "Create Teams") ---
+    .security-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .sec-card-header {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 7px 12px;
-        background: $verre;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: $rayon-pilule;
-        color: $texte-clair;
-        font-size: 11.5px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s ease;
+        gap: 10px;
 
-        &:hover {
-          background: color-mix(in srgb, var(--primary) 45%, transparent);
-        }
-
-        .sec-icon {
-          font-size: 15px;
-          width: 15px;
-          height: 15px;
-          color: var(--secondary);
-        }
-
-        .sec-text {
-          flex: 1;
-          text-align: left;
-        }
-
-        .sec-badge {
-          font-size: 10px;
-          font-weight: 700;
-          padding: 2px 8px;
-          border-radius: $rayon-pilule;
-          background: rgba(255, 255, 255, 0.1);
-          color: $texte-doux;
-
-          &.sec-badge-ok {
-            background: color-mix(in srgb, var(--success) 22%, transparent);
-            color: var(--success);
-          }
-        }
-
-        // Rail : pastille ronde, point ocre tant que le code n'est pas personnalisé
-        &.security-pin-mini {
-          position: relative;
-          width: 40px;
-          height: 40px;
-          padding: 0;
+        .sec-icon-circle {
+          width: 32px;
+          height: 32px;
+          border-radius: 10px;
+          background: rgba(238, 168, 35, 0.15);
+          color: $or-karavan;
+          display: flex;
+          align-items: center;
           justify-content: center;
-          border-radius: 50%;
+          flex-shrink: 0;
 
-          .sec-icon {
+          mat-icon {
             font-size: 18px;
             width: 18px;
             height: 18px;
           }
         }
 
-        .sec-alerte {
-          position: absolute;
-          top: 7px;
-          right: 7px;
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: var(--secondary);
-          box-shadow: 0 0 0 2px var(--terre);
+        .sec-card-text {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+
+          .sec-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: $texte-blanc;
+          }
+
+          .sec-card-subtitle {
+            font-size: 10px;
+            color: $texte-mute;
+          }
         }
       }
-    }
 
-    .toggle-collapse-bar {
-      display: flex;
-      align-items: center;
-
-      .collapse-btn {
+      .sec-card-btn {
         width: 100%;
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 7px 12px;
-        background: $verre;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: $rayon-pilule;
-        color: $texte-clair;
-        font-size: 12px;
-        font-weight: 600;
+        justify-content: space-between;
+        padding: 6px 10px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: $texte-blanc;
+        font-size: 11px;
+        font-weight: 700;
         cursor: pointer;
-        transition: background 0.2s ease;
+        transition: all 0.2s ease;
 
         &:hover {
-          background: color-mix(in srgb, var(--primary) 45%, transparent);
+          background: rgba(238, 168, 35, 0.2);
+          border-color: rgba(238, 168, 35, 0.4);
+          color: $or-karavan;
         }
 
-        .collapse-icon {
-          font-size: 18px;
-          width: 18px;
-          height: 18px;
+        &.btn-configured {
+          background: rgba(16, 185, 129, 0.12);
+          border-color: rgba(16, 185, 129, 0.25);
+          color: #34D399;
+
+          &:hover {
+            background: rgba(16, 185, 129, 0.22);
+          }
         }
 
-        .collapse-label {
-          white-space: nowrap;
+        .btn-arrow {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
         }
       }
     }
 
-    .user-footer {
+    // --- EN MODE RÉDUIT : BOUTON SÉCURITÉ COMPACT ---
+    .security-mini-wrapper {
+      position: relative;
       display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px;
-      border-radius: $rayon-pilule;
-      background: rgba(0, 0, 0, 0.18);
+      justify-content: center;
 
-      &.user-footer-mini {
-        flex-direction: column;
-        background: transparent;
-        padding: 0;
-
-        .avatar {
-          cursor: pointer;
-        }
-      }
-
-      .avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: var(--primary);
-        color: #FFFFFF;
-        font-size: 12px;
-        font-weight: 800;
+      .security-mini-btn {
+        position: relative;
+        width: 44px;
+        height: 44px;
+        border-radius: $rayon-squircle;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: $or-karavan;
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0;
-      }
-
-      .user-details {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        overflow: hidden;
-
-        .user-name {
-          font-size: 12.5px;
-          font-weight: 700;
-          color: #FFFFFF;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .user-role {
-          font-size: 10.5px;
-          color: $texte-doux;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-      }
-
-      .logout-btn {
-        background: transparent;
-        border: none;
-        color: $texte-doux;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 6px;
-        border-radius: 50%;
-        transition: color 0.2s ease, background 0.2s ease;
+        transition: all 0.2s ease;
 
         &:hover {
-          color: var(--danger);
-          background: color-mix(in srgb, var(--danger) 15%, transparent);
+          background: rgba(255, 255, 255, 0.12);
+          color: #FFFFFF;
+
+          .floating-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(-50%) translateX(6px);
+          }
+        }
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+
+        .sec-dot {
+          position: absolute;
+          top: 6px;
+          right: 6px;
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: $or-karavan;
+          box-shadow: 0 0 6px rgba(238, 168, 35, 0.8);
+        }
+
+        .floating-tooltip {
+          position: absolute;
+          left: 56px;
+          top: 50%;
+          transform: translateY(-50%) translateX(0px);
+          background: #1C1E2E;
+          color: #FFFFFF;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 10px;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 600;
+          white-space: nowrap;
+          pointer-events: none;
+          opacity: 0;
+          visibility: hidden;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+          transition: opacity 0.2s ease, transform 0.2s ease;
+          z-index: 1000;
+        }
+      }
+    }
+
+    // --- BOUTON DE DÉCONNEXION PILULE (Inspiré de Sidebar 4) ---
+    .logout-wrapper {
+      width: 100%;
+
+      &.logout-mini {
+        display: flex;
+        justify-content: center;
+
+        .logout-pill-btn {
+          width: 44px;
+          height: 44px;
+          padding: 0;
+          border-radius: $rayon-squircle;
+          justify-content: center;
+        }
+      }
+
+      .logout-pill-btn {
+        position: relative;
+        width: 100%;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 14px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 14px;
+        color: $texte-mute;
+        font-size: 12.5px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        outline: none;
+
+        &:hover {
+          background: rgba(239, 68, 68, 0.15);
+          border-color: rgba(239, 68, 68, 0.35);
+          color: #FF6B6B;
+
+          .logout-ico {
+            color: #FF6B6B;
+          }
+
+          .floating-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(-50%) translateX(6px);
+          }
+        }
+
+        .logout-ico {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          color: $texte-mute;
+          transition: color 0.2s ease;
+        }
+
+        .floating-tooltip {
+          position: absolute;
+          left: 56px;
+          top: 50%;
+          transform: translateY(-50%) translateX(0px);
+          background: #1C1E2E;
+          color: #FF6B6B;
+          border: 1px solid rgba(239, 68, 68, 0.25);
+          border-radius: 10px;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 600;
+          white-space: nowrap;
+          pointer-events: none;
+          opacity: 0;
+          visibility: hidden;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+          transition: opacity 0.2s ease, transform 0.2s ease;
+          z-index: 1000;
+        }
+      }
+    }
+
+    // --- BOUTON D'EXPANSION EN BAS DU RAIL ---
+    .toggle-rail-bottom {
+      display: flex;
+      justify-content: center;
+      margin-top: 4px;
+
+      .btn-expand-bottom {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.04);
+        color: $texte-mute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.12);
+          color: #FFFFFF;
+          transform: scale(1.08);
         }
 
         mat-icon {

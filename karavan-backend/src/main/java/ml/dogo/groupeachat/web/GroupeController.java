@@ -97,7 +97,6 @@ public class GroupeController {
     }
 
     @GetMapping("/groupes/{id}")
-    @PreAuthorize("hasAnyAuthority('CAMPAGNE_EXPLORER','GROUPE_SUIVRE','GROUPE_DISPONIBILITE_VALIDER')")
     public GroupeService.GroupeVue detail(@AuthenticationPrincipal UtilisateurCourant moi, @PathVariable long id) {
         return groupes.detail(moi, id);
     }

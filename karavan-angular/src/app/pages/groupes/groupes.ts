@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { LIBELLES_COMMANDE, LIBELLES_GROUPE, dateCourte, fcfa, ligneCsv, messageErreur, telechargerTexte } from '../../core/api';
+import { LIBELLES_COMMANDE, LIBELLES_GROUPE, dateCourte, fcfa, ligneCsv, messageErreur, telechargerTexte, urlImage } from '../../core/api';
 import { LIBELLES_TYPE, PERMISSIONS_PAGES } from '../../core/permissions';
 import {
   AdminApiService,
@@ -83,6 +83,7 @@ export class GroupesComponent implements OnInit {
   readonly libellesCommande = LIBELLES_COMMANDE;
   readonly fcfa = fcfa;
   readonly dateCourte = dateCourte;
+  readonly urlImage = urlImage;
 
   readonly onglets: { cle: Onglet; libelle: string }[] = [
     { cle: 'TOUS', libelle: 'Tous' },
@@ -270,7 +271,12 @@ export class GroupesComponent implements OnInit {
       this.message.set('Le grossiste n’a pas encore confirmé son stock (RG-18) : publication impossible.');
       return;
     }
-    this.executer(this.api.deciderPublication(g.id, true, 'Conforme'), `« ${g.titre} » est publié : les commerçants peuvent le rejoindre.`);
+    this.executer(
+      this.api.deciderPublication(g.id, true, 'Conforme'),
+      `« ${g.titre} » a été validé et publié avec succès ! Il est maintenant actif et visible dans l'onglet « Ouverts ».`
+    );
+    // Basculer automatiquement sur l'onglet 'OUVERT' pour que l'admin voie immédiatement le groupe validé
+    this.onglet.set('OUVERT');
   }
 
   confirmerDecision(): void {

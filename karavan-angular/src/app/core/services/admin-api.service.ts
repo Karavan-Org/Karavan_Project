@@ -26,6 +26,7 @@ export interface DossierKyc {
 export interface Acteur {
   id: number;
   nom: string;
+  photoUrl?: string | null;
 }
 
 export interface Groupe {

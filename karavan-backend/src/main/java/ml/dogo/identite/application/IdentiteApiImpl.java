@@ -27,7 +27,7 @@ public class IdentiteApiImpl implements IdentiteApi {
     @Override
     public Optional<ActeurInfo> acteur(long utilisateurId) {
         return utilisateurs.findById(utilisateurId).map(u -> new ActeurInfo(u.getId(), u.typeActeur().name(),
-                u.getStatutCompte().name(), u.getNom(), u.getTelephone()));
+                u.getStatutCompte().name(), u.getNom(), u.getTelephone(), u.getPhotoUrl()));
     }
 
     @Override

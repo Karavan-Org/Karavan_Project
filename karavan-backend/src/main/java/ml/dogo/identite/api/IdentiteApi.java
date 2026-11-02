@@ -7,7 +7,11 @@ import ml.dogo.shared.errors.ErreurMetier;
 /** Ce que les autres modules ont le droit de savoir sur les utilisateurs. */
 public interface IdentiteApi {
 
-    record ActeurInfo(long id, String type, String statut, String nom, String telephone) {
+    record ActeurInfo(long id, String type, String statut, String nom, String telephone, String photoUrl) {
+
+        public ActeurInfo(long id, String type, String statut, String nom, String telephone) {
+            this(id, type, statut, nom, telephone, null);
+        }
 
         public boolean actif() {
             return "ACTIF".equals(statut);

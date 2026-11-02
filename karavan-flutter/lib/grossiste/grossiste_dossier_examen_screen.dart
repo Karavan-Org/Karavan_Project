@@ -456,7 +456,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                         ),
                         const Spacer(),
                         Text(
-                          _estValide ? "Statut : Actif ✓" : "Délai : ~6 heures",
+                          _estValide ? "Statut : Actif" : "Délai : ~6 heures",
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
@@ -532,7 +532,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                       ),
                     ] else
                       const Text(
-                        "🔔 Vous recevrez une notification et un SMS dès validation définitive.",
+                        "Vous recevrez une notification et un SMS dès validation définitive.",
                         style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppTheme.primary),
                       ),
                   ],
@@ -558,7 +558,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
                 couleurTitre: AppTheme.couleurTexte(context),
                 ligne1: resume.isEmpty ? "${documents.length} pièce(s) enregistrée(s)" : "$resume enregistrés",
                 couleurLigne1: CouleursArrivee.texteDoux,
-                ligne2: "✓ Aucune action requise",
+                ligne2: "Aucune action requise",
                 couleurLigne2: CouleursArrivee.vert,
                 fleche: true,
                 onTap: _voirDocuments,

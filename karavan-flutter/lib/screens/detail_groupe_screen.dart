@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../services/api/api_exception.dart';
 import '../services/groupe_api_service.dart';
 import '../theme/app_theme.dart';
@@ -669,24 +669,33 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            _groupe.aAtteint100 || const ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE', 'TERMINE'].contains(_groupe.statut)
-                                ? "Fermée"
-                                : (_groupe.statut == 'OUVERT' ? "Ouverte" : _groupe.libelleStatut),
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: _groupe.aAtteint100 || const ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE', 'TERMINE'].contains(_groupe.statut)
-                                  ? const Color(0xFFEF4444)
-                                  : const Color(0xFF16A34A),
+                          Flexible(
+                            child: Text(
+                              _groupe.aAtteint100 || const ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE', 'TERMINE'].contains(_groupe.statut)
+                                  ? "Fermée"
+                                  : (_groupe.statut == 'OUVERT' ? "Ouverte" : _groupe.libelleStatut),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: _groupe.aAtteint100 || const ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE', 'TERMINE'].contains(_groupe.statut)
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFF16A34A),
+                              ),
                             ),
                           ),
-                          Text(
-                            "${_formaterPrix(montantTotalGroupe)} FCFA",
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF16A34A),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              "${_formaterPrix(montantTotalGroupe)} FCFA",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF16A34A),
+                              ),
                             ),
                           ),
                         ],
@@ -776,7 +785,10 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
                               ),
                             ),
                             const SizedBox(height: 2),
-                            Row(
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 2,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Text(
                                   "${_formaterPrix(totalSequestre)} FCFA",
@@ -786,7 +798,6 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
                                     color: AppTheme.couleurTexte(context),
                                   ),
                                 ),
-                                const SizedBox(width: 6),
                                 const Text(
                                   "(Garantis)",
                                   style: TextStyle(
@@ -989,7 +1000,6 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
         ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
@@ -1000,26 +1010,34 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
             ),
           ],
         ),
-        child: SizedBox(
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: _ouvrirChoixNotification,
-            icon: const Icon(Icons.notifications_active_outlined, color: Colors.white, size: 20),
-            label: const Text(
-              "Notifier",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
+        child: SafeArea(
+          top: false,
+          bottom: true,
+          minimum: const EdgeInsets.only(bottom: 8),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: _ouvrirChoixNotification,
+                icon: const Icon(Icons.notifications_active_outlined, color: Colors.white, size: 20),
+                label: const Text(
+                  "Notifier",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE59324),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  elevation: 0,
+                ),
               ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE59324),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
-              ),
-              elevation: 0,
             ),
           ),
         ),

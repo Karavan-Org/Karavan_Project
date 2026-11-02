@@ -408,16 +408,25 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "${g.prixGroupe} FCFA",
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+                      Flexible(
+                        child: Text(
+                          "${g.prixGroupe} FCFA",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+                        ),
                       ),
-                      Text(
-                        "${(g.ratio * 100).toInt()}% réservé",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11.5,
-                          color: AppTheme.couleurTexteAttenue(context),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          "${(g.ratio * 100).toInt()}% réservé",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11.5,
+                            color: AppTheme.couleurTexteAttenue(context),
+                          ),
                         ),
                       ),
                     ],

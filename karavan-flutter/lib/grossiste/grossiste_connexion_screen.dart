@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/bouton_bascule_theme.dart';
+import '../widgets/champ_telephone_international.dart';
 import '../widgets/mot_de_passe_oublie_modal.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -27,6 +28,7 @@ class GrossisteConnexionScreen extends StatefulWidget {
 class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
   final _telephoneController = TextEditingController();
   final _pinController = TextEditingController();
+  String _telephoneComplet = '';
   bool _pinMasque = true;
   bool _seSouvenir = true;
   bool _chargement = false;
@@ -60,7 +62,8 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
 
   Future<void> _seConnecter() async {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    final telephone = _telephoneController.text.trim();
+    final localPhone = _telephoneController.text.trim();
+    final telephone = _telephoneComplet.isNotEmpty ? _telephoneComplet : localPhone;
     final motDePasse = _pinController.text.trim();
     if (telephone.length < 8) {
       afficherErreur(
@@ -320,14 +323,13 @@ class _GrossisteConnexionScreenState extends State<GrossisteConnexionScreen> {
                     style: TextStyle(fontSize: 14.5, color: AppTheme.primary),
                   ),
                   const SizedBox(height: 54),
-                  ChampArrivee(
-                    icone: Icons.phone_outlined,
-                    indice: "Numéro de téléphone",
+                  ChampTelephoneInternational(
                     controller: _telephoneController,
-                    clavier: TextInputType.phone,
-                    couleurBordure: CouleursArrivee.bordureConnexion,
-                    couleurIndice: AppTheme.couleurTexteAttenue(context),
-                    hauteur: 56,
+                    borderColor: CouleursArrivee.bordureConnexion,
+                    accentColor: AppTheme.primary,
+                    onNumeroCompletChange: (complet) {
+                      _telephoneComplet = complet;
+                    },
                   ),
                   const SizedBox(height: 16),
                   ChampArrivee(

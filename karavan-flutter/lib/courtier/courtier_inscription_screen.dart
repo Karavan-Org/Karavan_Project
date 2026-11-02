@@ -10,6 +10,7 @@ import '../services/validateur_mot_de_passe.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/bouton_google_signin.dart';
+import '../widgets/champ_telephone_international.dart';
 
 /// Écran d'Inscription dédié exclusivement au Courtier (Transit, Groupage & Retraits).
 /// Soumis aux critères de validation Courtier : pièce d'identité + licence de transitaire.
@@ -31,6 +32,7 @@ class _CourtierInscriptionScreenState extends State<CourtierInscriptionScreen> {
   final _phoneController = TextEditingController();
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
+  String _telephoneComplet = '';
   bool _obscurePin = true;
   bool _obscureConfirmPin = true;
   bool _isLoading = false;
@@ -59,7 +61,8 @@ class _CourtierInscriptionScreenState extends State<CourtierInscriptionScreen> {
 
   Future<void> _validerInscription() async {
     final societe = _societeController.text.trim();
-    final phone = _phoneController.text.trim();
+    final localPhone = _phoneController.text.trim();
+    final phone = _telephoneComplet.isNotEmpty ? _telephoneComplet : localPhone;
     final pin = _pinController.text.trim();
     final confirmPin = _confirmPinController.text.trim();
 
@@ -211,13 +214,15 @@ class _CourtierInscriptionScreenState extends State<CourtierInscriptionScreen> {
                 camelColor: camelColor,
               ),
               const SizedBox(height: 14),
-              _buildInputField(
-                icon: Icons.phone_outlined,
-                label: "Téléphone Mobile Money",
-                hint: "Ex: +223 70 12 34 56",
+              // CHAMP TÉLÉPHONE INTERNATIONAL AVEC INDICATIFS PAYS (intl_phone_field)
+              ChampTelephoneInternational(
                 controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                camelColor: camelColor,
+                label: "Téléphone Mobile Money",
+                hintText: "70 12 34 56",
+                accentColor: camelColor,
+                onNumeroCompletChange: (complet) {
+                  _telephoneComplet = complet;
+                },
               ),
               const SizedBox(height: 14),
               _buildInputField(

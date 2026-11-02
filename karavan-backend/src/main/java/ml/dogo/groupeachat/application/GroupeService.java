@@ -56,7 +56,10 @@ public class GroupeService {
                              String photoUrl, List<VarianteVue> variantes) {
     }
 
-    public record ActeurVue(long id, String nom) {
+    public record ActeurVue(long id, String nom, String photoUrl) {
+        public ActeurVue(long id, String nom) {
+            this(id, nom, null);
+        }
     }
 
     public record GrilleVue(BigDecimal marchandise, BigDecimal transport, BigDecimal fraisPlateforme, BigDecimal douane,
@@ -349,7 +352,7 @@ public class GroupeService {
         String titre = g.getTitre() != null ? g.getTitre()
                 : catalogue.produit(g.getProduitId()).map(CatalogueApi.ProduitInfo::nom).orElse("");
         for (Long admin : identite.administrateursActifs()) {
-            String prefixe = estIncident ? "🚨 ALERTE INCIDENT LOGISTIQUE" : "Suivi colis";
+            String prefixe = estIncident ? "[ALERTE LOGISTIQUE]" : "Suivi colis";
             notifications.notifier(admin, prefixe + " — groupe #" + groupeId + " « " + titre + " » : " + detail
                     + ". Mettez à jour le suivi vu par les commerçants.");
         }
@@ -363,12 +366,12 @@ public class GroupeService {
         }
         String titre = g.getTitre() != null ? g.getTitre()
                 : catalogue.produit(g.getProduitId()).map(CatalogueApi.ProduitInfo::nom).orElse("");
-        String libelle = "âš ï¸ " + motif + (pieceJointeUrl != null && !pieceJointeUrl.isBlank() ? " [PJ: " + pieceJointeUrl + "]" : "");
+        String libelle = "[Incident] " + motif + (pieceJointeUrl != null && !pieceJointeUrl.isBlank() ? " [PJ: " + pieceJointeUrl + "]" : "");
         String precision = detail == null || detail.isBlank() ? null : detail.strip();
         etapes.save(new EtapeAcheminement(groupeId, libelle, precision, horloge.instant(), grossisteId));
         audit.tracer(grossisteId, "INCIDENT_LOGISTIQUE_GROSSISTE", "groupe=" + groupeId, motif + (precision != null ? " : " + precision : ""));
         for (Long admin : identite.administrateursActifs()) {
-            notifications.notifier(admin, "🚨 ALERTE INCIDENT LOGISTIQUE — groupe #" + groupeId + " « " + titre + " » : "
+            notifications.notifier(admin, "[ALERTE LOGISTIQUE] — groupe #" + groupeId + " « " + titre + " » : "
                     + motif + (precision != null ? " — " + precision : "") + ". Intervention recommandée.");
         }
     }
@@ -392,11 +395,11 @@ public class GroupeService {
         return "GROSSISTE".equals(moi.type()) ? duGrossiste(moi.id()) : duCourtier(moi.id());
     }
 
-    /** Groupes ouverts, avec filtres facultatifs sur la catégorie et le nom du produit (RG-14 : catégories inactives comprises). */
+    /** Groupes ouverts ou ayant atteint l'objectif, avec filtres facultatifs sur la catégorie et le nom du produit (RG-14 : catégories inactives comprises). */
     @Transactional(readOnly = true)
     public List<GroupeVue> explorer(Long categorieId, String recherche) {
         String q = recherche == null ? null : recherche.strip().toLowerCase(Locale.ROOT);
-        return groupes.findByStatutOrderByDateLimiteAsc(StatutGroupe.OUVERT).stream()
+        return groupes.findByStatutInOrderByDateLimiteAsc(List.of(StatutGroupe.OUVERT, StatutGroupe.OBJECTIF_ATTEINT)).stream()
                 .map(this::vue)
                 .map(this::anonymiserPourCommercant)
                 .filter(v -> categorieId == null || catalogue.produit(v.produit().id())
@@ -445,7 +448,7 @@ public class GroupeService {
 
     private GroupeVue anonymiserPourCommercant(GroupeVue v) {
         return new GroupeVue(v.id(), v.titre(), v.statut(), v.produit(), v.courtier(),
-                null, v.porteParGrossiste(), v.quantiteCible(), v.quantiteConfirmee(), v.quantiteReservee(),
+                v.grossiste(), v.porteParGrossiste(), v.quantiteCible(), v.quantiteConfirmee(), v.quantiteReservee(),
                 v.quantiteRestante(), v.prixUnitaire(), null, v.conditions(), v.dateOuverture(),
                 v.dateLimite(), v.disponibiliteValidee(), v.paysOrigineCode(), v.paysOrigineNom());
     }
@@ -463,10 +466,10 @@ public class GroupeService {
     /** Brouillons et groupes en validation : visibles seulement de leur courtier, de leur grossiste et des administrateurs. */
     private GroupeAchat visible(UtilisateurCourant u, long groupeId) {
         GroupeAchat g = groupes.findById(groupeId).orElseThrow(() -> ErreurMetier.nonTrouve("Groupe", groupeId));
-        boolean admin = u.estAdministrateur();
-        boolean courtier = g.getCourtierId() != null && g.getCourtierId().equals(u.id());
-        boolean grossiste = g.getGrossisteId().equals(u.id());
-        if ("GROSSISTE".equals(u.type()) && !grossiste) {
+        boolean admin = u != null && u.estAdministrateur();
+        boolean courtier = u != null && g.getCourtierId() != null && g.getCourtierId().equals(u.id());
+        boolean grossiste = u != null && g.getGrossisteId().equals(u.id());
+        if (u != null && "GROSSISTE".equals(u.type()) && !grossiste) {
             throw ErreurMetier.nonTrouve("Groupe", groupeId);
         }
         boolean prive = g.getStatut() == StatutGroupe.BROUILLON || g.getStatut() == StatutGroupe.EN_VALIDATION;
@@ -579,7 +582,9 @@ public class GroupeService {
     }
 
     private ActeurVue acteur(long id) {
-        return new ActeurVue(id, identite.acteur(id).map(IdentiteApi.ActeurInfo::nom).orElse("?"));
+        return identite.acteur(id)
+                .map(a -> new ActeurVue(a.id(), a.nom(), a.photoUrl()))
+                .orElseGet(() -> new ActeurVue(id, "?", null));
     }
 
     // ---------------------------------------------------------------- planificateur

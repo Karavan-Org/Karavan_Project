@@ -1,6 +1,7 @@
 import '../widgets/image_produit.dart';
 import '../widgets/drapeau_pays_widget.dart';
 import 'package:flutter/material.dart';
+import 'favoris_service.dart';
 import '../theme/app_theme.dart';
 import '../services/groupe_api_service.dart';
 import '../widgets/app_popups.dart';
@@ -204,6 +205,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
     final bool progressionConnue = _piecesObjectif > 0;
 
     void quitterVersEspace(int tabIndex) {
+      FavorisService.instance.actualiserDepuisBackend();
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
@@ -226,10 +228,12 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
             onPressed: () => quitterVersEspace(0),
           ),
         ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 4),
-        child: Column(
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 4),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // 1. GRAND BADGE CIRCULAIRE VERT AVEC CONFETTIS FIGMA
@@ -441,7 +445,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                         const SizedBox(width: 3),
                                       ],
                                       Text(
-                                        estObjectifAtteint ? "Objectif atteint 🎉" : "Groupe en cours",
+                                        estObjectifAtteint ? "Objectif atteint" : "Groupe en cours",
                                         style: TextStyle(
                                           fontSize: 10.5,
                                           fontWeight: FontWeight.w800,
@@ -513,7 +517,7 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
-                                          "Objectif 100% atteint ! Expédition garantie 🚀",
+                                          "Objectif 100% atteint ! Expédition garantie",
                                           style: TextStyle(
                                             fontSize: 10.5,
                                             color: isDark ? AppTheme.darkOlive : AppTheme.oliveProfond,
@@ -684,7 +688,8 @@ class _ReussitePaiementScreenState extends State<ReussitePaiementScreen>
         ),
       ),
     ),
-  );
+  ),
+);
 }
 
   Widget _buildDetailRow({

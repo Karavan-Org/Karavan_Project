@@ -73,11 +73,24 @@ public class TableauDeBordAdminService {
             double progressionMoyenne,
             long groupesComplets,
             long retardsSuivi,
-            List<ActiviteRecenteVue> activiteRecente
+            List<ActiviteRecenteVue> activiteRecente,
+            BigDecimal totalSequestreBloque,
+            long totalAnnulations
     ) {
+        public ResumeVue(UtilisateursResume utilisateurs, long totalGroupes, Map<String, Long> groupesParStatut,
+                         List<RepartitionPaysVue> repartitionPays, long groupesSansPays, long groupesLancesMois,
+                         double progressionMoyenne, long groupesComplets, long retardsSuivi,
+                         List<ActiviteRecenteVue> activiteRecente) {
+            this(utilisateurs, totalGroupes, groupesParStatut, repartitionPays, groupesSansPays,
+                 groupesLancesMois, progressionMoyenne, groupesComplets, retardsSuivi, activiteRecente,
+                 BigDecimal.ZERO, 0L);
+        }
     }
 
-    public record ActeurVue(long id, String nom) {
+    public record ActeurVue(long id, String nom, String photoUrl) {
+        public ActeurVue(long id, String nom) {
+            this(id, nom, null);
+        }
     }
 
     public record GroupeCadranVue(
@@ -330,7 +343,7 @@ public class TableauDeBordAdminService {
         for (GroupeAchat g : recentsGroupes) {
             String pCode = g.getPaysOrigineCode();
             String pNom = "Mali";
-            String drapeau = "🇲🇱";
+            String drapeau = "";
             if (pCode != null && paysMap.containsKey(pCode.toUpperCase())) {
                 Pays p = paysMap.get(pCode.toUpperCase());
                 pNom = p.getNomFr();
@@ -365,13 +378,73 @@ public class TableauDeBordAdminService {
                             uNom != null ? uNom : "Utilisateur #" + uid,
                             "ML",
                             "Mali",
-                            "🇲🇱",
+                            "",
                             uDate
                     ));
                 }
             );
         } catch (Exception ignored) {
         }
+
+        // Annulations récentes de commerçants (RG-31 / RG-60)
+        long totalAnnulations = 0;
+        try {
+            Long nbAnnul = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM participation WHERE statut = 'ANNULEE'",
+                Long.class
+            );
+            if (nbAnnul != null) totalAnnulations = nbAnnul;
+
+            jdbc.query(
+                "SELECT p.id, p.commercant_id, p.groupe_id, p.quantite, p.statut, u.nom as commercant_nom, " +
+                "       g.produit_nom, r.montant, r.date_demande, r.statut as statut_remb " +
+                "FROM participation p " +
+                "JOIN utilisateur u ON u.id = p.commercant_id " +
+                "LEFT JOIN groupe_achat g ON g.id = p.groupe_id " +
+                "LEFT JOIN paiement pa ON pa.participation_id = p.id " +
+                "LEFT JOIN remboursement r ON r.paiement_id = pa.id " +
+                "WHERE p.statut = 'ANNULEE' " +
+                "ORDER BY p.id DESC LIMIT 5",
+                rs -> {
+                    long partId = rs.getLong("id");
+                    String cNom = rs.getString("commercant_nom");
+                    String pNom = rs.getString("produit_nom");
+                    long grpId = rs.getLong("groupe_id");
+                    int qte = rs.getInt("quantite");
+                    BigDecimal montant = rs.getBigDecimal("montant");
+                    java.sql.Timestamp ts = rs.getTimestamp("date_demande");
+                    Instant dateAnnul = ts != null ? ts.toInstant() : horloge.instant();
+                    String detail = (cNom != null ? cNom : "Commerçant") + " • "
+                            + (pNom != null ? pNom : "Groupe #" + grpId) + " (" + qte + " lot" + (qte > 1 ? "s" : "") + ")";
+                    if (montant != null) {
+                        detail += " • Remb. " + montant.toBigInteger() + " FCFA";
+                    }
+                    activite.add(new ActiviteRecenteVue(
+                            "ANNULATION",
+                            partId,
+                            "Annulation de commande",
+                            detail,
+                            "ML",
+                            "Mali",
+                            "",
+                            dateAnnul
+                    ));
+                }
+            );
+        } catch (Exception ignored) {
+        }
+
+        // Portefeuille & Séquestre total sous mandat
+        BigDecimal totalSequestre = BigDecimal.ZERO;
+        try {
+            BigDecimal res = jdbc.queryForObject(
+                "SELECT COALESCE(SUM(montant_bloque), 0) FROM sequestre WHERE statut = 'BLOQUE'",
+                BigDecimal.class
+            );
+            if (res != null) totalSequestre = res;
+        } catch (Exception ignored) {
+        }
+
         activite.sort((a, b) -> b.date().compareTo(a.date()));
 
         ResumeVue vue = new ResumeVue(
@@ -384,7 +457,9 @@ public class TableauDeBordAdminService {
                 progressionMoyenne,
                 complets,
                 retardsSuivi,
-                activite
+                activite,
+                totalSequestre,
+                totalAnnulations
         );
 
         cacheResume = new CacheEntree(vue, maintenantMs);
@@ -392,11 +467,8 @@ public class TableauDeBordAdminService {
     }
 
     public static String obtenirDrapeau(String codeIso) {
-        if (codeIso == null || codeIso.length() != 2) return "🌍";
-        String code = codeIso.toUpperCase();
-        int premier = 0x1F1E6 + (code.charAt(0) - 'A');
-        int second = 0x1F1E6 + (code.charAt(1) - 'A');
-        return new String(Character.toChars(premier)) + new String(Character.toChars(second));
+        if (codeIso == null || codeIso.length() != 2) return "";
+        return codeIso.toUpperCase();
     }
 
     /**
@@ -428,13 +500,17 @@ public class TableauDeBordAdminService {
                         .setScale(1, RoundingMode.HALF_UP).doubleValue()
                     : 0.0;
 
-            String grossisteNom = identite.acteur(g.getGrossisteId()).map(IdentiteApi.ActeurInfo::nom).orElse("Grossiste #" + g.getGrossisteId());
-            ActeurVue grossisteVue = new ActeurVue(g.getGrossisteId(), grossisteNom);
+            var gActeur = identite.acteur(g.getGrossisteId());
+            String grossisteNom = gActeur.map(IdentiteApi.ActeurInfo::nom).orElse("Grossiste #" + g.getGrossisteId());
+            String grossistePhoto = gActeur.map(IdentiteApi.ActeurInfo::photoUrl).orElse(null);
+            ActeurVue grossisteVue = new ActeurVue(g.getGrossisteId(), grossisteNom, grossistePhoto);
 
             ActeurVue courtierVue = null;
             if (g.getCourtierId() != null) {
-                String courtierNom = identite.acteur(g.getCourtierId()).map(IdentiteApi.ActeurInfo::nom).orElse("Courtier #" + g.getCourtierId());
-                courtierVue = new ActeurVue(g.getCourtierId(), courtierNom);
+                var cActeur = identite.acteur(g.getCourtierId());
+                String courtierNom = cActeur.map(IdentiteApi.ActeurInfo::nom).orElse("Courtier #" + g.getCourtierId());
+                String courtierPhoto = cActeur.map(IdentiteApi.ActeurInfo::photoUrl).orElse(null);
+                courtierVue = new ActeurVue(g.getCourtierId(), courtierNom, courtierPhoto);
             }
 
             List<EtapeAcheminement> etapesListe = etapes.findByGroupeIdOrderByIdAsc(g.getId());
@@ -457,8 +533,11 @@ public class TableauDeBordAdminService {
                     pVue = paysService.resoudre(prodInfo.get().paysOrigine()).map(PaysVue::de).orElse(null);
                 }
             }
+            if ((photoUrl == null || photoUrl.isBlank()) && grossisteVue != null) {
+                photoUrl = grossisteVue.photoUrl();
+            }
 
-            String drapeau = (pVue != null) ? obtenirDrapeau(pVue.codeIso()) : "🌍";
+            String drapeau = (pVue != null) ? obtenirDrapeau(pVue.codeIso()) : "";
 
             resultats.add(new GroupeCadranVue(
                     g.getId(),
@@ -508,13 +587,17 @@ public class TableauDeBordAdminService {
                     .setScale(1, RoundingMode.HALF_UP).doubleValue()
                 : 0.0;
 
-        String grossisteNom = identite.acteur(g.getGrossisteId()).map(IdentiteApi.ActeurInfo::nom).orElse("Grossiste #" + g.getGrossisteId());
-        ActeurVue grossisteVue = new ActeurVue(g.getGrossisteId(), grossisteNom);
+        var gActeur = identite.acteur(g.getGrossisteId());
+        String grossisteNom = gActeur.map(IdentiteApi.ActeurInfo::nom).orElse("Grossiste #" + g.getGrossisteId());
+        String grossistePhoto = gActeur.map(IdentiteApi.ActeurInfo::photoUrl).orElse(null);
+        ActeurVue grossisteVue = new ActeurVue(g.getGrossisteId(), grossisteNom, grossistePhoto);
 
         ActeurVue courtierVue = null;
         if (g.getCourtierId() != null) {
-            String courtierNom = identite.acteur(g.getCourtierId()).map(IdentiteApi.ActeurInfo::nom).orElse("Courtier #" + g.getCourtierId());
-            courtierVue = new ActeurVue(g.getCourtierId(), courtierNom);
+            var cActeur = identite.acteur(g.getCourtierId());
+            String courtierNom = cActeur.map(IdentiteApi.ActeurInfo::nom).orElse("Courtier #" + g.getCourtierId());
+            String courtierPhoto = cActeur.map(IdentiteApi.ActeurInfo::photoUrl).orElse(null);
+            courtierVue = new ActeurVue(g.getCourtierId(), courtierNom, courtierPhoto);
         }
 
         List<EtapeVue> etapesVues = etapes.findByGroupeIdOrderByIdAsc(g.getId()).stream()
@@ -526,6 +609,11 @@ public class TableauDeBordAdminService {
         String titre = g.getTitre();
         if (titre == null || titre.isBlank()) {
             titre = p.nom();
+        }
+
+        String photoProduit = p.photoUrl();
+        if ((photoProduit == null || photoProduit.isBlank()) && grossisteVue != null) {
+            photoProduit = grossisteVue.photoUrl();
         }
 
         return new GroupeDetailVue(
@@ -547,7 +635,7 @@ public class TableauDeBordAdminService {
                 courtierVue,
                 p.nom(),
                 p.description(),
-                p.photoUrl(),
+                photoProduit,
                 p.categorie(),
                 grille.getPrixMarchandise(),
                 grille.getTransport(),

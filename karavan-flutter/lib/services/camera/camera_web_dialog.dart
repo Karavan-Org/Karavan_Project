@@ -106,7 +106,7 @@ class _CameraWebDialogState extends State<CameraWebDialog> {
 
         if (errStr.contains("NotAllowedError") || errStr.contains("Permission denied") || errStr.contains("PermissionDeniedError")) {
           messageExplicatif = "L'accès à la webcam a été refusé par le navigateur.\n\n"
-              "👉 Veuillez autoriser la caméra dans la barre d'adresse de Chrome puis cliquer sur \"Réessayer\".";
+              "Veuillez autoriser la caméra dans la barre d'adresse de Chrome puis cliquer sur \"Réessayer\".";
         } else if (errStr.contains("NotFoundError") || errStr.contains("DevicesNotFoundError")) {
           messageExplicatif = "Aucune webcam détectée sur cet ordinateur.\n"
               "Vous pouvez importer une photo depuis vos fichiers ci-dessous.";

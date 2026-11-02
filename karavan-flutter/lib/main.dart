@@ -27,11 +27,14 @@ void main() async {
   GoogleSignInService.instance.definirNavigatorKey(KaravanApp.navigatorKey);
   await GoogleSignInService.instance.initialiser();
 
-  // Configuration de la barre de statut système
+  // Configuration des barres système (statut et navigation native)
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarDividerColor: Colors.transparent,
     ),
   );
 

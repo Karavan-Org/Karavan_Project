@@ -75,13 +75,17 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
   late int _quantiteActuelle;
   late int _quantiteObjectif;
   late int _quantiteRestante;
+  int _quantiteDejaCommandee = 0;
   List<VarianteGroupeModel> _variantes = [];
   VarianteGroupeModel? _varianteSelectionnee;
 
   /// Données vivantes : relues en arrière-plan tant que l'écran est affiché
   @override
   Future<void> actualiserEnSilence() async {
-    await _chargerDetailsGroupe();
+    await Future.wait([
+      _chargerDetailsGroupe(),
+      _verifierParticipationsExistantes(),
+    ]);
   }
 
   @override
@@ -89,6 +93,18 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
     super.initState();
     demarrerActualisation();
     _initialiserVariantesEtQuantite();
+    _verifierParticipationsExistantes();
+  }
+
+  Future<void> _verifierParticipationsExistantes() async {
+    final gid = int.tryParse(widget.id.isNotEmpty ? widget.id : (widget.groupe?.id ?? ''));
+    if (gid == null) return;
+    try {
+      final mesPart = await GroupeApiService.instance.mesParticipations();
+      final pourCeGroupe = mesPart.where((p) => p.groupeId == gid && p.statut != 'ANNULEE' && p.statut != 'EXPIREE');
+      final total = pourCeGroupe.fold<int>(0, (acc, p) => acc + p.quantite);
+      if (mounted) setState(() => _quantiteDejaCommandee = total);
+    } catch (_) {}
   }
 
   void _initialiserVariantesEtQuantite() {
@@ -390,32 +406,40 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
                   ),
                   const SizedBox(height: 16),
 
-                  // Prix comparatifs
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
+                  // Prix comparatifs (Wrap réactif sans aucun débordement de pixels)
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
-                      Text(
-                        "${widget.prixGroupe} FCFA",
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.couleurAccent(context),
-                        ),
-                      ),
-                      if (prixPub > widget.prixGroupe) ...[
-                        const SizedBox(width: 10),
-                        Text(
-                          "$prixPub FCFA",
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: AppTheme.couleurTexteAttenue(context),
-                            decoration: TextDecoration.lineThrough,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            "${widget.prixGroupe} FCFA",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.couleurAccent(context),
+                            ),
                           ),
-                        ),
-                      ],
-                      if (economie > 0) ...[
-                        const Spacer(),
+                          if (prixPub > widget.prixGroupe) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              "$prixPub FCFA",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.couleurTexteAttenue(context),
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      if (economie > 0)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
@@ -431,9 +455,38 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
                             ),
                           ),
                         ),
-                      ],
                     ],
                   ),
+
+                  // Bannière informative si le commerçant participe déjà à ce groupe
+                  if (_quantiteDejaCommandee > 0) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.ocre.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.ocre.withValues(alpha: 0.6), width: 1.2),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline_rounded, color: AppTheme.ocreProfond, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "Vous participez déjà à ce groupe avec $_quantiteDejaCommandee pièce${_quantiteDejaCommandee > 1 ? 's' : ''}. Vous pouvez ajouter une commande supplémentaire.",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.couleurTexte(context),
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
 
                   const SizedBox(height: 20),
 
@@ -685,6 +738,30 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
                     ),
                     child: Column(
                       children: [
+                        if (widget.groupe?.grossisteNom.isNotEmpty ?? false) ...[
+                          _buildInfoLigne(
+                            icon: Icons.storefront_rounded,
+                            titre: "Fournisseur certifié",
+                            valeurWidget: Row(
+                              children: [
+                                if (widget.groupe?.grossistePhotoUrl != null && widget.groupe!.grossistePhotoUrl!.isNotEmpty) ...[
+                                  CircleAvatar(
+                                    radius: 12,
+                                    backgroundImage: imageReseauDimensionnee(context, widget.groupe!.grossistePhotoUrl!, 24),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    widget.groupe!.grossisteNom,
+                                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.couleurTexte(context)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Divider(height: 20, color: AppTheme.couleurBordure(context)),
+                        ],
                         _buildInfoLigne(
                           icon: Icons.flight_takeoff,
                           titre: "Provenance & Fret",
@@ -694,7 +771,23 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
                         _buildInfoLigne(
                           icon: Icons.local_shipping_outlined,
                           titre: "Acheminement assuré par",
-                          valeur: widget.courtierNom,
+                          valeurWidget: Row(
+                            children: [
+                              if (widget.groupe?.courtierPhotoUrl != null && widget.groupe!.courtierPhotoUrl!.isNotEmpty) ...[
+                                CircleAvatar(
+                                  radius: 12,
+                                  backgroundImage: imageReseauDimensionnee(context, widget.groupe!.courtierPhotoUrl!, 24),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  widget.courtierNom.isNotEmpty ? widget.courtierNom : (widget.groupe?.grossisteNom ?? 'Karavan Transit'),
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.couleurTexte(context)),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         Divider(height: 20, color: AppTheme.couleurBordure(context)),
                         _buildInfoLigne(
@@ -759,100 +852,119 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
     ],
   ),
 
-      // Barre d'action fixe en bas
-      bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+      // Barre d'action fixe en bas protégée des encoches et de la barre de navigation native (||| O <)
+      bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppTheme.couleurCarte(context),
-          boxShadow: const [
+          color: AppTheme.estSombre(context) ? AppTheme.darkCard : Colors.white,
+          boxShadow: [
             BoxShadow(
-              color: Color(0x14000000),
+              color: Colors.black.withOpacity(0.08),
               blurRadius: 16,
-              offset: Offset(0, -4),
+              offset: const Offset(0, -4),
             ),
           ],
         ),
-        child: Row(
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: SafeArea(
+          top: false,
+          left: false,
+          right: false,
+          bottom: true,
+          minimum: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+            child: Row(
               children: [
-                Text(
-                  _quantiteMax < _quantiteMin ? "Statut du groupe :" : "Total à payer :",
-                  style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
+                Flexible(
+                  flex: 2,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _quantiteMax < _quantiteMin ? "Statut du groupe :" : "Total à payer :",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 11.5, color: AppTheme.couleurTexteAttenue(context)),
+                      ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _quantiteMax < _quantiteMin ? "100% Atteint" : "${widget.prixGroupe * _quantite} FCFA",
+                          style: TextStyle(
+                            fontSize: _quantiteMax < _quantiteMin ? 17 : 20,
+                            fontWeight: FontWeight.w800,
+                            color: _quantiteMax < _quantiteMin ? AppTheme.couleurSucces(context) : AppTheme.couleurAccent(context),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                Text(
-                  _quantiteMax < _quantiteMin ? "100% Atteint" : "${widget.prixGroupe * _quantite} FCFA",
-                  style: TextStyle(
-                    fontSize: _quantiteMax < _quantiteMin ? 17 : 20,
-                    fontWeight: FontWeight.w800,
-                    color: _quantiteMax < _quantiteMin ? AppTheme.couleurSucces(context) : AppTheme.couleurAccent(context),
+                const SizedBox(width: 14),
+                Expanded(
+                  flex: 3,
+                  child: ElevatedButton(
+                    onPressed: _quantite >= _quantiteMin && _quantite <= _quantiteMax ? () {
+                      final gid = widget.id.isNotEmpty ? widget.id : widget.groupe?.id;
+                      if (gid == null || gid.toString().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Groupe d'achat introuvable : rechargez la page.")),
+                        );
+                        return;
+                      }
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => RejoindreGroupeScreen(
+                            groupeId: gid,
+                            varianteId: _varianteSelectionnee?.id,
+                            variante: _varianteSelectionnee,
+                            variantesDisponibles: _variantes,
+                            titre: widget.titre,
+                            quantite: _quantite,
+                            quantiteMin: _quantiteMin,
+                            taille: _varianteSelectionnee?.libelleComplet ?? "",
+                            prixUnitaire: widget.prixGroupe,
+                            courtierNom: widget.courtierNom,
+                            imagePath: widget.imagePath,
+                            paysOrigine: widget.paysOrigine,
+                            quantiteActuelle: _quantiteActuelle,
+                            quantiteObjectif: _quantiteObjectif,
+                            quantiteRestante: _quantiteRestante,
+                          ),
+                        ),
+                      );
+                    } : (_quantiteMax < _quantiteMin ? () {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      }
+                      TabNavigationScope.switchToTab(context, 2);
+                    } : null),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _quantiteMax < _quantiteMin
+                          ? AppTheme.couleurSucces(context)
+                          : AppTheme.couleurAccent(context),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: Text(
+                      _quantiteMax < _quantiteMin
+                          ? "Groupe complet · Mes commandes →"
+                          : "Rejoindre le groupe",
+                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _quantite >= _quantiteMin && _quantite <= _quantiteMax ? () {
-                  final gid = widget.id.isNotEmpty ? widget.id : widget.groupe?.id;
-                  if (gid == null || gid.toString().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Groupe d'achat introuvable : rechargez la page.")),
-                    );
-                    return;
-                  }
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => RejoindreGroupeScreen(
-                        groupeId: gid,
-                        varianteId: _varianteSelectionnee?.id,
-                        variante: _varianteSelectionnee,
-                        variantesDisponibles: _variantes,
-                        titre: widget.titre,
-                        quantite: _quantite,
-                        quantiteMin: _quantiteMin,
-                        taille: _varianteSelectionnee?.libelleComplet ?? "",
-                        prixUnitaire: widget.prixGroupe,
-                        courtierNom: widget.courtierNom,
-                        imagePath: widget.imagePath,
-                        paysOrigine: widget.paysOrigine,
-                        quantiteActuelle: _quantiteActuelle,
-                        quantiteObjectif: _quantiteObjectif,
-                        quantiteRestante: _quantiteRestante,
-                      ),
-                    ),
-                  );
-                } : (_quantiteMax < _quantiteMin ? () {
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  }
-                  TabNavigationScope.switchToTab(context, 2);
-                } : null),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _quantiteMax < _quantiteMin
-                      ? AppTheme.couleurSucces(context)
-                      : AppTheme.couleurAccent(context),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: Text(
-                  _quantiteMax < _quantiteMin
-                      ? "Groupe complet · Mes commandes →"
-                      : "Rejoindre le groupe",
-                  style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
-    );
-  }
+  );
+}
 
   Widget _buildInfoLigne({
     required IconData icon,

@@ -583,7 +583,7 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                                     SizedBox(width: 6),
                                                     Flexible(
                                                       child: Text(
-                                                        "📦 Présenter mon code de retrait",
+                                                        "Présenter mon code de retrait",
                                                         overflow: TextOverflow.ellipsis,
                                                         style: TextStyle(
                                                           fontSize: 11.5,

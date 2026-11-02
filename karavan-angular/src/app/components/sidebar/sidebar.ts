@@ -40,34 +40,23 @@ export class SidebarComponent implements OnInit, OnDestroy {
   readonly securite = inject(AdminSecuriteService);
   private minuterie?: ReturnType<typeof setInterval>;
 
+  private readonly CLE_STORAGE = 'karavan_sidebar_reduite';
+
   /**
-   * Mode miniature/réduit : FERMÉ PAR DÉFAUT. La barre s'ouvre au survol (temporairement)
-   * ou au clic (durablement), et revient en rail quand on la ferme.
+   * Mode miniature/réduit (rail compact à icônes).
+   * L'état est synchronisé avec le layout parent : quand la barre s'ouvre,
+   * le contenu de la page s'adapte en symbiose (aucun chevauchement).
    */
-  private readonly replieeManuellement = signal(true);
+  readonly estReduite = signal<boolean>(false);
 
-  /** Ouverture temporaire au survol : la barre passe par-dessus le contenu sans le décaler */
-  private readonly ouverteAuSurvol = signal(false);
-  private minuterieSurvol?: ReturnType<typeof setTimeout>;
-
-  readonly estReduite = computed(() => this.replieeManuellement() && !this.ouverteAuSurvol());
-
-  @HostBinding('class.survol')
-  get enSurvol(): boolean {
-    return this.ouverteAuSurvol();
+  @HostBinding('class.sidebar-reduite')
+  get isReduite(): boolean {
+    return this.estReduite();
   }
 
-  @HostListener('mouseenter')
-  onSurvolEntree(): void {
-    if (!this.replieeManuellement()) return;
-    // Léger délai : un simple passage de la souris n'ouvre pas la barre
-    this.minuterieSurvol = setTimeout(() => this.ouverteAuSurvol.set(true), 120);
-  }
-
-  @HostListener('mouseleave')
-  onSurvolSortie(): void {
-    clearTimeout(this.minuterieSurvol);
-    this.ouverteAuSurvol.set(false);
+  @HostBinding('class.sidebar-etendue')
+  get isEtendue(): boolean {
+    return !this.estReduite();
   }
 
   /** Compteurs de badges (relus périodiquement) */
@@ -75,9 +64,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
   readonly groupesAModerer = signal(0);
 
   ngOnInit(): void {
-    // Par défaut : TOUJOURS fermé en mode miniature (rail compact à icônes)
-    // S'ouvre au survol ou au clic explicite de l'utilisateur.
-    this.replieeManuellement.set(true);
+    const stocke = localStorage.getItem(this.CLE_STORAGE);
+    if (stocke !== null) {
+      this.estReduite.set(stocke === 'true');
+    } else {
+      // Par défaut : ouvert pour une expérience riche et directe, adaptable en 1 clic
+      this.estReduite.set(false);
+    }
 
     this.chargerBadges();
     this.minuterie = setInterval(() => this.chargerBadges(), 60_000);
@@ -85,29 +78,40 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearInterval(this.minuterie);
-    clearTimeout(this.minuterieSurvol);
   }
 
   basculerReduite(): void {
-    this.replieeManuellement.set(!this.estReduite());
-    this.ouverteAuSurvol.set(false);
+    const nv = !this.estReduite();
+    this.estReduite.set(nv);
+    try {
+      localStorage.setItem(this.CLE_STORAGE, String(nv));
+    } catch (_) {}
   }
 
   ouvrirSidebar(): void {
-    this.replieeManuellement.set(false);
-    this.ouverteAuSurvol.set(false);
+    this.estReduite.set(false);
+    try {
+      localStorage.setItem(this.CLE_STORAGE, 'false');
+    } catch (_) {}
   }
 
   fermerSidebar(): void {
-    this.replieeManuellement.set(true);
-    this.ouverteAuSurvol.set(false);
+    this.estReduite.set(true);
+    try {
+      localStorage.setItem(this.CLE_STORAGE, 'true');
+    } catch (_) {}
   }
 
   onSidebarClick(event: MouseEvent): void {
     if (this.estReduite()) {
       const target = event.target as HTMLElement;
-      // Ne pas empêcher le clic direct sur une icône de navigation ou de déconnexion
-      if (!target.closest('.nav-item') && !target.closest('.logout-btn')) {
+      // Ne pas intercepter de clic sur un lien de navigation, déconnexion ou bouton de sécurité
+      if (
+        !target.closest('.nav-item') &&
+        !target.closest('.logout-pill-btn') &&
+        !target.closest('.security-mini-btn') &&
+        !target.closest('.btn-expand-bottom')
+      ) {
         this.ouvrirSidebar();
       }
     }
@@ -163,7 +167,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       title: 'Opérations',
       items: [
         { label: 'Validations KYC', icon: 'verified_user', route: '/kyc-validation' },
-        { label: 'Séquestre et finance', icon: 'account_balance_wallet', route: '/finance' },
+        { label: 'Portefeuille & Séquestre', icon: 'account_balance_wallet', route: '/finance' },
         { label: 'Suivi des colis', icon: 'local_shipping', route: '/corridors' },
         { label: 'Retraits de colis', icon: 'qr_code_scanner', route: '/retraits' }
       ]

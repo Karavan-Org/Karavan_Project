@@ -4,46 +4,76 @@
   (click)="onSidebarClick($event)"
 >
 
-  <!-- 1. En-tête : Logo et Identité Karavan (cliquer dessus bascule l'état ouvert/fermé) -->
-  <div
-    class="brand-header"
-    (click)="$event.stopPropagation(); basculerReduite()"
-    [title]="estReduite() ? 'Cliquer pour ouvrir le menu' : 'Cliquer pour réduire le menu'"
-  >
-    <img
-      class="brand-logo"
-      src="assets/logo_karavan.png"
-      alt="Karavan"
-    />
+  <!-- 1. En-tête : Brand & Bouton Réduire / Agrandir -->
+  <div class="brand-header">
+    <div
+      class="brand-main"
+      (click)="$event.stopPropagation(); basculerReduite()"
+      [title]="estReduite() ? 'Cliquer pour agrandir le menu' : 'Karavan Administration'"
+    >
+      <div class="brand-logo-wrapper">
+        <img
+          class="brand-logo"
+          src="assets/logo_karavan.png"
+          alt="Karavan"
+        />
+        <span class="brand-status-dot"></span>
+      </div>
 
-    <div class="brand-info" *ngIf="!estReduite()">
-      <span class="brand-name">Karavan</span>
-      <span class="brand-tag">Console d'administration</span>
+      <div class="brand-info" *ngIf="!estReduite()">
+        <span class="brand-name">Karavan<span class="brand-accent">.co</span></span>
+        <span class="brand-tag">Administration</span>
+      </div>
+    </div>
+
+    <!-- Bouton toggle (flèche) en mode étendu -->
+    <button
+      *ngIf="!estReduite()"
+      type="button"
+      class="btn-toggle-top"
+      (click)="$event.stopPropagation(); basculerReduite()"
+      title="Réduire le menu latéral"
+      aria-label="Réduire le menu"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+  </div>
+
+  <!-- 2. Profil Administrateur (Directement inspiré des sidebars 1 et 3 du modèle) -->
+  <div class="admin-profile-section" [class.profile-mini]="estReduite()">
+    <div class="profile-avatar-wrapper" [title]="adminProfile.name">
+      <div class="profile-avatar">
+        {{ adminProfile.initials }}
+      </div>
+      <span class="avatar-online-badge"></span>
+    </div>
+
+    <div class="profile-meta" *ngIf="!estReduite()">
+      <span class="profile-name">{{ adminProfile.name }}</span>
+      <span class="profile-role-badge">{{ adminProfile.role }}</span>
     </div>
   </div>
 
-  <div class="sidebar-divider" *ngIf="!estReduite()"></div>
-
-  <!-- 2. Navigation principale -->
+  <!-- 3. Navigation Principale (Sections et Items avec barre active gauche ou squircle en mode rail) -->
   <nav class="nav-container" aria-label="Navigation principale">
-
     <div *ngFor="let section of sections(); trackBy: parTitre" class="nav-section">
-
-      <!-- Titre de section visible uniquement en mode étendu -->
+      <!-- Titre de section en mode étendu -->
       <h2 class="section-title" *ngIf="!estReduite()">
         {{ section.title }}
       </h2>
 
       <ul class="nav-list">
         <li *ngFor="let item of section.items; trackBy: parRoute" class="nav-list-item">
-
           <a
             [routerLink]="item.route"
             routerLinkActive="active"
             ariaCurrentWhenActive="page"
             [routerLinkActiveOptions]="{ exact: item.route === '/admin' }"
             class="nav-item"
-            [attr.aria-label]="item.label">
+            [attr.aria-label]="item.label"
+          >
+            <!-- Indicateur vertical actif gauche (comme sur la sidebar 1 du modèle) -->
+            <span class="active-indicator" *ngIf="!estReduite()"></span>
 
             <mat-icon class="nav-icon">
               {{ item.icon }}
@@ -54,91 +84,93 @@
               {{ item.label }}
             </span>
 
-            <!-- Badge numérique -->
+            <!-- Badge numérique de notification -->
             <span
               *ngIf="item.badge"
               class="nav-badge"
-              [class.mini-badge]="estReduite()">
+              [class.mini-badge]="estReduite()"
+            >
               {{ item.badge }}
             </span>
 
-            <!-- Tooltip flottant au survol en mode miniature (style Karavan) -->
+            <!-- Tooltip flottant au survol en mode rail -->
             <span class="floating-tooltip" *ngIf="estReduite()">
               {{ item.label }}
             </span>
-
           </a>
-
         </li>
       </ul>
-
     </div>
-
   </nav>
 
-  <!-- 3. Pied de barre latérale -->
+  <!-- 4. Pied de Barre Latérale -->
   <div class="sidebar-footer">
-    <!-- Code de sécurité à 4 chiffres : libellé complet en mode étendu, pastille d'alerte en rail -->
-    <div class="security-pin-bar">
+
+    <!-- Mini-carte / Widget Sécurité PIN (Inspiré de la carte "Create Teams" des sidebars 1 et 3) -->
+    <div class="security-card" *ngIf="!estReduite()">
+      <div class="sec-card-header">
+        <div class="sec-icon-circle">
+          <mat-icon>{{ securite.statut()?.configure ? 'verified_user' : 'lock_clock' }}</mat-icon>
+        </div>
+        <div class="sec-card-text">
+          <span class="sec-card-title">Code Sécurité</span>
+          <span class="sec-card-subtitle">Protection 4 chiffres</span>
+        </div>
+      </div>
       <button
         type="button"
-        class="security-pin-btn"
-        [class.security-pin-mini]="estReduite()"
+        class="sec-card-btn"
+        [class.btn-configured]="securite.statut()?.configure"
         (click)="$event.stopPropagation(); securite.ouvrirConfiguration()"
-        [attr.aria-label]="securite.statut()?.configure ? 'Modifier mon code de sécurité' : 'Configurer mon code de sécurité'"
-        title="Code de sécurité à 4 chiffres (requis pour chaque action sensible)">
-        <mat-icon class="sec-icon">{{ securite.statut()?.configure ? 'lock' : 'lock_open' }}</mat-icon>
-        <ng-container *ngIf="!estReduite()">
-          <span class="sec-text">Code de sécurité</span>
-          <span class="sec-badge" [class.sec-badge-ok]="securite.statut()?.configure">
-            {{ securite.statut()?.configure ? 'Actif' : 'À configurer' }}
-          </span>
-        </ng-container>
-        <span class="sec-alerte" *ngIf="estReduite() && !securite.statut()?.configure" aria-hidden="true"></span>
-      </button>
-    </div>
-
-    <!-- Bouton de bascule Réduire / Agrandir la barre latérale -->
-    <div class="toggle-collapse-bar">
-      <button
-        type="button"
-        class="collapse-btn"
-        (click)="$event.stopPropagation(); basculerReduite()"
-        [title]="estReduite() ? 'Agrandir le menu latéral' : 'Réduire le menu en miniature'"
       >
-        <mat-icon class="collapse-icon">
-          {{ estReduite() ? 'chevron_right' : 'chevron_left' }}
-        </mat-icon>
-        <span class="collapse-label" *ngIf="!estReduite()">
-          Réduire le menu
-        </span>
+        <span>{{ securite.statut()?.configure ? 'Configuré' : 'À configurer' }}</span>
+        <mat-icon class="btn-arrow">arrow_forward</mat-icon>
       </button>
     </div>
 
-    <!-- Profil administrateur connecté -->
-    <div class="user-footer" [class.user-footer-mini]="estReduite()">
-      <div class="avatar" [title]="adminProfile.name">
-        {{ adminProfile.initials }}
-      </div>
-
-      <div class="user-details" *ngIf="!estReduite()">
-        <span class="user-name">
-          {{ adminProfile.name }}
-        </span>
-        <span class="user-role">
-          {{ adminProfile.role }}
-        </span>
-      </div>
-
+    <!-- En mode réduit : bouton icône de sécurité compact -->
+    <div class="security-mini-wrapper" *ngIf="estReduite()">
       <button
         type="button"
-        class="logout-btn"
-        aria-label="Déconnexion"
-        title="Déconnexion"
-        (click)="deconnecter()">
-        <mat-icon>logout</mat-icon>
+        class="security-mini-btn"
+        (click)="$event.stopPropagation(); securite.ouvrirConfiguration()"
+        [title]="securite.statut()?.configure ? 'Code de sécurité configuré' : 'Configurer le code de sécurité (requis)'"
+        [attr.aria-label]="'Code de sécurité'"
+      >
+        <mat-icon>{{ securite.statut()?.configure ? 'lock' : 'lock_open' }}</mat-icon>
+        <span class="sec-dot" *ngIf="!securite.statut()?.configure"></span>
+        <span class="floating-tooltip">Code Sécurité</span>
       </button>
     </div>
+
+    <!-- Bouton Déconnexion (Inspiré du bouton pilule de la sidebar 4) -->
+    <div class="logout-wrapper" [class.logout-mini]="estReduite()">
+      <button
+        type="button"
+        class="logout-pill-btn"
+        (click)="deconnecter()"
+        title="Déconnexion"
+        aria-label="Déconnexion"
+      >
+        <mat-icon class="logout-ico">logout</mat-icon>
+        <span class="logout-text" *ngIf="!estReduite()">Déconnexion</span>
+        <span class="floating-tooltip" *ngIf="estReduite()">Déconnexion</span>
+      </button>
+    </div>
+
+    <!-- Bouton de bascule en mode rail au bas -->
+    <div class="toggle-rail-bottom" *ngIf="estReduite()">
+      <button
+        type="button"
+        class="btn-expand-bottom"
+        (click)="$event.stopPropagation(); basculerReduite()"
+        title="Agrandir le menu"
+        aria-label="Agrandir le menu"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+
   </div>
 
 </aside>

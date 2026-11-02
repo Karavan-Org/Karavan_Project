@@ -322,6 +322,10 @@ export class TableauDeBordComponent implements OnInit {
     this.chargerTout();
   }
 
+  allerVersFinance(): void {
+    this.router.navigate(['/finance']);
+  }
+
   formatTempsEcoule(dateStr?: string | null): string {
     if (!dateStr) return 'Récemment';
     try {

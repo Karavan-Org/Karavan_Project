@@ -18,11 +18,12 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
   final _commandeController = TextEditingController();
   final _pinController = TextEditingController();
   final _camera = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
+    detectionSpeed: DetectionSpeed.normal,
     formats: const [BarcodeFormat.qrCode],
   );
   Map<String, dynamic>? _retrait;
   bool _enCours = false;
+  bool _torcheActive = false;
 
   @override
   void dispose() {
@@ -32,18 +33,37 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
     super.dispose();
   }
 
+  /// Nettoie le jeton pour éliminer espaces, préfixes URL ou clés (ex: "https://.../token" ou "TOKEN:token")
+  String _nettoyerJeton(String brut) {
+    var t = brut.trim();
+    if (t.contains('/')) {
+      t = t.split('/').last.trim();
+    }
+    if (t.contains(':')) {
+      t = t.split(':').last.trim();
+    }
+    return t;
+  }
+
   /// QR code détecté par la caméra : son contenu est le jeton de retrait de la commande
   void _surDetection(BarcodeCapture capture) {
-    final jeton = capture.barcodes.map((b) => b.rawValue).whereType<String>().firstOrNull;
-    if (jeton == null || jeton.isEmpty || _enCours || _retrait != null) return;
+    if (_enCours || _retrait != null) return;
+    final brut = capture.barcodes.map((b) => b.rawValue).whereType<String>().firstOrNull;
+    if (brut == null || brut.trim().isEmpty) return;
+    final jeton = _nettoyerJeton(brut);
+    if (jeton.isEmpty) return;
     _valider(qrToken: jeton);
   }
 
   void _validerParPin() {
-    final commande = int.tryParse(_commandeController.text.trim().replaceAll('#', ''));
-    final pin = _pinController.text.trim();
-    if (commande == null || pin.length < 4) {
-      _erreur("Saisissez le numéro de commande et le code PIN à 4 chiffres");
+    final commande = int.tryParse(_commandeController.text.trim().replaceAll(RegExp(r'[^0-9]'), ''));
+    final pin = _pinController.text.trim().replaceAll(RegExp(r'\s+'), '');
+    if (commande == null) {
+      _erreur("Saisissez un numéro de commande valide");
+      return;
+    }
+    if (pin.length != 6) {
+      _erreur("Le code PIN doit comporter 6 chiffres (reçu par SMS)");
       return;
     }
     _valider(commandeId: commande, pin: pin);
@@ -51,7 +71,9 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
 
   Future<void> _valider({String? qrToken, int? commandeId, String? pin}) async {
     setState(() => _enCours = true);
-    await _camera.stop();
+    try {
+      await _camera.stop();
+    } catch (_) {}
     try {
       final r = await LogistiqueApiService.instance.validerRetrait(
         qrToken: qrToken,
@@ -63,7 +85,9 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
     } catch (e) {
       if (!mounted) return;
       _erreur(e is ApiException ? e.messageComplet : 'Code invalide ou expiré');
-      await _camera.start();
+      try {
+        await _camera.start();
+      } catch (_) {}
     } finally {
       if (mounted) setState(() => _enCours = false);
     }
@@ -79,7 +103,9 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
     _commandeController.clear();
     _pinController.clear();
     setState(() => _retrait = null);
-    _camera.start();
+    try {
+      _camera.start();
+    } catch (_) {}
   }
 
   @override
@@ -140,6 +166,40 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                         ),
                       ),
                     ),
+                    // Boutons de contrôle caméra (Lampe torche & Bascule caméra)
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: IconButton(
+                        tooltip: "Lampe torche",
+                        icon: Icon(
+                          _torcheActive ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                          color: _torcheActive ? AppTheme.secondary : Colors.white,
+                          size: 22,
+                        ),
+                        style: IconButton.styleFrom(backgroundColor: const Color(0x66000000)),
+                        onPressed: () async {
+                          try {
+                            await _camera.toggleTorch();
+                            if (mounted) setState(() => _torcheActive = !_torcheActive);
+                          } catch (_) {}
+                        },
+                      ),
+                    ),
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: IconButton(
+                        tooltip: "Changer de caméra",
+                        icon: const Icon(Icons.flip_camera_ios_rounded, color: Colors.white, size: 20),
+                        style: IconButton.styleFrom(backgroundColor: const Color(0x66000000)),
+                        onPressed: () async {
+                          try {
+                            await _camera.switchCamera();
+                          } catch (_) {}
+                        },
+                      ),
+                    ),
                     if (_enCours)
                       const ColoredBox(
                         color: Color(0x88000000),
@@ -172,7 +232,7 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Champ PIN 4 chiffres (reçu par SMS par le commerçant)
+              // Champ PIN 6 chiffres (reçu par SMS par le commerçant)
               TextField(
                 controller: _pinController,
                 maxLength: 6,
@@ -180,7 +240,7 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 28, letterSpacing: 10, fontWeight: FontWeight.bold, color: AppTheme.couleurTexte(context)),
-                decoration: _decoration("••••").copyWith(
+                decoration: _decoration("••••••").copyWith(
                   counterText: "",
                   hintStyle: TextStyle(letterSpacing: 8, color: AppTheme.couleurTexteAttenue(context)),
                 ),

@@ -159,7 +159,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
             _uploadedImageName =
                 "photo_camera_${DateTime.now().millisecondsSinceEpoch}.jpg";
             _uploadedImageTaille = bytes.lengthInBytes;
-            _photoSourceLabel = "📷 Caméra (Webcam)";
+            _photoSourceLabel = "Caméra (Webcam)";
           });
           _afficherSucces("Photo prise avec succès depuis la caméra !");
         }
@@ -216,7 +216,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
               ? photo.name
               : "photo_${DateTime.now().millisecondsSinceEpoch}.jpg";
           _uploadedImageTaille = taille;
-          _photoSourceLabel = "📷 Caméra smartphone";
+          _photoSourceLabel = "Caméra smartphone";
         });
         _afficherSucces("Photo enregistrée avec succès !");
       }
@@ -255,7 +255,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
             _uploadedImageBytes = bytes;
             _uploadedImageName = file.name;
             _uploadedImageTaille = bytes.lengthInBytes;
-            _photoSourceLabel = "🖼️ Galerie PC (${file.name})";
+            _photoSourceLabel = "Galerie PC (${file.name})";
           });
           _afficherSucces("Image importée depuis la galerie avec succès !");
         }
@@ -284,7 +284,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
               ? image.name
               : "galerie_${DateTime.now().millisecondsSinceEpoch}.jpg";
           _uploadedImageTaille = taille;
-          _photoSourceLabel = "🖼️ Galerie photo";
+          _photoSourceLabel = "Galerie photo";
         });
         _afficherSucces("Image sélectionnée depuis la galerie !");
       }
@@ -694,10 +694,12 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        "Photos du produit (Obligatoire)",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 14),
+                      const Expanded(
+                        child: Text(
+                          "Photos du produit (Obligatoire)",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 14),
+                        ),
                       ),
                       TextButton.icon(
                         onPressed: () => _ouvrirSelectionPhotoModal(context),
@@ -725,7 +727,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           icon: const Icon(Icons.camera_alt_rounded,
                               size: 18, color: Colors.white),
                           label: const Text(
-                            "📷 Prendre photo",
+                            "Prendre photo",
                             style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
@@ -746,7 +748,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           icon: const Icon(Icons.photo_library_outlined,
                               size: 18, color: AppTheme.primary),
                           label: const Text(
-                            "🖼️ Galerie",
+                            "Galerie",
                             style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,

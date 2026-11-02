@@ -77,22 +77,22 @@ class _NotifierAdministrationScreenState extends State<NotifierAdministrationScr
     ),
     // Incidents et blocages
     _EtapeOption(
-      titre: "⚠️ Incident : Blocage en douane",
+      titre: "Incident : Blocage en douane",
       icone: Icons.warning_amber_rounded,
       estIncident: true,
     ),
     _EtapeOption(
-      titre: "⚠️ Incident : Retard transporteur / avarie",
+      titre: "Incident : Retard transporteur / avarie",
       icone: Icons.report_problem_outlined,
       estIncident: true,
     ),
     _EtapeOption(
-      titre: "⚠️ Incident : Colis endommagé ou manquant",
+      titre: "Incident : Colis endommagé ou manquant",
       icone: Icons.broken_image_outlined,
       estIncident: true,
     ),
     _EtapeOption(
-      titre: "⚠️ Autre problème logistique urgent",
+      titre: "Autre problème logistique urgent",
       icone: Icons.error_outline_rounded,
       estIncident: true,
     ),
@@ -379,7 +379,7 @@ class _NotifierAdministrationScreenState extends State<NotifierAdministrationScr
         // Envoi direct de l'incident à l'administration
         await GroupeApiService.instance.signalerIncident(
           groupeId,
-          motif: _etapeSelectionnee.titre.replaceAll("⚠️ ", ""),
+          motif: _etapeSelectionnee.titre,
           detail: details.isNotEmpty ? details : null,
           pieceJointeUrl: _fichierJustificatif?.nom,
         );

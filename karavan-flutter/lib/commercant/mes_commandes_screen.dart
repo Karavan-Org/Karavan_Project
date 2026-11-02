@@ -26,15 +26,19 @@ class MesCommandesScreen extends StatefulWidget {
   const MesCommandesScreen({super.key});
 
   @override
-  State<MesCommandesScreen> createState() => _MesCommandesScreenState();
+  State<MesCommandesScreen> createState() => MesCommandesScreenState();
 }
 
-class _MesCommandesScreenState extends State<MesCommandesScreen> with ActualisationAutomatique<MesCommandesScreen> {
+class MesCommandesScreenState extends State<MesCommandesScreen> with ActualisationAutomatique<MesCommandesScreen> {
   int _selectedOrderIndex = 0;
   bool _isLoading = true;
   bool _annulationEnCours = false;
   String? _errorMessage;
   final List<ElementCommande> _commandes = [];
+
+  void recharger() {
+    _chargerDonnees(silencieux: false);
+  }
 
   /// Données vivantes : relues en arrière-plan tant que l'écran est affiché
   @override

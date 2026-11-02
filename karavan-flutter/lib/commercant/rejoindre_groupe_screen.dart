@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/services.dart';
+import 'favoris_service.dart';
 import '../services/paiement_api_service.dart';
 import '../services/groupe_api_service.dart';
 import '../services/profil_api_service.dart';
@@ -69,14 +70,26 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
   late int _quantiteMin;
   late int _quantiteObjectif;
   late int _quantiteRestante;
+  int _quantiteDejaCommandee = 0;
   List<VarianteGroupeModel> _variantes = [];
   VarianteGroupeModel? _varianteSelectionnee;
+
+  Future<void> _verifierParticipationsExistantes() async {
+    final gid = int.tryParse(widget.groupeId.toString());
+    if (gid == null) return;
+    try {
+      final mesPart = await GroupeApiService.instance.mesParticipations();
+      final pourCeGroupe = mesPart.where((p) => p.groupeId == gid && p.statut != 'ANNULEE' && p.statut != 'EXPIREE');
+      final total = pourCeGroupe.fold<int>(0, (acc, p) => acc + p.quantite);
+      if (mounted) setState(() => _quantiteDejaCommandee = total);
+    } catch (_) {}
+  }
 
   final List<Map<String, dynamic>> _operateurs = [
     {
       "nom": "Portefeuille Achats",
       "couleur": AppTheme.oliveProfond,
-      "sigle": "💼",
+      "sigle": "",
       "delai": "Instantané • Direct",
       "isPortefeuille": true,
     },
@@ -106,6 +119,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
   @override
   void initState() {
     super.initState();
+    _verifierParticipationsExistantes();
     _quantiteMin = widget.quantiteMin > 0 ? widget.quantiteMin : 1;
     _quantiteObjectif = widget.quantiteObjectif;
     _quantiteRestante = widget.quantiteRestante ??
@@ -367,6 +381,9 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
 
       if (!mounted) return;
 
+      // Actualiser immédiatement les jauges et les groupes en mémoire
+      FavorisService.instance.actualiserDepuisBackend();
+
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => ReussitePaiementScreen(
@@ -451,11 +468,43 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+            // Bannière informative si le commerçant participe déjà à ce groupe
+            if (_quantiteDejaCommandee > 0) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.ocre.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.ocre.withValues(alpha: 0.6), width: 1.2),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: AppTheme.ocreProfond, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "Vous participez déjà à ce groupe d'achat avec $_quantiteDejaCommandee unité${_quantiteDejaCommandee > 1 ? 's' : ''}. Vous pouvez ajouter cette nouvelle commande.",
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.couleurTexte(context),
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             // 1. SÉLECTION DES VARIANTES FOURNIES PAR LE GROSSISTE
             if (_variantes.isNotEmpty) ...[
               Container(
@@ -779,7 +828,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                           ),
                           child: const Center(
                             child: Text(
-                              "💼",
+                              "",
                               style: TextStyle(fontSize: 18),
                             ),
                           ),
@@ -1001,10 +1050,12 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildLigneMontant(String libelle, String montant, {bool isGratuit = false}) {

@@ -16,6 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { GroupeCadranVue } from '../tableau-de-bord.service';
 import { DrapeauPaysComponent } from '../../../components/drapeau-pays/drapeau-pays.component';
 import { PaysResolverService } from '../../../core/services/pays-resolver.service';
+import { urlImage } from '../../../core/api';
 
 export interface CarteCadran3D {
   groupe: GroupeCadranVue;
@@ -762,6 +763,8 @@ export class CadranGroupesComponent implements OnChanges {
   private accumulateurMolette = 0;
   private rotationVerrouillee = false;
 
+  readonly urlImage = urlImage;
+
   constructor(
     private readonly cdr: ChangeDetectorRef,
     private readonly paysResolver: PaysResolverService
@@ -1001,6 +1004,9 @@ export class CadranGroupesComponent implements OnChanges {
       const infoPays = this.paysResolver.resoudre(groupe.paysOrigine?.codeIso || groupe.paysOrigine?.nomFr);
       const nomPays = infoPays.reconnu ? infoPays.nomFr : (groupe.paysOrigine?.nomFr || 'Origine non renseignée');
 
+      const rawPhoto = groupe.produitPhotoUrl || groupe.grossiste?.photoUrl;
+      const photoResolue = rawPhoto ? urlImage(rawPhoto) : undefined;
+
       cartes.push({
         groupe,
         indexOriginal: idx,
@@ -1012,7 +1018,7 @@ export class CadranGroupesComponent implements OnChanges {
         zIndex,
         estActive: offset === 0,
         nomPays,
-        photoUrl: groupe.produitPhotoUrl
+        photoUrl: photoResolue
       });
     }
 
@@ -1116,7 +1122,12 @@ export class CadranGroupesComponent implements OnChanges {
   }
 
   onImageErreur(event: Event, item: CarteCadran3D): void {
-    item.photoUrl = undefined;
+    const grossistePhoto = item.groupe.grossiste?.photoUrl;
+    if (grossistePhoto && item.photoUrl !== urlImage(grossistePhoto)) {
+      item.photoUrl = urlImage(grossistePhoto);
+    } else {
+      item.photoUrl = undefined;
+    }
     this.cdr.markForCheck();
   }
 

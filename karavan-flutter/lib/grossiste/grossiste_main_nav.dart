@@ -7,6 +7,7 @@ import 'grossiste_dashboard_screen.dart';
 import 'grossiste_catalogue_screen.dart';
 import 'grossiste_commandes_screen.dart';
 import 'grossiste_profil_screen.dart';
+import '../commercant/explorer_screen.dart';
 import 'ajouter_produit_screen.dart';
 import 'creer_groupe_grossiste_screen.dart';
 import 'selection_produit_grossiste.dart';
@@ -67,7 +68,7 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
 
   final List<Widget> _screens = const [
     GrossisteDashboardScreen(showFab: false),
-    GrossisteCatalogueScreen(),
+    ExplorerScreen(),
     GrossisteCommandesScreen(),
     GrossisteProfilScreen(),
   ];
@@ -186,53 +187,58 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
       _buildNavItem(
         index: 0,
         label: "Accueil",
-        activeIcon: Icons.dashboard_rounded,
-        inactiveIcon: Icons.dashboard_outlined,
+        activeIcon: Icons.home,
+        inactiveIcon: Icons.home_outlined,
       ),
       _buildNavItem(
         index: 1,
-        label: "Catalogue",
-        activeIcon: Icons.inventory_2_rounded,
-        inactiveIcon: Icons.inventory_2_outlined,
+        label: "Explorer",
+        activeIcon: Icons.explore,
+        inactiveIcon: Icons.explore_outlined,
       ),
       _buildNavItem(
         index: 2,
-        label: "Lots & Ventes",
-        activeIcon: Icons.local_shipping_rounded,
-        inactiveIcon: Icons.local_shipping_outlined,
+        label: "Commandes",
+        activeIcon: Icons.receipt_long,
+        inactiveIcon: Icons.receipt_long_outlined,
       ),
       _buildNavItem(
         index: 3,
         label: "Profil",
-        activeIcon: Icons.storefront_rounded,
-        inactiveIcon: Icons.storefront_outlined,
+        activeIcon: Icons.person,
+        inactiveIcon: Icons.person_outline,
       ),
     ];
 
     return TabNavigationScope(
       onSwitchTab: setTabIndex,
       child: Stack(
+        fit: StackFit.expand,
         children: [
           Scaffold(
             backgroundColor: AppTheme.couleurFond(context),
             body: Stack(
+              fit: StackFit.expand,
               children: [
                 // 1. Écrans principaux avec IndexedStack (tickers suspendus sur onglets masqués)
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (laterale) RailNavigation(onglets: onglets),
                     Expanded(
-                        child: CadrePage(
-                            child: IndexedStack(
-                      index: _currentIndex,
-                      children: [
-                        for (int i = 0; i < _screens.length; i++)
-                          TickerMode(
-                            enabled: _currentIndex == i,
-                            child: _screens[i],
-                          ),
-                      ],
-                    ))),
+                      child: SizedBox.expand(
+                        child: IndexedStack(
+                          index: _currentIndex,
+                          children: [
+                            for (int i = 0; i < _screens.length; i++)
+                              TickerMode(
+                                enabled: _currentIndex == i,
+                                child: _screens[i],
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
 
@@ -285,7 +291,7 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                         radius: arc.rayon,
                         label: "Produit",
                         subLabel: "Nouveau",
-                        hoverTooltip: "📦 Créer & Publier un Article",
+                        hoverTooltip: "Créer & Publier un Article",
                         icon: Icons.add_photo_alternate_rounded,
                         color: AppTheme.primary,
                         onTap: () {
@@ -305,7 +311,7 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                         radius: arc.rayon,
                         label: "Groupe",
                         subLabel: "Créer",
-                        hoverTooltip: "👥 Lancer un groupe d'achat",
+                        hoverTooltip: "Lancer un groupe d'achat",
                         icon: Icons.group_add_rounded,
                         color: AppTheme.olive,
                         onTap: () {
@@ -343,7 +349,7 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                         radius: arc.rayon,
                         label: "Suivi",
                         subLabel: "Colis",
-                        hoverTooltip: "📍 Valider les étapes du colis",
+                        hoverTooltip: "Valider les étapes du colis",
                         icon: Icons.location_on_rounded,
                         color: AppTheme.bissapProfond,
                         onTap: () {
@@ -364,7 +370,7 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                         radius: arc.rayon,
                         label: "Expédier",
                         subLabel: "Mes lots",
-                        hoverTooltip: "🚚 Lots à préparer pour le courtier",
+                        hoverTooltip: "Lots à préparer pour le courtier",
                         icon: Icons.local_shipping_rounded,
                         color: AppTheme.olive,
                         // Les lots réels (à préparer / expédiés) sont dans l'onglet « Lots & Ventes »
@@ -410,54 +416,47 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                     ),
                     child: SafeArea(
                       top: false,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          if (constraints.maxWidth < 100) {
-                            return const SizedBox(height: 64);
-                          }
-                          return Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 560),
-                              child: SizedBox(
-                                height: 64,
-                                child: Row(
-                                  children: [
-                                    // Côté gauche : Tableau de bord + Catalogue
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: onglets[0],
-                                          ),
-                                          Expanded(
-                                            child: onglets[1],
-                                          ),
-                                        ],
+                      child: SizedBox(
+                        height: 64,
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 560),
+                            child: Row(
+                              children: [
+                                // Côté gauche : Tableau de bord + Catalogue
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: onglets[0],
                                       ),
-                                    ),
-
-                                    // Espace pour le FAB central (+)
-                                    const SizedBox(width: 52),
-
-                                    // Côté droit : Lots/Commandes + Profil
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: onglets[2],
-                                          ),
-                                          Expanded(
-                                            child: onglets[3],
-                                          ),
-                                        ],
+                                      Expanded(
+                                        child: onglets[1],
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
+
+                                // Espace pour le FAB central (+)
+                                const SizedBox(width: 52),
+
+                                // Côté droit : Lots/Commandes + Profil
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: onglets[2],
+                                      ),
+                                      Expanded(
+                                        child: onglets[3],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                     ),
                   ),

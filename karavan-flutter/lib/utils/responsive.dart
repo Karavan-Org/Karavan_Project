@@ -38,8 +38,12 @@ class TransitionCadree extends PageTransitionsBuilder {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) =>
-      base.buildTransitions(route, context, animation, secondaryAnimation, CadrePage(child: child));
+  ) {
+    if (MediaQuery.sizeOf(context).width <= Responsive.largeurContenu) {
+      return base.buildTransitions(route, context, animation, secondaryAnimation, child);
+    }
+    return base.buildTransitions(route, context, animation, secondaryAnimation, CadrePage(child: child));
+  }
 }
 
 /// Centre son contenu sur [Responsive.largeurContenu] quand l'espace est plus large, avec le fond
@@ -55,16 +59,16 @@ class CadrePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ecran = MediaQuery.of(context);
-    Widget contenu = child;
-    if (ecran.size.width > Responsive.largeurContenu) {
-      contenu = _MediaQueryEcran(
-        data: ecran,
-        child: MediaQuery(
-          data: ecran.copyWith(size: Size(Responsive.largeurContenu, ecran.size.height)),
-          child: child,
-        ),
-      );
+    if (ecran.size.width <= Responsive.largeurContenu) {
+      return child;
     }
+    final contenu = _MediaQueryEcran(
+      data: ecran,
+      child: MediaQuery(
+        data: ecran.copyWith(size: Size(Responsive.largeurContenu, ecran.size.height)),
+        child: child,
+      ),
+    );
     return _Cadre(couleurFond: AppTheme.couleurFond(context), child: contenu);
   }
 }
@@ -86,15 +90,20 @@ class _PleineLargeurState extends State<PleineLargeur> {
   _RenderCadre? _cadre;
 
   @override
-  void initState() {
-    super.initState();
-    _cadre = context.findAncestorRenderObjectOfType<_RenderCadre>();
-    _cadre?.demandesPleineLargeur += 1;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nouveauCadre = context.findAncestorRenderObjectOfType<_RenderCadre>();
+    if (nouveauCadre != _cadre) {
+      _cadre?.demandesPleineLargeur -= 1;
+      _cadre = nouveauCadre;
+      _cadre?.demandesPleineLargeur += 1;
+    }
   }
 
   @override
   void dispose() {
     _cadre?.demandesPleineLargeur -= 1;
+    _cadre = null;
     super.dispose();
   }
 
@@ -160,16 +169,29 @@ class _RenderCadre extends RenderShiftedBox {
     }
     final donnees = enfant.parentData! as BoxParentData;
     if (!_limite) {
-      enfant.layout(constraints, parentUsesSize: true);
-      size = enfant.size;
+      final contraintesStrictes = BoxConstraints(
+        minWidth: constraints.hasBoundedWidth ? constraints.maxWidth : constraints.minWidth,
+        maxWidth: constraints.hasBoundedWidth ? constraints.maxWidth : constraints.maxWidth,
+        minHeight: constraints.hasBoundedHeight ? constraints.maxHeight : constraints.minHeight,
+        maxHeight: constraints.hasBoundedHeight ? constraints.maxHeight : constraints.maxHeight,
+      );
+      enfant.layout(contraintesStrictes, parentUsesSize: true);
+      size = Size(contraintesStrictes.maxWidth, contraintesStrictes.maxHeight);
       donnees.offset = Offset.zero;
       return;
     }
     enfant.layout(
-      constraints.copyWith(minWidth: Responsive.largeurContenu, maxWidth: Responsive.largeurContenu),
+      constraints.copyWith(
+        minWidth: Responsive.largeurContenu,
+        maxWidth: Responsive.largeurContenu,
+        minHeight: constraints.hasBoundedHeight ? constraints.maxHeight : constraints.minHeight,
+        maxHeight: constraints.hasBoundedHeight ? constraints.maxHeight : constraints.maxHeight,
+      ),
       parentUsesSize: true,
     );
-    size = constraints.constrain(Size(constraints.maxWidth, enfant.size.height));
+    final double hauteur =
+        constraints.hasBoundedHeight ? constraints.maxHeight : enfant.size.height;
+    size = constraints.constrain(Size(constraints.maxWidth, hauteur));
     donnees.offset = Offset((size.width - Responsive.largeurContenu) / 2, 0);
   }
 

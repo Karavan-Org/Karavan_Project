@@ -1,4 +1,4 @@
-﻿/// Alias pour compatibilité
+/// Alias pour compatibilité
 typedef VarianteGroupe = VarianteGroupeModel;
 
 /// Modèle d'une variante de produit renseignée par le grossiste (RG-12)
@@ -82,7 +82,9 @@ class GroupeCampagneModel {
   final String categorie;
   final String paysOrigine;
   final String courtierNom;
+  final String? courtierPhotoUrl;
   final String grossisteNom;
+  final String? grossistePhotoUrl;
   final String tempsRestant;
   final int? varianteId;
   final List<VarianteGroupeModel> variantes;
@@ -111,7 +113,9 @@ class GroupeCampagneModel {
     required this.categorie,
     this.paysOrigine = "",
     this.courtierNom = "",
+    this.courtierPhotoUrl,
     this.grossisteNom = "",
+    this.grossistePhotoUrl,
     this.tempsRestant = "",
     this.varianteId,
     this.variantes = const [],
@@ -156,10 +160,20 @@ class GroupeCampagneModel {
         ? rawPrixPublic.toInt()
         : (rawPrixPublic != null ? int.tryParse(rawPrixPublic.toString()) ?? 0 : 0);
 
-    final rawQteActuelle = json['quantiteConfirmee'] ?? json['quantiteActuelle'];
-    final int qteActuelle = rawQteActuelle is num
-        ? rawQteActuelle.toInt()
-        : int.tryParse(rawQteActuelle?.toString() ?? '0') ?? 0;
+    final int qteConfirmee = json['quantiteConfirmee'] is num
+        ? (json['quantiteConfirmee'] as num).toInt()
+        : int.tryParse(json['quantiteConfirmee']?.toString() ?? '0') ?? 0;
+    final int qteReservee = json['quantiteReservee'] is num
+        ? (json['quantiteReservee'] as num).toInt()
+        : int.tryParse(json['quantiteReservee']?.toString() ?? '0') ?? 0;
+    final int rawQteActuelle = json['quantiteActuelle'] is num
+        ? (json['quantiteActuelle'] as num).toInt()
+        : int.tryParse(json['quantiteActuelle']?.toString() ?? '0') ?? 0;
+
+    // La jauge reflète toutes les pièces engagées (réservées + confirmées)
+    final int qteActuelle = (qteConfirmee + qteReservee) > 0
+        ? (qteConfirmee + qteReservee)
+        : (rawQteActuelle > 0 ? rawQteActuelle : qteConfirmee);
 
     final rawQteCible = json['quantiteCible'] ?? json['quantiteObjectif'];
     final int qteCible = rawQteCible is num
@@ -189,10 +203,13 @@ class GroupeCampagneModel {
         ? rawProduitId.toInt()
         : int.tryParse(rawProduitId?.toString() ?? '');
 
-    // Photo réelle du produit (servie par le backend) ; à défaut, le logo Karavan
+    // Photo réelle du produit (servie par le backend) ; à défaut la photo du vendeur, sinon logo Karavan
     String resolveImage() {
       final photo = produit?['photoUrl']?.toString() ?? json['imagePath']?.toString() ?? '';
-      return photo.isNotEmpty ? photo : 'assets/images/logo_karavan.png';
+      if (photo.isNotEmpty) return photo;
+      final photoG = grossiste?['photoUrl']?.toString() ?? json['grossistePhotoUrl']?.toString() ?? '';
+      if (photoG.isNotEmpty) return photoG;
+      return 'assets/images/logo_karavan.png';
     }
 
     String resolveTempsRestant() {
@@ -204,6 +221,9 @@ class GroupeCampagneModel {
       if (reste.inDays >= 1) return '${reste.inDays} jour${reste.inDays > 1 ? 's' : ''} restant${reste.inDays > 1 ? 's' : ''}';
       return '${reste.inHours} h restantes';
     }
+
+    final grossistePhoto = grossiste?['photoUrl']?.toString() ?? json['grossistePhotoUrl']?.toString();
+    final courtierPhoto = courtier?['photoUrl']?.toString() ?? json['courtierPhotoUrl']?.toString();
 
     return GroupeCampagneModel(
       id: json['id']?.toString() ?? '1',
@@ -219,7 +239,9 @@ class GroupeCampagneModel {
       paysOrigine: produit?['paysOrigine'] as String? ?? json['paysOrigine'] as String? ?? '',
       // Groupe porté par un grossiste (sans courtier) : c'est lui qui achemine la marchandise
       courtierNom: courtier?['nom'] as String? ?? json['courtierNom'] as String? ?? grossiste?['nom'] as String? ?? '',
+      courtierPhotoUrl: courtierPhoto,
       grossisteNom: grossiste?['nom'] as String? ?? json['grossisteNom'] as String? ?? '',
+      grossistePhotoUrl: grossistePhoto,
       tempsRestant: resolveTempsRestant(),
       varianteId: vId,
       variantes: vars,

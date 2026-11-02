@@ -131,7 +131,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                   children: [
                   // 1. En-tête personnalisé Commerçant avec bouton Favoris & Notifications
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
                     child: Row(
                       children: [
                         Expanded(
@@ -159,10 +159,10 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                               return Row(
                                 children: [
                                   CircleAvatar(
-                                    radius: 22,
+                                    radius: 20,
                                     backgroundColor: AppTheme.rose,
                                     backgroundImage: aPhoto
-                                        ? imageReseauDimensionnee(context, user.photoUrl!, 44)
+                                        ? imageReseauDimensionnee(context, user.photoUrl!, 40)
                                         : null,
                                     child: !aPhoto
                                         ? Text(
@@ -170,22 +170,22 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                                             style: const TextStyle(
                                               color: AppTheme.terre,
                                               fontWeight: FontWeight.w800,
-                                              fontSize: 14,
+                                              fontSize: 13,
                                             ),
                                           )
                                         : null,
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          "Bonjour $prenom 👋",
+                                          "Bonjour $prenom",
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
-                                            fontSize: 16,
+                                            fontSize: 15,
                                             fontWeight: FontWeight.w800,
                                             color: AppTheme.couleurTexte(context),
                                           ),
@@ -193,15 +193,15 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                                         const SizedBox(height: 2),
                                         Row(
                                           children: [
-                                            const Icon(Icons.location_on, size: 13, color: AppTheme.ocreProfond),
-                                            const SizedBox(width: 4),
+                                            const Icon(Icons.location_on, size: 12, color: AppTheme.ocreProfond),
+                                            const SizedBox(width: 3),
                                             Expanded(
                                               child: Text(
                                                 quartier,
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
-                                                  fontSize: 11.5,
+                                                  fontSize: 11,
                                                   color: AppTheme.couleurTexteAttenue(context),
                                                   fontWeight: FontWeight.w600,
                                                 ),
@@ -217,17 +217,19 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                             },
                           ),
                         ),
+                        const SizedBox(width: 6),
 
                         // Bascule de thème animée uniforme (comme Grossiste et Courtier)
                         const BoutonBasculeTheme(compact: true),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
 
                         // Bouton d'accès direct à Mes Favoris avec Badge de compteur
                         Container(
-                          margin: const EdgeInsets.only(right: 8),
+                          width: 38,
+                          height: 38,
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: favorisIds.isNotEmpty
                                   ? Colors.redAccent.withValues(alpha: 0.3)
@@ -235,14 +237,17 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                             ),
                           ),
                           child: Stack(
+                            alignment: Alignment.center,
                             children: [
                               IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
                                 icon: Icon(
                                   favorisIds.isNotEmpty ? Icons.favorite : Icons.favorite_border,
                                   color: favorisIds.isNotEmpty
                                       ? AppTheme.danger
                                       : AppTheme.couleurTexte(context),
-                                  size: 22,
+                                  size: 20,
                                 ),
                                 tooltip: "Mes Favoris",
                                 onPressed: () {
@@ -253,24 +258,24 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                               ),
                               if (favorisIds.isNotEmpty)
                                 Positioned(
-                                  top: 6,
-                                  right: 6,
+                                  top: 3,
+                                  right: 3,
                                   child: Container(
-                                    padding: const EdgeInsets.all(4),
+                                    padding: const EdgeInsets.all(3),
                                     decoration: const BoxDecoration(
                                       color: AppTheme.danger,
                                       shape: BoxShape.circle,
                                     ),
                                     constraints: const BoxConstraints(
-                                      minWidth: 16,
-                                      minHeight: 16,
+                                      minWidth: 14,
+                                      minHeight: 14,
                                     ),
                                     child: Text(
                                       "${favorisIds.length}",
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 11.5,
+                                        fontSize: 9.5,
                                         fontWeight: FontWeight.w800,
                                       ),
                                     ),
@@ -279,12 +284,15 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                             ],
                           ),
                         ),
+                        const SizedBox(width: 6),
 
                         // Cloche de notifications avec Badge dynamique
                         Container(
+                          width: 38,
+                          height: 38,
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: _nbNotifsNonLues > 0
                                   ? AppTheme.rose
@@ -292,8 +300,11 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                             ),
                           ),
                           child: Stack(
+                            alignment: Alignment.center,
                             children: [
                               IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
                                 icon: Icon(
                                   _nbNotifsNonLues > 0
                                       ? Icons.notifications_active_rounded
@@ -301,7 +312,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                                   color: _nbNotifsNonLues > 0
                                       ? AppTheme.primary
                                       : AppTheme.couleurTexte(context),
-                                  size: 22,
+                                  size: 20,
                                 ),
                                 tooltip: "Notifications",
                                 onPressed: () async {
@@ -593,7 +604,7 @@ class _CommercantHomeScreenState extends State<CommercantHomeScreen> with Actual
                         Text(
                           _categorieActive == "Favoris"
                               ? "Mes Groupes Favoris (${campagnesFiltrees.length})"
-                              : "Groupes bientôt clôturés 🔥",
+                              : "Groupes bientôt clôturés",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,

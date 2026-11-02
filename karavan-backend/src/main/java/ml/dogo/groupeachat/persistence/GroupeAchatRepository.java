@@ -12,6 +12,8 @@ public interface GroupeAchatRepository extends JpaRepository<GroupeAchat, Long> 
 
     List<GroupeAchat> findByStatutOrderByDateLimiteAsc(StatutGroupe statut);
 
+    List<GroupeAchat> findByStatutInOrderByDateLimiteAsc(java.util.Collection<StatutGroupe> statuts);
+
     List<GroupeAchat> findByCourtierIdOrderByIdDesc(Long courtierId);
 
     List<GroupeAchat> findByGrossisteIdAndStatutOrderByIdAsc(Long grossisteId, StatutGroupe statut);

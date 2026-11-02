@@ -10,6 +10,7 @@ import '../services/validateur_mot_de_passe.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bouton_bascule_theme.dart';
 import '../widgets/bouton_google_signin.dart';
+import '../widgets/champ_telephone_international.dart';
 import '../widgets/mot_de_passe_oublie_modal.dart';
 import 'courtier_inscription_screen.dart';
 
@@ -25,6 +26,7 @@ class CourtierConnexionScreen extends StatefulWidget {
 class _CourtierConnexionScreenState extends State<CourtierConnexionScreen> {
   final _phoneController = TextEditingController();
   final _pinController = TextEditingController();
+  String _telephoneComplet = '';
   bool _obscurePin = true;
   bool _rememberMe = true;
   bool _isLoading = false;
@@ -58,7 +60,8 @@ class _CourtierConnexionScreenState extends State<CourtierConnexionScreen> {
 
   Future<void> _seConnecter() async {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    final phone = _phoneController.text.trim();
+    final localPhone = _phoneController.text.trim();
+    final phone = _telephoneComplet.isNotEmpty ? _telephoneComplet : localPhone;
     final pin = _pinController.text.trim();
 
     if (phone.isEmpty) {
@@ -347,13 +350,15 @@ class _CourtierConnexionScreenState extends State<CourtierConnexionScreen> {
                 ),
               ),
               const SizedBox(height: 26),
-              _buildInputField(
-                icon: Icons.phone_outlined,
-                label: "Téléphone professionnel",
-                hint: "Entrez votre numéro de téléphone",
+              // CHAMP TÉLÉPHONE INTERNATIONAL AVEC INDICATIFS PAYS (intl_phone_field)
+              ChampTelephoneInternational(
                 controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                camelColor: camelColor,
+                label: "Téléphone professionnel",
+                borderColor: borderColor,
+                accentColor: camelColor,
+                onNumeroCompletChange: (complet) {
+                  _telephoneComplet = complet;
+                },
               ),
               const SizedBox(height: 16),
               _buildInputField(

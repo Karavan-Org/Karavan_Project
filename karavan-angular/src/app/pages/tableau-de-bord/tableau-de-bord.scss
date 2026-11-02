@@ -154,17 +154,66 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       user-select: none;
 
-      .icone-animee {
-        font-size: 16px;
-        line-height: 1;
-        display: inline-block;
+      .icone-stat {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
 
-        &.icone-pulse-users {
-          animation: pulseUsers 2.6s ease-in-out infinite;
+        &.icone-users {
+          color: #3B82F6;
         }
 
-        &.icone-bounce-box {
-          animation: bounceParcel 2.4s ease-in-out infinite;
+        &.icone-box {
+          color: #EEA823;
+        }
+
+        &.icone-wallet {
+          color: #10B981;
+        }
+
+        &.icone-cancel {
+          color: #EF4444;
+        }
+      }
+
+      &.capsule-portefeuille {
+        background: #F0FDF4;
+        border-color: #BBF7D0;
+
+        &:hover {
+          border-color: #10B981;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        }
+
+        .valeur-chiffre {
+          color: #065F46;
+
+          small {
+            font-size: 9.5px;
+            font-weight: 700;
+            color: #059669;
+          }
+        }
+      }
+
+      &.capsule-annulations {
+        background: #FEF2F2;
+        border-color: #FECACA;
+
+        &:hover {
+          border-color: #EF4444;
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+        }
+
+        .valeur-chiffre {
+          color: #991B1B;
+        }
+
+        .libelle-texte {
+          color: #DC2626;
         }
       }
 

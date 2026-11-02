@@ -16,7 +16,7 @@
       <!-- 1. Micro-stat Utilisateurs (indicateur)-->
       <button type="button" class="micro-stat-capsule capsule-utilisateurs"
               (click)="ouvrirPanneau('UTILISATEURS')" title="Voir les utilisateurs, leur état et leurs actions">
-        <span class="icone-animee icone-pulse-users">👥</span>
+        <mat-icon class="icone-stat icone-users">people</mat-icon>
         <span class="capsule-chiffre-bloc">
           <span class="valeur-chiffre">{{ (resume()?.utilisateurs?.total ?? 0).toLocaleString('fr-FR') }}</span>
           <span class="libelle-texte">utilisateurs</span>
@@ -26,14 +26,35 @@
       <!-- 2. Micro-stat Colis / Convois : ouvre la liste des groupes lancés -->
       <button type="button" class="micro-stat-capsule capsule-colis"
               (click)="ouvrirPanneau('CONVOIS')" title="Voir les groupes lancés et leurs informations">
-        <span class="icone-animee icone-bounce-box">📦</span>
+        <mat-icon class="icone-stat icone-box">inventory_2</mat-icon>
         <span class="capsule-chiffre-bloc">
           <span class="valeur-chiffre">{{ resume()?.totalGroupes ?? groupes().length }}</span>
           <span class="libelle-texte">convois</span>
         </span>
       </button>
 
-      <!-- 3. Unique accès au panneau de statistiques générales -->
+      <!-- 3. Micro-stat Portefeuille Séquestre & Trésorerie Centrale -->
+      <button type="button" class="micro-stat-capsule capsule-portefeuille"
+              (click)="allerVersFinance()" title="Consulter le portefeuille sous séquestre et la trésorerie">
+        <mat-icon class="icone-stat icone-wallet">account_balance_wallet</mat-icon>
+        <span class="capsule-chiffre-bloc">
+          <span class="valeur-chiffre">{{ (resume()?.totalSequestreBloque ?? 0).toLocaleString('fr-FR') }} <small>FCFA</small></span>
+          <span class="libelle-texte">séquestre</span>
+        </span>
+      </button>
+
+      <!-- 4. Micro-stat Annulations de commandes si présentes -->
+      <button *ngIf="(resume()?.totalAnnulations ?? 0) > 0" type="button"
+              class="micro-stat-capsule capsule-annulations"
+              (click)="allerVersFinance()" title="Commandes annulées et remboursements">
+        <mat-icon class="icone-stat icone-cancel">assignment_return</mat-icon>
+        <span class="capsule-chiffre-bloc">
+          <span class="valeur-chiffre">{{ resume()?.totalAnnulations }}</span>
+          <span class="libelle-texte">annulations</span>
+        </span>
+      </button>
+
+      <!-- 5. Unique accès au panneau de statistiques générales -->
       <button
         type="button"
         class="btn-stats-icone-seule"
