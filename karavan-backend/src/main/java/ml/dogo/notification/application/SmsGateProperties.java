@@ -19,7 +19,7 @@ public record SmsGateProperties(
 ) {
     public SmsGateProperties {
         if (localUrl == null || localUrl.isBlank()) {
-            localUrl = "http://192.168.11.15:8080";
+            localUrl = "http://192.168.10.90:8080";
         }
         if (publicUrl == null || publicUrl.isBlank()) {
             publicUrl = "http://154.118.156.78:8080";
@@ -31,7 +31,7 @@ public record SmsGateProperties(
             password = "MZKakNJa";
         }
         if (deviceId == null || deviceId.isBlank()) {
-            deviceId = "ffffffffa25ede61000001a17e61d348";
+            deviceId = "ffffffffa25ede61000001a17e6";
         }
         if (simNumber <= 0) {
             simNumber = 1;

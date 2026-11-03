@@ -144,7 +144,7 @@
             <dt>Conditions</dt><dd>min. {{ g.conditions.quantiteMinParCommercant }} pce(s) · livraison {{ g.conditions.delaiLivraisonJours }} j</dd>
             <dt>Ouvert le</dt><dd>{{ dateCourte(g.dateOuverture) }}</dd>
             <dt>Limite</dt><dd>{{ dateCourte(g.dateLimite) }}</dd>
-            <dt>Stock</dt><dd>{{ g.disponibiliteValidee ? '✓ confirmé par le grossiste' : '⏳ non confirmé' }}</dd>
+            <dt>Stock</dt><dd>{{ g.disponibiliteValidee ? '✓ confirmé par le grossiste' : 'En attente de confirmation' }}</dd>
             <dt>Suivi colis</dt>
             <dd>
               <ng-container *ngIf="convoiAssocie() as c; else sansConvoi">

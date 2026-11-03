@@ -203,11 +203,60 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
         foregroundColor: AppTheme.couleurTexte(context),
         elevation: 0,
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
+      bottomNavigationBar: _produit == null
+          ? null
+          : Container(
+              decoration: BoxDecoration(
+                color: AppTheme.couleurCarte(context),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                left: false,
+                right: false,
+                bottom: true,
+                minimum: const EdgeInsets.only(bottom: 16),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  child: ElevatedButton(
+                    onPressed: _envoi || _produit == null ? null : _creer,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 54),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      elevation: 2,
+                    ),
+                    child: _envoi
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                          )
+                        : const Text("Créer et envoyer au grossiste", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  ),
+                ),
+              ),
+            ),
+      body: SafeArea(
+        top: false,
+        bottom: _produit == null,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              32 + (_produit == null ? MediaQuery.paddingOf(context).bottom : 16),
+            ),
+            children: [
             _titre("1. Produit du grossiste"),
             const SizedBox(height: 10),
             ..._sectionProduits(),
@@ -291,28 +340,13 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
               maxLines: 2,
               decoration: _decoration("Politique d'annulation"),
             ),
-            const SizedBox(height: 28),
-            ElevatedButton(
-              onPressed: _envoi || _produit == null ? null : _creer,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 54),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-              ),
-              child: _envoi
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
-                    )
-                  : const Text("Créer et envoyer au grossiste", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-            ),
+            const SizedBox(height: 12),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   List<Widget> _sectionProduits() {
     if (_chargement) {

@@ -855,7 +855,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
       // Barre d'action fixe en bas protégée des encoches et de la barre de navigation native (||| O <)
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppTheme.estSombre(context) ? AppTheme.darkCard : Colors.white,
+          color: AppTheme.couleurCarte(context),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.08),

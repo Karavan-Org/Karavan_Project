@@ -1050,7 +1050,7 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: MediaQuery.paddingOf(context).bottom + 24),
           ],
         ),
       ),

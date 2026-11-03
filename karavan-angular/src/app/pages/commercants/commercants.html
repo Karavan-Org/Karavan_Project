@@ -7,7 +7,7 @@
       <p>Supervision des comptes acheteurs, suivi des achats groupés et retraits sécurisés.</p>
     </div>
     <div class="header-btns">
-      <button class="btn-sec" (click)="charger()">Actualiser l’annuaire 📄</button>
+      <button class="btn-sec" (click)="charger()">Actualiser l’annuaire</button>
       <button class="btn-primary" [disabled]="envoi()" (click)="validerRetrait()">Valider un retrait (QR / PIN)</button>
     </div>
   </header>
@@ -107,7 +107,7 @@
         <p>Code bloqué après 3 essais ou perdu : un nouveau code est envoyé par SMS au commerçant.</p>
         <p *ngIf="message()"><small>{{ message() }}</small></p>
         <button class="btn-dark" [disabled]="envoi()" (click)="generateEmergencyPin()">
-          Générer un Code PIN de Secours 🔑
+          Générer un Code PIN de Secours
         </button>
       </div>
 

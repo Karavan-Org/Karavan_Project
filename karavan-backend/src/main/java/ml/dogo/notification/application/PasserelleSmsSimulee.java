@@ -12,7 +12,7 @@ public class PasserelleSmsSimulee implements PasserelleSms {
 
     @Override
     public boolean envoyer(String telephone, String message) {
-        LOG.info("📱 [SMS DoGo REÇU] -> {} : {}", telephone, message);
+        LOG.info("[SMS RECU] -> {} : {}", telephone, message);
         return true;
     }
 }

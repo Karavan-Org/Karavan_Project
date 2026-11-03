@@ -94,7 +94,7 @@
           <p *ngIf="g.courtier">Courtier : <strong>{{ g.courtier.nom }}</strong></p>
           <p>Prix fixé : <strong>{{ fcfa(g.prixUnitaire) }} / pc</strong></p>
           <span class="check-text">
-            {{ g.disponibiliteValidee ? '✓ Stock confirmé par le grossiste (RG-18)' : '⏳ Stock pas encore confirmé' }}
+            {{ g.disponibiliteValidee ? '✓ Stock confirmé par le grossiste (RG-18)' : 'Stock en cours de confirmation' }}
             · Min. {{ g.conditions.quantiteMinParCommercant }} pcs/commerçant
           </span>
         </div>

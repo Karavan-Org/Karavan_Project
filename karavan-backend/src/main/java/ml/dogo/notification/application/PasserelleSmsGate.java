@@ -43,7 +43,7 @@ public class PasserelleSmsGate implements PasserelleSms {
     @Override
     public boolean envoyer(String telephoneBrut, String message) {
         if (!properties.actif()) {
-            LOG.info("📱 [SMSGate DÉSACTIVÉ] Utilisation de la simulation locale pour {}", telephoneBrut);
+            LOG.info("[SMSGate DESACTIVE] Utilisation de la simulation locale pour {}", telephoneBrut);
             return fallback.envoyer(telephoneBrut, message);
         }
 
@@ -55,13 +55,13 @@ public class PasserelleSmsGate implements PasserelleSms {
         // 2. Si échec ou hors réseau local, essai sur l'adresse publique (ex: http://154.118.156.78:8080)
         if (!envoye && properties.publicUrl() != null && !properties.publicUrl().isBlank()
                 && !properties.publicUrl().equalsIgnoreCase(properties.localUrl())) {
-            LOG.info("🔄 [SMSGate] Tentative sur l'adresse publique SMSGate : {}", properties.publicUrl());
+            LOG.info("[SMSGate] Tentative sur l'adresse publique SMSGate : {}", properties.publicUrl());
             envoye = tenterEnvoiSurUrl(properties.publicUrl(), telephone, message, "Public");
         }
 
         // 3. Repli automatique en journalisation si le téléphone est déconnecté ou éteint
         if (!envoye) {
-            LOG.warn("⚠️ [SMSGate INDISPONIBLE] Impossible de joindre le téléphone Android sur {} ou {}. " +
+            LOG.warn("[SMSGate INDISPONIBLE] Impossible de joindre le téléphone Android sur {} ou {}. " +
                      "Repli sur les logs pour ne pas bloquer l'OTP.", properties.localUrl(), properties.publicUrl());
             fallback.envoyer(telephoneBrut, message);
         }
@@ -99,16 +99,16 @@ public class PasserelleSmsGate implements PasserelleSms {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                LOG.info("✅ [SMSGate SUCCÈS - {}] SMS envoyé avec succès à {} ! Réponse : {}",
+                LOG.info("[SMSGate SUCCES - {}] SMS envoyé avec succès à {} ! Réponse : {}",
                         contexte, telephone, response.body());
                 return true;
             } else {
-                LOG.warn("❌ [SMSGate ERREUR - {}] Code HTTP {} reçu de {} : {}",
+                LOG.warn("[SMSGate ERREUR - {}] Code HTTP {} reçu de {} : {}",
                         contexte, response.statusCode(), url, response.body());
                 return false;
             }
         } catch (Exception e) {
-            LOG.warn("⚠️ [SMSGate TIMEOUT/ERREUR - {}] Impossible de contacter {} : {}",
+            LOG.warn("[SMSGate TIMEOUT/ERREUR - {}] Impossible de contacter {} : {}",
                     contexte, baseUrl, e.getMessage());
             return false;
         }

@@ -401,6 +401,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   void _ouvrirSelectionPhotoModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppTheme.couleurCarte(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -415,23 +416,24 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppTheme.bordureForte,
+                  color: AppTheme.couleurBordureForte(context),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
+            Text(
               "Ajouter une photo du produit",
               style: TextStyle(
                   fontFamily: AppTheme.policeTitre,
                   fontWeight: FontWeight.w800,
-                  fontSize: 17),
+                  fontSize: 17,
+                  color: AppTheme.couleurTexte(context)),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               "Prenez une photo en direct ou choisissez depuis votre galerie",
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+              style: TextStyle(color: AppTheme.couleurTexteAttenue(context), fontSize: 13),
             ),
             const SizedBox(height: 20),
             ListTile(
@@ -444,18 +446,18 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 child: const Icon(Icons.camera_alt_rounded,
                     color: AppTheme.primary, size: 26),
               ),
-              title: const Text("Prendre une photo (Caméra)",
+              title: Text("Prendre une photo (Caméra)",
                   style:
-                      TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-              subtitle: const Text(
+                      TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.couleurTexte(context))),
+              subtitle: Text(
                   "Ouvrir l'appareil photo du téléphone ou webcam",
-                  style: TextStyle(fontSize: 12)),
+                  style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context))),
               onTap: () {
                 Navigator.pop(ctx);
                 _prendrePhoto();
               },
             ),
-            const Divider(height: 16),
+            Divider(height: 16, color: AppTheme.couleurBordure(context)),
             ListTile(
               leading: Container(
                 padding: const EdgeInsets.all(12),
@@ -466,11 +468,11 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 child: const Icon(Icons.photo_library_rounded,
                     color: AppTheme.ocreProfond, size: 26),
               ),
-              title: const Text("Choisir depuis la galerie",
+              title: Text("Choisir depuis la galerie",
                   style:
-                      TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-              subtitle: const Text("Sélectionner une photo déjà enregistrée",
-                  style: TextStyle(fontSize: 12)),
+                      TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppTheme.couleurTexte(context))),
+              subtitle: Text("Sélectionner une photo déjà enregistrée",
+                  style: TextStyle(fontSize: 12, color: AppTheme.couleurTexteAttenue(context))),
               onTap: () {
                 Navigator.pop(ctx);
                 _selectionnerDepuisGalerie();
@@ -681,6 +683,44 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         elevation: 0,
         centerTitle: true,
       ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.couleurCarte(context),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          left: false,
+          right: false,
+          bottom: true,
+          minimum: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _soumettreProduit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 54),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                elevation: 2,
+              ),
+              child: const Text(
+                "Enregistrer dans mon catalogue",
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              ),
+            ),
+          ),
+        ),
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -694,11 +734,11 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           "Photos du produit (Obligatoire)",
                           style: TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 14),
+                              fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
                         ),
                       ),
                       TextButton.icon(
@@ -790,18 +830,24 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppTheme.couleurCarte(context),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppTheme.bordureForte),
+                            border: Border.all(color: AppTheme.couleurBordure(context)),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<int>(
+                              dropdownColor: AppTheme.couleurCarte(context),
                               value: _selectedCategorieId,
                               items: _categories.map((c) {
                                 return DropdownMenuItem<int>(
                                   value: c['id'] as int,
-                                  child: Text(c['nom'] as String,
-                                      style: const TextStyle(fontSize: 13.5)),
+                                  child: Text(
+                                    c['nom'] as String,
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      color: AppTheme.couleurTexte(context),
+                                    ),
+                                  ),
                                 );
                               }).toList(),
                               onChanged: (v) {
@@ -809,6 +855,16 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                   setState(() => _selectedCategorieId = v);
                                 }
                               },
+                              hint: Text(
+                                "Sélectionnez une catégorie",
+                                style: TextStyle(
+                                  color: AppTheme.couleurTexteAttenue(context),
+                                  fontSize: 13.5,
+                                ),
+                              ),
+                              isExpanded: true,
+                              icon: const Icon(Icons.arrow_drop_down,
+                                  color: AppTheme.primary),
                             ),
                           ),
                         ),
@@ -838,9 +894,12 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                             final info = PaysResolverService.instance.resoudre(val.text);
                             return TextFormField(
                               controller: _paysOrigineController,
+                              style: TextStyle(color: AppTheme.couleurTexte(context), fontSize: 14),
                               decoration: InputDecoration(
                                 labelText: "Pays d'origine *",
+                                labelStyle: TextStyle(color: AppTheme.couleurTexteAttenue(context)),
                                 hintText: "Ex : Turquie, Chine, Mali, Brésil...",
+                                hintStyle: TextStyle(color: AppTheme.couleurTexteAttenue(context)),
                                 prefixIcon: Padding(
                                   padding: const EdgeInsets.only(left: 12, right: 8),
                                   child: Row(
@@ -926,10 +985,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             "Variantes & Stocks de gros",
                             style: TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 14),
+                                fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
                           ),
                           Text(
                             _variantes.isEmpty
@@ -938,8 +997,8 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               color: _variantes.isEmpty
-                                  ? AppTheme.ocreProfond
-                                  : AppTheme.textMuted,
+                                  ? AppTheme.couleurAttention(context)
+                                  : AppTheme.couleurTexteAttenue(context),
                               fontWeight: _variantes.isEmpty
                                   ? FontWeight.w600
                                   : FontWeight.normal,
@@ -964,9 +1023,9 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       padding: const EdgeInsets.symmetric(
                           vertical: 24, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.couleurCarte(context),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.bordure),
+                        border: Border.all(color: AppTheme.couleurBordure(context)),
                       ),
                       child: Column(
                         children: [
@@ -974,17 +1033,17 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                               size: 36,
                               color: AppTheme.primary.withValues(alpha: 0.7)),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             "Aucune variante définie",
                             style: TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 14),
+                                fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             "Renseignez au moins une taille, couleur et quantité en stock.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                                fontSize: 12, color: AppTheme.textMuted),
+                                fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
                           ),
                           const SizedBox(height: 12),
                           OutlinedButton.icon(
@@ -1004,9 +1063,9 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   else
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.couleurCarte(context),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.bordure),
+                        border: Border.all(color: AppTheme.couleurBordure(context)),
                       ),
                       child: Material(
                           type: MaterialType.transparency,
@@ -1018,8 +1077,8 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: _variantes.length,
-                                separatorBuilder: (_, __) => const Divider(
-                                    height: 1, color: AppTheme.bordure),
+                                separatorBuilder: (_, __) => Divider(
+                                    height: 1, color: AppTheme.couleurBordure(context)),
                                 itemBuilder: (context, index) {
                                   final v = _variantes[index];
                                   return ListTile(
@@ -1046,9 +1105,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                         Flexible(
                                           child: Text(
                                             "Taille : ${v['taille']}",
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontWeight: FontWeight.w700,
-                                                fontSize: 13),
+                                                fontSize: 13,
+                                                color: AppTheme.couleurTexte(context)),
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
@@ -1057,15 +1117,15 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 8, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: AppTheme.surfaceDouce,
+                                            color: AppTheme.couleurSurfaceDouce(context),
                                             borderRadius:
                                                 BorderRadius.circular(6),
                                           ),
                                           child: Text(
                                             "${v['couleur']}",
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 11.5,
-                                                color: AppTheme.terreDouce,
+                                                color: AppTheme.couleurTexte(context),
                                                 fontWeight: FontWeight.w600),
                                           ),
                                         ),
@@ -1075,14 +1135,14 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                       padding: const EdgeInsets.only(top: 2),
                                       child: Row(
                                         children: [
-                                          const Icon(Icons.inventory_2_outlined,
+                                          Icon(Icons.inventory_2_outlined,
                                               size: 13,
-                                              color: AppTheme.oliveProfond),
+                                              color: AppTheme.couleurSucces(context)),
                                           const SizedBox(width: 4),
                                           Text(
                                             "Stock : ${v['stock']} unités",
-                                            style: const TextStyle(
-                                                color: AppTheme.oliveProfond,
+                                            style: TextStyle(
+                                                color: AppTheme.couleurSucces(context),
                                                 fontWeight: FontWeight.w600,
                                                 fontSize: 11.5),
                                           ),
@@ -1095,8 +1155,8 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                             Flexible(
                                               child: Text(
                                                 "• ${v['sku']}",
-                                                style: const TextStyle(
-                                                    color: AppTheme.textMuted,
+                                                style: TextStyle(
+                                                    color: AppTheme.couleurTexteAttenue(context),
                                                     fontSize: 11),
                                                 overflow: TextOverflow.ellipsis,
                                               ),
@@ -1168,24 +1228,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           )),
                     ),
 
-                  const SizedBox(height: 32),
-
-                  // --- BOUTON DE SOUMISSION ---
-                  ElevatedButton(
-                    onPressed: _isSubmitting ? null : _soumettreProduit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      minimumSize: const Size(double.infinity, 54),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: const Text(
-                      "Enregistrer dans mon catalogue",
-                      style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                    ),
-                  ),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
@@ -1200,7 +1243,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.couleurCarte(context),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Column(
@@ -1210,14 +1253,14 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       const SizedBox(height: 18),
                       Text(
                         _submissionMessage,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 14),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.couleurTexte(context)),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
+                      Text(
                         "Veuillez patienter...",
                         style:
-                            TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                            TextStyle(color: AppTheme.couleurTexteAttenue(context), fontSize: 12),
                       ),
                     ],
                   ),
@@ -1237,9 +1280,9 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
       height: 200,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.couleurCarte(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.bordureForte),
+        border: Border.all(color: AppTheme.couleurBordure(context)),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -1258,16 +1301,16 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       _uploadedImageBytes!,
                       fit: BoxFit.contain,
                     )
-                  : const Column(
+                  : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.add_a_photo_outlined,
+                        const Icon(Icons.add_a_photo_outlined,
                             size: 48, color: AppTheme.primary),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
                           "Aucune photo : prenez-en une ou importez-la",
                           style: TextStyle(
-                              fontSize: 12, color: AppTheme.textMuted),
+                              fontSize: 12, color: AppTheme.couleurTexteAttenue(context)),
                         ),
                       ],
                     ),
@@ -1317,7 +1360,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: AppTheme.couleurCarte(context).withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                       boxShadow: const [
                         BoxShadow(color: Colors.black12, blurRadius: 4)
@@ -1333,7 +1376,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   const SizedBox(width: 8),
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: AppTheme.couleurCarte(context).withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                       boxShadow: const [
                         BoxShadow(color: Colors.black12, blurRadius: 4)
@@ -1367,8 +1410,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
+      style: TextStyle(color: AppTheme.couleurTexte(context), fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: AppTheme.couleurTexteAttenue(context)),
         prefixIcon: Icon(icon, color: AppTheme.primary, size: 20),
         filled: true,
         fillColor: AppTheme.couleurCarte(context),

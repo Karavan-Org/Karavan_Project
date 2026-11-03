@@ -13,7 +13,7 @@
     <main class="colonne">
       <section class="card">
         <div class="onglets">
-          <button type="button" [class.actif]="mode() === 'CAMERA'" (click)="changerMode('CAMERA')">📷 Scanner avec la caméra</button>
+          <button type="button" [class.actif]="mode() === 'CAMERA'" (click)="changerMode('CAMERA')">Scanner avec la caméra</button>
           <button type="button" [class.actif]="mode() === 'LECTEUR'" (click)="changerMode('LECTEUR')">Lecteur de QR code</button>
           <button type="button" [class.actif]="mode() === 'PIN'" (click)="changerMode('PIN')">N° de commande + PIN</button>
         </div>

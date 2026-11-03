@@ -51,10 +51,10 @@
             Suspendre…
           </button>
           <button class="btn-main" type="button" (click)="messageSupportOuvert.set(!messageSupportOuvert())" style="background:var(--info);color:#fff;">
-            💬 Répondre / Support…
+            Répondre / Support…
           </button>
           <button class="btn-sec" type="button" (click)="diffusionAdminsOuverte.set(!diffusionAdminsOuverte())">
-            📢 Note aux Admins…
+            Note aux Admins…
           </button>
         </ng-container>
         <button class="btn-sec" type="button" [disabled]="chargement()" (click)="charger()">Actualiser</button>
@@ -95,7 +95,7 @@
 
     <!-- Formulaire d'envoi de message Support à l'utilisateur -->
     <form class="card formulaire support" *ngIf="messageSupportOuvert()" (ngSubmit)="envoyerMessageSupport()" style="border-left: 4px solid var(--info); background: var(--info-light); padding: 16px; margin-bottom: 20px; border-radius: 8px;">
-      <h3 style="margin-top: 0; color: var(--info); font-size: 15px; font-weight: 600;">💬 Répondre à l'utilisateur (Notification In-App + SMS)</h3>
+      <h3 style="margin-top: 0; color: var(--info); font-size: 15px; font-weight: 600;">Répondre à l'utilisateur (Notification In-App + SMS)</h3>
       <p style="font-size: 13px; color: var(--text-body); margin: 4px 0 12px;">
         Votre message sera transmis instantanément sur l'application mobile de {{ m.nom }} ({{ m.telephone }}) et sauvegardé dans le journal d'audit.
       </p>
@@ -234,7 +234,7 @@
                   <td><span class="badge" [ngClass]="c.statut === 'COLLECTEE' ? 'green' : c.statut === 'EN_ATTENTE_RETRAIT' ? 'yellow' : 'orange'">{{ libellesCommande[c.statut] ?? c.statut }}</span></td>
                   <td class="text-right">
                     <button class="btn-sm" type="button" *ngIf="c.statut === 'EN_ATTENTE_RETRAIT' && auth.peut('RETRAIT_VALIDER')" [disabled]="envoi()" (click)="regenererCode(c)">
-                      Nouveau code 🔑
+                      Nouveau code
                     </button>
                   </td>
                 </tr>

@@ -124,7 +124,7 @@
                     <!-- Numéro de téléphone -->
                     <div class="form-group">
                         <div class="input-wrapper">
-                            <span class="icon">📱</span>
+                            <mat-icon class="icon">phone_android</mat-icon>
                             <input type="tel" formControlName="telephone" [readonly]="otpEnvoye" placeholder="Numéro de téléphone (+223)" />
                         </div>
                     </div>
@@ -139,7 +139,7 @@
                     <ng-container *ngIf="otpEnvoye">
                         <div class="form-group" style="margin-top: 14px;">
                             <div class="input-wrapper">
-                                <span class="icon">🔢</span>
+                                <mat-icon class="icon">pin</mat-icon>
                                 <input type="text" formControlName="codeOtp" maxlength="4" placeholder="Code à 4 chiffres" style="letter-spacing: 6px; font-weight: 800; font-size: 18px; text-align: center;" />
                             </div>
                         </div>
@@ -149,7 +149,7 @@
                                 Renvoyer le code dans {{ secondesRestantes }} s
                             </span>
                             <button *ngIf="secondesRestantes === 0" type="button" (click)="demanderOtpGoogle()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-weight:700;padding:0;">
-                                🔄 Renvoyer le code SMS
+                                Renvoyer le code SMS
                             </button>
                         </div>
 
