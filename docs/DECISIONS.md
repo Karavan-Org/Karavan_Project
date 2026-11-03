@@ -197,3 +197,49 @@ Les bases contenaient des comptes administrateurs de démonstration (`+223700000
 
 #### 4. Code de sécurité à 4 chiffres
 - Distinct du mot de passe : au premier paramétrage, l'administrateur saisit le code provisoire `1234` puis choisit son code personnel (voir ADR-022, RG-SEC-03).
+
+## ADR-024 : Codes de retrait (QR) et QR colis sécurisés pour Karavan
+
+### Contexte
+La livraison des commandes d'achats groupés aux commerçants et la traçabilité des lots d'importation nécessitent une validation sécurisée, sans données lisibles en clair dans les QR codes, avec usage unique strict, prévention des doubles scans simultanés, et solution de secours en cas de smartphone déchargé.
+
+### Ce qui existait déjà et ce qui a été conservé (Réutilisation)
+1. **Table et persistance `code_retrait`** :
+   - Déjà présente pour lier une commande à son retrait.
+   - Conservée intégralement et étendue de manière non-destructive par la migration `V28__qr_retrait_et_colis.sql` (colonnes `jeton_hash`, `code_court_hash`, `jeton_chiffre`, `type_qr`, `statut`).
+2. **Logique métier existante de `RetraitService`** :
+   - Verrouillage pessimiste ordonné des commandes du groupe (`commandes.verrouillerDuGroupe`) pour éviter tout interblocage.
+   - Déblocage automatique des fonds du séquestre (`finance.libererSequestre(participationId)`) selon le mode configuré (`fonds.liberation.mode`), conservé sans altération.
+   - Journalisation d'audit chaînée (`audit.tracer`) et notifications clients (`notifications.notifier`).
+3. **Cycle de vie de la commande** :
+   - Génération automatique du code de retrait lors du passage à l'état `PRÊT À RETIRER` / `EN_ATTENTE_RETRAIT`.
+
+### Décisions d'Implémentation
+
+#### 1. Deux types de QR étanches (KVR. et KVC.)
+- **QR de retrait (`KVR.`)** : rattaché à une commande client, scanné par l'agent ou le courtier au point de retrait. Fait passer la commande à `COLLECTEE` (`RETIRÉE`).
+- **QR colis (`KVC.`)** : rattaché à une expédition / lot, scanné à l'arrivée au dépôt ou au point de retrait. Fait passer l'expédition à `ARRIVE` et bascule les commandes associées à `EN_ATTENTE_RETRAIT`.
+- **Incompatibilité stricte** : un jeton `KVR.` présenté pour valider une arrivée de colis est immédiatement rejeté avec le motif « Type de QR invalide : attendu KVC, reçu KVR » (et réciproquement).
+
+#### 2. Sécurité cryptographique et opacité totale
+- **Jeton opaque** : 128 bits minimum générés par `SecureRandom`, encodés en base64url sans padding, préfixés par `KVR.` ou `KVC.`. Aucune donnée lisible dans le QR (ni prix, ni identifiant, ni nom).
+- **Stockage par hash SHA-256** : le serveur ne stocke en clair aucun jeton. La recherche et la validation se font par empreinte SHA-256 (`jeton_hash`).
+- **Code court de secours (8 chiffres)** : généré aléatoirement pour les clients dont la batterie est déchargée, haché en SHA-256. Usage unique et même durée d'expiration que le QR code.
+- **Régénération atomique** : l'ancien code passe immédiatement à `ANNULE` ; un seul code peut être `ACTIF` à la fois pour une commande ou un lot.
+- **Mise à jour atomique anti-concurrence** : passage à `UTILISE` via `UPDATE ... SET statut = 'UTILISE' WHERE id = :id AND statut = 'ACTIF'`. Deux scans concurrents à la même milliseconde ne peuvent aboutir tous les deux ; le second reçoit « déjà utilisé » avec horodatage.
+- **Protection anti-brute-force** : limitation stricte des tentatives par agent et par adresse IP (`QrSecuriteService`, 10 tentatives / minute).
+
+#### 3. Émission d'étiquette serveur (ZXing)
+- Génération d'images PNG noir sur blanc via `com.google.zxing:core` et `javase` avec correction d'erreur niveau M/Q et zone de silence.
+- Endpoint admin dédié : `GET /api/admin/expeditions/{id}/etiquette-qr`.
+
+#### 4. Intégration Flutter
+- **Commerçant (`CodeRetraitCommercantScreen`)** : affichage du QR code noir sur blanc via `qr_flutter`, luminosité d'écran poussée à 100% avec maintien allumé (`wakelock_plus`), code court 8 chiffres bien visible dessous, mise en cache locale pour affichage hors-réseau une fois chargé, et bouton de régénération avec confirmation.
+- **Agent / Courtier (`ScannerRetraitScreen`)** : détection en temps réel via `mobile_scanner`, aiguillage automatique `KVR.` / `KVC.`, retour visuel vert/rouge à fort contraste, gestion du refus de permission caméra en français, et dialogue de saisie manuelle du code court.
+- Permissions déclarées dans `AndroidManifest.xml` et iOS `Info.plist` (`NSCameraUsageDescription`).
+
+#### 5. Console Admin Angular (`corridors` & `retraits`)
+- Page de l'expédition : affichage du statut du QR colis, bouton « Imprimer l'étiquette QR » (fenêtre d'impression avec aperçu), bouton « Annuler / régénérer le code » avec boîte de dialogue de confirmation, et historique des codes/scans.
+- Saisie manuelle du code court / jeton pour valider l'arrivée d'un lot à Bamako.
+- Validation des retraits au guichet supportant à la fois les jetons QR, les codes courts 8 chiffres et les PIN historiques.
+

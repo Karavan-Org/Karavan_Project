@@ -126,7 +126,8 @@ public class ConvoiService {
                 throw new ErreurMetier(CodeErreur.ACCES_REFUSE, null, "Seul le courtier responsable de ce groupe peut créer son convoi");
             }
         }
-        if (g.quantiteConfirmee() < g.quantiteCible() && !"OBJECTIF_ATTEINT".equals(g.statut()) && !"EN_EXPEDITION".equals(g.statut()) && !"LIVRE".equals(g.statut())) {
+        int engage = g.quantiteConfirmee() + g.quantiteReservee();
+        if (engage < g.quantiteCible() && !"OBJECTIF_ATTEINT".equals(g.statut()) && !"EN_EXPEDITION".equals(g.statut()) && !"LIVRE".equals(g.statut())) {
             throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, null,
                     "Ce groupe n'a pas atteint l'objectif (progression inférieure à 100%).");
         }
@@ -137,6 +138,9 @@ public class ConvoiService {
             throw new ErreurMetier(CodeErreur.CONFLIT, null, "Cette référence de convoi existe déjà");
         }
         Instant maintenant = horloge.instant();
+        if (g.ouvert()) {
+            groupes.transitionner(d.groupeId(), "OBJECTIF_ATTEINT", moi.estAdministrateur() ? "ADMINISTRATEUR" : "COURTIER");
+        }
         Expedition e = new Expedition(d.groupeId(), d.reference().strip(), StatutExpedition.ACHETE, maintenant, d.transporteur());
         e = expeditions.save(e);
         evenements.save(new EvenementLogistique(e.getId(), "CREATION_CONVOI", maintenant, "Origine"));

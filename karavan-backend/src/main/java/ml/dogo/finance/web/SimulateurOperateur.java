@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Démonstration uniquement (profil « demo ») : joue le rôle de l'opérateur Mobile Money. Il fabrique un vrai callback,
  * le signe avec le secret partagé et le fait passer par le même chemin que celui d'un opérateur réel.
  */
-@Profile("demo")
+@Profile({"demo", "local", "dev"})
 @PreAuthorize("hasAnyAuthority('ADMIN_CREER', 'PAIEMENT_EFFECTUER')")
 @RestController
 @RequestMapping("/api/dev/mobile-money")
