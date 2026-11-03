@@ -111,7 +111,9 @@ class ApiConfig {
   static const String mesCommandes = '/api/moi/commandes';
   static String commandeDetail(dynamic id) => '/api/commandes/$id';
   static String codeRetrait(dynamic commandeId) => '/api/commandes/$commandeId/code-retrait';
+  static String regenererCodeRetrait(dynamic commandeId) => '/api/commandes/$commandeId/code-retrait/regeneration';
   static const String validerRetrait = '/api/retraits/valider';
+  static const String validerArriveeColis = '/api/colis/valider-arrivee';
   static const String pointsRetrait = '/api/points-retrait';
 
   // --- Endpoints Catalogue Grossiste & Upload Photos ---
