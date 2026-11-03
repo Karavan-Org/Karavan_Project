@@ -10,7 +10,8 @@ import java.time.Instant;
 
 /**
  * Entité QR Colis : jeton opaque unique associé à une expédition / convoi de marchandises.
- * Le jeton brut (préfixé 'KVC.') n'est jamais conservé en base de données : seul son hash SHA-256 est stocké.
+ * Le jeton brut (préfixé 'KVC.') n'est jamais conservé en base de données en clair : seul son hash SHA-256
+ * est indexé pour la recherche, et une version chiffrée (AES) permet la régénération de l'étiquette par l'admin.
  */
 @Entity
 @Table(name = "qr_colis")
@@ -25,6 +26,9 @@ public class QrColis {
 
     @Column(name = "token_hash", nullable = false, unique = true)
     private String tokenHash;
+
+    @Column(name = "token_chiffre")
+    private String tokenChiffre;
 
     @Column(name = "code_court_hash", nullable = false, unique = true)
     private String codeCourtHash;
@@ -50,9 +54,10 @@ public class QrColis {
     protected QrColis() {
     }
 
-    public QrColis(Long expeditionId, String tokenHash, String codeCourtHash, Instant expiration, Instant dateCreation) {
+    public QrColis(Long expeditionId, String tokenHash, String tokenChiffre, String codeCourtHash, Instant expiration, Instant dateCreation) {
         this.expeditionId = expeditionId;
         this.tokenHash = tokenHash;
+        this.tokenChiffre = tokenChiffre;
         this.codeCourtHash = codeCourtHash;
         this.expiration = expiration;
         this.dateCreation = dateCreation;
@@ -63,6 +68,7 @@ public class QrColis {
     public Long getId() { return id; }
     public Long getExpeditionId() { return expeditionId; }
     public String getTokenHash() { return tokenHash; }
+    public String getTokenChiffre() { return tokenChiffre; }
     public String getCodeCourtHash() { return codeCourtHash; }
     public String getStatut() { return statut; }
     public Instant getExpiration() { return expiration; }

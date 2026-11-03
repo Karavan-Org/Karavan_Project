@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS qr_colis (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     expedition_id BIGINT NOT NULL,
     token_hash VARCHAR(64) NOT NULL,
+    token_chiffre VARCHAR(255) NULL,
     code_court_hash VARCHAR(64) NOT NULL,
     statut VARCHAR(20) NOT NULL DEFAULT 'ACTIF',
     expiration DATETIME(3) NOT NULL,
