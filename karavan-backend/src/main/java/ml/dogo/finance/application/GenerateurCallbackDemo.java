@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Démonstration uniquement : fabrique le corps JSON qu'enverrait l'opérateur Mobile Money pour un paiement donné. */
-@Profile("demo")
+@Profile({"demo", "local", "dev"})
 @Service
 public class GenerateurCallbackDemo {
 

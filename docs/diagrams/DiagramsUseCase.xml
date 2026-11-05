@@ -10,7 +10,7 @@
     </mxCell>
     <mxCell id="pWutEnMYGYoR6DZl-zsI-3" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Grossiste" vertex="1">
       <mxGeometry height="60" width="30" x="460" y="311" as="geometry" />
-    </mxCell>
+    <!-- </mxCell>la -->
     <mxCell id="pWutEnMYGYoR6DZl-zsI-4" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Courtier&amp;nbsp;" vertex="1">
       <mxGeometry height="60" width="30" x="460" y="747" as="geometry" />
     </mxCell>

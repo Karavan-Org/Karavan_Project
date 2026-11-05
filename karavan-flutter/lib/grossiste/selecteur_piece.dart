@@ -15,6 +15,7 @@ typedef FichierChoisi = ({Uint8List octets, String nom});
 Future<FichierChoisi?> choisirPiece(BuildContext context, {required String titre}) async {
   final source = await showModalBottomSheet<String>(
     context: context,
+    useSafeArea: true,
     backgroundColor: AppTheme.couleurCarte(context),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),

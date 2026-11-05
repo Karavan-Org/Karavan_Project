@@ -1,9 +1,8 @@
 package ml.dogo.logistique.application;
 
-import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.HexFormat;
 import java.util.List;
 import ml.dogo.audit.api.AuditApi;
 import ml.dogo.groupeachat.api.GroupeAchatApi;
@@ -24,6 +23,7 @@ import ml.dogo.shared.config.DogoProperties;
 import ml.dogo.shared.errors.CodeErreur;
 import ml.dogo.shared.errors.ErreurMetier;
 import ml.dogo.shared.security.UtilisateurCourant;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -32,7 +32,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * Codes de retrait et validation du retrait (RG-53 à RG-56).
+ * Codes de retrait (QR / code court de secours) et validation du retrait (RG-53 à RG-56).
  *
  * <p>Un retrait verrouille toutes les commandes du groupe, dans l'ordre des identifiants : deux retraits du même groupe
  * se suivent (et le dernier voit que tout est collecté), sans interblocage possible. La ligne du code n'est jamais
@@ -41,14 +41,19 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Service
 public class RetraitService {
 
-    /** Ce que voit le Commerçant : le jeton du QR code seulement. Le PIN n'est jamais relisible (RG-71). */
-    public record CodeVue(long commandeId, String qrToken, Instant expiration, int tentativesRestantes, boolean bloque) {
+    /** Ce que voit le Commerçant : le jeton du QR code et le code court. */
+    public record CodeVue(long commandeId, String qrToken, String codeCourt, Instant expiration, int tentativesRestantes, boolean bloque) {
+        public CodeVue(long commandeId, String qrToken, Instant expiration, int tentativesRestantes, boolean bloque) {
+            this(commandeId, qrToken, null, expiration, tentativesRestantes, bloque);
+        }
     }
 
-    public record RetraitVue(long commandeId, String statut, Instant date, String mode) {
+    public record RetraitVue(long commandeId, String statut, Instant date, String mode,
+                             String nomClient, String marchandise, Integer quantite, String message) {
+        public RetraitVue(long commandeId, String statut, Instant date, String mode) {
+            this(commandeId, statut, date, mode, null, null, null, null);
+        }
     }
-
-    private static final SecureRandom ALEA = new SecureRandom();
 
     private final CommandeRepository commandes;
     private final CodeRetraitRepository codes;
@@ -62,12 +67,15 @@ public class RetraitService {
     private final NotificationApi notifications;
     private final PasswordEncoder encodeur;
     private final DogoProperties proprietes;
+    private final QrSecuriteService qrSecurite;
     private final Clock horloge;
+    private final int expirationJours;
 
     public RetraitService(CommandeRepository commandes, CodeRetraitRepository codes, PreuveRetraitRepository preuves,
-                          PointRetraitRepository points, CompteursRetrait compteurs, GroupeAchatApi campagne, FinanceApi finance, IdentiteApi identite,
-                          AuditApi audit, NotificationApi notifications, PasswordEncoder encodeur,
-                          DogoProperties proprietes, Clock horloge) {
+                          PointRetraitRepository points, CompteursRetrait compteurs, GroupeAchatApi campagne,
+                          FinanceApi finance, IdentiteApi identite, AuditApi audit, NotificationApi notifications,
+                          PasswordEncoder encodeur, DogoProperties proprietes, QrSecuriteService qrSecurite,
+                          Clock horloge, @Value("${qr.retrait.expiration-jours:45}") int expirationJours) {
         this.commandes = commandes;
         this.codes = codes;
         this.preuves = preuves;
@@ -80,14 +88,16 @@ public class RetraitService {
         this.notifications = notifications;
         this.encodeur = encodeur;
         this.proprietes = proprietes;
+        this.qrSecurite = qrSecurite;
         this.horloge = horloge;
+        this.expirationJours = expirationJours > 0 ? expirationJours : 45;
     }
 
     // ---------------------------------------------------------------------- génération
 
     /**
-     * RG-53 : crée le code unique d'une commande (QR + PIN). Le PIN est envoyé par SMS au Commerçant, une fois la
-     * transaction validée, et n'est conservé nulle part sous forme lisible.
+     * RG-53 : crée le code unique d'une commande (QR KVR + Code court de secours 8 chiffres).
+     * Le code court de secours est notifié au Commerçant une fois la transaction validée.
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public void genererCode(Commande commande, String nomPoint) {
@@ -100,13 +110,20 @@ public class RetraitService {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void genererCode(Commande commande, String nomPoint, String lienGoogleMap, String adresse) {
-        String pin = String.format("%06d", ALEA.nextInt(1_000_000));
-        byte[] octets = new byte[32];
-        ALEA.nextBytes(octets);
+        String codeCourt = qrSecurite.genererCodeCourt();
+        String token = qrSecurite.genererJeton(QrSecuriteService.PREFIXE_RETRAIT);
+        String tokenHash = qrSecurite.hasher(token);
+        String codeCourtHash = qrSecurite.hasher(codeCourt);
+
         Instant maintenant = horloge.instant();
-        Instant expiration = maintenant.plus(proprietes.retrait().validite());
-        codes.save(new CodeRetrait(commande.getId(), encodeur.encode(pin), HexFormat.of().formatHex(octets), expiration,
-                maintenant));
+        int jours = expirationJours > 0 ? expirationJours : (int) proprietes.retrait().validite().toDays();
+        if (jours <= 0) jours = 45;
+        Instant expiration = maintenant.plus(Duration.ofDays(jours));
+
+        // Rétro-compatibilité : encodeur pour le PIN si vérifié via BCrypt
+        String pinHash = encodeur.encode(codeCourt);
+
+        codes.save(new CodeRetrait(commande.getId(), pinHash, token, tokenHash, codeCourtHash, expiration, maintenant));
         long commandeId = commande.getId();
         long commercantId = commande.getCommercantId();
 
@@ -117,14 +134,14 @@ public class RetraitService {
 
         // Notification in-app affichée en direct pour le commerçant
         String messageInApp = "Colis arrivé au dépôt ! Votre commande #" + commandeId + " est prête au dépôt " + nomPoint + adrTexte + "."
-                + mapTexte + " Code PIN : " + pin + " (ou présentez le QR code sur l'application).";
+                + mapTexte + " Code de retrait (secours) : " + codeCourt + " (ou présentez votre QR code sur l'application).";
         notifications.notifier(commercantId, messageInApp);
 
         String telephone = identite.acteur(commercantId).map(IdentiteApi.ActeurInfo::telephone).orElse(null);
         if (telephone != null) {
-            String sms = "DoGo : votre commande #" + commandeId + " est disponible au dépôt " + nomPoint + adrTexte + "."
-                    + mapTexte + " PIN de retrait : " + pin + " (ou QR code). Valable "
-                    + proprietes.retrait().validite().toDays() + " jours.";
+            String sms = "Karavan : votre commande #" + commandeId + " est disponible au dépôt " + nomPoint + adrTexte + "."
+                    + mapTexte + " Code de retrait : " + codeCourt + " (ou QR code). Valable "
+                    + jours + " jours.";
             apresValidation(() -> notifications.envoyerSms(telephone, sms));
         }
     }
@@ -181,40 +198,43 @@ public class RetraitService {
         CodeRetrait code = codes.findByCommandeId(commandeId)
                 .orElseThrow(() -> ErreurMetier.nonTrouve("Code de retrait de la commande", commandeId));
         int restantes = Math.max(0, proprietes.retrait().maxTentatives() - code.getTentatives());
-        return new CodeVue(commandeId, code.getQrToken(), code.getExpiration(), restantes, code.isBloque());
+        return new CodeVue(commandeId, code.getQrToken(), "********", code.getExpiration(), restantes, code.isBloque());
     }
 
     // ---------------------------------------------------------------------- validation du retrait
 
     /**
-     * RG-53 à RG-55 : le Courtier (ou un administrateur) valide le retrait, soit en scannant le QR code, soit en saisissant
-     * le numéro de commande et le PIN. À la collecte, dans la même transaction : la commande passe à COLLECTEE, le code
-     * est consommé, la preuve est écrite et le séquestre est libéré vers le portefeuille du Courtier.
-     * Un PIN erroné augmente le compteur d'échecs (indépendamment de la transaction) ; au maximum, le code se bloque.
+     * RG-53 à RG-55 : validation du retrait au scan ou saisie du code court de secours.
+     * Transaction unique, vérification du statut ACTIF, non expiré, bon type, bon point de retrait.
+     * Passage atomique à UTILISE avec traçabilité complète.
      */
     @Transactional
     public RetraitVue valider(UtilisateurCourant acteur, Long commandeIdSaisi, String qrToken, String pin) {
-        String tokenNettoye = null;
-        if (qrToken != null && !qrToken.isBlank()) {
-            tokenNettoye = qrToken.strip();
-            if (tokenNettoye.contains("/")) {
-                tokenNettoye = tokenNettoye.substring(tokenNettoye.lastIndexOf('/') + 1).strip();
-            }
-            if (tokenNettoye.contains(":")) {
-                tokenNettoye = tokenNettoye.substring(tokenNettoye.lastIndexOf(':') + 1).strip();
-            }
-        }
+        qrSecurite.controlerTentatives("agent:" + acteur.id());
+
+        String tokenNettoye = qrSecurite.nettoyerJeton(qrToken);
         String pinNettoye = (pin != null && !pin.isBlank()) ? pin.replaceAll("\\s+", "").strip() : null;
 
         boolean parQr = tokenNettoye != null && !tokenNettoye.isBlank();
         boolean parPin = pinNettoye != null && !pinNettoye.isBlank();
         if (parQr == parPin || (parPin && commandeIdSaisi == null)) {
             throw new ErreurMetier(CodeErreur.DONNEES_INVALIDES, "RG-53",
-                    "Présentez soit le QR code, soit le numéro de commande avec le PIN");
+                    "Présentez soit le QR code, soit le numéro de commande avec le code de retrait");
         }
+
+        if (parQr) {
+            qrSecurite.verifierTypeRetrait(tokenNettoye);
+        }
+
+        String hash = parQr ? qrSecurite.hasher(tokenNettoye) : qrSecurite.hasher(pinNettoye);
+
         long commandeId = parQr
-                ? codes.commandeDuJeton(tokenNettoye).orElseThrow(RetraitService::codeInvalide)
+                ? codes.commandeDuJetonOuHash(tokenNettoye, hash).orElseThrow(() -> {
+                    qrSecurite.enregistrerTentative("agent:" + acteur.id());
+                    return codeInvalide();
+                })
                 : commandeIdSaisi;
+
         long groupeId = commandes.groupeDe(commandeId).orElseThrow(RetraitService::codeInvalide);
         GroupeAchatApi.GroupeInfo g = groupeGere(acteur, groupeId);
 
@@ -225,19 +245,27 @@ public class RetraitService {
             throw new ErreurMetier(CodeErreur.TRANSITION_INTERDITE, "RG-53",
                     "Cette commande n'est pas en attente de retrait (statut : " + commande.getStatut() + ")");
         }
+
         CodeRetrait code = codes.findByCommandeId(commandeId).orElseThrow(RetraitService::codeInvalide);
         Instant maintenant = horloge.instant();
+
+        if (code.isUtilise()) {
+            throw new ErreurMetier(CodeErreur.CONFLIT, "RG-54",
+                    "Ce code de retrait a déjà été utilisé" + (code.getDateUtilisation() != null ? " le " + code.getDateUtilisation() : ""));
+        }
+
         RegleRetrait.verifierUtilisable(code.isUtilise(), code.isBloque(), code.getExpiration(), maintenant);
 
         int max = proprietes.retrait().maxTentatives();
-        if (parPin && !encodeur.matches(pinNettoye, code.getPinHash())) {
+        if (parPin && !encodeur.matches(pinNettoye, code.getPinHash()) && !hash.equals(code.getCodeCourtHash())) {
+            qrSecurite.enregistrerTentative("agent:" + acteur.id());
             int echecs = compteurs.enregistrerEchec(code.getId(), max);
             if (RegleRetrait.doitBloquer(echecs, max)) {
                 throw new ErreurMetier(CodeErreur.CODE_RETRAIT_BLOQUE, "RG-54",
                         "Code bloqué après trop de tentatives : contactez le support");
             }
             throw new ErreurMetier(CodeErreur.CODE_RETRAIT_INVALIDE, "RG-54",
-                    "PIN incorrect : il reste " + (max - echecs) + " tentative(s)");
+                    "Code de retrait incorrect : il reste " + (max - echecs) + " tentative(s)");
         }
 
         // Valeurs lues avant les requêtes SQL directes (qui vident le contexte de persistance).
@@ -245,21 +273,27 @@ public class RetraitService {
         long commercantId = commande.getCommercantId();
         boolean derniere = duGroupe.stream().filter(c -> c.getId() != commandeId)
                 .allMatch(c -> c.getStatut() == StatutCommande.COLLECTEE || c.getStatut() == StatutCommande.ANNULEE);
-        String mode = parQr ? "QR" : "PIN";
+        String mode = parQr ? "QR" : "CODE_COURT";
 
         commande.changerStatut(StatutCommande.COLLECTEE);
         preuves.save(new PreuveRetrait(commandeId, mode, null, maintenant));
-        if (codes.consommer(code.getId(), maintenant) != 1) {
-            throw new ErreurMetier(CodeErreur.CODE_RETRAIT_INVALIDE, "RG-54", "Ce code n'est plus utilisable");
+        if (codes.consommerAvecActeur(code.getId(), maintenant, acteur.id()) != 1) {
+            throw new ErreurMetier(CodeErreur.CONFLIT, "RG-54", "Ce code n'est plus utilisable");
         }
         finance.libererSequestre(participationId);
         audit.tracer(acteur.id(), "RETRAIT_VALIDE", "commande=" + commandeId, "mode=" + mode + " groupe=" + g.id());
-        notifications.notifier(commercantId, "Retrait confirmé pour votre commande #" + commandeId + ". Merci d'avoir utilisé DoGo.");
+        notifications.notifier(commercantId, "Retrait confirmé pour votre commande #" + commandeId + ". Merci d'avoir utilisé Karavan.");
         if (derniere) {
             campagne.transitionner(groupeId, "TERMINE", "SYSTEME");
             audit.tracer(null, "GROUPE_TERMINE", "groupe=" + groupeId, "toutes les commandes sont collectées");
         }
-        return new RetraitVue(commandeId, StatutCommande.COLLECTEE.name(), maintenant, mode);
+
+        String nomClient = identite.acteur(commercantId).map(IdentiteApi.ActeurInfo::nom).orElse("Commerçant #" + commercantId);
+        String marchandise = g.produitNom();
+        int quantite = commande.getQuantite();
+
+        return new RetraitVue(commandeId, StatutCommande.COLLECTEE.name(), maintenant, mode,
+                nomClient, marchandise, quantite, "Retrait validé avec succès pour " + nomClient + " (" + quantite + "x " + marchandise + ")");
     }
 
     // ---------------------------------------------------------------------- utilitaires
@@ -284,8 +318,8 @@ public class RetraitService {
     }
 
     private String nomDuPoint(Commande commande) {
-        return commande.getPointRetraitId() == null ? "DoGo"
-                : points.findById(commande.getPointRetraitId()).map(p -> p.getNom()).orElse("DoGo");
+        return commande.getPointRetraitId() == null ? "Karavan"
+                : points.findById(commande.getPointRetraitId()).map(PointRetrait::getNom).orElse("Karavan");
     }
 
     /** Exécute l'action une fois la transaction validée (un SMS ne doit pas partir pour une opération annulée). */
@@ -302,4 +336,3 @@ public class RetraitService {
         }
     }
 }
-

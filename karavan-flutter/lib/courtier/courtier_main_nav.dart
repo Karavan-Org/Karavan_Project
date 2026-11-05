@@ -304,7 +304,10 @@ class _CourtierMainNavState extends State<CourtierMainNav>
                         icon: Icons.cell_tower_rounded,
                         color: AppTheme.secondary,
                         // Les étapes se pointent dans l'onglet Convois (suivi réel, notifié aux commerçants)
-                        onTap: () => setTabIndex(1),
+                        onTap: () {
+                          _fabController.reverse();
+                          setTabIndex(1);
+                        },
                       ),
 
                       // Item 3 (Droite - 28°) : Retirer Gains Commissions

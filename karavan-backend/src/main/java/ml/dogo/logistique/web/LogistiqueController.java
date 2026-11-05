@@ -1,5 +1,6 @@
 package ml.dogo.logistique.web;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,9 +8,11 @@ import java.util.List;
 import ml.dogo.logistique.application.CommandeService;
 import ml.dogo.logistique.application.LocalisationService;
 import ml.dogo.logistique.application.PointRetraitService;
+import ml.dogo.logistique.application.QrColisService;
 import ml.dogo.logistique.application.RetraitService;
 import ml.dogo.shared.security.UtilisateurCourant;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,8 +36,31 @@ public class LogistiqueController {
     public record ArriveeRequete(@NotNull Long pointRetraitId) {
     }
 
-    /** Soit {@code qrToken} (scan), soit {@code commandeId} + {@code pin}. */
-    public record RetraitRequete(Long commandeId, String qrToken, String pin) {
+    /** Soit {@code qrToken} / {@code jeton} (scan), soit {@code commandeId} + {@code pin} / {@code codeCourt}. */
+    public record RetraitRequete(Long commandeId, String qrToken, String jeton, String token, String pin, String codeCourt) {
+        public RetraitRequete(Long commandeId, String qrToken, String pin) {
+            this(commandeId, qrToken, null, null, pin, null);
+        }
+
+        public String tokenEffectif() {
+            if (qrToken != null && !qrToken.isBlank()) return qrToken;
+            if (jeton != null && !jeton.isBlank()) return jeton;
+            return token;
+        }
+
+        public String codeCourtEffectif() {
+            if (pin != null && !pin.isBlank()) return pin;
+            return codeCourt;
+        }
+    }
+
+    public record ColisArriveeRequete(String jeton, String qrToken, String token, String codeCourt) {
+        public String valeur() {
+            if (jeton != null && !jeton.isBlank()) return jeton;
+            if (qrToken != null && !qrToken.isBlank()) return qrToken;
+            if (token != null && !token.isBlank()) return token;
+            return codeCourt;
+        }
     }
 
     public record NotifierRequete(@NotBlank String message) {
@@ -44,13 +70,15 @@ public class LogistiqueController {
     private final CommandeService commandes;
     private final RetraitService retraits;
     private final LocalisationService localisation;
+    private final QrColisService qrColisService;
 
     public LogistiqueController(PointRetraitService points, CommandeService commandes, RetraitService retraits,
-                                LocalisationService localisation) {
+                                LocalisationService localisation, QrColisService qrColisService) {
         this.points = points;
         this.commandes = commandes;
         this.retraits = retraits;
         this.localisation = localisation;
+        this.qrColisService = qrColisService;
     }
 
     // ---- points de retrait
@@ -171,6 +199,43 @@ public class LogistiqueController {
     @PreAuthorize("hasAuthority('RETRAIT_VALIDER')")
     public RetraitService.RetraitVue valider(@AuthenticationPrincipal UtilisateurCourant moi,
                                              @RequestBody RetraitRequete r) {
-        return retraits.valider(moi, r.commandeId(), r.qrToken(), r.pin());
+        return retraits.valider(moi, r.commandeId(), r.tokenEffectif(), r.codeCourtEffectif());
+    }
+
+    // ---- QR Colis et Validation d'arrivée
+
+    @PostMapping("/colis/valider-arrivee")
+    @PreAuthorize("hasAnyAuthority('RECEPTION_VALIDER', 'COMMANDE_AVANCER', 'RETRAIT_VALIDER') or hasRole('ADMINISTRATEUR')")
+    public QrColisService.ColisArriveeVue validerArriveeColis(@AuthenticationPrincipal UtilisateurCourant moi,
+                                                              @RequestBody ColisArriveeRequete r,
+                                                              HttpServletRequest req) {
+        String ip = req != null ? req.getRemoteAddr() : null;
+        return qrColisService.validerArrivee(moi, r.valeur(), ip);
+    }
+
+    @GetMapping(value = "/admin/expeditions/{id}/etiquette-qr", produces = MediaType.IMAGE_PNG_VALUE)
+    @PreAuthorize("hasAuthority('COMMANDE_LIRE') or hasRole('ADMINISTRATEUR')")
+    public byte[] etiquetteQrColis(@PathVariable long id,
+                                   @RequestParam(defaultValue = "350") int taille) {
+        return qrColisService.genererImageEtiquetteQr(id, taille, taille);
+    }
+
+    @GetMapping("/admin/expeditions/{id}/qr-colis")
+    @PreAuthorize("hasAuthority('COMMANDE_LIRE') or hasRole('ADMINISTRATEUR')")
+    public QrColisService.QrColisVue obtenirQrColis(@PathVariable long id) {
+        return qrColisService.obtenirOuCreer(id);
+    }
+
+    @PostMapping("/admin/expeditions/{id}/qr-colis/regeneration")
+    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    public QrColisService.QrColisVue regenererQrColis(@AuthenticationPrincipal UtilisateurCourant moi,
+                                                      @PathVariable long id) {
+        return qrColisService.regenerer(moi, id);
+    }
+
+    @GetMapping("/admin/expeditions/{id}/qr-colis/historique")
+    @PreAuthorize("hasAuthority('COMMANDE_LIRE') or hasRole('ADMINISTRATEUR')")
+    public List<QrColisService.QrColisHistoriqueVue> historiqueQrColis(@PathVariable long id) {
+        return qrColisService.historiqueExpedition(id);
     }
 }

@@ -691,12 +691,15 @@ class MesCommandesScreenState extends State<MesCommandesScreen> with Actualisati
                   size: 20,
                   color: AppTheme.estSombre(context) ? AppTheme.doreKaravan : const Color(0xFF7B4026),
                 ),
-                label: Text(
-                  "Suivi international détaillé (10 phases) →",
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.estSombre(context) ? AppTheme.doreKaravan : const Color(0xFF7B4026),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "Suivi détaillé du colis →",
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.estSombre(context) ? AppTheme.doreKaravan : const Color(0xFF7B4026),
+                    ),
                   ),
                 ),
                 style: OutlinedButton.styleFrom(

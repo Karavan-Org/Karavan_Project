@@ -26,14 +26,18 @@ class SelecteurPays extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _FeuilleSelectionPays(
-        pays: listePays,
-        actuel: paysSelectionne,
-        onChoix: (p) {
-          Navigator.of(ctx).pop();
-          onPaysChoisi(p);
-        },
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: _FeuilleSelectionPays(
+          pays: listePays,
+          actuel: paysSelectionne,
+          onChoix: (p) {
+            Navigator.of(ctx).pop();
+            onPaysChoisi(p);
+          },
+        ),
       ),
     );
   }
@@ -184,7 +188,7 @@ class _FeuilleSelectionPaysState extends State<_FeuilleSelectionPays> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.70,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
       decoration: BoxDecoration(
         color: couleurCarte,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),

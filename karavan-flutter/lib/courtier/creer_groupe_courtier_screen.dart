@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/image_produit.dart';
 import '../models/pays_model.dart';
 import '../widgets/selecteur_pays.dart';
+import '../services/pays_resolver_service.dart';
 
 /// Création d'un groupe d'achat par le Courtier (RG-16, RG-17) : il choisit un produit dans le catalogue
 /// des grossistes validés, fixe l'objectif et la grille de coûts unitaires, puis envoie le groupe au grossiste
@@ -82,16 +83,30 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
   }
 
   void _tenterPreselectionPays() {
-    if (_produit == null || _listePays.isEmpty) return;
+    if (_produit == null) return;
     final brut = _produit!['paysOrigine']?.toString().trim();
     if (brut == null || brut.isEmpty) return;
-    try {
-      final trouve = _listePays.firstWhere(
-        (p) => p.nomFr.toLowerCase() == brut.toLowerCase() || p.codeIso.toLowerCase() == brut.toLowerCase(),
-      );
-      _paysSelectionne = trouve;
-      _erreurPays = null;
-    } catch (_) {}
+    if (_listePays.isNotEmpty) {
+      try {
+        final trouve = _listePays.firstWhere(
+          (p) => p.nomFr.toLowerCase() == brut.toLowerCase() || p.codeIso.toLowerCase() == brut.toLowerCase(),
+        );
+        _paysSelectionne = trouve;
+        _erreurPays = null;
+        return;
+      } catch (_) {}
+    }
+    final res = PaysResolverService.instance.resoudre(brut);
+    final code = res.estReconnu ? res.codeIso : (brut.length == 2 ? brut.toUpperCase() : 'ML');
+    final nom = res.estReconnu ? res.nomFr : brut;
+    _paysSelectionne = PaysModel(
+      codeIso: code,
+      nomFr: nom,
+      latitude: 12.6392,
+      longitude: -8.0029,
+      actif: true,
+    );
+    _erreurPays = null;
   }
 
   Future<void> _chargerProduits() async {
@@ -451,6 +466,7 @@ class _CreerGroupeCourtierScreenState extends State<CreerGroupeCourtierScreen> {
   InputDecoration _decoration(String label) => InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: AppTheme.couleurTexteAttenue(context)),
+        errorMaxLines: 2,
         filled: true,
         fillColor: AppTheme.couleurCarte(context),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.couleurBordure(context))),

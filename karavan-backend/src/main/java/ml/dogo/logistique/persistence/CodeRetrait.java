@@ -9,8 +9,8 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 
 /**
- * RG-53 / RG-54 : code unique par commande. Le PIN n'est jamais stocké en clair (RG-71). Les compteurs et drapeaux
- * (tentatives, utilisé, bloqué) ne sont écrits que par des requêtes SQL atomiques.
+ * RG-53 / RG-54 : code unique par commande. Le PIN et le jeton ne sont jamais stockés en clair (RG-71). Les compteurs
+ * et drapeaux (tentatives, statut, utilisé, bloqué) ne sont écrits que par des requêtes SQL atomiques.
  */
 @Entity
 @Table(name = "code_retrait")
@@ -29,6 +29,15 @@ public class CodeRetrait {
     @Column(name = "qr_token", nullable = false, updatable = false)
     private String qrToken;
 
+    @Column(name = "token_hash")
+    private String tokenHash;
+
+    @Column(name = "code_court_hash")
+    private String codeCourtHash;
+
+    @Column(nullable = false)
+    private String statut = "ACTIF";
+
     @Column(nullable = false, updatable = false)
     private Instant expiration;
 
@@ -44,6 +53,12 @@ public class CodeRetrait {
     @Column(name = "date_creation", nullable = false, updatable = false)
     private Instant dateCreation;
 
+    @Column(name = "date_utilisation")
+    private Instant dateUtilisation;
+
+    @Column(name = "valide_par_id")
+    private Long valideParId;
+
     protected CodeRetrait() {
     }
 
@@ -53,14 +68,33 @@ public class CodeRetrait {
         this.qrToken = qrToken;
         this.expiration = expiration;
         this.dateCreation = dateCreation;
+        this.statut = "ACTIF";
+    }
+
+    public CodeRetrait(Long commandeId, String pinHash, String qrToken, String tokenHash, String codeCourtHash,
+                       Instant expiration, Instant dateCreation) {
+        this.commandeId = commandeId;
+        this.pinHash = pinHash;
+        this.qrToken = qrToken;
+        this.tokenHash = tokenHash;
+        this.codeCourtHash = codeCourtHash;
+        this.expiration = expiration;
+        this.dateCreation = dateCreation;
+        this.statut = "ACTIF";
     }
 
     public Long getId() { return id; }
     public Long getCommandeId() { return commandeId; }
     public String getPinHash() { return pinHash; }
     public String getQrToken() { return qrToken; }
+    public String getTokenHash() { return tokenHash; }
+    public String getCodeCourtHash() { return codeCourtHash; }
+    public String getStatut() { return statut; }
     public Instant getExpiration() { return expiration; }
     public int getTentatives() { return tentatives; }
-    public boolean isUtilise() { return utilise; }
-    public boolean isBloque() { return bloque; }
+    public boolean isUtilise() { return utilise || "UTILISE".equalsIgnoreCase(statut); }
+    public boolean isBloque() { return bloque || "BLOQUE".equalsIgnoreCase(statut); }
+    public Instant getDateCreation() { return dateCreation; }
+    public Instant getDateUtilisation() { return dateUtilisation; }
+    public Long getValideParId() { return valideParId; }
 }

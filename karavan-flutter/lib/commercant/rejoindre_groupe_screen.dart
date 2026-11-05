@@ -1045,9 +1045,12 @@ class _RejoindreGroupeScreenState extends State<RejoindreGroupeScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(AppTheme.texteSur(AppTheme.couleurAccent(context))),
                       ),
                     )
-                  : Text(
-                      "Payer ${_formatMontant(_total)}",
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  : FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        "Payer ${_formatMontant(_total)}",
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
                     ),
             ),
             SizedBox(height: MediaQuery.paddingOf(context).bottom + 24),

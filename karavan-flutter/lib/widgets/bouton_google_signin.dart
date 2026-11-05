@@ -127,13 +127,17 @@ class _BoutonGoogleSignInState extends State<BoutonGoogleSignIn> {
                 ),
               ),
             const SizedBox(width: 12),
-            Text(
-              widget.libelle,
-              style: TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w700,
-                color: couleurTexte,
-                letterSpacing: 0.1,
+            Flexible(
+              child: Text(
+                widget.libelle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  color: couleurTexte,
+                  letterSpacing: 0.1,
+                ),
               ),
             ),
           ],

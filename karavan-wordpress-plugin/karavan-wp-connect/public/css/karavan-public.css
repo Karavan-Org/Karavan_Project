@@ -1,0 +1,253 @@
+/**
+ * Styles du Design System Karavan pour WordPress
+ * Palette : Camel (#AC7F5E), Ocre (#EEA823), Terre (#2C241E), Crème (#FAF8F5), Vert Nuit (#183630)
+ */
+
+:root {
+  --k-primary: #AC7F5E;
+  --k-primary-hover: #8E6445;
+  --k-secondary: #EEA823;
+  --k-dark: #183630;
+  --k-terre: #2C241E;
+  --k-creme: #FAF8F5;
+  --k-surface: #FFFFFF;
+  --k-border: #EDE5DC;
+  --k-success: #34C759;
+  --k-shadow: 0 10px 25px -5px rgba(44, 36, 30, 0.08), 0 8px 10px -6px rgba(44, 36, 30, 0.04);
+  --k-radius: 24px;
+}
+
+.karavan-widget-wrapper {
+  margin: 30px auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: var(--k-terre);
+}
+
+.karavan-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.karavan-titre {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--k-dark);
+  margin: 0;
+}
+
+.karavan-btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--k-creme);
+  border: 1px solid var(--k-border);
+  color: var(--k-terre);
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.karavan-btn-refresh:hover {
+  background: #F2ECE3;
+  border-color: #D8D0C5;
+  transform: translateY(-1px);
+}
+
+.karavan-btn-refresh.en-chargement .karavan-refresh-icon {
+  display: inline-block;
+  animation: karavan-spin 0.8s linear infinite;
+}
+
+@keyframes karavan-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Grille Responsive */
+.karavan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 22px;
+}
+
+/* Carte Produit / Conteneur */
+.karavan-card {
+  background: var(--k-surface);
+  border: 1px solid var(--k-border);
+  border-radius: var(--k-radius);
+  padding: 22px;
+  box-shadow: var(--k-shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.karavan-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -6px rgba(44, 36, 30, 0.12);
+}
+
+.karavan-card-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.karavan-tag-pays {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #FDF6E7;
+  color: #9A6700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.karavan-tag-statut {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.karavan-statut-ouvert {
+  background: #EDFBF1;
+  color: #248A3D;
+  border: 1px solid #B7E4C7;
+}
+
+.karavan-card-cat {
+  font-size: 0.8rem;
+  color: #8C7E72;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+
+.karavan-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--k-terre);
+  margin: 6px 0 16px 0;
+  line-height: 1.35;
+}
+
+/* Jauge de Progression Animée */
+.karavan-jauge-block {
+  background: var(--k-creme);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 18px;
+}
+
+.karavan-jauge-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.karavan-jauge-val {
+  color: var(--k-secondary);
+  font-weight: 800;
+}
+
+.karavan-progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #E8E0D5;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.karavan-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--k-secondary), #F5B843);
+  border-radius: 99px;
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.karavan-jauge-sub {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #7A6F66;
+  margin-top: 8px;
+}
+
+/* Footer de Carte */
+.karavan-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px dashed var(--k-border);
+}
+
+.karavan-prix-label {
+  display: block;
+  font-size: 0.72rem;
+  color: #8C7E72;
+  text-transform: uppercase;
+}
+
+.karavan-prix-val {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--k-dark);
+}
+
+.karavan-btn-participer {
+  display: inline-block;
+  background: var(--k-primary);
+  color: #FFFFFF !important;
+  text-decoration: none !important;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 30px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.karavan-btn-participer:hover {
+  background: var(--k-primary-hover);
+  transform: scale(1.03);
+}
+
+/* Bandeau Statistiques [karavan_stats] */
+.karavan-stats-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 30px 0;
+}
+
+.karavan-stat-box {
+  background: #FAF8F5;
+  border: 1px solid var(--k-border);
+  border-radius: 20px;
+  padding: 20px;
+  text-align: center;
+}
+
+.karavan-stat-num {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--k-primary);
+  margin-bottom: 6px;
+}
+
+.karavan-stat-label {
+  font-size: 0.85rem;
+  color: #6B5E54;
+  font-weight: 600;
+}

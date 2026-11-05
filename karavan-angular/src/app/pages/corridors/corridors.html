@@ -129,6 +129,77 @@
             {{ a.libelle }}
           </button>
         </div>
+
+        <!-- Section QR Colis & Étiquette Imprimable (KVC) -->
+        <div class="qr-colis-section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <strong style="font-size: 13px; color: var(--text-main);">Étiquette & QR Colis (KVC)</strong>
+            <span *ngIf="qrColis()" class="badge" [ngClass]="qrColis()?.statut === 'ACTIF' ? 'green' : (qrColis()?.statut === 'UTILISE' ? 'blue' : 'yellow')">
+              {{ qrColis()?.statut }}
+            </span>
+          </div>
+
+          <div *ngIf="chargementQr()" style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+            Chargement des informations QR...
+          </div>
+
+          <div *ngIf="qrColis() as qr" style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px; background: var(--bg-app); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <img [src]="api.etiquetteQrColisUrl(e.groupe.id, 100)" alt="QR Colis" style="width: 80px; height: 80px; border-radius: 6px; border: 1px solid #ddd; background: #fff; padding: 2px;" />
+            <div style="font-size: 12px; line-height: 1.5;">
+              <div><strong>Code secours :</strong> <span style="font-family: monospace; font-weight: 700; color: var(--primary);">{{ qr.codeCourt }}</span></div>
+              <div><small>Expire le {{ dateCourte(qr.expiration) }}</small></div>
+              <div *ngIf="qr.dateUtilisation"><small style="color: var(--success-dark);">Validé le {{ dateCourte(qr.dateUtilisation) }}</small></div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn-sm" (click)="imprimerEtiquetteQr(e)" title="Imprimer l'étiquette avec QR code">
+              🖨 Imprimer l'étiquette QR
+            </button>
+            <button type="button" class="btn-sm" [disabled]="envoi()" (click)="regenererQrColis(e)" title="Invalider le code actuel et en générer un nouveau">
+              🔄 Annuler / Régénérer le code
+            </button>
+          </div>
+
+          <!-- Historique des scans / régénérations -->
+          <div *ngIf="historiqueQrColis().length > 0" style="margin-top: 10px; font-size: 11.5px;">
+            <div style="color: var(--text-muted); margin-bottom: 4px; font-weight: 600;">Historique des codes du lot :</div>
+            <div class="status-list" style="margin: 0;">
+              <div class="status-item" *ngFor="let h of historiqueQrColis()" style="padding: 4px 0; font-size: 11px;">
+                <span>Code #{{ h.id }} (créé le {{ dateCourte(h.dateCreation) }})</span>
+                <span class="dot-badge" [ngClass]="h.statut === 'UTILISE' ? 'green' : (h.statut === 'ACTIF' ? 'blue' : 'gray')">
+                  {{ h.statut }}{{ h.dateUtilisation ? ' · ' + dateCourte(h.dateUtilisation) : '' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Validation rapide d'arrivée de colis au Hub Bamako (Scan ou Code court) -->
+      <div class="card">
+        <h3>Validation d'arrivée Colis à Bamako</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+          Scannez le QR colis (KVC...) ou saisissez le code court à 8 chiffres pour valider l'arrivée du lot et débloquer les codes de retrait commerçants.
+        </p>
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+          <input
+            type="text"
+            [(ngModel)]="saisieCodeArrivee"
+            placeholder="Jeton KVC... ou code à 8 chiffres"
+            style="flex: 1; padding: 7px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 12.5px; font-family: monospace;"
+            (keyup.enter)="validerArriveeColis()"
+          />
+          <button
+            type="button"
+            class="btn-primary"
+            style="padding: 7px 14px; font-size: 12px; white-space: nowrap;"
+            [disabled]="arriveeEnCours() || !saisieCodeArrivee.trim()"
+            (click)="validerArriveeColis()"
+          >
+            {{ arriveeEnCours() ? 'Validation...' : 'Valider arrivée' }}
+          </button>
+        </div>
       </div>
 
       <!-- État des axes -->

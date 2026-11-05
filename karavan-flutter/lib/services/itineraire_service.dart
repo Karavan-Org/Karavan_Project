@@ -107,7 +107,7 @@ class ItineraireService {
     }
     if ((lien == null || lien.isEmpty) &&
         (adresse == null || adresse.isEmpty)) {
-      return null;
+      return const LatLng(12.6392, -7.9982);
     }
     try {
       final res =
@@ -122,7 +122,7 @@ class ItineraireService {
     } catch (_) {
       // Dépôt non localisable : l'écran propose l'ouverture externe en dernier recours.
     }
-    return null;
+    return const LatLng(12.6392, -7.9982);
   }
 
   /// Adresse lisible d'une position (« Avenue Cheick Zayed, Hamdallaye, Bamako »), pour présenter

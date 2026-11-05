@@ -91,6 +91,36 @@ export interface PointRetrait {
   lienGoogleMap?: string;
 }
 
+export interface QrColisVue {
+  id: number;
+  expeditionId: number;
+  token: string;
+  codeCourt: string;
+  statut: string;
+  expiration: string;
+  dateCreation: string;
+  dateUtilisation: string | null;
+}
+
+export interface QrColisHistoriqueVue {
+  id: number;
+  expeditionId: number;
+  statut: string;
+  expiration: string;
+  dateCreation: string;
+  dateUtilisation: string | null;
+}
+
+export interface ColisArriveeVue {
+  expeditionId: number;
+  reference: string;
+  statut: string;
+  date: string;
+  mode: string;
+  commandesImpactees: number;
+  message: string;
+}
+
 export interface Sequestre {
   id: number;
   paiementId: number;
@@ -402,12 +432,36 @@ export class AdminApiService {
     return this.http.put<PointRetrait>(`${API_URL}/admin/points-retrait/${id}`, { nom, adresse, quartier, lienGoogleMap });
   }
 
-  validerRetrait(code:{ qrToken?: string; commandeId?: number; pin?: string }): Observable<unknown> {
+  validerRetrait(code:{ qrToken?: string; commandeId?: number; pin?: string; codeCourt?: string; jeton?: string }): Observable<unknown> {
     return this.http.post(`${API_URL}/retraits/valider`, code);
   }
 
   regenererCodeRetrait(commandeId: number): Observable<unknown> {
     return this.http.post(`${API_URL}/commandes/${commandeId}/code-retrait/regeneration`, {});
+  }
+
+  etiquetteQrColisUrl(expeditionId: number, taille = 350): string {
+    return `${API_URL}/admin/expeditions/${expeditionId}/etiquette-qr?taille=${taille}`;
+  }
+
+  obtenirQrColis(expeditionId: number): Observable<QrColisVue> {
+    return this.http.get<QrColisVue>(`${API_URL}/admin/expeditions/${expeditionId}/qr-colis`);
+  }
+
+  regenererQrColis(expeditionId: number): Observable<QrColisVue> {
+    return this.http.post<QrColisVue>(`${API_URL}/admin/expeditions/${expeditionId}/qr-colis/regeneration`, {});
+  }
+
+  historiqueQrColis(expeditionId: number): Observable<QrColisHistoriqueVue[]> {
+    return this.http.get<QrColisHistoriqueVue[]>(`${API_URL}/admin/expeditions/${expeditionId}/qr-colis/historique`);
+  }
+
+  validerArriveeColis(jetonOuCodeCourt: string): Observable<ColisArriveeVue> {
+    const val = (jetonOuCodeCourt ?? '').trim();
+    return this.http.post<ColisArriveeVue>(`${API_URL}/colis/valider-arrivee`, {
+      jeton: val,
+      codeCourt: val
+    });
   }
 
   // ---------------------------------------------------------------- finance

@@ -94,14 +94,22 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
   void _ouvrirChoixNotification() {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Column(
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            16,
+            20,
+            MediaQuery.of(context).padding.bottom + 20,
+          ),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -193,8 +201,9 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _ouvrirDialogueNotification() {
     final controller = TextEditingController();
@@ -203,23 +212,32 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: EdgeInsets.fromLTRB(
-            24,
-            20,
-            24,
-            MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        builder: (context, setModalState) {
+          final insetsBottom = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = insetsBottom > 0 ? insetsBottom + 16 : systemBottom + 24;
+
+          return SafeArea(
+            top: false,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              padding: EdgeInsets.fromLTRB(
+                24,
+                20,
+                24,
+                bottomPadding,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
               Center(
                 child: Container(
                   width: 44,
@@ -350,12 +368,15 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
                       : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                  label: const Text(
-                    "Envoyer la notification",
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      "Envoyer la notification",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -372,7 +393,10 @@ class _DetailGroupeScreenState extends State<DetailGroupeScreen> {
         ),
       ),
     );
-  }
+  },
+),
+);
+}
 
   Widget _modeleMessage(String titre, TextEditingController controller) {
     return InkWell(

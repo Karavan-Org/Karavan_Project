@@ -858,7 +858,7 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
           color: AppTheme.couleurCarte(context),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),
@@ -950,11 +950,14 @@ class _FicheCampagneScreenState extends State<FicheCampagneScreen> with Actualis
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
-                    child: Text(
-                      _quantiteMax < _quantiteMin
-                          ? "Groupe complet · Mes commandes →"
-                          : "Rejoindre le groupe",
-                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        _quantiteMax < _quantiteMin
+                            ? "Groupe complet · Mes commandes →"
+                            : "Rejoindre le groupe",
+                        style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ),

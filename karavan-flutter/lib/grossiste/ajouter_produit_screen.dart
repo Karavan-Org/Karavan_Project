@@ -330,7 +330,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
             Icon(Icons.warning_amber_rounded,
                 color: AppTheme.ocreProfond, size: 28),
             SizedBox(width: 10),
-            Text("Image trop volumineuse"),
+            Expanded(child: Text("Image trop volumineuse")),
           ],
         ),
         content: Text(
@@ -355,7 +355,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           children: [
             Icon(Icons.camera_alt_rounded, color: AppTheme.primary, size: 28),
             SizedBox(width: 10),
-            Text("Autorisation requise"),
+            Expanded(child: Text("Autorisation requise")),
           ],
         ),
         content: const Text(
@@ -401,13 +401,16 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   void _ouvrirSelectionPhotoModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: AppTheme.couleurCarte(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Column(
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Container(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).padding.bottom + 16),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -481,8 +484,9 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ==========================================
   // SOUMISSION DU FORMULAIRE ET ENVOI MULTIPART
@@ -633,7 +637,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
             children: [
               Icon(Icons.error_outline, color: AppTheme.danger, size: 28),
               SizedBox(width: 10),
-              Text("Erreur d'enregistrement"),
+              Expanded(child: Text("Erreur d'enregistrement")),
             ],
           ),
           content: Text(
@@ -713,9 +717,12 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 ),
                 elevation: 2,
               ),
-              child: const Text(
-                "Enregistrer dans mon catalogue",
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              child: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  "Enregistrer le produit",
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
               ),
             ),
           ),
@@ -1049,7 +1056,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           OutlinedButton.icon(
                             onPressed: () => _ouvrirDialogueVariante(),
                             icon: const Icon(Icons.add, size: 16),
-                            label: const Text("Créer une première variante"),
+                            label: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text("Ajouter une variante"),
+                            ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppTheme.primary,
                               side: const BorderSide(color: AppTheme.primary),
@@ -1322,6 +1332,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
             top: 10,
             left: 10,
             child: Container(
+              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width - 120),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: aPhotoReelle ? AppTheme.primary : AppTheme.terreDouce,
@@ -1336,14 +1347,18 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                     size: 13,
                   ),
                   const SizedBox(width: 5),
-                  Text(
-                    aPhotoReelle
-                        ? "$_photoSourceLabel (${(_uploadedImageTaille / 1024).toStringAsFixed(0)} Ko)"
-                        : "Modèle prédéfini",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
+                  Flexible(
+                    child: Text(
+                      aPhotoReelle
+                          ? "$_photoSourceLabel (${(_uploadedImageTaille / 1024).toStringAsFixed(0)} Ko)"
+                          : "Modèle prédéfini",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
                     ),
                   ),
                 ],

@@ -251,6 +251,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
   void _voirDocuments() {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: AppTheme.couleurCarte(context),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(
@@ -282,6 +283,7 @@ class _GrossisteDossierExamenScreenState extends State<GrossisteDossierExamenScr
   void _profil() {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: AppTheme.couleurCarte(context),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(

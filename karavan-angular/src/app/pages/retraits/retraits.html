@@ -54,10 +54,10 @@
             <input name="commandeId" type="number" min="1" required [(ngModel)]="commandeId" />
           </label>
           <label>
-            PIN de retrait (SMS du commerçant)
-            <input name="pin" type="password" inputmode="numeric" maxlength="6" required [(ngModel)]="pin" autocomplete="off" />
+            Code de retrait (8 chiffres ou secours)
+            <input name="pin" type="password" inputmode="numeric" maxlength="8" required [(ngModel)]="pin" autocomplete="off" />
           </label>
-          <small class="vide">3 PIN erronés bloquent le code : un nouveau code peut alors être envoyé (RG-54).</small>
+          <small class="vide">3 tentatives erronées bloquent le code : un nouveau code de retrait peut alors être envoyé (RG-54).</small>
           <div class="actions">
             <button class="btn-primary" type="submit" [disabled]="envoi() || !commandeId || !pin.trim()">Valider le retrait</button>
           </div>

@@ -5,7 +5,7 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>DoGo a besoin de l'appareil photo pour vous permettre de photographier vos articles de gros pour votre catalogue.</string>
+	<string>Karavan a besoin de la camera pour scanner les QR codes de retrait et de colis.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>DoGo utilise votre position pour afficher le chemin jusqu'au dépôt où récupérer votre commande.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

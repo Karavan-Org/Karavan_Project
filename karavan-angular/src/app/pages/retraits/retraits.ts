@@ -181,14 +181,32 @@ export class RetraitsComponent implements OnInit, OnDestroy {
   private validerJeton(jeton: string): void {
     const clean = this.extraireJeton(jeton);
     if (!clean) return;
+
+    if (clean.startsWith('KVC.')) {
+      this.envoi.set(true);
+      this.message.set('');
+      this.api.validerArriveeColis(clean).subscribe({
+        next: res => {
+          this.envoi.set(false);
+          this.afficher(`Arrivée colis validée : convoi ${res.reference} (${res.commandesImpactees} commandes prêtes à retirer).`, false);
+          this.chargerCommandes();
+        },
+        error: e => {
+          this.envoi.set(false);
+          this.afficher(messageErreur(e, 'Arrivée colis refusée.'), true);
+        }
+      });
+      return;
+    }
+
     this.valider(this.api.validerRetrait({ qrToken: clean }) as Observable<RetraitValide>);
   }
 
   validerPin(): void {
     if (!this.commandeId || !this.pin.trim()) return;
     const cleanPin = this.pin.replace(/\s+/g, '').trim();
-    if (cleanPin.length !== 6) {
-      this.afficher('Le code PIN doit comporter exactement 6 chiffres (reçu par SMS).', true);
+    if (cleanPin.length !== 6 && cleanPin.length !== 8) {
+      this.afficher('Le code de retrait doit comporter 6 ou 8 chiffres.', true);
       return;
     }
     this.valider(this.api.validerRetrait({ commandeId: this.commandeId, pin: cleanPin }) as Observable<RetraitValide>);

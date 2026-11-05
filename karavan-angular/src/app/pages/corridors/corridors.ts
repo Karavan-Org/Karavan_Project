@@ -15,7 +15,9 @@ import {
   Convoi,
   EtapeSignalee,
   Groupe,
-  PointRetrait
+  PointRetrait,
+  QrColisVue,
+  QrColisHistoriqueVue
 } from '../../core/services/admin-api.service';
 
 /** Groupe en acheminement, avec son convoi (suivi officiel vu par les commerçants) s'il est ouvert */
@@ -45,7 +47,7 @@ const ETATS_ACHEMINEMENT = ['OBJECTIF_ATTEINT', 'EN_EXPEDITION', 'LIVRE'];
   styleUrl: './corridors.scss'
 })
 export class CorridorsComponent implements OnInit, OnDestroy {
-  private readonly api = inject(AdminApiService);
+  readonly api = inject(AdminApiService);
   private readonly securite = inject(AdminSecuriteService);
   readonly peutGererPoints = inject(AuthService).peut('POINT_RETRAIT_GERER');
   nouveauPoint = { nom: '', adresse: '', quartier: '', lienGoogleMap: '' };
@@ -63,6 +65,13 @@ export class CorridorsComponent implements OnInit, OnDestroy {
   readonly selectionId = signal<number | null>(null);
   readonly etapes = signal<EtapeSignalee[]>([]);
   readonly commandes = signal<{ statut: string }[]>([]);
+
+  // QR Colis (KVC)
+  readonly qrColis = signal<QrColisVue | null>(null);
+  readonly historiqueQrColis = signal<QrColisHistoriqueVue[]>([]);
+  readonly chargementQr = signal(false);
+  saisieCodeArrivee = '';
+  readonly arriveeEnCours = signal(false);
 
   readonly modalGroupesEnAttente = signal(false);
   readonly filtreModal = signal<'TOUS' | 'OBJECTIF_ATTEINT' | 'EN_COURS'>('TOUS');
@@ -114,7 +123,7 @@ export class CorridorsComponent implements OnInit, OnDestroy {
   readonly expeditions = computed<Expedition[]>(() => {
     const parGroupe = new Map(this.convoisListe().map(c => [c.groupeId, c]));
     return this.groupes()
-      .filter(g => ETATS_ACHEMINEMENT.includes(g.statut) || (parGroupe.has(g.id) && g.statut !== 'TERMINE'))
+      .filter(g => ETATS_ACHEMINEMENT.includes(g.statut) || this.estEligible(g) || (parGroupe.has(g.id) && g.statut !== 'TERMINE'))
       .map(g => ({ groupe: g, convoi: parGroupe.get(g.id) ?? null }));
   });
 
@@ -162,12 +171,16 @@ export class CorridorsComponent implements OnInit, OnDestroy {
   }
 
   statut(e: Expedition): string {
+    if (!e.convoi && this.estEligible(e.groupe)) {
+      return '100% atteint · Prêt pour corridor';
+    }
     return e.convoi ? LIBELLES_CONVOI[e.convoi.statut] ?? e.convoi.statut : LIBELLES_GROUPE[e.groupe.statut] ?? e.groupe.statut;
   }
 
   badge(e: Expedition): string {
     if (e.convoi?.statut === 'BLOQUE_DOUANE') return 'yellow';
     if (e.convoi?.statut === 'ARRIVE' || e.groupe.statut === 'LIVRE') return 'green';
+    if (!e.convoi && this.estEligible(e.groupe)) return 'green';
     return 'orange';
   }
 
@@ -192,6 +205,7 @@ export class CorridorsComponent implements OnInit, OnDestroy {
       this.api.etapesSignalees(groupeId).subscribe({ next: liste => this.etapes.set(liste ?? []), error: () => undefined });
     }
     this.chargerCommandes(groupeId);
+    this.chargerQrColis(groupeId);
   }
 
   private chargerCommandes(groupeId: number): void {
@@ -219,7 +233,7 @@ export class CorridorsComponent implements OnInit, OnDestroy {
         liste.push({ libelle: 'Déclarer l’expédition', executer: () => this.lancer(this.api.expedierCommandes(g.id), 'Expédition déclarée : les commerçants sont prévenus.') });
       }
     }
-    if (!e.convoi && ['OBJECTIF_ATTEINT', 'EN_EXPEDITION'].includes(g.statut)) {
+    if (!e.convoi && (['OBJECTIF_ATTEINT', 'EN_EXPEDITION'].includes(g.statut) || this.estEligible(g))) {
       liste.push({ libelle: 'Ouvrir le suivi officiel', executer: () => this.ouvrirSuivi(g) });
     }
     if (e.convoi) {
@@ -266,7 +280,8 @@ export class CorridorsComponent implements OnInit, OnDestroy {
   });
 
   progression(g: Groupe): number {
-    return g.quantiteCible ? Math.min(100, Math.round((g.quantiteConfirmee / g.quantiteCible) * 100)) : 0;
+    const engagee = (g.quantiteConfirmee || 0) + (g.quantiteReservee || 0);
+    return g.quantiteCible ? Math.min(100, Math.round((engagee / g.quantiteCible) * 100)) : 0;
   }
 
   estEligible(g: Groupe): boolean {
@@ -488,6 +503,120 @@ export class CorridorsComponent implements OnInit, OnDestroy {
       error: e => {
         this.envoi.set(false);
         this.message.set(messageErreur(e, 'Action impossible.'));
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------- QR Colis & Arrivée
+
+  chargerQrColis(expeditionId: number): void {
+    this.qrColis.set(null);
+    this.historiqueQrColis.set([]);
+    this.chargementQr.set(true);
+    this.api.obtenirQrColis(expeditionId).pipe(catchError(() => of(null))).subscribe(qr => {
+      this.qrColis.set(qr);
+      this.chargementQr.set(false);
+    });
+    this.api.historiqueQrColis(expeditionId).pipe(catchError(() => of([] as QrColisHistoriqueVue[]))).subscribe(h => {
+      this.historiqueQrColis.set(h ?? []);
+    });
+  }
+
+  imprimerEtiquetteQr(e: Expedition): void {
+    const url = this.api.etiquetteQrColisUrl(e.groupe.id, 450);
+    const codeCourt = this.qrColis()?.codeCourt || 'Voir fiche';
+    const fenetre = window.open('', '_blank');
+    if (!fenetre) {
+      window.open(url, '_blank');
+      return;
+    }
+    fenetre.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Étiquette Colis Karavan - ${this.reference(e)}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 24px; margin: 0; color: #1e1e1e; background: #fff; }
+          .etiquette { border: 2px dashed #2c241e; padding: 24px; display: inline-block; max-width: 380px; border-radius: 12px; }
+          h2 { margin: 0 0 6px 0; font-size: 18px; color: #183630; letter-spacing: 0.5px; }
+          .ref { font-family: monospace; font-size: 15px; font-weight: bold; background: #FAF8F5; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-bottom: 12px; }
+          img { width: 260px; height: 260px; margin: 10px auto; display: block; border: 1px solid #eee; border-radius: 8px; }
+          .code-court-box { font-size: 16px; font-weight: bold; color: #ac7f5e; letter-spacing: 2px; margin: 10px 0; }
+          .info { font-size: 12.5px; text-align: left; margin-top: 14px; border-top: 1px solid #e8e2d9; padding-top: 10px; line-height: 1.6; }
+          @media print { .no-print { display: none; } body { padding: 0; } .etiquette { border: 2px solid #000; } }
+        </style>
+      </head>
+      <body>
+        <div class="etiquette">
+          <h2>KARAVAN — ÉTIQUETTE COLIS</h2>
+          <div class="ref">${this.reference(e)}</div>
+          <div style="font-size: 13px; color: #555;">Expédition #${e.groupe.id} : ${e.groupe.titre}</div>
+          <img src="${url}" alt="QR Code Colis" />
+          <div class="code-court-box">CODE SECOURS : ${codeCourt}</div>
+          <div class="info">
+            <div><strong>Axe / Origine :</strong> ${e.groupe.produit?.paysOrigine || 'N/A'}</div>
+            <div><strong>Destination :</strong> Hub Bamako, Mali</div>
+            <div><strong>Quantité lot :</strong> ${e.groupe.quantiteConfirmee} pcs</div>
+            <div><strong>Statut expédition :</strong> ${this.statut(e)}</div>
+          </div>
+        </div>
+        <p class="no-print" style="margin-top: 20px;">
+          <button onclick="window.print()" style="padding: 10px 22px; font-size: 14px; font-weight: 600; background: #ac7f5e; color: #fff; border: none; border-radius: 20px; cursor: pointer;">Imprimer l'étiquette</button>
+        </p>
+      </body>
+      </html>
+    `);
+    fenetre.document.close();
+  }
+
+  async regenererQrColis(e: Expedition): Promise<void> {
+    try {
+      await this.securite.demanderConfirmation({
+        titre: 'Régénérer le QR Colis',
+        description: `Annuler le QR colis actuel et en générer un nouveau pour l'expédition #${e.groupe.id} (${this.reference(e)}) ? L'ancien QR code et code court deviendront immédiatement invalides.`,
+        actionTexte: 'Régénérer le QR',
+        icone: 'qr_code_scanner'
+      });
+      this.envoi.set(true);
+      this.api.regenererQrColis(e.groupe.id).subscribe({
+        next: nouveauQr => {
+          this.envoi.set(false);
+          this.qrColis.set(nouveauQr);
+          this.message.set(`Nouveau QR Colis généré avec succès pour l'expédition #${e.groupe.id}.`);
+          this.chargerQrColis(e.groupe.id);
+        },
+        error: err => {
+          this.envoi.set(false);
+          this.message.set(messageErreur(err, 'Impossible de régénérer le QR colis.'));
+        }
+      });
+    } catch {
+      // Annulé
+    }
+  }
+
+  validerArriveeColis(): void {
+    const code = (this.saisieCodeArrivee ?? '').trim();
+    if (!code) {
+      this.message.set('Veuillez saisir le jeton QR (KVC...) ou le code court à 8 chiffres.');
+      return;
+    }
+    this.arriveeEnCours.set(true);
+    this.message.set('');
+    this.api.validerArriveeColis(code).subscribe({
+      next: res => {
+        this.arriveeEnCours.set(false);
+        this.saisieCodeArrivee = '';
+        this.message.set(res.message || `Arrivée validée à Bamako pour l'expédition ${res.reference} (${res.commandesImpactees} commandes prêtes) !`);
+        this.charger(false);
+        if (this.selectionId()) {
+          this.chargerQrColis(this.selectionId()!);
+        }
+      },
+      error: err => {
+        this.arriveeEnCours.set(false);
+        this.message.set(messageErreur(err, 'Validation d\'arrivée du colis refusée.'));
       }
     });
   }
