@@ -83,7 +83,7 @@
 
   .wallet-user-body {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 340px;
     gap: 20px;
     align-items: center;
     padding: 10px 0;
@@ -91,6 +91,12 @@
     @media (max-width: 960px) {
       grid-template-columns: 1fr;
     }
+  }
+
+  .wallet-user-animation-col {
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .wallet-user-kpi-col {

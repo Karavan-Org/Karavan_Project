@@ -25,7 +25,7 @@
 
     <div class="wallet-inner">
       
-      <!-- Synthèse du compte séquestre -->
+      <!-- Synthèse du compte séquestre avec Vitrine 3D -->
       <div class="wallet-hero-showcase-row">
         <!-- Titres et solde -->
         <div class="wallet-hero-left">
@@ -48,6 +48,11 @@
               <span>{{ bloques().length }} séquestre(s) sous mandat actif · Fonds sécurisés contre tout litige</span>
             </div>
           </div>
+        </div>
+
+        <!-- Colonne Droite : L'Animation 3D Matérielle & Légère du Portefeuille Karavan -->
+        <div class="wallet-hero-right">
+          <app-portefeuille-3d [soldeAffiche]="tableau()?.totalBloque ?? 0"></app-portefeuille-3d>
         </div>
       </div>
 

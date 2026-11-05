@@ -254,12 +254,15 @@
               <span class="wallet-user-label">Solde des fonds en transit & séquestre</span>
               <div class="wallet-user-amount">{{ fcfa(totalSequestreActif()) }}</div>
               <div class="wallet-user-pill-row">
-                <span class="pill-stat locked">Bloqué : {{ fcfa(sequestreBloque()) }}</span>
-                <span class="pill-stat unlocked">Libéré : {{ fcfa(sequestreLibere()) }}</span>
+                <span class="pill-stat locked">🔒 Bloqué : {{ fcfa(sequestreBloque()) }}</span>
+                <span class="pill-stat unlocked">✅ Libéré : {{ fcfa(sequestreLibere()) }}</span>
               </div>
               <p class="wallet-user-note">
                 Fonds protégés sous séquestre tiers de confiance Karavan. Entrées via Mobile Money instantanées.
               </p>
+            </div>
+            <div class="wallet-user-animation-col">
+              <app-portefeuille-3d [soldeAffiche]="totalSequestreActif()"></app-portefeuille-3d>
             </div>
           </div>
         </section>
