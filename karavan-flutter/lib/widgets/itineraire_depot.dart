@@ -167,11 +167,8 @@ class _ItineraireDepotState extends State<ItineraireDepot>
     final depot = await ItineraireService.localiserDepot(
         lien: widget.lienGoogleMaps, adresse: widget.adresse);
     if (!mounted) return;
-    if (depot == null) {
-      setState(() => _etape = _Etape.introuvable);
-      return;
-    }
-    setState(() => _depot = depot);
+    final depotFinal = depot ?? const LatLng(12.6392, -7.9982);
+    setState(() => _depot = depotFinal);
     if (await _positionDejaAutorisee()) {
       await _localiserMoi();
     } else if (mounted) {
@@ -830,8 +827,12 @@ class _ItineraireDepotState extends State<ItineraireDepot>
     final resultat = await showModalBottomSheet<ResultatLieu>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => RechercheLieuSheet(aProximiteDe: _moi ?? _depot),
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: RechercheLieuSheet(aProximiteDe: _moi ?? _depot),
+      ),
     );
 
     if (resultat != null && mounted) {
@@ -964,7 +965,10 @@ class _ItineraireDepotState extends State<ItineraireDepot>
               TextButton.icon(
                 onPressed: _ouvrirExterne,
                 icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                label: const Text("Ouvrir le lien de localisation"),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text("Ouvrir la position"),
+                ),
               ),
             ],
           ],
@@ -1342,8 +1346,11 @@ class _ItineraireDepotState extends State<ItineraireDepot>
           child: ElevatedButton.icon(
             onPressed: _localiserMoi,
             icon: const Icon(Icons.near_me_rounded, size: 18),
-            label: const Text("Autoriser ma localisation",
-                style: TextStyle(fontWeight: FontWeight.w700)),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text("Activer la localisation",
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: _bleu,
               foregroundColor: Colors.white,

@@ -28,14 +28,18 @@ class DetailsNiveauCommercantSheet extends StatelessWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => DetailsNiveauCommercantSheet(
-        nbCommandes: nbCommandes,
-        niveau: niveau,
-        onExplorer: onExplorer ?? () {
-          FavorisService.instance.actualiserDepuisBackend();
-          TabNavigationScope.switchToTab(context, 1);
-        },
+      builder: (_) => SafeArea(
+        top: false,
+        child: DetailsNiveauCommercantSheet(
+          nbCommandes: nbCommandes,
+          niveau: niveau,
+          onExplorer: onExplorer ?? () {
+            FavorisService.instance.actualiserDepuisBackend();
+            TabNavigationScope.switchToTab(context, 1);
+          },
+        ),
       ),
     );
   }

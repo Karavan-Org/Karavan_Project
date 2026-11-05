@@ -9,6 +9,7 @@ import '../widgets/partage_groupe.dart';
 import '../models/pays_model.dart';
 import '../widgets/selecteur_pays.dart';
 import '../widgets/drapeau_pays_widget.dart';
+import '../services/pays_resolver_service.dart';
 
 /// Création d'un groupe d'achat par le Grossiste sur l'un de ses produits, sans courtier :
 /// il achemine lui-même la marchandise. Le prix de gros et le stock du produit pré-remplissent le
@@ -98,24 +99,35 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
     if (_produit == null) return;
     final brut = _produit!['paysOrigine']?.toString().trim();
     if (brut == null || brut.isEmpty) return;
+    final res = PaysResolverService.instance.resoudre(brut);
     if (_listePays.isNotEmpty) {
       try {
         final trouve = _listePays.firstWhere(
-          (p) => p.nomFr.toLowerCase() == brut.toLowerCase() ||
+          (p) => (res.estReconnu && p.codeIso.toUpperCase() == res.codeIso.toUpperCase()) ||
+                 p.nomFr.toLowerCase() == brut.toLowerCase() ||
                  p.codeIso.toLowerCase() == brut.toLowerCase() ||
-                 brut.toLowerCase().contains(p.nomFr.toLowerCase()),
+                 (res.estReconnu && p.nomFr.toLowerCase() == res.nomFr.toLowerCase()),
         );
         _paysSelectionne = trouve;
         _erreurPays = null;
         return;
       } catch (_) {}
     }
-    if (_paysSelectionne == null) {
+    if (res.estReconnu) {
       _paysSelectionne = PaysModel(
-        codeIso: brut.length == 2 ? brut.toUpperCase() : 'ML',
+        codeIso: res.codeIso,
+        nomFr: res.nomFr,
+        latitude: 0.0,
+        longitude: 0.0,
+        actif: true,
+      );
+      _erreurPays = null;
+    } else {
+      _paysSelectionne = PaysModel(
+        codeIso: brut.length == 2 ? brut.toUpperCase() : '',
         nomFr: brut,
-        latitude: 12.6392,
-        longitude: -8.0029,
+        latitude: 0.0,
+        longitude: 0.0,
         actif: true,
       );
       _erreurPays = null;
@@ -340,7 +352,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
                   child: Row(
                     children: [
                       DrapeauBadge(
-                        pays: _paysSelectionne?.codeIso ?? produit['paysOrigine']?.toString() ?? '',
+                        pays: _paysSelectionne?.nomFr ?? _paysSelectionne?.codeIso ?? produit['paysOrigine']?.toString() ?? '',
                         compact: true,
                       ),
                       const SizedBox(width: 12),
@@ -476,6 +488,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
         if (_fraisVisibles) ...[
           const SizedBox(height: 8),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _champ(_transportController, "Transport / pce")),
               const SizedBox(width: 12),
@@ -484,6 +497,7 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
           ),
           const SizedBox(height: 12),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _champ(_autresController, "Autres / pce")),
               const SizedBox(width: 12),
@@ -610,6 +624,8 @@ class _CreerGroupeGrossisteScreenState extends State<CreerGroupeGrossisteScreen>
         labelText: label,
         labelStyle: TextStyle(color: AppTheme.couleurTexteAttenue(context)),
         helperText: aide,
+        helperMaxLines: 2,
+        errorMaxLines: 2,
         filled: true,
         fillColor: AppTheme.couleurCarte(context),
         counterText: '',

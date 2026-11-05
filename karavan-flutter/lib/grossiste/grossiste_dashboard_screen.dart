@@ -487,8 +487,10 @@ class _GrossisteDashboardScreenState extends State<GrossisteDashboardScreen> wit
               ElevatedButton.icon(
                 onPressed: () => _creerGroupe(selection),
                 icon: const Icon(Icons.group_add_rounded),
-                label: Text("Créer le groupe « ${selection['nom'] ?? ''} »",
-                    overflow: TextOverflow.ellipsis),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text("Créer le groupe « ${selection['nom'] ?? ''} »"),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.olive,
                   foregroundColor: Colors.white,

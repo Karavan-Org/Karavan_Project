@@ -39,6 +39,7 @@ class _AvatarProfilInteractifState extends State<AvatarProfilInteractif> {
     final theme = Theme.of(context);
     final String? choix = await showModalBottomSheet<String>(
       context: context,
+      useSafeArea: true,
       backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.rayonXL)),

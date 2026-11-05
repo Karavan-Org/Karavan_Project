@@ -304,7 +304,10 @@ class _CourtierDashboardScreenState extends State<CourtierDashboardScreen> {
               OutlinedButton.icon(
                 onPressed: () => _ouvrir(const ScannerRetraitScreen()),
                 icon: const Icon(Icons.qr_code_scanner, size: 18),
-                label: const Text("Scanner un QR Code au retrait", maxLines: 1, overflow: TextOverflow.ellipsis),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text("Scanner un code de retrait (QR)"),
+                ),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   minimumSize: const Size(double.infinity, 48),

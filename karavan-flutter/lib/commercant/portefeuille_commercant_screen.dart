@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models/participation_model.dart';
 import '../models/remboursement_model.dart';
 import '../services/auth_service.dart';
@@ -192,17 +192,26 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Container(
-          padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(ctx).viewInsets.bottom + 30),
-          decoration: BoxDecoration(
-            color: AppTheme.couleurCarte(context),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+        builder: (ctx, setModalState) {
+          final insetsBottom = MediaQuery.of(ctx).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(ctx).padding.bottom;
+          final bottomPadding = insetsBottom > 0 ? insetsBottom + 20 : systemBottom + 24;
+
+          return SafeArea(
+            top: false,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(24, 20, 24, bottomPadding),
+              decoration: BoxDecoration(
+                color: AppTheme.couleurCarte(context),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
                 child: Container(
@@ -314,7 +323,10 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
         ),
       ),
     );
-  }
+  },
+),
+);
+}
 
   Widget _buildOperateurChip(String nom, String selected, ValueChanged<String> onSelect) {
     final isSelected = nom == selected;
@@ -444,9 +456,13 @@ class _PortefeuilleCommercantScreenState extends State<PortefeuilleCommercantScr
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "Mouvements & commandes",
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context)),
+                  Expanded(
+                    child: Text(
+                      "Mouvements & commandes",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.couleurTexte(context)),
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: _chargerDonneesPortefeuille,

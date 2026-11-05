@@ -493,7 +493,10 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.autorenew_rounded),
-              label: const Text("Générer un nouveau code"),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text("Générer un nouveau code"),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.couleurAccent(context),
                 side: BorderSide(color: AppTheme.couleurAccent(context).withValues(alpha: 0.5)),
@@ -571,7 +574,10 @@ class _CodeRetraitCommercantScreenState extends State<CodeRetraitCommercantScree
                   );
                 },
                 icon: const Icon(Icons.directions_rounded, size: 18),
-                label: const Text("Voir l'itinéraire vers le dépôt"),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text("Itinéraire vers le dépôt"),
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.primary,
                   side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.5)),

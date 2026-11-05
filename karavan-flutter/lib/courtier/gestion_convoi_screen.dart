@@ -152,6 +152,7 @@ class _GestionConvoiScreenState extends State<GestionConvoiScreen> {
     }
     final choisi = await showModalBottomSheet<PointRetrait>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => SafeArea(
         child: ListView(shrinkWrap: true, padding: const EdgeInsets.symmetric(vertical: 12), children: [
           Padding(

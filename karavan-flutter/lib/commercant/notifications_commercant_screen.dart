@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api/api_client.dart';
 import '../services/api/api_config.dart';
-import '../services/plus_code.dart';
 import '../theme/app_theme.dart';
 import '../widgets/itineraire_depot.dart';
 
 import 'mes_commandes_screen.dart';
 import 'portefeuille_commercant_screen.dart';
+import 'suivi_colis_screen.dart';
 import '../services/visibilite_ecran.dart';
 
 /// Écran des Notifications Commerçant (Frame Figma "Notifications")
@@ -364,6 +364,16 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                             final bool estRemboursement = notif["categorie"] == "Remboursements";
                             final String? lienMaps = notif["lienMaps"] as String?;
                             final bool aCodeRetrait = (notif["aCodeRetrait"] as bool?) ?? false;
+                            final bool aDepotInfo = lienMaps != null ||
+                                (notif["depotNom"] != null && (notif["depotNom"] as String).isNotEmpty) ||
+                                (notif["titre"] as String).toLowerCase().contains("dépôt") ||
+                                (notif["titre"] as String).toLowerCase().contains("depot") ||
+                                (notif["message"] as String).toLowerCase().contains("dépôt") ||
+                                (notif["message"] as String).toLowerCase().contains("depot");
+                            final bool estSuiviCommande = notif["categorie"] == "Commandes" ||
+                                notif["titre"] == "Suivi de commande" ||
+                                notif["titre"] == "Colis disponible au dépôt" ||
+                                aDepotInfo;
 
                             return InkWell(
                               borderRadius: BorderRadius.circular(20),
@@ -371,6 +381,26 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                 if (!estLu && notif["id"] != null) {
                                   ApiClient.instance.post("${ApiConfig.notifications}/${notif["id"]}/lue").catchError((_) => null);
                                   setState(() => notif["lu"] = true);
+                                }
+                                if (estRemboursement) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (_) => const PortefeuilleCommercantScreen()),
+                                  );
+                                } else if (aCodeRetrait) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (_) => const MesCommandesScreen()),
+                                  );
+                                } else if (estSuiviCommande || aDepotInfo) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => SuiviColisScreen(
+                                        initialDepotNom: notif["depotNom"] as String?,
+                                        initialDepotAdresse: notif["depotAdresse"] as String?,
+                                        initialLienMaps: lienMaps,
+                                        phaseInitiale: aDepotInfo ? 9 : null,
+                                      ),
+                                    ),
+                                  );
                                 }
                               },
                               child: Container(
@@ -492,60 +522,124 @@ class _NotificationsCommercantScreenState extends State<NotificationsCommercantS
                                               ),
                                             ),
                                           ],
-                                          if (lienMaps != null || PlusCode.depuisTexte(notif["depotAdresse"] as String?) != null) ...[
+                                          if (aDepotInfo || estSuiviCommande) ...[
                                             const SizedBox(height: 10),
-                                            InkWell(
-                                              borderRadius: BorderRadius.circular(8),
-                                              onTap: () {
-                                                if (!estLu && notif["id"] != null) {
-                                                  ApiClient.instance.post("${ApiConfig.notifications}/${notif["id"]}/lue").catchError((_) => null);
-                                                  setState(() => notif["lu"] = true);
-                                                }
-                                                afficherItineraireDepot(
-                                                  context,
-                                                  nomDepot: notif["depotNom"] as String,
-                                                  adresse: notif["depotAdresse"] as String?,
-                                                  lienGoogleMaps: lienMaps,
-                                                );
-                                              },
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                                                decoration: BoxDecoration(
-                                                  color: AppTheme.bissap.withValues(alpha: 0.1),
-                                                  borderRadius: BorderRadius.circular(8),
-                                                  border: Border.all(
-                                                    color: AppTheme.bissap.withValues(alpha: 0.3),
-                                                  ),
-                                                ),
-                                                child: const Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.directions_rounded,
-                                                      size: 15,
-                                                      color: AppTheme.bissap,
-                                                    ),
-                                                    SizedBox(width: 6),
-                                                    Flexible(
-                                                      child: Text(
-                                                        "Voir l'itinéraire vers le dépôt",
-                                                        overflow: TextOverflow.ellipsis,
-                                                        style: TextStyle(
-                                                          fontSize: 11.5,
-                                                          fontWeight: FontWeight.w700,
-                                                          color: AppTheme.bissap,
+                                            Wrap(
+                                              spacing: 8,
+                                              runSpacing: 8,
+                                              children: [
+                                                if (aDepotInfo)
+                                                  InkWell(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    onTap: () {
+                                                      if (!estLu && notif["id"] != null) {
+                                                        ApiClient.instance.post("${ApiConfig.notifications}/${notif["id"]}/lue").catchError((_) => null);
+                                                        setState(() => notif["lu"] = true);
+                                                      }
+                                                      afficherItineraireDepot(
+                                                        context,
+                                                        nomDepot: (notif["depotNom"] as String?) ?? "Dépôt Central Karavan",
+                                                        adresse: notif["depotAdresse"] as String?,
+                                                        lienGoogleMaps: lienMaps,
+                                                      );
+                                                    },
+                                                    child: Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                                      decoration: BoxDecoration(
+                                                        color: AppTheme.bissap.withValues(alpha: 0.1),
+                                                        borderRadius: BorderRadius.circular(8),
+                                                        border: Border.all(
+                                                          color: AppTheme.bissap.withValues(alpha: 0.3),
                                                         ),
                                                       ),
+                                                      child: const Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          Icon(
+                                                            Icons.directions_rounded,
+                                                            size: 15,
+                                                            color: AppTheme.bissap,
+                                                          ),
+                                                          SizedBox(width: 6),
+                                                          Flexible(
+                                                            child: Text(
+                                                              "Itinéraire dépôt",
+                                                              overflow: TextOverflow.ellipsis,
+                                                              style: TextStyle(
+                                                                fontSize: 11.5,
+                                                                fontWeight: FontWeight.w700,
+                                                                color: AppTheme.bissap,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 4),
+                                                          Icon(
+                                                            Icons.chevron_right_rounded,
+                                                            size: 15,
+                                                            color: AppTheme.bissap,
+                                                          ),
+                                                        ],
+                                                      ),
                                                     ),
-                                                    SizedBox(width: 4),
-                                                    Icon(
-                                                      Icons.chevron_right_rounded,
-                                                      size: 15,
-                                                      color: AppTheme.bissap,
+                                                  ),
+                                                InkWell(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  onTap: () {
+                                                    if (!estLu && notif["id"] != null) {
+                                                      ApiClient.instance.post("${ApiConfig.notifications}/${notif["id"]}/lue").catchError((_) => null);
+                                                      setState(() => notif["lu"] = true);
+                                                    }
+                                                    Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                        builder: (_) => SuiviColisScreen(
+                                                          initialDepotNom: notif["depotNom"] as String?,
+                                                          initialDepotAdresse: notif["depotAdresse"] as String?,
+                                                          initialLienMaps: lienMaps,
+                                                          phaseInitiale: aDepotInfo ? 9 : null,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                                    decoration: BoxDecoration(
+                                                      color: AppTheme.primary.withValues(alpha: 0.1),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                      border: Border.all(
+                                                        color: AppTheme.primary.withValues(alpha: 0.3),
+                                                      ),
                                                     ),
-                                                  ],
+                                                    child: const Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.local_shipping_rounded,
+                                                          size: 15,
+                                                          color: AppTheme.primary,
+                                                        ),
+                                                        SizedBox(width: 6),
+                                                        Flexible(
+                                                          child: Text(
+                                                            "Suivre mon colis",
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: TextStyle(
+                                                                fontSize: 11.5,
+                                                                fontWeight: FontWeight.w700,
+                                                                color: AppTheme.primary,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 4),
+                                                        Icon(
+                                                          Icons.chevron_right_rounded,
+                                                          size: 15,
+                                                          color: AppTheme.primary,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
+                                              ],
                                             ),
                                           ],
                                           if (aCodeRetrait) ...[

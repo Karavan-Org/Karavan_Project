@@ -53,6 +53,7 @@ class _RechercheLieuSheetState extends State<RechercheLieuSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final systemBottom = MediaQuery.of(context).padding.bottom;
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
@@ -61,7 +62,7 @@ class _RechercheLieuSheetState extends State<RechercheLieuSheet> {
           left: 20,
           right: 20,
           top: 16,
-          bottom: bottomInset > 0 ? bottomInset + 16 : 24),
+          bottom: bottomInset > 0 ? bottomInset + 16 : systemBottom + 20),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),

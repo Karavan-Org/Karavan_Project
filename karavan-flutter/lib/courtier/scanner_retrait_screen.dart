@@ -140,21 +140,30 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppTheme.couleurCarte(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+        builder: (context, setModalState) {
+          final insetsBottom = MediaQuery.of(ctx).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(ctx).padding.bottom;
+          final bottomPadding = insetsBottom > 0 ? insetsBottom + 16 : systemBottom + 24;
+
+          return SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: bottomPadding,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -250,7 +259,10 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
         ),
       ),
     );
-  }
+  },
+),
+);
+}
 
   @override
   Widget build(BuildContext context) {
@@ -294,7 +306,10 @@ class _ScannerRetraitScreenState extends State<ScannerRetraitScreen> {
               child: ElevatedButton.icon(
                 onPressed: _enCours ? null : _ouvrirSaisieCodeCourt,
                 icon: const Icon(Icons.pin_outlined),
-                label: const Text("Saisir le code court (8 chiffres)"),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text("Saisir le code court"),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,

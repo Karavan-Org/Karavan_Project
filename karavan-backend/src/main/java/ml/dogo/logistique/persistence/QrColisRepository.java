@@ -35,3 +35,4 @@ public interface QrColisRepository extends JpaRepository<QrColis, Long> {
     @Query(nativeQuery = true, value = "UPDATE qr_colis SET tentatives = tentatives + 1 WHERE id = :id")
     int enregistrerEchec(@Param("id") long id);
 }
+

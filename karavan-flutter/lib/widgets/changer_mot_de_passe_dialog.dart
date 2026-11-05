@@ -11,8 +11,12 @@ Future<bool?> afficherDialogueChangerMotDePasse(BuildContext context) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => const ChangerMotDePasseSheet(),
+    builder: (ctx) => const SafeArea(
+      top: false,
+      child: ChangerMotDePasseSheet(),
+    ),
   );
 }
 
@@ -114,6 +118,8 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final systemBottom = MediaQuery.of(context).padding.bottom;
+    final bottomPadding = bottomInset > 0 ? bottomInset + 16 : systemBottom + 24;
     final camelColor = AppTheme.estSombre(context) ? AppTheme.darkPrimary : AppTheme.bissap;
     final borderColor = AppTheme.couleurBordure(context);
 
@@ -122,7 +128,7 @@ class _ChangerMotDePasseSheetState extends State<ChangerMotDePasseSheet> {
         left: 24,
         right: 24,
         top: 20,
-        bottom: bottomInset > 0 ? bottomInset + 20 : 36,
+        bottom: bottomPadding,
       ),
       decoration: BoxDecoration(
         color: AppTheme.couleurSurface(context),

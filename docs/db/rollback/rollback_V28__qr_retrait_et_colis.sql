@@ -12,3 +12,4 @@ ALTER TABLE code_retrait DROP COLUMN code_court_hash;
 ALTER TABLE code_retrait DROP COLUMN token_hash;
 
 DELETE FROM flyway_schema_history WHERE version = '28';
+

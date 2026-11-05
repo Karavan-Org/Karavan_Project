@@ -4,7 +4,6 @@ import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/navigation_laterale.dart';
 import 'grossiste_dashboard_screen.dart';
-import 'grossiste_catalogue_screen.dart';
 import 'grossiste_commandes_screen.dart';
 import 'grossiste_profil_screen.dart';
 import '../commercant/explorer_screen.dart';
@@ -374,7 +373,10 @@ class _GrossisteMainNavState extends State<GrossisteMainNav>
                         icon: Icons.local_shipping_rounded,
                         color: AppTheme.olive,
                         // Les lots réels (à préparer / expédiés) sont dans l'onglet « Lots & Ventes »
-                        onTap: () => setTabIndex(2),
+                        onTap: () {
+                          _fabController.reverse();
+                          setTabIndex(2);
+                        },
                       ),
                     ]);
                   },

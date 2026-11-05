@@ -10,6 +10,7 @@ import 'favoris_service.dart';
 import 'profil_commercant_screen.dart';
 import 'mes_favoris_screen.dart';
 import 'code_retrait_commercant_screen.dart';
+import 'suivi_colis_screen.dart';
 import 'fiche_campagne_screen.dart';
 import 'groupe_selection_service.dart';
 import 'ouvrir_groupe_screen.dart';
@@ -323,18 +324,25 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                         },
                       ),
 
-                      // Item 1 (Haut-Gauche - 112°) : Suivi de mes colis (suivi réel dans l'onglet Commandes)
+                      // Item 1 (Haut-Gauche - 112°) : Suivi de mes colis (SuiviColisScreen)
                       _buildArcButton(
                         index: 1,
                         total: 4,
                         angleDeg: arc.angle(1),
                         radius: arc.rayon,
                         label: "Suivi Colis",
-                        subLabel: "Mes commandes",
-                        hoverTooltip: "Suivre mes colis",
+                        subLabel: "Temps réel",
+                        hoverTooltip: "Suivre mes colis en direct",
                         icon: Icons.local_shipping_rounded,
                         color: AppTheme.primary,
-                        onTap: () => setTabIndex(2),
+                        onTap: () {
+                          _fabController.reverse();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const SuiviColisScreen(),
+                            ),
+                          );
+                        },
                       ),
 
                       // Item 2 (Haut-Droite - 68°) : Retrait Sécurisé (CodeRetraitCommercantScreen avec QR & PIN)
@@ -344,8 +352,8 @@ class _CommercantMainNavState extends State<CommercantMainNav>
                         angleDeg: arc.angle(2),
                         radius: arc.rayon,
                         label: "Retrait",
-                        subLabel: "QR & PIN",
-                        hoverTooltip: "Afficher mon Code QR & PIN",
+                        subLabel: "Code QR",
+                        hoverTooltip: "Afficher mon Code de retrait (QR)",
                         icon: Icons.qr_code_2_rounded,
                         color: AppTheme.secondary,
                         onTap: () {

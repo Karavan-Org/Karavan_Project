@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/groupe_api_service.dart';
@@ -10,6 +10,7 @@ Future<void> afficherPartageGroupe(BuildContext context, GroupeResume groupe) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: AppTheme.couleurCarte(context),
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (_) => _PartageGroupe(groupe: groupe),

@@ -175,16 +175,19 @@ class _NotifierAdministrationScreenState extends State<NotifierAdministrationScr
     if (_groupesDisponibles.isEmpty) return;
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).padding.bottom + 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: Container(
@@ -236,22 +239,26 @@ class _NotifierAdministrationScreenState extends State<NotifierAdministrationScr
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _ouvrirSelectionEtape() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => Container(
-        height: MediaQuery.of(context).size.height * 0.72,
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Column(
+      useSafeArea: true,
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.72,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).padding.bottom + 16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
@@ -335,8 +342,9 @@ class _NotifierAdministrationScreenState extends State<NotifierAdministrationScr
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Future<void> _joindrePiece() async {
     final piece = await choisirPiece(

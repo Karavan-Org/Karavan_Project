@@ -1,22 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../services/logistique_api_service.dart';
 import '../services/api/api_exception.dart';
+import '../services/itineraire_service.dart';
 import '../widgets/animations_suivi_international.dart';
 import '../widgets/image_produit.dart';
+import '../widgets/itineraire_depot.dart';
 import 'code_retrait_commercant_screen.dart';
 
 /// Écran complet de Suivi de Colis International pour le Commerçant connecté à l'API Karavan.
 /// Prend en compte les 10 grandes phases communes à tous les colis internationaux,
-/// avec une animation dédiée qui boucle en continu pendant toute la durée de la phase active.
+/// avec une animation dédiée qui boucle en continu pendant toute la durée de la phase active
+/// et la localisation interactive en direct du dépôt / entrepôt via OpenStreetMap & Leaflet.
 class SuiviColisScreen extends StatefulWidget {
   final int? commandeIdSelectionnee;
   final int? phaseInitiale;
+  final String? initialDepotNom;
+  final String? initialDepotAdresse;
+  final String? initialLienMaps;
 
   const SuiviColisScreen({
     super.key,
     this.commandeIdSelectionnee,
     this.phaseInitiale,
+    this.initialDepotNom,
+    this.initialDepotAdresse,
+    this.initialLienMaps,
   });
 
   @override
@@ -34,6 +46,7 @@ class _SuiviColisScreenState extends State<SuiviColisScreen> {
   /// Phase active sélectionnée (1 à 10)
   int _phaseActive = 5; // En transit international par défaut
   bool _modeSimulation = false;
+  LatLng _depotLatLng = const LatLng(12.6392, -7.9982); // Dabanani, Bamako par défaut
 
   @override
   void initState() {
@@ -89,6 +102,8 @@ class _SuiviColisScreenState extends State<SuiviColisScreen> {
         }
         _chargement = false;
       });
+
+      _resoudrePositionDepot(cmdActive);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -96,6 +111,34 @@ class _SuiviColisScreenState extends State<SuiviColisScreen> {
         _chargement = false;
       });
     }
+  }
+
+  Future<void> _resoudrePositionDepot(Map<String, dynamic>? cmdActive) async {
+    final point = cmdActive?['pointRetrait'] as Map<String, dynamic>?;
+    final lien = widget.initialLienMaps ?? point?['lienGoogleMap']?.toString();
+    final adr = widget.initialDepotAdresse ?? point?['adresse']?.toString() ?? "Dabanani, Bamako, Mali";
+
+    if (point != null && point['latitude'] is num && point['longitude'] is num) {
+      final lat = (point['latitude'] as num).toDouble();
+      final lng = (point['longitude'] as num).toDouble();
+      if (lat != 0.0 || lng != 0.0) {
+        if (mounted) {
+          setState(() {
+            _depotLatLng = LatLng(lat, lng);
+          });
+        }
+        return;
+      }
+    }
+
+    try {
+      final pos = await ItineraireService.localiserDepot(lien: lien, adresse: adr);
+      if (pos != null && mounted) {
+        setState(() {
+          _depotLatLng = pos;
+        });
+      }
+    } catch (_) {}
   }
 
   /// Déduit la phase logistique (1 à 10) depuis l'état réel de la commande et du convoi
@@ -179,7 +222,7 @@ class _SuiviColisScreenState extends State<SuiviColisScreen> {
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
           : _erreur != null
               ? _vueErreur()
-              : _commandes.isEmpty && _participations.isEmpty
+              : (_commandes.isEmpty && _participations.isEmpty && !_modeSimulation && widget.phaseInitiale == null && widget.initialDepotNom == null)
                   ? _vueAucunColis()
                   : _vueContenu(phaseCourante, estSombre),
     );
@@ -229,6 +272,22 @@ class _SuiviColisScreenState extends State<SuiviColisScreen> {
               "Rejoignez un groupe d'achat pour suivre l'acheminement de vos commandes internationales étape par étape.",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13.5, color: AppTheme.textMuted, height: 1.4),
+            ),
+            const SizedBox(height: 22),
+            ElevatedButton.icon(
+              onPressed: () => setState(() => _modeSimulation = true),
+              icon: const Icon(Icons.map_rounded, size: 18),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text("Voir les 10 phases & la carte du dépôt"),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
             ),
           ],
         ),
@@ -499,19 +558,31 @@ class _SuiviColisScreenState extends State<SuiviColisScreen> {
 
           const SizedBox(height: 20),
 
-          // 3. BARRE DE NAVIGATION RAPIDE PARMI LES 10 PHASES
+          // 3. CARTE ET LOCALISATION DU DÉPÔT / ENTREPÔT (Leaflet & OpenStreetMap)
+          _buildSectionCarteDepot(
+            context: context,
+            commande: commande,
+            estArriveeOuRetrait: _phaseActive >= 8,
+          ),
+
+          // 4. BARRE DE NAVIGATION RAPIDE PARMI LES 10 PHASES
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "Les 10 phases internationales",
-                style: TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.couleurTexte(context),
+              Expanded(
+                child: Text(
+                  "Les 10 phases internationales",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.couleurTexte(context),
+                  ),
                 ),
               ),
-              if (_modeSimulation)
+              if (_modeSimulation) ...[
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () {
                     setState(() => _modeSimulation = false);
@@ -526,6 +597,7 @@ class _SuiviColisScreenState extends State<SuiviColisScreen> {
                     ),
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
@@ -610,9 +682,12 @@ class _SuiviColisScreenState extends State<SuiviColisScreen> {
                   );
                 },
                 icon: const Icon(Icons.qr_code_rounded, color: Colors.white, size: 22),
-                label: const Text(
-                  "Voir mon Code de Retrait (PIN & QR)",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "Voir mon code de retrait (QR)",
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF16A34A),
@@ -621,6 +696,280 @@ class _SuiviColisScreenState extends State<SuiviColisScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCarteDepot({
+    required BuildContext context,
+    required Map<String, dynamic>? commande,
+    required bool estArriveeOuRetrait,
+  }) {
+    final point = commande?['pointRetrait'] as Map<String, dynamic>?;
+    final String nomDepot = widget.initialDepotNom ??
+        point?['nom']?.toString() ??
+        "Dépôt Central Karavan (Dabanani)";
+    final String adresseDepot = widget.initialDepotAdresse ??
+        point?['adresse']?.toString() ??
+        "Grand Marché, Dabanani, Bamako";
+    final String lienMaps = widget.initialLienMaps ??
+        point?['lienGoogleMap']?.toString() ??
+        "https://maps.google.com/?q=${_depotLatLng.latitude},${_depotLatLng.longitude}";
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: AppTheme.couleurCarte(context),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: estArriveeOuRetrait ? AppTheme.primary.withValues(alpha: 0.5) : AppTheme.couleurBordure(context),
+          width: estArriveeOuRetrait ? 1.8 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: estArriveeOuRetrait ? AppTheme.primary.withValues(alpha: 0.08) : const Color(0x062C241E),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // En-tête du dépôt
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: estArriveeOuRetrait
+                        ? const Color(0xFF16A34A).withValues(alpha: 0.12)
+                        : AppTheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    estArriveeOuRetrait ? Icons.store_mall_directory_rounded : Icons.location_on_rounded,
+                    color: estArriveeOuRetrait ? const Color(0xFF16A34A) : AppTheme.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              nomDepot,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.couleurTexte(context),
+                              ),
+                            ),
+                          ),
+                          if (estArriveeOuRetrait)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF16A34A).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                "Arrivé au dépôt",
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF16A34A),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        adresseDepot,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.couleurTexteAttenue(context),
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Carte OpenStreetMap Leaflet interactive intégrée
+          Container(
+            height: 190,
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppTheme.couleurBordure(context)),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                FlutterMap(
+                  options: MapOptions(
+                    initialCenter: _depotLatLng,
+                    initialZoom: 15.0,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.example.karavan_app',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: _depotLatLng,
+                          width: 50,
+                          height: 50,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primary.withValues(alpha: 0.45),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.warehouse_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                // Badge "OpenStreetMap" discret
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.65),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      "OpenStreetMap · Leaflet",
+                      style: TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+                // Bouton "Agrandir"
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: Material(
+                    color: Colors.white,
+                    elevation: 3,
+                    borderRadius: BorderRadius.circular(10),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () {
+                        afficherItineraireDepot(
+                          context,
+                          nomDepot: nomDepot,
+                          adresse: adresseDepot,
+                          lienGoogleMaps: lienMaps,
+                        );
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.fullscreen_rounded, size: 16, color: AppTheme.terre),
+                            SizedBox(width: 4),
+                            Text(
+                              "Agrandir",
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.terre),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Barre d'actions sous la carte
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      afficherItineraireDepot(
+                        context,
+                        nomDepot: nomDepot,
+                        adresse: adresseDepot,
+                        lienGoogleMaps: lienMaps,
+                      );
+                    },
+                    icon: const Icon(Icons.directions_rounded, size: 18),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text("Itinéraire GPS vers le dépôt"),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                if (lienMaps.isNotEmpty) ...[
+                  const SizedBox(width: 10),
+                  IconButton(
+                    onPressed: () => launchUrl(Uri.parse(lienMaps), mode: LaunchMode.externalApplication),
+                    tooltip: "Ouvrir dans Google Maps",
+                    icon: const Icon(Icons.open_in_new_rounded, size: 20),
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppTheme.couleurSurfaceDouce(context),
+                      foregroundColor: AppTheme.couleurTexte(context),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(color: AppTheme.couleurBordure(context)),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );

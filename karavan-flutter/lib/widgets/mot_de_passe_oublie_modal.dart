@@ -49,11 +49,15 @@ class MotDePasseOublieModal extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => MotDePasseOublieModal(
-        initialTelephone: initialTelephone,
-        role: role,
-        onMotDePasseReinitialise: onMotDePasseReinitialise,
+      builder: (_) => SafeArea(
+        top: false,
+        child: MotDePasseOublieModal(
+          initialTelephone: initialTelephone,
+          role: role,
+          onMotDePasseReinitialise: onMotDePasseReinitialise,
+        ),
       ),
     );
   }
@@ -204,12 +208,16 @@ class _MotDePasseOublieModalState extends State<MotDePasseOublieModal> {
     final couleurTexte = AppTheme.couleurTexte(context);
     final couleurAttenue = AppTheme.couleurTexteAttenue(context);
 
+    final insetsBottom = MediaQuery.of(context).viewInsets.bottom;
+    final systemBottom = MediaQuery.of(context).padding.bottom;
+    final bottomPadding = insetsBottom > 0 ? insetsBottom + 16 : systemBottom + 22;
+
     return Container(
       padding: EdgeInsets.only(
         left: 22,
         right: 22,
         top: 22,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 22,
+        bottom: bottomPadding,
       ),
       decoration: BoxDecoration(
         color: couleurCarte,
